@@ -1,0 +1,1 @@
+Stores analysis scripts for the target tool, covering the entire process from pulling the project from Git → analyzing the repository code → saving rule information.
