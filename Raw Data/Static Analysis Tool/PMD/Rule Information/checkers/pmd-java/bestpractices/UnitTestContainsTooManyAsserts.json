@@ -1,0 +1,106 @@
+{
+  "name": "UnitTestContainsTooManyAsserts",
+  "language": "java",
+  "description": "\n            Unit tests should not contain too many asserts. Many asserts are indicative of a complex test, for which\n            it is harder to verify correctness.  Consider breaking the test scenario into multiple, shorter test scenarios.\n            Customize the maximum number of assertions used by this Rule to suit your needs.\n\n            This rule checks for JUnit (3, 4 and 5) and TestNG Tests.\n\n            Note: This rule was named JUnitTestContainsTooManyAsserts before PMD 7.7.0.\n        ",
+  "example": "public class MyTestCase {\n    // Ok\n    @Test\n    public void testMyCaseWithOneAssert() {\n        boolean myVar = false;\n        assertFalse(\"should be false\", myVar);\n    }\n\n    // Bad, too many asserts (assuming max=1)\n    @Test\n    public void testMyCaseWithMoreAsserts() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\", myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 58,
+  "branches": 6,
+  "apis": 8,
+  "test": [
+    {
+      "description": "JUnit 3 Test contains no assert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class MyTestCase extends TestCase {\n    //negative on rule\n    public void testMyCaseWithNoAssert() {\n        boolean myVar = false;\n        //no assert here\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 Test contains no assert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class MyTestCase extends TestCase {\n    //negative on rule\n    @org.junit.Test\n    public void myCaseWithNoAssert() {\n        boolean myVar = false;\n        //no assert here\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 3 Test contains one assert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class MyTestCase extends TestCase {\n    //negative on rule\n    public void testMyCaseWithOneAssert() {\n        boolean myVar = false;\n        assertFalse(\"should be false\",myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 Test contains one assert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class MyTestCase {\n    //negative on rule\n    @Test\n    public void myCaseWithOneAssert() {\n        boolean myVar = false;\n        assertFalse(\"should be false\",myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 3 Test contains more than one assert",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class MyTestCase extends TestCase {\n    //positive on rule\n    public void testMyCaseWithMoreAsserts() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 Test contains more than one assert",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class MyTestCase {\n    //positive on rule\n    @Test\n    public void myCaseWithMoreAsserts() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 3 Test contains more than one assert, but allowed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class MyTestCase extends TestCase {\n    //positive on rule\n    public void testMyCaseWithMoreAsserts() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 Test contains more than one assert, but allowed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class MyTestCase {\n    //positive on rule\n    @Test\n    public void myCaseWithMoreAsserts() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 5 Test contains more than one assert",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        11,
+        18,
+        25,
+        32,
+        40
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.RepeatedTest;\nimport org.junit.jupiter.api.TestFactory;\nimport org.junit.jupiter.api.TestTemplate;\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\nimport static org.junit.jupiter.api.Assertions.*;\n\npublic class MyTestCase {\n    @Test\n    public void testRegular() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n\n    @RepeatedTest(2)\n    public void testRepeated() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n\n    @TestFactory\n    public void testFactory() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n\n    @TestTemplate\n    public void testTemplate() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n\n    @ParameterizedTest\n    @ValueSource(strings = {\"Hello\", \"World\"})\n    public void testParameterized(String value) {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "TestNG Test contains more than one assert",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport org.testng.annotations.Test;\n\npublic class MyTestCase {\n    @Test\n    public void testRegular() {\n        boolean myVar = false;\n        assertFalse(\"myVar should be false\",myVar);\n        assertEquals(\"should equals false\", false, myVar);\n    }\n}\n        "
+    },
+    {
+      "description": "Should not count unrelated asserts",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.Test;\n\npublic class MyTestCase {\n    @Test\n    public void testRegular() {\n        assertFalse(\"myVar should be false\",false);\n    }\n    @Test\n    public void testRegular2() {\n        assertFalse(\"myVar should be false\",false);\n    }\n}\n        "
+    },
+    {
+      "description": "#1212 [java] Don't raise JUnitTestContainsTooManyAsserts on JUnit 5's assertAll",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package unknown;\n            import static org.junit.jupiter.api.Assertions.*;\n            import org.junit.jupiter.api.Test;\n            import my.MutableInteger;\n            import my.SomeClass;\n\n            public class SomeClassTest {\n\n                @Test\n                public void testSomeMethod() {\n                    MutableInteger mutableInteger = new MutableInteger(2);\n                    SomeClass instance = new SomeClass();\n                    int expResult = -1;\n                    int result = instance.someMethod(mutableInteger);\n                    assertAll(() -> assertEquals(expResult, result),\n                              () -> assertEquals(3, mutableInteger.getValue()));\n                }\n            }\n            "
+    },
+    {
+      "description": "#2374 [java] False positive JUnitTestContainsTooManyAsserts for JUnit 5 assertAll()",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package unknown;\n            import static org.junit.jupiter.api.Assertions.*;\n            import org.junit.jupiter.api.Test;\n            import my.Point;\n            import java.util.List;\n\n            class SampleTest {\n                @Test\n                void sampleTestCase(List<Point> ps) {\n                    final Point input = new Point(1, 2);\n                    final Point result = ps.add(input);\n                    assertAll(\n                            () -> assertEquals(2, result.x),\n                            () -> assertEquals(4, result.y)\n                    );\n                }\n            }\n            "
+    },
+    {
+      "description": "Extra properties",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import org.junit.jupiter.api.Test;\n            public class A {\n                @Test\n                void test() {\n                    customAssertion(\"aueoau\");\n                    customAssertion(\"aueoau\");\n                    customAssertion(\"aueoau\");\n                }\n            }\n            "
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "name": "AccessorMethodGeneration",
+  "language": "java",
+  "description": "\nWhen accessing private fields / methods from another class, the Java compiler will generate accessor methods\nwith package-private visibility. This adds overhead, and to the dex method count on Android. This situation can\nbe avoided by changing the visibility of the field / method from private to package-private.\n\n\n_Note:_ This rule is only executed for Java 10 or lower.\nSince Java 11, [JEP 181: Nest-Based Access Control](https://openjdk.org/jeps/181) has been implemented. This\nmeans that in Java 11 and above accessor classes are not generated anymore.\n        ",
+  "example": "public class OuterClass {\n    private int counter;\n    /* package */ int id;\n\n    public class InnerClass {\n        InnerClass() {\n            OuterClass.this.counter++; // wrong accessor method will be generated\n        }\n\n        public int getOuterClassId() {\n            return OuterClass.this.id; // id is package-private, no accessor method needed\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 100,
+  "branches": 18,
+  "apis": 12,
+  "test": [
+    {
+      "description": "inner class accesses private field from outer class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    private int field;\n\n    public class InnerClass {\n        private long innerField;\n\n        InnerClass() {\n            innerField = Foo.this.field; // violation, accessing a private field\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "inner class accesses private field from outer class unqualified",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    private int field;\n\n    public class InnerClass {\n        private long innerField;\n\n        InnerClass() {\n            innerField = field; // violation, accessing a private field\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "outer class accesses private field from inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    private int field;\n\n    public class InnerClass {\n        private long innerField;\n    }\n\n    long method() {\n        return new InnerClass().innerField; // violation, accessing a private field\n    }\n}\n        "
+    },
+    {
+      "description": "non private fields are ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int publicField;\n    protected int protectedField;\n    /* package */ int packageField;\n\n    public class InnerClass {\n        private long innerField;\n\n        InnerClass() {\n            innerField = Foo.this.publicField; // this is ok\n            innerField += Foo.this.protectedField; // this is ok\n            innerField += Foo.this.packageField; // this is ok\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "inner class accesses private method of outer class, unqualified",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class Foo {\n    public class InnerClass {\n        private void secret() {\n            outerSecret(); // violation, accessing a private method\n        }\n    }\n\n    private void outerSecret() {\n    }\n}\n        "
+    },
+    {
+      "description": "inner class accesses private method of outer class, qualified",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class Foo {\n    public class InnerClass {\n        private void secret() {\n            Foo.this.outerSecret(); // violation, accessing a private method\n        }\n    }\n\n    private void outerSecret() {\n    }\n}\n        "
+    },
+    {
+      "description": "outer class accesses private method of inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public class InnerClass {\n        private void secret() {\n        }\n    }\n\n    private void outerSecret() {\n        new InnerClass().secret(); // violation, accessing a private method\n    }\n}\n        "
+    },
+    {
+      "description": "check violations are not duplicated",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public class InnerClass {\n        private void secret() {\n        }\n    }\n\n    private void outerSecret() {\n        // two different usages should be reported once\n        new InnerClass().secret();\n        new InnerClass().secret();\n    }\n}\n        "
+    },
+    {
+      "description": "inner class accesses non-private methods of outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public class InnerClass {\n        private void secret() {\n            outerPublic(); // this is ok\n            outerProtected(); // this is ok\n            outerPackage(); // this is ok\n        }\n    }\n\n    public void outerPublic() {\n    }\n\n    protected void outerProtected() {\n    }\n\n    /* package */ void outerPackage() {\n    }\n}\n        "
+    },
+    {
+      "description": "#274 - Method inside static inner class incorrectly reported as generating accessor methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements Parcelable {\n    public static final Creator<Foo> CREATOR = new Creator<Foo>() {\n        @Override\n        public Foo createFromParcel(Parcel source) {\n            return new Foo(source.readString(),\n                          getBooleanForInt(source.readInt()),\n                          source.readLong());\n        }\n\n        @Override\n        public Foo[] newArray(int size) {\n            return new Foo[size];\n        }\n\n        private boolean getBooleanForInt(int value) {\n            return value == 1;\n        }\n    };\n}\n        "
+    },
+    {
+      "description": "#808 - [java] AccessorMethodGeneration false positives with compile time constants",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "code": "\nclass Outer {\n    private static final String CONST_STRING = \"value\";\n    private static final String CALCULATED_STRING = \"value\" + 0;\n    private static final int LITERAL = 0;\n    private static final int CALCULATED = LITERAL * 2;\n    private static final int CAST = (int) 0L;\n    // these are violations\n    private static final long NON_CONSTANT = java.util.concurrent.TimeUnit.SECONDS.toMillis(10);\n    private static final String NON_CONSTANT_STR = NON_CONSTANT + \"foo\";\n    private static final int LATE_INIT;\n    private static String STATIC_STRING = \"value\";\n    static {\n        LATE_INIT = 0;\n    }\n\n    class Inner {\n        @Override\n        public String toString() {\n        return \"\" // separate lines so the rule violations show up better\n               + CONST_STRING\n               + CALCULATED_STRING\n               + LITERAL\n               + CALCULATED\n               + CAST\n               + NON_CONSTANT     // valid violation\n               + NON_CONSTANT_STR // valid violation\n               + LATE_INIT        // valid violation\n               + STATIC_STRING    // valid violation\n            ;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "AccessorMethodGeneration false positive with overloads #807",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Outer {\n\n                static void outerMethod(int i) {\n                    // package private method, safe to call, and is called from Inner.f()\n                }\n\n                private static void outerMethod(String s) {\n                    // private method, not used anywhere, yet triggers AccessorMethodGeneration\n                }\n\n                static class Inner {\n                    void f() {\n                        outerMethod(0);\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "AccessorMethodGeneration false positive with overloads #807 (control test)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Outer {\n\n                static void outerMethod(int i) {\n                    // package private method, safe to call, and is called from Inner.f()\n                }\n\n                private static void outerMethod(String s) {\n                    // private method, not used anywhere, yet triggers AccessorMethodGeneration\n                }\n\n                static class Inner {\n                    void f() {\n                        outerMethod(\"0\");\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "AccessorMethodGeneration: Name clash with another public field not properly handled #342",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class ClassA {\n\n                public String field;\n\n            }\n\n            public class ClassB {\n\n                private String field;\n\n                private class ClassC {\n\n                    public void doSomething() {\n                        ClassA a = new ClassA();\n                        a.field = \"abcd\"; // should not be a violation here but reported as one\n                    }\n\n                }\n\n            }\n        "
+    },
+    {
+      "description": "nesting three levels",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public static class Outer {\n        private int field;\n\n        public class Inner {\n            private long innerField;\n\n            Inner() {\n                innerField = Outer.this.field; // violation, accessing a private field\n            }\n        }\n    }\n}\n        "
+    }
+  ]
+}

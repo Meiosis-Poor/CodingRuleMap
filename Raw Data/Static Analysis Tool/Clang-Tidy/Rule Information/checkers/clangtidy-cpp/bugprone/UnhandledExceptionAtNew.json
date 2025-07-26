@@ -1,0 +1,33 @@
+{
+  "name": "UnhandledExceptionAtNew",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-unhandled-exception-at-new",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 76,
+  "branches": 8,
+  "apis": 51,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        34,
+        81,
+        87,
+        111,
+        128,
+        134,
+        136,
+        139,
+        152,
+        157,
+        176,
+        198
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++14 %s bugprone-unhandled-exception-at-new %t -- -- -fexceptions\n// FIXME: Fix the checker to work in C++17 or later mode.\nnamespace std {\ntypedef __typeof__(sizeof(0)) size_t;\nenum class align_val_t : std::size_t {};\nclass exception {};\nclass bad_alloc : public exception {};\nclass bad_array_new_length : public bad_alloc {};\nstruct nothrow_t {};\nextern const nothrow_t nothrow;\n} // namespace std\n\nvoid *operator new(std::size_t, const std::nothrow_t &) noexcept;\nvoid *operator new(std::size_t, std::align_val_t, const std::nothrow_t &) noexcept;\nvoid *operator new(std::size_t, void *) noexcept;\n\nclass A {};\ntypedef std::bad_alloc badalloc1;\nusing badalloc2 = std::bad_alloc;\nusing badalloc3 = std::bad_alloc &;\n\nvoid *operator new(std::size_t, int, int);\nvoid *operator new(std::size_t, int, int, int) noexcept;\n\nstruct ClassSpecificNew {\n  void *operator new(std::size_t);\n  void *operator new(std::size_t, std::align_val_t);\n  void *operator new(std::size_t, int, int) noexcept;\n  void *operator new(std::size_t, int, int, int);\n};\n\nvoid f1() noexcept {\n  int *I1 = new int;\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: missing exception handler for allocation failure at 'new'\n  try {\n    int *I2 = new int;\n    try {\n      int *I3 = new int;\n    } catch (A) {\n    }\n  } catch (std::bad_alloc) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (std::bad_alloc &) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (const std::bad_alloc &) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (badalloc1) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (badalloc1 &) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (const badalloc1 &) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (badalloc2) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (badalloc3) {\n  }\n\n  try {\n    int *I = new int;\n    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: missing exception handler for allocation failure at 'new'\n  } catch (std::bad_alloc *) {\n  }\n\n  try {\n    int *I = new int;\n    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: missing exception handler for allocation failure at 'new'\n  } catch (A) {\n  }\n}\n\nvoid f2() noexcept {\n  try {\n    int *I = new int;\n  } catch (A) {\n  } catch (std::bad_alloc) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (...) {\n  }\n\n  try {\n    int *I = new int;\n  } catch (const std::exception &) {\n  }\n\n  try {\n    int *I = new int;\n    // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: missing exception handler for allocation failure at 'new'\n  } catch (const std::bad_array_new_length &) {\n  }\n}\n\nvoid f_new_nothrow() noexcept {\n  int *I1 = new (std::nothrow) int;\n  int *I2 = new (static_cast<std::align_val_t>(1), std::nothrow) int;\n}\n\nvoid f_new_placement() noexcept {\n  char buf[100];\n  int *I = new (buf) int;\n}\n\nvoid f_new_user_defined() noexcept {\n  int *I1 = new (1, 2) int;\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: missing exception handler for allocation failure at 'new'\n  int *I2 = new (1, 2, 3) int;\n}\n\nvoid f_class_specific() noexcept {\n  ClassSpecificNew *N1 = new ClassSpecificNew;\n  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: missing exception handler for allocation failure at 'new'\n  ClassSpecificNew *N2 = new (static_cast<std::align_val_t>(1)) ClassSpecificNew;\n  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: missing exception handler for allocation failure at 'new'\n  ClassSpecificNew *N3 = new (1, 2) ClassSpecificNew;\n  ClassSpecificNew *N4 = new (1, 2, 3) ClassSpecificNew;\n  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: missing exception handler for allocation failure at 'new'\n}\n\nvoid f_est_none() {\n  int *I = new int;\n}\n\nvoid f_est_noexcept_false() noexcept(false) {\n  int *I = new int;\n}\n\nvoid f_est_noexcept_true() noexcept(true) {\n  int *I = new int;\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: missing exception handler for allocation failure at 'new'\n}\n\nvoid f_est_dynamic_none() throw() {\n  int *I = new int;\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: missing exception handler for allocation failure at 'new'\n}\n\nvoid f_est_dynamic_1() throw(std::bad_alloc) {\n  int *I = new int;\n}\n\nvoid f_est_dynamic_2() throw(A) {\n  // the exception specification list is not checked\n  int *I = new int;\n}\n\nvoid f_try() noexcept try {\n  int *I = new int;\n} catch (const std::bad_alloc &) {\n}\n\nvoid f_try_bad() noexcept try {\n  int *I = new int;\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: missing exception handler for allocation failure at 'new'\n} catch (const A &) {\n}\n\nvoid f_embedded_try() noexcept {\n  try {\n    try {\n      int *I = new int;\n    } catch (const A &) {\n    }\n  } catch (const std::bad_alloc &) {\n  }\n}\n\ntemplate <bool P>\nvoid f_est_noexcept_dependent_unused() noexcept(P) {\n  int *I = new int;\n}\n\ntemplate <bool P>\nvoid f_est_noexcept_dependent_used() noexcept(P) {\n  int *I = new int;\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: missing exception handler for allocation failure at 'new'\n}\n\ntemplate <class T>\nvoid f_dependent_new() {\n  T *X = new T;\n}\n\nvoid f_1() {\n  f_est_noexcept_dependent_used<true>();\n}"
+    }
+  ]
+}

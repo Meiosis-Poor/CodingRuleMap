@@ -1,0 +1,127 @@
+{
+  "name": "FieldDeclarationsShouldBeAtStartOfClass",
+  "language": "java",
+  "description": "\nFields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes.\n        ",
+  "example": "public class HelloWorldBean {\n\n  // Field declared before methods / inner classes - OK\n  private String _thing;\n\n  public String getMessage() {\n    return \"Hello World!\";\n  }\n\n  // Field declared after methods / inner classes - avoid this\n  private String _fieldInWrongLocation;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 95,
+  "branches": 21,
+  "apis": 12,
+  "test": [
+    {
+      "description": "basic test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class HelloWorldBean {\n    private String _thing;\n\n    public String getMessage() {\n        return \"Hello World!\";\n    }\n}\n        "
+    },
+    {
+      "description": "basic test, not OK",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class HelloWorldBean {\n\n    public String getMessage() {\n        return \"Hello World!\";\n    }\n    private String _fieldInWrongLocation;\n}\n        "
+    },
+    {
+      "description": "inner class, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class HelloWorldBean {\n\n    public String getMessage() {\n        return \"Hello World!\";\n    }\n\n    public class Foo {\n        private String _fieldInWrongLocation;\n    }\n}\n        "
+    },
+    {
+      "description": "Initial report where rule was introduced, [ 2487971 ] False positive with field-level annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.springframework.beans.factory.annotation.Autowired;\npublic class MyTest {\n    @Autowired\n    protected String _first;\n    @Autowired\n    protected String _second;\n}\n        "
+    },
+    {
+      "description": "Empty declaration is allowed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\npublic class Foo {\n    private static final Logger LOGGER = Logger.getLogger(Foo.class);\n\n    ;\n\n    private int id;\n    private Foo myType;\n    private String name;\n\n    // OK, now constructors, getters, setters, etc.\n}\n        "
+    },
+    {
+      "description": "#1126 False positive with FieldDeclarationsShouldBeAtStartOfClass for static enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\npublic class Foo {\n    private static final Logger LOGGER = Logger.getLogger(Foo.class);\n\n    public static enum MyType {\n        ABC, DEF, GHI, JHK\n    }\n\n    private int id;\n    private MyType myType;\n    private String name;\n\n    // OK, now constructors, getters, setters, etc.\n}\n        "
+    },
+    {
+      "description": "#1126 Do not ignore enums",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\npublic class Foo {\n    private static final Logger LOGGER = Logger.getLogger(Foo.class);\n\n    public static enum MyType {\n        ABC, DEF, GHI, JHK\n    }\n\n    private int id;\n    private MyType myType;\n    private String name;\n\n    // OK, now constructors, getters, setters, etc.\n}\n        "
+    },
+    {
+      "description": "#1244 FieldDeclarationsShouldBeAtStartOfClass and anonymous classes, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n    private final String name;\n    public MyClass() {\n        this.name = \"whatever\";\n    }\n    public void onCreate() {\n        // someView.setListener(onSomeViewClick);\n    }\n    private final OnClickListener onSomeViewClick = new OnClickListener() {\n        @Override\n        public void onClick(Object view) {\n            // something\n        }\n    };\n}\ninterface OnClickListener { void onClick(Object view); }\n        "
+    },
+    {
+      "description": "#1244 FieldDeclarationsShouldBeAtStartOfClass and anonymous classes, fail",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\npublic class MyClass {\n    private final String name;\n    public MyClass() {\n        this.name = \"whatever\";\n    }\n    public void onCreate() {\n        // someView.setListener(onSomeViewClick);\n    }\n    private final OnClickListener onSomeViewClick = new OnClickListener() {\n        @Override\n        public void onClick(Object v) {\n            // something\n        }\n    };\n}\ninterface OnClickListener { void onClick(Object view); }\n        "
+    },
+    {
+      "description": "#1354 Complex FieldDeclarationsShouldBeAtStartOfClass false positive with Spring annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.beans.factory.annotation.Bean;\npublic class MyClass {\n    private static final String MY_STRING = \"STRING\";\n\n    @Autowired\n    private MyPrivate myPrivate;\n\n    @Bean\n    public void myPublicBean() {}\n\n    private static void myPrivateStatic() {}\n    static class MyPrivate {}\n}\n        "
+    },
+    {
+      "description": "#1364 FieldDeclarationsShouldBeAtStartOfClass false positive using multiple annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.persistence.ManyToOne;\nimport javax.persistence.Id;\nimport javax.persistence.Column;\nimport javax.persistence.JoinColumn;\npublic class MyEntity {\n\n    private static final String MY_STRING = \"STRING\";\n\n    @Id\n    @Column\n    private Long id;\n\n    @ManyToOne\n    @JoinColumn(\"\")\n    private MyEntity relation;\n\n    public MyEntity() {\n    }\n}\n        "
+    },
+    {
+      "description": "#345 [java] FieldDeclarationsShouldBeAtStartOfClass: Add ability to ignore interfaces - default case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class TestFieldDeclarations {\n    public interface StartCaptureListener {\n        void onStartCapture(boolean shouldUploadMediaToTba);\n    }\n\n    private static final int TAKE_PHOTO_RC = 334; // line 6\n}\n        "
+    },
+    {
+      "description": "#345 [java] FieldDeclarationsShouldBeAtStartOfClass: Add ability to ignore interfaces - ignore interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestFieldDeclarations {\n    public interface StartCaptureListener {\n        void onStartCapture(boolean shouldUploadMediaToTba);\n    }\n\n    private static final int TAKE_PHOTO_RC = 334; // line 6\n}\n        "
+    },
+    {
+      "description": "False negative with anon classes (1)",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        4,
+        5,
+        7
+      ],
+      "code": "\npublic class TestFieldDeclarations {\n    class Inner {\n        void method1() { }\n        private int field1; // violation 1\n        private Inner anon = new Inner() { // violation 2 - field \"anon\"\n            void method2() { }\n            private int field2; // violation 3\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "False negative with anon classes (2)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        7
+      ],
+      "code": "\npublic class TestFieldDeclarations {\n    class Inner {\n        void method1() { }\n        private int field1; // violation 1\n        private Inner anon = new Inner() { // ignored due to ignoreAnonymousClassDeclarations\n            void method2() { }\n            private int field2; // violation 2\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Initializers don't count",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class MyClass {\n                private static final String NAME;\n                static {\n                    NAME = \"\";\n                }\n\n                private final String name;\n                {\n                    name = \"\";\n                }\n                private String name2;\n\n                public MyClass() {\n                    this.name = \"whatever\";\n                }\n            }\n            "
+    },
+    {
+      "description": "Check inside enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public enum MyClass {\n                A,\n                B;\n\n                private final String name;\n\n                public MyClass() {\n                    this.name = \"whatever\";\n                }\n            }\n            "
+    }
+  ]
+}

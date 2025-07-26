@@ -1,0 +1,357 @@
+{
+  "name": "JavadocMethod",
+  "language": "java",
+  "description": "<div>\n Checks the Javadoc of a method or constructor.\n </div>\n\n <p>\n Violates parameters and type parameters for which no param tags are present can\n be suppressed by defining property {@code allowMissingParamTags}.\n </p>\n\n <p>\n Violates methods which return non-void but for which no return tag is present can\n be suppressed by defining property {@code allowMissingReturnTag}.\n </p>\n\n <p>\n Violates exceptions which are declared to be thrown (by {@code throws} in the method\n signature or by {@code throw new} in the method body), but for which no throws tag is\n present by activation of property {@code validateThrows}.\n Note that {@code throw new} is not checked in the following places:\n </p>\n <ul>\n <li>\n Inside a try block (with catch). It is not possible to determine if the thrown\n exception can be caught by the catch block as there is no knowledge of the\n inheritance hierarchy, so the try block is ignored entirely. However, catch\n and finally blocks, as well as try blocks without catch, are still checked.\n </li>\n <li>\n Local classes, anonymous classes and lambda expressions. It is not known when the\n throw statements inside such classes are going to be evaluated, so they are ignored.\n </li>\n </ul>\n\n <p>\n ATTENTION: Checkstyle does not have information about hierarchy of exception types\n so usage of base class is considered as separate exception type.\n As workaround, you need to specify both types in javadoc (parent and exact type).\n </p>\n\n <p>\n Javadoc is not required on a method that is tagged with the {@code @Override}\n annotation. However, under Java 5 it is not possible to mark a method required\n for an interface (this was <i>corrected</i> under Java 6). Hence, Checkstyle\n supports using the convention of using a single {@code {@inheritDoc}} tag\n instead of all the other tags.\n </p>\n\n <p>\n Note that only inheritable items will allow the {@code {@inheritDoc}}\n tag to be used in place of comments. Static methods at all visibilities,\n private non-static methods and constructors are not inheritable.\n </p>\n\n <p>\n For example, if the following method is implementing a method required by\n an interface, then the Javadoc could be done as:\n </p>\n <pre>\n &#47;** {&#64;inheritDoc} *&#47;\n public int checkReturnTag(final int aTagIndex,\n                           JavadocTag[] aTags,\n                           int aLineNo)\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 550,
+  "branches": 92,
+  "apis": 101,
+  "test": [
+    {
+      "description": "Auto test from InputJavadocMethod1.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        18
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethod1 {\n}\n@interface Bleh {\n    int method(); \n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethod2.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        9,
+        9
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethod2 {\n    public <X, Y1> String doSomething() { \n        return null;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodAboveComments.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        9,
+        18,
+        41,
+        60,
+        73,
+        83,
+        92
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodAboveComments {\n    public int foo() throws Exception { \n        return 0;\n    }\n    public int foo2() throws Exception { \n        return 0;\n    }\n    public int foo3() throws Exception {\n        return 0;\n    }\n    public int foo4() throws Exception {  \n        return 0;\n    }\n    @SuppressWarnings(\"unchecked\")\n    public int method() throws Exception { \n        return 0;\n    }\n    @SuppressWarnings(\"unchecked\")\n    public int method2() throws Exception {  \n        return 0;\n    }\n    @SuppressWarnings(\"unchecked\")\n    public int method3() throws Exception { \n        return 0;\n    }\n    @SuppressWarnings(\"unchecked\")\n    public int method4() throws Exception { \n        return 0;\n    }\n    public int foo5() {\n        return 0;\n    }\n    public void foo7() throws Exception { }\n    public int foo8() { return 0; } \n    public void foo9() throws Exception { }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodAllowInlineReturn.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        32,
+        39
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodAllowInlineReturn {\n    public int getFoo() { return 0; }\n    public int getBar() { return 0; }\n    public int getFiz() { return 0; }\n    public int getBaz() { return 0; }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodConstructor.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        18,
+        21
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodConstructor {\n    private int field;\n    public InputJavadocMethodConstructor() {}\n    public InputJavadocMethodConstructor(Runnable p1) { this.field = 0; }\n    public InputJavadocMethodConstructor(String p1) { this.field = 0; }\n    public InputJavadocMethodConstructor(Integer p1) { this.field = 0; }\n    public InputJavadocMethodConstructor(Long p1) { this.field = 0; }\n    public InputJavadocMethodConstructor(Short p1) { this.field = 0; }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodCustomMessage.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        17,
+        22,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodCustomMessage {\n    int method3() { \n        return 3;\n    }\n    void method2() {\n    }\n    void method3(int a) { \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodDefaultAccessModifier.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        19,
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic interface InputJavadocMethodDefaultAccessModifier {\n    void testNoViolation();\n    class MyClass {\n        public MyClass(Integer a) { \n        }\n    }\n    int testViolationMissingParameter(int b); \n    double testNoViolationParameterPresent(int c);\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodDoNotAllowInlineReturn.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        21,
+        33,
+        40
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodDoNotAllowInlineReturn {\n    public int getFoo() { return 0; }\n    public int getBar() { return 0; }\n    public int getFiz() { return 0; }\n    public int getBaz() { return 0; }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodEnum.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        24
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodEnum {\n    private enum DAY {\n        SOME_CONSTANT(1) {\n            int someMethod() {\n                return 0;\n            }\n        };\n        DAY(int i) { \n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodExtraThrowsOne.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        41,
+        64,
+        77,
+        90
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodExtraThrowsOne {\n    public  InputJavadocMethodExtraThrowsOne(String properties) {\n        if (properties.charAt(0) == 0) {\n            throw new IllegalArgumentException(\"cannot have char with code 0\");\n        }\n    }\n    public void doSomething1(String properties) throws IllegalArgumentException {\n        if (properties.charAt(0) == 0) {\n            throw new IllegalArgumentException(\"cannot have char with code 0\");\n        }\n    }\n    public void doSomething2(String properties) throws IllegalStateException {\n        if (properties.charAt(0) == 0) {\n            throw new IllegalArgumentException(\"cannot have char with code 0\");\n        }\n    }\n    public void doSomething3(String properties) throws IllegalStateException {\n        if (properties.charAt(0) == 0) {\n            throw new IllegalArgumentException(\"cannot have char with code 0\");\n        }\n    }\n    public void doSomething4(String properties) {\n        if (properties.charAt(0) == 0) {\n            throw new IllegalArgumentException(\"cannot have char with code 0\");\n        }\n    }\n    public void doSomething5(String properties) {\n        if (properties.charAt(0) == 0) {\n            throw new java.lang.IllegalArgumentException(\n                    \"cannot have char with code 0\");\n        }\n    }\n    public void doSomething6(String properties) {\n        if (properties.charAt(0) == 0) {\n            throw new java.lang.IllegalArgumentException(\"cannot have char with code 0\");\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodExtraThrowsTwo.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        43
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\nimport java.io.File;\nimport java.io.FileNotFoundException;\nimport java.io.IOException;\npublic class InputJavadocMethodExtraThrowsTwo {\n    public void doSomething7(String properties) {\n        if (properties.charAt(0) == 0) {\n            IllegalArgumentException exception =\n                    new IllegalArgumentException(\"cannot have char with code 0\");\n            throw exception;\n        }\n    }\n    public void doSomething8(File file) throws IOException {\n        if (file == null) {\n            throw new FileNotFoundException();\n        }\n    }\n    public void doSomething9(File file) throws IOException {\n        if (file == null) {\n            throw new FileNotFoundException();\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodGenerics.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        24,
+        39,
+        51,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodGenerics <E extends java.lang.Exception,\n                           RE extends RuntimeException & java.io.Serializable>\n{\n    public void method1() throws E\n    {\n    }\n    public void method2() throws RE \n    {\n    }\n    public void method3() throws E, RE\n    {\n    }\n    public <NPE extends NullPointerException> void method4() throws NPE, RE\n    {\n    }\n    public class InnerClass <RuntimeException extends ClassCastException>\n    {\n        public void method1() throws RuntimeException, RE,\n            java.lang.RuntimeException \n        {\n        }\n    }\n    public interface InnerInterface<T, E2 extends Throwable> {\n        public abstract String doStuff(T t) throws E2;\n    }\n    public interface InvalidParameterInJavadoc<T> {}\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodIgnoreThrowsOne.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        32,
+        35,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\nimport java.util.function.Function;\npublic class InputJavadocMethodIgnoreThrowsOne {\n    private static int parsePositiveInt(String s) {\n        try {\n            int value = Integer.parseInt(s);\n            if (value <= 0) {\n                throw new NumberFormatException(value + \" is negative/zero\");\n            }\n            return value;\n        } catch (NumberFormatException ex) {\n            throw new IllegalArgumentException(\"Invalid number\", ex);\n        } finally {\n            throw new IllegalStateException(\"Should never reach here\");\n        }\n    }\n    private static void catchAndRethrow(Object o) {\n        try {\n            if (o == null) {\n                throw new IllegalArgumentException(\"null\"); \n            }\n        } catch (IllegalArgumentException ex) {\n            throw new IllegalArgumentException(ex.toString());\n        }\n    }\n    private static void catchAndRethrowSame(Object o) {\n        try {\n            if (o == null) {\n                throw new IllegalArgumentException(\"null\"); \n            }\n        } catch (IllegalArgumentException ex) {\n            throw ex; \n        }\n    }\n    private static void catchAndRethrowDifferent(Object o, int i) {\n        try {\n            float x = 1 / i; \n        } catch (RuntimeException ex) {\n            if (o == null) {\n                ex = new NullPointerException(\"\");\n            }\n            throw ex;\n        }\n    }\n    private static Function<String, String> getTruncateFunction(int maxLength) {\n        return s -> {\n            if (s == null) {\n                throw new IllegalArgumentException(\"Cannot truncate null\"); \n            }\n            return s.length() > maxLength ? s.substring(0, maxLength) : s;\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodIgnoreThrowsTwo.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        49,
+        106
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\nimport java.io.BufferedReader;\nimport java.io.FileReader;\nimport java.io.IOException;\nimport java.util.Scanner;\nimport java.util.function.Function;\npublic class InputJavadocMethodIgnoreThrowsTwo {\n    private static void ignoreTryWithResources(String input) {\n        try (BufferedReader in = new BufferedReader(new FileReader(input))) {\n            String s = in.readLine();\n            System.out.println(s);\n            if (s.length() == 0) {\n                throw new IllegalArgumentException(\"empty input\"); \n            }\n            else {\n                throw new IOException(); \n            }\n        } catch (IOException e) {\n            System.out.println(\"Error reading file\");\n        }\n    }\n    private static void keepTryWithoutCatch() {\n        try (Scanner sc = new Scanner(System.in)) {\n            if (sc.nextInt() <= 0) {\n                throw new IllegalArgumentException(\"\");\n            }\n        }\n    }\n    void dfs(String str) {\n        class DFS {\n            void neverCalled() {\n                throw new IllegalStateException(\"\"); \n            }\n            void dfs(String str) {\n                if (str != null) {\n                    dfs(str.toLowerCase());\n                    System.out.println(str);\n                    dfs(str.toUpperCase());\n                }\n            }\n        }\n        new DFS().dfs(str);\n    }\n    Runnable ignoreAnonClasses() {\n        return new Runnable() {\n            @Override\n            public void run() {\n                throw new UnsupportedOperationException(\"\"); \n            }\n        };\n    }\n    Function<String, Integer> lambdaInCatchBlock(String s) {\n        try {\n            int value = Integer.parseInt(s);\n            if (value <= 0) {\n                throw new NumberFormatException(value + \" is negative/zero\"); \n            }\n            return x -> value;\n        } catch (NumberFormatException ex) {\n            if (s.length() == 1) {\n                throw new IllegalArgumentException(\"Invalid number\", ex);\n            }\n            return x -> {\n                throw new UnsupportedOperationException(\"\"); \n            };\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodInheritDoc.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        16,
+        20,
+        40,
+        45,
+        50,
+        56
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodInheritDoc\n{\n    InputJavadocMethodInheritDoc() \n    {\n    }\n    private void privateMethod() \n    {\n    }\n    void packageMethod()\n    {\n    }\n    protected void protectedMethod()\n    {\n    }\n    public void publicMethod()\n    {\n    }\n    private static void privateStaticMethod() \n    {\n    }\n    static void packageStaticMethod() \n    {\n    }\n    protected static void protectedStaticMethod()\n    {\n    }\n    public static void publicStaticMethod() \n    {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodMissingJavadocTagsDefault.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        15,
+        25,
+        56,
+        67,
+        77
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodMissingJavadocTagsDefault {\n    int missingReturn(int number) throws ThreadDeath {\n        return number;\n    }\n    int missingParam(int number) throws ThreadDeath {\n        return number;\n    }\n    int missingThrows(int number) throws ThreadDeath {\n        return number;\n    }\n    int missingReturnButInheritDocPresent(int number) throws java.util.NoSuchElementException {\n        return number;\n    }\n    private int missingReturnInTheMiddle(int number) { \n        return number;\n    }\n    private int missingReturnAtTheEnd(int number) { \n        return number;\n    }\n    private int missingReturnAtTheEndFollowedByEmptyLine(int number) {\n        return number;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodNoJavadocDefault.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        25,
+        28,
+        30,
+        32
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodNoJavadocDefault \n{\n    public int i1;\n    protected int i2;\n    int i3;\n    private int i4;\n    public void foo1() {}\n    protected void foo2() {}\n    void foo3() {}\n    private void foo4() {}\n    public void foo5() {}\n    protected void foo6() {}\n    void foo7() {}\n    private void foo8() {}\n    protected class ProtectedInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n    class PackageInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n    private class PrivateInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodNoJavadocOnlyPrivateScope.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        25,
+        30,
+        32
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodNoJavadocOnlyPrivateScope \n{\n    public int i1;\n    protected int i2;\n    int i3;\n    private int i4;\n    public void foo1() {}\n    protected void foo2() {}\n    void foo3() {}\n    private void foo4() {}\n    public void foo5() {}\n    protected void foo6() {}\n    void foo7() {}\n    private void foo8() {}\n    protected class ProtectedInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n    class PackageInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n    private class PrivateInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodNoJavadocProtectedScope.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        25,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodNoJavadocProtectedScope \n{\n    public int i1;\n    protected int i2;\n    int i3;\n    private int i4;\n    public void foo1() {}\n    protected void foo2() {}\n    void foo3() {}\n    private void foo4() {}\n    public void foo5() {}\n    protected void foo6() {}\n    void foo7() {}\n    private void foo8() {}\n    protected class ProtectedInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n    class PackageInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n    private class PrivateInner { \n        public int i1;\n        protected int i2;\n        int i3;\n        private int i4;\n        public void foo1() {}\n        protected void foo2() {}\n        void foo3() {}\n        private void foo4() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodParamsTags.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        15,
+        15,
+        15,
+        15,
+        63,
+        63,
+        75,
+        75
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodParamsTags {\n  void testEmpty(Object param1, Object param2, Object param3) {\n  }\n  public void setPathRef(Object r) {\n  }\n  public void setPathRef2(Object s) {\n  }\n  public void setPathRef3(Object k) {\n  }\n  public void setPathRef4(Object w) { \n  }\n  public void setPathRef5(Object z) {\n  }\n  public void setPathRef6(Object y) { \n  }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodProtectedScopeJavadocTwo.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        44,
+        49
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodProtectedScopeJavadocTwo {\n    private InputJavadocMethodProtectedScopeJavadocTwo(int aA)\n    {\n    }\n    InputJavadocMethodProtectedScopeJavadocTwo(String aA)\n    {\n    }\n    protected InputJavadocMethodProtectedScopeJavadocTwo(Object aA)\n    {\n    }\n    public InputJavadocMethodProtectedScopeJavadocTwo(Class<Object> aA)\n    {\n    }\n    private void method(int aA)\n    {\n    }\n    void method(Long aA)\n    {\n    }\n    protected void method(Class<Object> aA) \n    {\n    }\n    public void method(StringBuffer aA) \n    {\n    }\n    private void method(String aA)\n    {\n    }\n    public class InnerWithoutAuthor\n    {\n    }\n    public String toString()\n    {\n        return super.toString();\n    }\n    @Deprecated @Override\n    public int hashCode()\n    {\n        return super.hashCode();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodPublicOnlyOne.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        74,
+        79,
+        84,
+        89
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodPublicOnlyOne \n{\n    private interface InnerInterface \n    {\n        String CONST = \"InnerInterface\"; \n        void method(); \n        class InnerInnerClass \n        {\n            private int mData; \n            private InnerInnerClass()\n            {\n                final Runnable r = new Runnable() {\n                        public void run() {};\n                    };\n            }\n            void method2() \n            {\n                final Runnable r = new Runnable() {\n                        public void run() {};\n                    };\n            }\n        }\n    }\n    private class InnerClass \n    {\n        private int mDiff; \n        void method() \n        {\n        }\n    }\n    private int mSize; \n    int mLen; \n    protected int mDeer; \n    public int aFreddo; \n    private InputJavadocMethodPublicOnlyOne(int aA)\n    {\n    }\n   InputJavadocMethodPublicOnlyOne(String aA)\n    {\n    }\n    protected InputJavadocMethodPublicOnlyOne(Object aA)\n    {\n    }\n   public InputJavadocMethodPublicOnlyOne(Class<Object> aA)\n    {\n    }\n    private void method(int aA) \n    {\n    }\n    void method(Long aA) \n    {\n    }\n    protected void method(Class<Object> aA) \n    {\n    }\n    public void method(StringBuffer aA) \n    {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodPublicOnlyTwo.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodPublicOnlyTwo {\n    private void method(String aA) \n    {\n    }\n    public class InnerWithoutAuthor\n    {\n    }\n    public String toString()\n    {\n        return super.toString();\n    }\n    @Deprecated @Override\n    public int hashCode()\n    {\n        return super.hashCode();\n    }\n    public Thread anonymousClassInMethod() {\n        return new Thread() {\n            @Override\n            public void run() {\n                privateMethod(null, null);\n            }\n            private String privateMethod(String a, String b) {\n                return null;\n            }\n        };\n    }\n    private final Thread anonymousClassInField = new Thread() {\n        @Override\n        public void run() {\n            publicMethod(null, null);\n        }\n        public String publicMethod(String a, String b) {\n            return null;\n        }\n    };\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodRecords2.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        30,
+        48
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodRecords2\n{\n    public record Inner(String subject, String firstName,\n                        String nickName, String fullName,\n                        String email, boolean emailVerified)\n    {\n        public Inner\n        {\n        }\n    }\n    public record Inner2()\n    {\n        public Inner2\n        {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodRecordsAndCompactCtors.java",
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        27,
+        41,
+        50,
+        61,
+        69,
+        69,
+        80,
+        88,
+        88,
+        100
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodRecordsAndCompactCtors {\n    public record MyRecord() {\n        public void doSomething4(String properties) {\n            if (properties.charAt(0) == 0) {\n                throw new IllegalArgumentException(\"cannot have char with code 0\");\n            }\n        }\n        public void doSomething5(String properties) {\n            if (properties.charAt(0) == 0) {\n                throw new java.lang.IllegalArgumentException(\"cannot have char with code 0\");\n            }\n        }\n    }\n    public record MySecondRecord() {\n        static String props = \"\";\n        public MySecondRecord {\n            if (props.charAt(0) == 0) {\n                throw new IllegalArgumentException(\"cannot have char with code 0\");\n            }\n        }\n    }\n    public record MyThirdRecord(String myString) {\n        public MyThirdRecord {\n            if (myString.charAt(0) == 0) {\n                throw new IllegalArgumentException(\"cannot have char with code 0\");\n            }\n        }\n    }\n    public record MyFourthRecord(String myString) {\n        public MyFourthRecord(int myInt) {\n            this(\"my string\");\n            if (myString.charAt(0) == 0) {\n                throw new IllegalArgumentException(\"cannot have char with code 0\");\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodsNotSkipWritten.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodsNotSkipWritten {\n    @MyAnnotation\n    public void InputJavadocMethodsNotSkipWritten() {\n    }\n    @MyAnnotation\n    public void test() {\n    }\n    @MyAnnotation\n    public void test2() {\n    }\n    @MyAnnotation\n    public String test3(int a) throws Exception {\n        return \"\";\n    }\n}\n@interface MyAnnotation {}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodTags.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        47,
+        85
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\nenum InputJavadocMethodTagsEnum\n{\n    CONSTANT_A,\n    CONSTANT_B,\n    CONSTANT_C\n    {\n        public void someMethod()\n        {\n        }\n        public void someOtherMethod()\n        {\n        }\n    }\n}\n@interface InputJavadocMethodTagsAnnotation\n{\n    String someField();\n    int A_CONSTANT = 0;\n    int B_CONSTANT = 1;\n    String someField2();\n    String someField3(); \n}\npublic class InputJavadocMethodTags {\n    public InputJavadocMethodTags() {\n    }\n    public final String myMethod(final String arg1,\n                                 final Object arg2)\n      throws Exception\n    {\n        return null;\n    }\n}\nclass WrongException extends RuntimeException\n{\n}\n@interface InputInterfaceTest {\n    String[] results() default {};\n}\nclass MoreExamples {\n    public void setAlgorithm(String algorithm) {}\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodTags1One.java",
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        25,
+        31,
+        37,
+        49,
+        58,
+        67,
+        72,
+        80,
+        86,
+        86,
+        96
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodTags1One {\n    private int mMissingJavadoc;\n    void method1()\n    {\n    }\n    void method2()\n    {\n    }\n    int method3() \n    {\n        return 3;\n    }\n    int method4(int aOne) \n    {\n        return aOne;\n    }\n    void method5()\n        throws Exception \n    {\n    }\n    void method6()\n        throws Exception \n    {\n    }\n    void method7()\n        throws Exception, NullPointerException \n    {\n    }\n    void method8(int aOne) \n    {\n    }\n    void method9(int aOne) \n    {\n    }\n    void method10(int aOne, int aTwo) \n    {\n    }\n    void method11()\n    {\n    }\n    int method12()\n    {\n        return 0;\n    }\n    void method13()\n       throws java.io.IOException\n    {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodTags1Three.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        57,
+        67
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\nimport java.io.IOException;\npublic class InputJavadocMethodTags1Three {\n    int method20()\n    {\n        return 579190;\n    }\n    void method21()\n       throws IOException\n    {\n    }\n    void method22()\n       throws IOException\n    {\n    }\n    void method23() throws WrongException\n    {\n    }\n    void method24() throws IOException \n    {\n    }\n    void method25()\n    {\n    }\n    int method26()\n    { return 0;\n    }\n    int method27(int aParam)\n    { return 0;\n    }\n    int method28(int aParam)\n    { return 0;\n    }\n    public int foo(Object _arg) {\n        return 1;\n    }\n    int method29(int aParam) \n    { return 0;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodThrowsDetectionOne.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        23,
+        35,
+        39,
+        52,
+        57,
+        70,
+        74,
+        86,
+        90
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodThrowsDetectionOne {\n    void noJavadoc() {\n        throw new UnsupportedOperationException(\"\");\n    }\n    void topLevel() {\n        throw new UnsupportedOperationException(\"\");\n    }\n    int nestedWithinIf(int x) {\n        if (x > 0) {\n            throw new UnsupportedOperationException(\"\");\n        }\n        if (x < 0) {\n            throw new IllegalArgumentException(\"\");\n        }\n        return 0;\n    }\n    void nestedWithinIfLeadingComment(int x) {\n        if (x > 0) {\n            throw new UnsupportedOperationException(\"\");\n        }\n        if (x < 0) {\n            throw new IllegalArgumentException(\"\");\n        }\n    }\n    void nestedWithinIfElse(int x) {\n        if (x > 0) {\n            throw new UnsupportedOperationException(\"\");\n        }\n        else {\n            throw new IllegalArgumentException(\"\");\n        }\n    }\n    void nestedWithinIfElseIf(int x) {\n        if (x > 0) {\n            throw new UnsupportedOperationException(\"\");\n        }\n        else if (x < 0) {\n            throw new IllegalArgumentException(\"\");\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodThrowsDetectionTwo.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        24,
+        39,
+        52,
+        68,
+        82
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodThrowsDetectionTwo {\n    void doubleNestedIf(int x) {\n        if (x >= 0) {\n            if (x <= 0) {\n                throw new IllegalArgumentException(\"0\");\n            }\n        }\n    }\n    void tripleNestedIf(int x) {\n        if (x >= 0)\n            if (x <= 0)\n                if (x == 0)\n                    throw new IllegalArgumentException(\"0\");\n    }\n    void throwAfterIf(int x) {\n        if (x > 0) {\n            x = 0;\n        }\n        throw new UnsupportedOperationException(\"\");\n    }\n    void tryCatchAfterIf(int x) {\n        if (x == 0) {\n            return;\n        }\n        try {\n            System.out.println(\"foo\");\n        } catch (Exception e) {\n            throw new RuntimeException(e);\n        }\n    }\n    void tryCatchWithinIf(int x) {\n        if (x == 0) {\n            try {\n                System.out.println(\"foo\");\n            } catch (Exception e) {\n                throw new RuntimeException(e);\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputJavadocMethodTypeParamsTags.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        33,
+        33,
+        61,
+        61
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.javadoc.javadocmethod;\npublic class InputJavadocMethodTypeParamsTags<A,B1,C456 extends Comparable>\n{\n    public <X, Y1> String doSomething()\n    {\n        return null;\n    }\n    public <Z> void doSomethingElse() \n    {\n    }\n    public <L> void doSomethingElse2(L aAnEl)\n    {\n    }\n    public static class InnerClass<A,B>\n    {\n    }\n    public <Z> void unclosedGenericParam() \n    {\n    }\n}\nclass Test {}"
+    }
+  ]
+}

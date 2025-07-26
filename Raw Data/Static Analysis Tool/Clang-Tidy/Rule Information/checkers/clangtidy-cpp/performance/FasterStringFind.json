@@ -1,0 +1,39 @@
+{
+  "name": "FasterStringFind",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-faster-string-find",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 102,
+  "branches": 5,
+  "apis": 59,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        51,
+        56,
+        68,
+        71,
+        76,
+        79,
+        82,
+        85,
+        88,
+        94,
+        98,
+        104,
+        109,
+        112,
+        118,
+        132,
+        145,
+        146
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s performance-faster-string-find %t\n// RUN: %check_clang_tidy -check-suffix=CUSTOM %s performance-faster-string-find %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {performance-faster-string-find.StringLikeClasses: \\\n// RUN:                '::llvm::StringRef;'}}\"\n\nnamespace std {\ntemplate <typename Char>\nstruct basic_string {\n  int find(const Char *, int = 0) const;\n  int find(const Char *, int, int) const;\n  int rfind(const Char *) const;\n  int find_first_of(const Char *) const;\n  int find_first_not_of(const Char *) const;\n  int find_last_of(const Char *) const;\n  int find_last_not_of(const Char *) const;\n};\n\ntypedef basic_string<char> string;\ntypedef basic_string<wchar_t> wstring;\n\ntemplate <typename Char>\nstruct basic_string_view {\n  int find(const Char *, int = 0) const;\n  int find(const Char *, int, int) const;\n  int rfind(const Char *) const;\n  int find_first_of(const Char *) const;\n  int find_first_not_of(const Char *) const;\n  int find_last_of(const Char *) const;\n  int find_last_not_of(const Char *) const;\n};\n\ntypedef basic_string_view<char> string_view;\ntypedef basic_string_view<wchar_t> wstring_view;\n}  // namespace std\n\nnamespace llvm {\nstruct StringRef {\n  int find(const char *) const;\n};\n}  // namespace llvm\n\nstruct NotStringRef {\n  int find(const char *);\n};\n\nvoid StringFind() {\n  std::string Str;\n\n  Str.find(\"a\");\n  // CHECK-MESSAGES: [[@LINE-1]]:12: warning: 'find' called with a string literal consisting of a single character; consider using the more effective overload accepting a character [performance-faster-string-find]\n  // CHECK-FIXES: Str.find('a');\n\n  // Works with the pos argument.\n  Str.find(\"a\", 1);\n  // CHECK-MESSAGES: [[@LINE-1]]:12: warning: 'find' called with a string literal\n  // CHECK-FIXES: Str.find('a', 1);\n\n  // Doesn't work with strings smaller or larger than 1 char.\n  Str.find(\"\");\n  Str.find(\"ab\");\n\n  // Doesn't do anything with the 3 argument overload.\n  Str.find(\"a\", 1, 1);\n\n  // Single quotes are escaped properly\n  Str.find(\"'\");\n  // CHECK-MESSAGES: [[@LINE-1]]:12: warning: 'find' called with a string literal\n  // CHECK-FIXES: Str.find('\\'');\n  Str.find(\"\\'\");\n  // CHECK-MESSAGES: [[@LINE-1]]:12: warning: 'find' called with a string literal\n  // CHECK-FIXES: Str.find('\\'');\n\n  // Other methods that can also be replaced\n  Str.rfind(\"a\");\n  // CHECK-MESSAGES: [[@LINE-1]]:13: warning: 'rfind' called with a string literal\n  // CHECK-FIXES: Str.rfind('a');\n  Str.find_first_of(\"a\");\n  // CHECK-MESSAGES: [[@LINE-1]]:21: warning: 'find_first_of' called with a string\n  // CHECK-FIXES: Str.find_first_of('a');\n  Str.find_first_not_of(\"a\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: 'find_first_not_of' called with a\n  // CHECK-FIXES: Str.find_first_not_of('a');\n  Str.find_last_of(\"a\");\n  // CHECK-MESSAGES: [[@LINE-1]]:20: warning: 'find_last_of' called with a string\n  // CHECK-FIXES: Str.find_last_of('a');\n  Str.find_last_not_of(\"a\");\n  // CHECK-MESSAGES: [[@LINE-1]]:24: warning: 'find_last_not_of' called with a\n  // CHECK-FIXES: Str.find_last_not_of('a');\n\n  // std::wstring should work.\n  std::wstring WStr;\n  WStr.find(L\"n\");\n  // CHECK-MESSAGES: [[@LINE-1]]:13: warning: 'find' called with a string literal\n  // CHECK-FIXES: WStr.find(L'n');\n  // Even with unicode that fits in one wide char.\n  WStr.find(L\"\\x3A9\");\n  // CHECK-MESSAGES: [[@LINE-1]]:13: warning: 'find' called with a string literal\n  // CHECK-FIXES: WStr.find(L'\\x3A9');\n\n  // std::string_view and std::wstring_view should work.\n  std::string_view StrView;\n  StrView.find(\"n\");\n  // CHECK-MESSAGES: [[@LINE-1]]:16: warning: 'find' called with a string literal\n  // CHECK-FIXES: StrView.find('n');\n  std::wstring_view WStrView;\n\n  WStrView.find(L\"n\");\n  // CHECK-MESSAGES: [[@LINE-1]]:17: warning: 'find' called with a string literal\n  // CHECK-FIXES: WStrView.find(L'n');\n  WStrView.find(L\"\\x3A9\");\n  // CHECK-MESSAGES: [[@LINE-1]]:17: warning: 'find' called with a string literal\n  // CHECK-FIXES: WStrView.find(L'\\x3A9');\n\n  // Also with other types, but only if it was specified in the options.\n  llvm::StringRef sr;\n  sr.find(\"x\");\n  // CHECK-MESSAGES-CUSTOM: [[@LINE-1]]:11: warning: 'find' called with a string literal\n  // CHECK-FIXES-CUSTOM: sr.find('x');\n  NotStringRef nsr;\n  nsr.find(\"x\");\n}\n\n\ntemplate <typename T>\nint FindTemplateDependant(T value) {\n  return value.find(\"A\");\n}\ntemplate <typename T>\nint FindTemplateNotDependant(T pos) {\n  return std::string().find(\"A\", pos);\n  // CHECK-MESSAGES: [[@LINE-1]]:29: warning: 'find' called with a string literal\n  // CHECK-FIXES: return std::string().find('A', pos);\n}\n\nint FindStr() {\n  return FindTemplateDependant(std::string()) + FindTemplateNotDependant(1);\n}\n\n#define STR_MACRO(str) str.find(\"A\")\n#define POS_MACRO(pos) std::string().find(\"A\",pos)\n\nint Macros() {\n  return STR_MACRO(std::string()) + POS_MACRO(1);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: 'find' called with a string literal\n  // CHECK-MESSAGES: [[@LINE-2]]:37: warning: 'find' called with a string literal\n}"
+    }
+  ]
+}

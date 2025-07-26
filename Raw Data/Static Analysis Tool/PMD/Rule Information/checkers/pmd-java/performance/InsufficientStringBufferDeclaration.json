@@ -1,0 +1,413 @@
+{
+  "name": "InsufficientStringBufferDeclaration",
+  "language": "java",
+  "description": "\nFailing to pre-size a StringBuffer or StringBuilder properly could cause it to re-size many times\nduring runtime. This rule attempts to determine the total number the characters that are actually\npassed into StringBuffer.append(), but represents a best guess \"worst case\" scenario. An empty\nStringBuffer/StringBuilder constructor initializes the object to 16 characters. This default\nis assumed if the length of the constructor can not be determined.\n        ",
+  "example": "StringBuilder bad = new StringBuilder();\nbad.append(\"This is a long string that will exceed the default 16 characters\");\n\nStringBuilder good = new StringBuilder(41);\ngood.append(\"This is a long string, which is pre-sized\");",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 252,
+  "branches": 51,
+  "apis": 19,
+  "test": [
+    {
+      "description": "1, StringBuffer allocated with enough space",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(16);\n        sb.append(\"foo\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(16);\n        sb.append(\"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "2, StringBuffer not allocated with enough space",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        10
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(\"How are you today world\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "3, StringBuffer allocated with space",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer(l.size());\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(\"How are you today world\");\n    }\n\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder(l.size());\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "4, StringBuffer allocated from variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        int x = 3;\n        StringBuffer sb = new StringBuffer(x);\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(\"How are you today world\");\n    }\n\n    public void bar2(List l) {\n        int x = 3;\n        StringBuilder sb = new StringBuilder(x);\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "5, creating a new StringBuffer",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        int x = 3;\n        StringBuffer sb = new StringBuffer(5);\n        sb.append(\"Hello\");\n        sb = new StringBuffer(23);\n        sb.append(\"How are you today world\");\n    }\n\n    public void bar2(List l) {\n        int x = 3;\n        StringBuilder sb = new StringBuilder(5);\n        sb.append(\"Hello\");\n        sb = new StringBuffer(23);\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "6, Initialize with a specific String",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        11
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        int x = 3;\n        StringBuffer sb = new StringBuffer(\"Initialize With A String\");\n        sb.append(\"Hello\");\n        sb.append(\"How are you today world\");\n    }\n\n    public void bar2() {\n        int x = 3;\n        StringBuilder sb = new StringBuilder(\"Initialize With A String\");\n        sb.append(\"Hello\");\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "7, appends inside if statements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        if(true){\n            sb.append(\"1234567890\");\n        } else {\n            sb.append(\"123456789\");\n        }\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        if(true){\n            sb.append(\"1234567890\");\n        } else {\n            sb.append(\"123456789\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "8, Field level variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    StringBuffer sb = new StringBuffer(200);\n    public void bar() {\n        sb.append(\"Hello\");\n        sb.append(\"How are you today world\");\n    }\n}\npublic class Foo2 {\n    StringBuilder sb = new StringBuilder(200);\n    public void bar() {\n        sb.append(\"Hello\");\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "9, Field level variable",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        10
+      ],
+      "code": "\npublic class Foo {\n    StringBuffer sb = new StringBuffer();\n    public void bar() {\n        sb.append(\"Hello\");\n        sb.append(\"How are you today world\");\n    }\n}\n\npublic class Foo2 {\n    StringBuilder sb = new StringBuilder();\n    public void bar() {\n        sb.append(\"Hello\");\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "10, Appending non-literals",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer(0);\n        sb.append(l.get(2));\n        sb.append(l.toString());\n    }\n\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder(0);\n        sb.append(l.get(2));\n        sb.append(l.toString());\n    }\n}\n        "
+    },
+    {
+      "description": "11, Initialized to null",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = null;\n        sb = new StringBuffer(20);\n        sb.append(l.toString());\n    }\n    public void bar2(List l) {\n        StringBuilder sb = null;\n        sb = new StringBuilder(20);\n        sb.append(l.toString());\n    }\n}\n        "
+    },
+    {
+      "description": "12, Passed in as parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer param) {\n        param.append(\"Append something\");\n    }\n    public void bar2(StringBuilder param) {\n        param.append(\"Append something\");\n    }\n}\n        "
+    },
+    {
+      "description": "13, compound append",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"foo\").append(\"this will make it long\");\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"foo\").append(\"this will make it long\");\n    }\n}\n        "
+    },
+    {
+      "description": "14, Compound append, presized just fine",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(30);\n        sb.append(\"foo\").append(\"this is presized just right\");\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(30);\n        sb.append(\"foo\").append(\"this is presized just right\");\n    }\n}\n        "
+    },
+    {
+      "description": "15, Append long, incorrect presize",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(1234567890123456789L);\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(1234567890123456789L);\n    }\n}\n        "
+    },
+    {
+      "description": "16, Append int, properly presized",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(12345);\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(12345);\n    }\n}\n        "
+    },
+    {
+      "description": "17, Append char, incorrect presize",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        9
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(2);\n        sb.append('a');\n        sb.append('a');\n        sb.append('a');\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(2);\n        sb.append('a');\n        sb.append('a');\n        sb.append('a');\n    }\n}\n        "
+    },
+    {
+      "description": "18, Append char, properly presized",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(3);\n        sb.append('a');\n        sb.append('a');\n        sb.append('a');\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(3);\n        sb.append('a');\n        sb.append('a');\n        sb.append('a');\n    }\n}\n        "
+    },
+    {
+      "description": "19, String concatenation, incorrect presize",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"This string\" + \" \" + \"isn't nice, but valid\");\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"This string\" + \" \" + \"isn't nice, but valid\");\n    }\n}\n        "
+    },
+    {
+      "description": "20, String concatenation with non-literal, incorrect presize",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class Foo {\n    public void bar(String x) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"This string\" + x + \"isn't nice, but valid\");\n    }\n    public void bar2(String x) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"This string\" + x + \"isn't nice, but valid\");\n    }\n}\n        "
+    },
+    {
+      "description": "21, Incorrectly presized twice",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        6,
+        11,
+        13
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        int x = 3;\n        StringBuffer sb = new StringBuffer(2);\n        sb.append(\"Hello\");\n        sb = new StringBuffer(5);\n        sb.append(\"How are you today world\");\n    }\n    public void bar2() {\n        int x = 3;\n        StringBuilder sb = new StringBuilder(2);\n        sb.append(\"Hello\");\n        sb = new StringBuilder(5);\n        sb.append(\"How are you today world\");\n    }\n}\n        "
+    },
+    {
+      "description": "22, appends inside if/else if/else statements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        if (true) {\n            sb.append(\"1234567890\");\n        } else if( l.size() == 5){\n            sb.append(\"1234567890\");\n        } else {\n            sb.append(\"1234567890\");\n        }\n    }\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        if (true) {\n            sb.append(\"1234567890\");\n        } else if( l.size() == 5){\n            sb.append(\"1234567890\");\n        } else {\n            sb.append(\"1234567890\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "23, appends inside if/else if/else statements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        if (true) {\n            sb.append(\"12345\");\n        } else if( l.size() == 5){\n            sb.append(\"12345\");\n        } else {\n            sb.append(\"12345\");\n        }\n        if (true) {\n            sb.append(\"12345\");\n        } else if( l.size() == 5){\n            sb.append(\"12345\");\n        } else {\n            sb.append(\"12345\");\n        }\n    }\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        if (true) {\n            sb.append(\"12345\");\n        } else if( l.size() == 5){\n            sb.append(\"12345\");\n        } else {\n            sb.append(\"12345\");\n        }\n        if (true) {\n            sb.append(\"12345\");\n        } else if( l.size() == 5){\n            sb.append(\"12345\");\n        } else {\n            sb.append(\"12345\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "24, appends inside if/else if/else statements",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        14
+      ],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        if (true) {\n            sb.append(\"This should use\");\n        } else if( l.size() == 5){\n            sb.append(\"The longest if\");\n        } else {\n            sb.append(\"statement for its violation, which is this one\");\n        }\n    }\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        if (true) {\n            sb.append(\"This should use\");\n        } else if( l.size() == 5){\n            sb.append(\"The longest if\");\n        } else {\n            sb.append(\"statement for its violation, which is this one\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "25, Compound ifs",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        if (true) {\n           if (true) {\n                sb.append(\"More\");\n           } else if( l.size() == 5){\n                sb.append(\"Compound\");\n           } else {\n               sb.append(\"If\");\n           }\n       } else {\n           sb.append(\"A compound if\");\n       }\n    }\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        if (true) {\n           if (true) {\n                sb.append(\"More\");\n           } else if( l.size() == 5){\n                sb.append(\"Compound\");\n           } else {\n               sb.append(\"If\");\n           }\n       } else {\n           sb.append(\"A compound if\");\n       }\n    }\n}\n        "
+    },
+    {
+      "description": "26, Compound if, pushed over the edge",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        19
+      ],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        if (true) {\n           if (true) {\n                sb.append(\"More\");\n           } else if( l.size() == 5){\n                sb.append(\"Compound\");\n           } else {\n               sb.append(\"If\");\n           }\n       } else {\n           sb.append(\"A compound if\");\n       }\n       sb.append(\"Push\");\n    }\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        if (true) {\n           if (true) {\n                sb.append(\"More\");\n           } else if( l.size() == 5){\n                sb.append(\"Compound\");\n           } else {\n               sb.append(\"If\");\n           }\n       } else {\n           sb.append(\"A compound if\");\n       }\n       sb.append(\"Push\");\n    }\n}\n        "
+    },
+    {
+      "description": "28, Compound if, pushed over the edge",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        13
+      ],
+      "code": "\npublic class Foo {\n    public void bar(String str) {\n        StringBuffer sb = new StringBuffer();\n        switch (str.charAt(0)) {\n            case 'a':\n                sb.append(\"Switch block\");\n                break;\n            default:\n                sb.append(\"The default block exceeds 16 characters and will fail\");\n        }\n    }\n    public void bar2(String str) {\n        StringBuilder sb = new StringBuilder();\n        switch (str.charAt(0)) {\n            case 'a':\n                sb.append(\"Switch block\");\n                break;\n            default:\n                sb.append(\"The default block exceeds 16 characters and will fail\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "27, Switch statement doesn't exceed 16 characters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String str) {\n        StringBuffer sb = new StringBuffer();\n        switch (str.charAt(0)) {\n            case 'a':\n                sb.append(\"Switch block\");\n                break;\n            case 'b':\n                sb.append(\"Doesn't exceed\");\n                break;\n            default:\n                sb.append(\"16 chars\");\n        }\n    }\n    public void bar2(String str) {\n        StringBuilder sb = new StringBuilder();\n        switch (str.charAt(0)) {\n            case 'a':\n                sb.append(\"Switch block\");\n                break;\n            case 'b':\n                sb.append(\"Doesn't exceed\");\n                break;\n            default:\n                sb.append(\"16 chars\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "29, Appending from a cast",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(1);\n        sb.append((char) 0x0041);\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(1);\n        sb.append((char) 0x0041);\n    }\n}\n        "
+    },
+    {
+      "description": "30, Appending chars",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(char longnamedchar) {\n        StringBuffer sb = new StringBuffer(1);\n        sb.append(longnamedchar);\n    }\n    public void bar2(char longnamedchar) {\n        StringBuilder sb = new StringBuilder(1);\n        sb.append(longnamedchar);\n    }\n}\n        "
+    },
+    {
+      "description": "31, Appending from a cast in ifs",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int i) {\n        StringBuffer sb = new StringBuffer(1);\n        if (i == 1) {\n            sb.append((char) 0x0041);\n        } else if (i == 2) {\n            sb.append((char) 0x0041);\n        } else if (i == 19) {\n            sb.append((char) 0x0041);\n        } else {\n            sb.append((char) 0x0041);\n        }\n    }\n    public void bar2(int i) {\n        StringBuilder sb = new StringBuilder(1);\n        if (i == 1) {\n            sb.append((char) 0x0041);\n        } else if (i == 2) {\n            sb.append((char) 0x0041);\n        } else if (i == 19) {\n            sb.append((char) 0x0041);\n        } else {\n            sb.append((char) 0x0041);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "32, Constructor from math",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(char longnamedchar) {\n        StringBuffer sb = new StringBuffer(132+42);\n        sb.append();\n        StringBuffer sb1 = new StringBuffer(132*42);\n        sb1.append();\n    }\n\n    public void bar2(char longnamedchar) {\n        StringBuilder sb = new StringBuilder(132+42);\n        sb.append();\n        StringBuilder sb1 = new StringBuilder(132*42);\n        sb1.append();\n    }\n}\n        "
+    },
+    {
+      "description": "33, Uses setLength",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(); // initial capacity: 16\n        sb.append(\"Hello\"); // length = 5\n        sb.append(\"World\"); // length = 10\n        sb.setLength(0);    // length = 0, capacity = 16\n        sb.append(\"Hello world\"); // length = 11\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.setLength(0);\n        sb.append(\"Hello world\");\n    }\n}\n        "
+    },
+    {
+      "description": "34, Uses setLength incorrectly",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        10
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(); // initial capacity: 16\n        sb.append(\"Hello\"); // length = 5\n        sb.append(\"World\"); // length = 10\n        sb.setLength(6); // length = 6, capacity = 16\n        sb.append(\"Hello world\"); // length = 17\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.setLength(6);\n        sb.append(\"Hello world\");\n    }\n}\n        "
+    },
+    {
+      "description": "35, Append of 'null' literal.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append((String)null);\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append((String)null);\n    }\n}\n        "
+    },
+    {
+      "description": "36, Append of boolean literal.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(false);\n        sb.append(true);\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(false);\n        sb.append(true);\n    }\n}\n        "
+    },
+    {
+      "description": "37, Initialization with multiply - bug 1743938",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void testStringBufferSizeBug() {\n        final String temp = \"Hello world!\";\n        final StringBuffer sb = new StringBuffer(temp.length() * 2);\n        sb.append(temp);\n        sb.append(\"abc\");\n    }\n    public static void testStringBufferSizeBug2() {\n        final String temp = \"Hello world!\";\n        final StringBuilder sb = new StringBuilder(temp.length() * 2);\n        sb.append(temp);\n        sb.append(\"abc\");\n    }\n}\n        "
+    },
+    {
+      "description": "38, Uses setLength 0 with subsequently more than 16, but less than initial",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(100);\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.setLength(0);\n        sb.append(\"Hello world\");\n        sb.append(\"Hello world\");\n        sb.append(\"Hello world\");\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(100);\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.setLength(0);\n        sb.append(\"Hello world\");\n        sb.append(\"Hello world\");\n        sb.append(\"Hello world\");\n    }\n}\n        "
+    },
+    {
+      "description": "3175710: NPE in InsufficientStringBufferDeclaration",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test() {\n        StringBuffer sbLegend = new StringBuffer();\n        sbLegend.append(\"foo\").toString();\n    }\n}\n        "
+    },
+    {
+      "description": "3516101: InsufficientStringBufferDeclaration fails to parse hex",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public void testStringBufferWithHexInt() {\n        StringBuffer myVar = new StringBuffer(0x44);\n        StringBuilder myVar2 = new StringBuilder(0x44);\n    }\n}\n        "
+    },
+    {
+      "description": "Append a hex int",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        9
+      ],
+      "code": "\npublic class Test {\n    public void testStringBufferWithHexInt() {\n        // 0xdeadbeef == 3735928559.length() = 10\n\n        StringBuffer myVar = new StringBuffer();\n        myVar.append(0xdeadbeef);\n        myVar.append(0xdeadbeef);\n\n        StringBuilder myVar2 = new StringBuilder();\n        myVar2.append(0xdeadbeef);\n        myVar2.append(0xdeadbeef);\n    }\n}\n        "
+    },
+    {
+      "description": "#1371 InsufficientStringBufferDeclaration not detected properly on StringBuffer",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class StringBufferTest {\n    public void test() {\n        final StringBuffer stringBuffer = new StringBuffer().append(\"Added \").append(\" a \");\n        stringBuffer.append(\"string longer than 16 characters\");\n\n        // reassignment with chaining\n        stringBuffer = new StringBuffer().append(\"Added \").append(\" a \");\n        stringBuffer.append(\"string longer than 16 characters and longer\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1380 InsufficientStringBufferDeclaration false positive when literal string passed to a lookup service",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Locale;\nimport org.springframework.context.MessageSource;\n\npublic class StringBuilderWithMessageRetrieval {\n    private final MessageSource messageSource;\n\n    public StringBuilderWithMessageRetrieval(MessageSource messageSource) {\n        this.messageSource = messageSource;\n    }\n\n    public void run(String[] strings) {\n        StringBuilder builder = new StringBuilder();\n        boolean notFirst = false;\n        for (String string : strings) {\n            if (notFirst) {\n                builder.append('\\n');\n            }\n\n            builder.append(messageSource.getMessage(\"some.long.label.\" + string, null, Locale.ENGLISH));\n            notFirst = true;\n        }\n    }\n\n}\n        "
+    },
+    {
+      "description": "#1409 NullPointerException in InsufficientStringBufferRule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class NullPointer {\n    public void run(String[] strings) {\n        StringBuilder builder;\n        builder = new StringBuilder();\n    }\n}\n        "
+    },
+    {
+      "description": "#1413 False positive StringBuffer constructor with ?: int value",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class test {\n\n    private test() {}\n\n    public static void main(final String ... args) {\n        final String NEWLINE = \"\\n\";\n        StringBuilder report = new StringBuilder(args.length > 1 ? 100 : 200);\n        report.append(\n            \"### Testing report\" + NEWLINE +\n            \"# Testing\" + NEWLINE +\n            \"# More Contents\" + NEWLINE);\n    }\n}\n        "
+    },
+    {
+      "description": "#841 InsufficientStringBufferDeclaration NumberFormatException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n\n    public static void main(final String ... args) {\n        StringBuilder report = new StringBuilder(10_000).append(\"test\");\n    }\n}\n        "
+    },
+    {
+      "description": "[java] StringBuilder/Buffer false negatives with typeres #2881",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            package net.sourceforge.pmd.lang.java.types.testdata;\n\n            public class DummyCompiledClass {\n                public String toString() {\n\n                    StringBuffer sb = new StringBuffer();\n                    sb.append(\"test \");\n                    sb.append(\"test2 \").append(\"test3 \");\n                    appendToSpringBuffer(sb, \"test4\");\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] StringBuilder/Buffer false negatives with typeres #2881  (countertest, no classpath)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class NoCompiledClass {\n                public String toString(){\n                    StringBuffer sb = new StringBuffer();\n                    sb.append(\"test \");\n                    sb.append(\"test2 \").append(\"test3 \");\n                    appendToSpringBuffer(sb, \"test4\");\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] ConsecutiveLiteralAppends and InsufficientStringBufferDeclaration: FP with switch expressions #3152",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FalsePositive {\n\n    public static String escapeHTML(String text) {\n        int length = text.length();\n        int index = findHTMLReservedChar(text);\n        if (index == length) return text;\n        var builder = new StringBuilder(length * 2); // Rule:InsufficientStringBufferDeclaration Priority:3 StringBuffer constructor is initialized with size 16, but has at least 29 characters appended..\n        for (int i = 0; i < index; i++) builder.append(text.charAt(i));\n        for (; index < length; index++) {\n            char ch = text.charAt(index);\n            switch (ch) {\n                case '<' -> { builder.append(\"&lt;\"); } // Rule:ConsecutiveLiteralAppends Priority:3 StringBuffer (or StringBuilder).append is called 6 consecutive times with literals. Use a single append with a single combined String..\n                case '>' -> builder.append(\"&gt;\");\n                case '\"' -> builder.append(\"&quot;\");\n                case '&' -> builder.append(\"&amp;\");\n                case '\\'' -> builder.append(\"&#39;\");\n                case '/' -> builder.append(\"&#47;\");\n                default -> builder.append(ch);\n            }\n        }\n        return builder.toString();\n    }\n\n    private static int findHTMLReservedChar(String text) {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] InsufficientStringBufferDeclaration false positive for initial calculated StringBuilder size #1438",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.text.DecimalFormat;\nimport java.text.SimpleDateFormat;\nimport java.util.Date;\nimport java.util.Locale;\n\npublic class FalsePositive {\n    public String foo(final String x, final String y, final double z, final Date d, final double v) {\n        final StringBuilder sb = new StringBuilder(20 + 9*2 + 16 + 2 * x.length() + y.length());\n        final DecimalFormat df = (DecimalFormat) DecimalFormat.getInstance(Locale.GERMAN);\n        df.applyPattern(\"#,##0.000\");\n        final SimpleDateFormat sdf = new SimpleDateFormat(\"dd.MM.yyyy hh:mm\");\n        sb.append(\"foobar\")\n            .append(df.format(z))\n            .append(' ')\n            .append(x)\n            .append(y)\n            .append(\"foobar\")\n            .append(sdf.format(d))\n            .append(\"foobar\")\n            .append(df.format(v))\n            .append(' ')\n            .append(x);\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "Calculated initial size in constructor",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        10,
+        34,
+        44,
+        61,
+        88
+      ],
+      "code": "\npublic class InsufficientStringBufferDeclaration {\n    public String case1_ok() {\n        StringBuilder sb = new StringBuilder(2 + 2); // 4\n        sb.append(\"aa\");\n        sb.append(\"bb\");\n        return sb.toString();\n    }\n\n    public String case2_insufficient() {\n        StringBuilder sb = new StringBuilder(2 + 2); // line 10 - violation here, initial capacity 4\n        sb.append(\"aa\");\n        sb.append(\"bb\");\n        sb.append('c');\n        return sb.toString();\n    }\n\n    public String case3_unknown(String in) {\n        StringBuilder sb = new StringBuilder(in.length()); // unknown\n        sb.append(\"aa\");\n        sb.append(\"bb\");\n        sb.append('c');\n        return sb.toString();\n    }\n\n    public String case4_unknown_calculation(String in) {\n        StringBuilder sb = new StringBuilder(in.length() * 2); // unknown\n        sb.append(\"aa\");\n        sb.append(\"bb\");\n        sb.append('c');\n        return sb.toString();\n    }\n\n    public String case5_insufficient_setLength() {\n        StringBuilder sb = new StringBuilder(5); // line 34 - violation here, initial capacity 5\n        sb.append(\"xx\");\n        sb.setLength(2 + 2); // new length is 4\n        sb.append(\"aa\"); // appending 2 chars -> insufficient capacity\n        return sb.toString();\n    }\n\n    public String case6_insufficient_setLength() {\n        StringBuilder sb = new StringBuilder(5);\n        sb.append(\"xx\");\n        sb.setLength(2 + 2 * 3); // line 44 - new length is 8, new capacity now 8  -> violation here\n        sb.append(\"aa\"); // appending 2 chars -> insufficient capacity\n        return sb.toString();\n    }\n\n    public String case7_sufficient_ensureCapacity() {\n        StringBuilder sb = new StringBuilder(5);\n        sb.append(\"xx\");\n        sb.ensureCapacity(2 + 2 * 3); // length is still 2, new capacity now at least 8\n        sb.append(\"aa\"); // length is 4\n        sb.append(\"bb\"); // length is 6\n        return sb.toString();\n    }\n\n    public String case8_insufficient_ensureCapacity() {\n        StringBuilder sb = new StringBuilder(5);\n        sb.append(\"xx\");\n        sb.ensureCapacity(2 + 2 * 3); // line 61 - length is still 2, new capacity now at least 8 -> violation here\n        sb.append(\"aa\"); // length is 4\n        sb.append(\"bb\"); // length is 6\n        sb.append(\"cc\"); // length is 8\n        sb.append('d'); // length is now 9\n        return sb.toString();\n    }\n\n    public String case9_sufficient_setLength() {\n        StringBuilder sb = new StringBuilder(4);\n        sb.append(\"xxxx\");\n        sb.setLength(0); // length is 0, capacity is still 4\n        sb.append(\"aaaa\");\n        return sb.toString();\n    }\n\n    public String case10_unknown_setLength(String in) {\n        StringBuilder sb = new StringBuilder(in.length()); // unknown\n        sb.append(\"xxxx\");\n        sb.setLength(0); // length is 0, capacity is still unknown\n        sb.append(\"aaaa\");\n        return sb.toString();\n    }\n\n    public String case11_unknown_ensureCapacity(String in) {\n        StringBuilder sb = new StringBuilder(in.length()); // unknown\n        sb.append(\"xxxx\"); // length is 4\n        sb.ensureCapacity(7); // line 88 - length is still 4, new capacity now at least 7 -> violation here\n        sb.append(\"aaaa\"); // length is 8\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with method formal parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class InsufficientStringBufferDeclaration {\n    protected void appendHintMessage(StringBuilder msg) {\n        msg.append(\"A very long text\");\n        msg.append(\"that is longer than 16 characters\");\n    }\n}\n        "
+    },
+    {
+      "description": "NPE when StringBuilder is used in lambda and if without else",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.LinkedHashSet;\nimport java.util.Set;\n\npublic class InsufficientStringBufferDeclarationNPE {\n    public void perform() {\n        boolean added;\n        String mode;\n        if (added) {\n            String msg = \"\";\n            Set<String> altns = new LinkedHashSet<>();\n            StringBuilder sb = new StringBuilder();\n            altns.forEach(s -> sb.append(System.lineSeparator()).append(\"\\tat \" + \"foo\"));\n            msg = sb.toString();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] InsufficientStringBufferDeclaration should consider literal expression #3845",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class LiteralExpression {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(1 + 2 - 1);  // Should report a warning at this line\n        sb.append('a');\n        sb.append('a');\n        sb.append('a');\n    }\n}\n        "
+    },
+    {
+      "description": "Properly handle constant variable references",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class LiteralExpression {\n    private static final int MIN_LENGTH = 1;\n    public void bar() {\n        StringBuffer sb = new StringBuffer(MIN_LENGTH + 1);  // Should report a warning at this line\n        sb.append('a');\n        sb.append('a');\n        sb.append('a');\n    }\n}\n        "
+    },
+    {
+      "description": "Properly handle constant string expressions",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class LiteralExpression {\n    public String bar() {\n        StringBuilder sb = new StringBuilder(\n\t\t\t\t\"<!doctype html>\\n\" +\n\t\t\t\t\"<html><head>\\n\" +\n\t\t\t\t\"  <meta http-equiv=\\\"X-UA-Compatible\\\" content=\\\"IE=edge\\\" />\\n\" +\n\t\t\t\t\"  <meta http-equiv=\\\"Content-Type\\\" content=\\\"text/html; charset=UTF-8\\\" />\\n\" +\n\t\t\t\t\"</head><body><h2>Don't panic!</h2>\\n\" +\n\t\t\t\t\"  <script>\\n\" +\n\t\t\t\t\"    document.domain = document.domain;\\n\" +\n\t\t\t\t\"    var c = parent.%s;\\n\" +\n\t\t\t\t\"    c.start();\\n\" +\n\t\t\t\t\"    function p(d) {c.message(d);};\\n\" +\n\t\t\t\t\"    window.onload = function() {c.stop();};\\n\" +\n\t\t\t\t\"  </script>\"\n\t\t\t\t);\n\n        sb.append(\"this string is longer than 16 characters\");\n\t\treturn sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "#5314 [java] InsufficientStringBufferDeclarationRule: Lack of handling for char type parameters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class StringBufferInstantiationWithCharTest {\n    public void example01() {\n        // misleading instantiation, these buffers\n        // are actually sized to 99 characters long\n        StringBuffer  sb1 = new StringBuffer('c');\n        StringBuilder sb2 = new StringBuilder('c');\n\n        // in these forms, just single characters are allocated\n        StringBuffer  sb3 = new StringBuffer(\"c\");\n        StringBuilder sb4 = new StringBuilder(\"c\");\n    }\n}\n"
+    }
+  ]
+}

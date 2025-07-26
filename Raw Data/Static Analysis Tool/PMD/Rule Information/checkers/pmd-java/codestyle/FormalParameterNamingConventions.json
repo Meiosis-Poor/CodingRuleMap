@@ -1,0 +1,56 @@
+{
+  "name": "FormalParameterNamingConventions",
+  "language": "java",
+  "description": "\n            Configurable naming conventions for formal parameters of methods and lambdas.\n            This rule reports formal parameters which do not match the regex that applies to their\n            specific kind (e.g. lambda parameter, or final formal parameter). Each regex can be\n            configured through properties.\n\n            By default this rule uses the standard Java naming convention (Camel case).\n        ",
+  "example": "class Foo {\n\n                abstract void bar(int myInt); // This is Camel case, so it's ok\n\n                void bar(int my_i) { // this will be reported\n\n                }\n\n                void lambdas() {\n\n                    // lambdas parameters can be configured separately\n                    Consumer<String> lambda1 = s_str -> { };\n\n                    // lambda parameters with an explicit type can be configured separately\n                    Consumer<String> lambda1 = (String str) -> { };\n\n                }\n\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 78,
+  "branches": 14,
+  "apis": 2,
+  "test": [
+    {
+      "description": "Default is camel case",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Bar {\n    void foo(int Foo) {\n    }\n\n    void bar(final int Hoo) {\n    }\n\n    {\n        Consumer<String> i = (Koo) -> {\n        };\n\n        Consumer<String> k = (String Voo) -> {\n        };\n\n        Consumer<String> l = (final String Ooo) -> {\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "One character lambda Parameters should be allowed by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Bar {\n\n    public void foo() {\n        Consumer<String> i = (s) -> {\n        };\n\n        Consumer<String> k = (String s) -> {\n        };\n\n        Consumer<String> l = (final String s) -> {\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Test method param pattern",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Bar {\n\n    void foo(int Foo) {\n    }\n\n    void fooBar(int FOO) { // that's ok\n    }\n\n    void bar(final int Hoo) {\n    }\n\n    {\n        Consumer<String> i = (Koo) -> {\n        };\n\n        Consumer<String> k = (String Voo) -> {\n        };\n\n        Consumer<String> l = (final String Ooo) -> {\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Test final method param pattern",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Bar {\n\n    void foo(int Foo) {\n    }\n\n    void fooBar(final int FOO) { // that's ok\n    }\n\n    void bar(final int Hoo) {\n    }\n\n    {\n        Consumer<String> i = (Koo) -> {\n        };\n\n        Consumer<String> k = (String Voo) -> {\n        };\n\n        Consumer<String> l = (final String Ooo) -> {\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Test inferred lambda parameter pattern",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Bar {\n\n    void foo(int Foo) {\n    }\n\n    void bar(final int Hoo) {\n    }\n\n    {\n        Consumer<String> i = (Koo) -> {\n        };\n\n        Consumer<String> q = (KOO) -> { // that's ok\n        };\n\n        Consumer<String> k = (String Voo) -> {\n        };\n\n        Consumer<String> l = (final String Ooo) -> {\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Test explicitly-typed lambda parameter pattern",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Bar {\n    void foo(int Foo) {\n    }\n\n    void bar(final int Hoo) {\n    }\n\n    {\n        Consumer<String> i = (Koo) -> {\n        };\n\n        Consumer<String> q = (String KOO) -> { // that's ok\n        };\n\n        Consumer<String> qq = (final String MOO) -> { // that's ok\n        };\n\n        Consumer<String> k = (String Voo) -> {\n        };\n\n        Consumer<String> l = (final String Ooo) -> {\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "#4954 Test unnamed vars are not checked",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Bar {\n                void foo(int _, final int _){\n                    Consumer<String> _ = (final String _) -> {};\n                    Consumer<String> _ = (String _) -> {};\n                    Consumer<String> _ = (_) -> {};\n                    Consumer<String> _ = (var _) -> {};\n                    Consumer<String> _ = (final var _) -> {};\n                    Consumer<String> _ = _ -> {};\n                }\n            }\n            "
+    }
+  ]
+}

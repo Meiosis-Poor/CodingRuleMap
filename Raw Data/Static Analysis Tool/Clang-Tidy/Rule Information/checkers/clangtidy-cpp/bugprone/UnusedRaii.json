@@ -1,0 +1,39 @@
+{
+  "name": "UnusedRaii",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-unused-raii",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 97,
+  "branches": 10,
+  "apis": 59,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        68,
+        71,
+        75,
+        78,
+        91,
+        96,
+        101,
+        109,
+        112,
+        115,
+        118,
+        122,
+        126,
+        129,
+        133,
+        137,
+        141,
+        145
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-unused-raii %t -- -- -fno-delayed-template-parsing\n\nstruct Foo {\n  Foo();\n  Foo(int);\n  Foo(int, int);\n  ~Foo();\n};\n\nstruct Bar {\n  Bar();\n};\n\nstruct FooBar {\n  FooBar();\n  Foo f;\n};\n\ntemplate <typename T>\nvoid qux() {\n  T(42);\n}\n\ntemplate <typename T>\nstruct TFoo {\n  TFoo(T);\n  ~TFoo();\n};\n\nFoo f();\n\nstruct Ctor {\n  Ctor(int);\n  Ctor() {\n    Ctor(0); // TODO: warn here.\n  }\n};\n\ntemplate <typename T>\nvoid templ() {\n  T();\n}\n\ntemplate <typename T>\nvoid neverInstantiated() {\n  T();\n}\n\nstruct CtorDefaultArg {\n  CtorDefaultArg(int i = 0);\n  ~CtorDefaultArg();\n};\n\ntemplate <typename T>\nstruct TCtorDefaultArg {\n  TCtorDefaultArg(T i = 0);\n  ~TCtorDefaultArg();\n};\n\nstruct CtorTwoDefaultArg {\n  CtorTwoDefaultArg(int i = 0, bool b = false);\n  ~CtorTwoDefaultArg();\n};\n\ntemplate <typename T>\nvoid templatetest() {\n  TCtorDefaultArg<T>();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TCtorDefaultArg<T> give_me_a_name;\n  TCtorDefaultArg<T>{};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TCtorDefaultArg<T> give_me_a_name;\n\n  TCtorDefaultArg<T>(T{});\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TCtorDefaultArg<T> give_me_a_name(T{});\n  TCtorDefaultArg<T>{T{}};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TCtorDefaultArg<T> give_me_a_name{T{}};\n\n  int i = 0;\n  (void)i;\n}\n\ntemplate <typename T>\nvoid aliastest() {\n  using X = Foo;\n  using Y = X;\n  using Z = Y;\n  Z(42);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: Z give_me_a_name(42);\n\n  typedef Z ZT;\n  ZT(42, 13);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: ZT give_me_a_name(42, 13);\n\n  using TT = TCtorDefaultArg<T>;\n  TT(42);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TT give_me_a_name(42);\n\n  (void)0;\n}\n\nvoid test() {\n  Foo(42);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n// CHECK-FIXES: Foo give_me_a_name(42);\n  Foo(23, 42);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n// CHECK-FIXES: Foo give_me_a_name(23, 42);\n  Foo();\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n// CHECK-FIXES: Foo give_me_a_name;\n  TFoo<int>(23);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n// CHECK-FIXES: TFoo<int> give_me_a_name(23);\n\n  FooBar();\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n// CHECK-FIXES: FooBar give_me_a_name;\n\n  Foo{42};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: Foo give_me_a_name{42};\n  FooBar{};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: FooBar give_me_a_name;\n\n  CtorDefaultArg();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: CtorDefaultArg give_me_a_name;\n\n  CtorTwoDefaultArg();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: CtorTwoDefaultArg give_me_a_name;\n\n  TCtorDefaultArg<int>();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TCtorDefaultArg<int> give_me_a_name;\n\n  TCtorDefaultArg<int>{};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: object destroyed immediately after creation; did you mean to name the object?\n  // CHECK-FIXES: TCtorDefaultArg<int> give_me_a_name;\n\n  templ<FooBar>();\n  templ<Bar>();\n\n  Bar();\n  f();\n  qux<Foo>();\n\n#define M Foo();\n  M\n\n  {\n    Foo();\n  }\n  Foo();\n}"
+    }
+  ]
+}

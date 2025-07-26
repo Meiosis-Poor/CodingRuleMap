@@ -1,0 +1,40 @@
+{
+  "name": "DurationConversionCast",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-duration-conversion-cast",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 82,
+  "branches": 5,
+  "apis": 54,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        11,
+        14,
+        17,
+        20,
+        23,
+        26,
+        29,
+        32,
+        35,
+        38,
+        41,
+        44,
+        49,
+        52,
+        57,
+        60,
+        68,
+        71,
+        78
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s abseil-duration-conversion-cast %t -- -- -I%S/Inputs\n\n#include \"absl/time/time.h\"\n\nvoid f() {\n  absl::Duration d1;\n  double x;\n  int i;\n\n  i = static_cast<int>(absl::ToDoubleHours(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Hours(d1);\n  x = static_cast<float>(absl::ToInt64Hours(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleHours(d1);\n  i = static_cast<int>(absl::ToDoubleMinutes(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Minutes(d1);\n  x = static_cast<float>(absl::ToInt64Minutes(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleMinutes(d1);\n  i = static_cast<int>(absl::ToDoubleSeconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Seconds(d1);\n  x = static_cast<float>(absl::ToInt64Seconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleSeconds(d1);\n  i = static_cast<int>(absl::ToDoubleMilliseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Milliseconds(d1);\n  x = static_cast<float>(absl::ToInt64Milliseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleMilliseconds(d1);\n  i = static_cast<int>(absl::ToDoubleMicroseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Microseconds(d1);\n  x = static_cast<float>(absl::ToInt64Microseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleMicroseconds(d1);\n  i = static_cast<int>(absl::ToDoubleNanoseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Nanoseconds(d1);\n  x = static_cast<float>(absl::ToInt64Nanoseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleNanoseconds(d1);\n\n  // Functional-style casts\n  i = int(absl::ToDoubleHours(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Hours(d1);\n  x = float(absl::ToInt64Microseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleMicroseconds(d1);\n\n  // C-style casts\n  i = (int) absl::ToDoubleHours(d1);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Hours(d1);\n  x = (float) absl::ToInt64Microseconds(d1);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleMicroseconds(d1);\n\n  // Type aliasing\n  typedef int FancyInt;\n  typedef float FancyFloat;\n\n  FancyInt j = static_cast<FancyInt>(absl::ToDoubleHours(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:16: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToInt64Hours(d1);\n  FancyFloat k = static_cast<FancyFloat>(absl::ToInt64Microseconds(d1));\n  // CHECK-MESSAGES: [[@LINE-1]]:18: warning: duration should be converted directly to a floating-point number rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: absl::ToDoubleMicroseconds(d1);\n\n  // Macro handling\n  // We want to transform things in macro arguments\n#define EXTERNAL(x) (x) + 5\n  i = EXTERNAL(static_cast<int>(absl::ToDoubleSeconds(d1)));\n  // CHECK-MESSAGES: [[@LINE-1]]:16: warning: duration should be converted directly to an integer rather than through a type cast [abseil-duration-conversion-cast]\n  // CHECK-FIXES: EXTERNAL(absl::ToInt64Seconds(d1));\n#undef EXTERNAL\n\n  // We don't want to transform this which get split across macro boundaries\n#define SPLIT(x) static_cast<int>((x)) + 5\n  i = SPLIT(absl::ToDoubleSeconds(d1));\n#undef SPLIT\n\n  // We also don't want to transform things inside of a macro definition\n#define INTERNAL(x) static_cast<int>(absl::ToDoubleSeconds((x))) + 5\n  i = INTERNAL(d1);\n#undef INTERNAL\n\n  // These shouldn't be converted\n  i = static_cast<int>(absl::ToInt64Seconds(d1));\n  i = static_cast<float>(absl::ToDoubleSeconds(d1));\n}"
+    }
+  ]
+}

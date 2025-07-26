@@ -1,0 +1,30 @@
+{
+  "name": "SuspiciousReallocUsage",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-suspicious-realloc-usage",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 157,
+  "branches": 23,
+  "apis": 108,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        38,
+        43,
+        52,
+        55,
+        58,
+        61,
+        64,
+        100,
+        108
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-suspicious-realloc-usage %t\n\nvoid *realloc(void *, __SIZE_TYPE__);\n\nnamespace std {\n  using ::realloc;\n}\n\nnamespace n1 {\n  void *p;\n}\n\nnamespace n2 {\n  void *p;\n}\n\nstruct P {\n  void *p;\n  void *q;\n  P *pp;\n  void *&f();\n};\n\nstruct P1 {\n  static void *p;\n  static void *q;\n};\n\ntemplate<class>\nstruct P2 {\n  static void *p;\n  static void *q;\n};\n\ntemplate<class A, class B>\nvoid templ(void *p) {\n  A::p = realloc(A::p, 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: 'A::p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n  p = realloc(A::p, 10);\n  A::q = realloc(A::p, 10);\n  A::p = realloc(B::p, 10);\n  P2<A>::p = realloc(P2<A>::p, 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: 'P2<A>::p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n  P2<A>::p = realloc(P2<B>::p, 1);\n}\n\nvoid *&getPtr();\nP &getP();\n\nvoid warn(void *p, P *p1, int *pi) {\n  p = realloc(p, 111);\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: 'p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n\n  p = std::realloc(p, sizeof(int));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: 'p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n\n  p1->p = realloc(p1->p, 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: 'p1->p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n\n  p1->pp->p = realloc(p1->pp->p, 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: 'p1->pp->p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n\n  pi = (int*)realloc(pi, 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: 'pi' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n\n  templ<P1, P2<int>>(p);\n}\n\nvoid no_warn(void *p, P *p1, P *p2) {\n  void *q = realloc(p, 10);\n  q = realloc(p, 10);\n  p1->q = realloc(p1->p, 10);\n  p2->p = realloc(p1->p, 20);\n  n1::p = realloc(n2::p, 30);\n  p1->pp->p = realloc(p1->p, 10);\n  getPtr() = realloc(getPtr(), 30);\n  getP().p = realloc(getP().p, 20);\n  p1->f() = realloc(p1->f(), 30);\n}\n\nvoid no_warn_if_copy_exists_before1(void *p) {\n  void *q = p;\n  p = realloc(p, 111);\n}\n\nvoid no_warn_if_copy_exists_before2(void *p, void *q) {\n  q = p;\n  p = realloc(p, 111);\n}\n\nvoid *g_p;\n\nvoid no_warn_if_copy_exists_before3() {\n  void *q = g_p;\n  g_p = realloc(g_p, 111);\n}\n\nvoid warn_if_copy_exists_after(void *p) {\n  p = realloc(p, 111);\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: 'p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n  void *q = p;\n}\n\nvoid test_null_child(void *p) {\n  for (;;)\n    break;\n  p = realloc(p, 111);\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: 'p' may be set to null if 'realloc' fails, which may result in a leak of the original buffer [bugprone-suspicious-realloc-usage]\n}"
+    }
+  ]
+}

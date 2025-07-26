@@ -1,0 +1,32 @@
+{
+  "name": "AvoidDebugStatements",
+  "language": "apex",
+  "description": "\nDebug statements contribute to longer transactions and consume Apex CPU time even when debug logs are not being captured.\n\nWhen possible make use of other debugging techniques such as the Apex Replay Debugger and Checkpoints that could cover *most* use cases.\n\nFor other valid use cases that the statement is in fact valid make use of the `@SuppressWarnings` annotation or the `//NOPMD` comment.\n        ",
+  "example": "public class Foo {\n    public void bar() {\n        Account acc = [SELECT Name, Owner.Name FROM Account LIMIT 1];\n        System.debug(accs); // will get reported\n    }\n\n    @SuppressWarnings('PMD.AvoidDebugStatements')\n    public void baz() {\n        try {\n            Account myAccount = bar();\n        } catch (Exception e) {\n            System.debug(LoggingLevel.ERROR, e.getMessage()); // good to go\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "No debug statements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void bar() {\n        System.enqueueJob(new MayQueueable());\n    }\n}\n        "
+    },
+    {
+      "description": "Debug statements with a purpose",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@SuppressWarnings('PMD.AvoidDebugStatements') //logging classes may need the debugs\npublic class LoggingManager {\n    public static void log(LoggingLevel leve, Object data) {\n        System.debug(level, data);\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecesary debug statements",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void bar() {\n        System.debug(LoggingLevel.INFO, 'Testing ' + new List<Account>{new Account(Name = 'Test')});\n        system.debug('simple');\n    }\n}\n        "
+    }
+  ]
+}

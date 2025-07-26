@@ -1,0 +1,48 @@
+{
+  "name": "DebugsShouldUseLoggingLevel",
+  "language": "apex",
+  "description": "\nThe first parameter of System.debug, when using the signature with two parameters, is a LoggingLevel enum.\n\nHaving the Logging Level specified provides a cleaner log, and improves readability of it.\n       ",
+  "example": "@isTest\npublic class Foo {\n    @isTest\n    static void bar() {\n        System.debug('Hey this code executed.'); // not good\n        System.debug(LoggingLevel.WARN, 'Hey, something might be wrong.'); // good\n        System.debug(LoggingLevel.DEBUG, 'Hey, something happened.'); // not good when on strict mode\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Problematic apex debug statements - System.debug should have two arguments.",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n@isTest\npublic class Foo {\n    @isTest\n    static void methodATest() {\n        System.debug('I am a bad debug!'); // not good\n        System.debug(LoggingLevel.WARN, 'I am a good warning.'); // good\n    }\n}\n        "
+    },
+    {
+      "description": "When using strict mode, one should not use the DEBUG LoggingLevel.",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n@isTest\npublic class Foo {\n    @isTest\n    static void methodATest() {\n        System.debug(LoggingLevel.DEBUG, 'I am a bad debug.'); // not good\n    }\n}\n        "
+    },
+    {
+      "description": "When not using strict mode (default), one can use the DEBUG LoggingLevel.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\npublic class Foo {\n    @isTest\n    static void methodATest() {\n        System.debug(LoggingLevel.DEBUG, 'I am a good debug.'); // good\n    }\n}\n        "
+    },
+    {
+      "description": "Any other method of System is allowed - avoiding false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        System.otherMethod();\n        System.otherMethod('test');\n    }\n}\n        "
+    },
+    {
+      "description": "Test case insensitivity",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        SyStEm.DeBuG('test');\n        SyStEm.DeBuG(LoGiNgLeVeL.dEbUg, 'test');\n    }\n}\n        "
+    }
+  ]
+}

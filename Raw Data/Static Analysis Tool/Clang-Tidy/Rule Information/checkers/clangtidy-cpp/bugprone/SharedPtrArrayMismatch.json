@@ -1,0 +1,37 @@
+{
+  "name": "SharedPtrArrayMismatch",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-shared-ptr-array-mismatch",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 27,
+  "branches": 1,
+  "apis": 11,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        20,
+        24,
+        28,
+        31,
+        39,
+        46,
+        47,
+        53,
+        55,
+        57,
+        64,
+        69,
+        75,
+        91,
+        93,
+        96
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-shared-ptr-array-mismatch %t\n\nnamespace std {\n\ntemplate <typename T>\nstruct shared_ptr {\n  template <class Y>\n  explicit shared_ptr(Y *) {}\n  template <class Y, class Deleter>\n  shared_ptr(Y *, Deleter) {}\n};\n\n} // namespace std\n\nstruct A {};\n\nvoid f1() {\n  std::shared_ptr<int> P1{new int};\n  std::shared_ptr<int> P2{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-FIXES: std::shared_ptr<int[]> P2{new int[10]};\n  // clang-format off\n  std::shared_ptr<  int  > P3{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-FIXES: std::shared_ptr<  int[]  > P3{new int[10]};\n  // clang-format on\n  std::shared_ptr<int> P4(new int[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-FIXES: std::shared_ptr<int[]> P4(new int[10]);\n  new std::shared_ptr<int>(new int[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  std::shared_ptr<int[]> P5(new int[10]);\n  std::shared_ptr<int> P6(new int[10], [](const int *Ptr) {});\n}\n\nvoid f2() {\n  std::shared_ptr<A> P1(new A);\n  std::shared_ptr<A> P2(new A[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-FIXES: std::shared_ptr<A[]> P2(new A[10]);\n  std::shared_ptr<A[]> P3(new A[10]);\n}\n\nvoid f3() {\n  std::shared_ptr<int> P1{new int}, P2{new int[10]}, P3{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:40: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-MESSAGES: :[[@LINE-2]]:57: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n}\n\nstruct S {\n  std::shared_ptr<int> P1;\n  std::shared_ptr<int> P2{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  std::shared_ptr<int> P3{new int}, P4{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:40: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  S() : P1{new int[10]} {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n};\n\nvoid f_parm(std::shared_ptr<int>);\n\nvoid f4() {\n  f_parm(std::shared_ptr<int>{new int[10]});\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n}\n\nstd::shared_ptr<int> f_ret() {\n  return std::shared_ptr<int>(new int[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n}\n\ntemplate <class T>\nvoid f_tmpl() {\n  std::shared_ptr<T> P1{new T[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-FIXES: std::shared_ptr<T[]> P1{new T[10]};\n}\n\nvoid f5() {\n  f_tmpl<char>();\n}\n\n#define CHAR_PTR_TYPE std::shared_ptr<char>\n#define CHAR_PTR_VAR(X) \\\n  X { new char[10] }\n#define CHAR_PTR_INIT(X, Y) \\\n  std::shared_ptr<char> X { Y }\n\nvoid f6() {\n  CHAR_PTR_TYPE P1{new char[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  std::shared_ptr<char> CHAR_PTR_VAR(P2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n  // CHECK-FIXES: std::shared_ptr<char[]> CHAR_PTR_VAR(P2);\n  CHAR_PTR_INIT(P3, new char[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: shared pointer to non-array is initialized with array [bugprone-shared-ptr-array-mismatch]\n}"
+    }
+  ]
+}

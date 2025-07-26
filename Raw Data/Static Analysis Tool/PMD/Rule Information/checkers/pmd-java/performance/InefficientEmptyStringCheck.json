@@ -1,0 +1,154 @@
+{
+  "name": "InefficientEmptyStringCheck",
+  "language": "java",
+  "description": "\n\nString.trim().length() == 0 (or String.trim().isEmpty() for the same reason) is an inefficient\nway to check if a String is really blank, as it creates a new String object just to check its size.\nConsider creating a static function that loops through a string, checking Character.isWhitespace()\non each character and returning false if a non-whitespace character is found. A Smarter code to\ncheck for an empty string would be:\n\n```java\nprivate boolean checkTrimEmpty(String str) {\n    for(int i = 0; i < str.length(); i++) {\n        if(!Character.isWhitespace(str.charAt(i))) {\n            return false;\n        }\n    }\n    return true;\n}\n```\n\nYou can refer to Apache's StringUtils#isBlank (in commons-lang),\nSpring's StringUtils#hasText (in the Spring framework) or Google's\nCharMatcher#whitespace (in Guava) for existing implementations (some might\ninclude the check for != null).\n\n        ",
+  "example": "public void bar(String string) {\n    if (string != null && string.trim().length() > 0) {\n        doSomething();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 84,
+  "branches": 15,
+  "apis": 5,
+  "test": [
+    {
+      "description": "test is ok, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        if (foo.length() == 0) {\n            // this is bad\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.length is called, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        if (foo.trim().length() == 0) {\n            // this is bad\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.length not is called, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        if (foo.trim().equals(\"\")) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.length is called, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        while (foo.trim().length() == 0) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.length is called, assigned to int, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        int i = foo.trim().length();\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.length is called, assigned to boolean, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b = foo.trim().length() == 0;\n    }\n}\n        "
+    },
+    {
+      "description": "Using trim.length to find the length and compare to 1, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b = foo.trim().length() == 1;\n    }\n}\n        "
+    },
+    {
+      "description": "Passes trim().length() and 0 to another method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b = foo(foo.trim().length(), 0);\n    }\n}\n        "
+    },
+    {
+      "description": "Compares the length against a mathematical function",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b = foo(foo.trim().length() == (2 - 1));\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim().isEmpty() is called, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b = foo.trim().isEmpty();\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim().isEmpty() is called after a chain call, should have failed",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        7
+      ],
+      "code": "\nimport java.util.Arrays;\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b =  Arrays.toString(foo.toCharArray()).trim().isEmpty();\n        int i = 2;\n        b =  String.valueOf(i).trim().isEmpty();\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim().isEmpty() is called after a chain call, should have failed twice",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\nimport java.util.Arrays;\npublic class Foo {\n    void bar() {\n        String foo = \"foo\";\n        boolean b =  Arrays.toString(foo.toCharArray()).trim().isEmpty();\n        b =  String.valueOf(2).trim().isEmpty();\n    }\n}\n        "
+    },
+    {
+      "description": "Verify no NPE is thrown",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo extends SomeUnresolvedClass {\n    void bar(String[] logLevels, String[] guardMethods) {\n        if (super.guardStmtByLogLevel.isEmpty() && logLevels.length > 0 && guardMethods.length > 0) {\n            configureGuards(logLevels, guardMethods);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Avoid NPE for pattern matching instanceof",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PatternMatchingInstanceof {\n    private String s = \"other string\";\n\n    public void test() {\n        Object obj = \"abc\";\n        if (obj instanceof String s) {\n            System.out.println(\"a) obj == s: \" + (obj == s)); // true\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] InefficientEmptyStringCheck false negative in anonymous class #1224",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import javax.swing.*;\n            import java.awt.event.KeyEvent;\n            import java.awt.event.KeyListener;\n\n            public class Main {\n                public static void main(String[] args) {\n                    final JPanel jPanel = new JPanel();\n                    jPanel.addKeyListener(new KeyListener() {\n                        @Override\n                        public void keyTyped(KeyEvent e) {\n                            final String val = \"\";\n                            if (val.trim().length() > 0) {\n                                System.out.println(\"Non-empty string.\");\n                            }\n                        }\n\n                        @Override\n                        public void keyPressed(KeyEvent e) {\n                        }\n\n                        @Override\n                        public void keyReleased(KeyEvent e) {\n                        }\n                    });\n                }\n            }\n        "
+    },
+    {
+      "description": "String.trim.isEmpty is called on method result, should have failed",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        7,
+        10,
+        15,
+        18
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.performance.inefficientemptystringcheck;\npublic class StringTrimIsEmpty {\n    String get() {\n        return \"foo\";\n    }\n    void bar() {\n        if (get().trim().isEmpty()) {\n            // violation\n        }\n        if (this.get().trim().isEmpty()) {\n            // violation\n        }\n\n        String bar = get();\n        if (bar.trim().isEmpty()) {\n            // violation\n        }\n        if (bar.toString().trim().isEmpty()) {\n            // violation\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.length is called on method result, should have failed",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        7,
+        10,
+        15,
+        18
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.performance.inefficientemptystringcheck;\npublic class StringTrimLength {\n    String get() {\n        return \"foo\";\n    }\n    void bar() {\n        if (get().trim().length() == 0) {\n            // violation missing\n        }\n        if (this.get().trim().length() == 0) {\n            // violation missing\n        }\n\n        String bar = get();\n        if (bar.trim().length() == 0) {\n            // violation already detected\n        }\n        if (bar.toString().trim().length() == 0) {\n            // violation missing\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "String.trim.isEmpty and length called in method argument",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.performance.inefficientemptystringcheck;\npublic class StringTrimMethodArgument {\n    public String get() {\n        return \"foo\";\n    }\n    public void bar() {\n        String bar = \"foo\";\n        System.out.println(bar.trim().isEmpty()); // violation missing\n        System.out.println(bar.trim().length() == 0);\n        System.out.println(get().trim().isEmpty()); // violation missing\n        System.out.println(get().trim().length() == 0); // violation missing\n        System.out.println(this.get().trim().isEmpty()); // violation missing\n        System.out.println(this.get().trim().length() == 0); // violating missing\n    }\n}\n        "
+    },
+    {
+      "description": "[java] InefficientEmptyStringCheck false negatives #4013",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class MyClass {\n  public MyClass(String var) {\n    if( var.trim().length() > 0 ) { // false negative\n      config.set( var, true );\n      var = token;\n    }\n    if( var != null && var.trim().length() > 0 ) { // false negative\n      config.set( var, true );\n    }\n  }\n}\n"
+    }
+  ]
+}

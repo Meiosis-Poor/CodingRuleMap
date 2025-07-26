@@ -1,0 +1,34 @@
+{
+  "name": "AvoidCatchingThrowable",
+  "language": "java",
+  "description": "\nCatching Throwable errors is not recommended since its scope is very broad. It includes runtime issues such as\nOutOfMemoryError that should be exposed and managed separately.\n        ",
+  "example": "public void bar() {\n    try {\n        // do something\n    } catch (Throwable th) {  // should not catch Throwable\n        th.printStackTrace();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {} catch (Throwable t) {}\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {} catch (RuntimeException t) {}\n    }\n}\n        "
+    },
+    {
+      "description": "full class name false-negative test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        try {\n            Foo.class.isAssignableFrom(null);\n        } catch(java.lang.Throwable e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    }
+  ]
+}

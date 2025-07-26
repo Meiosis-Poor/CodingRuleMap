@@ -1,0 +1,386 @@
+{
+  "name": "UnnecessaryModifier",
+  "language": "java",
+  "description": "\nFields in interfaces and annotations are automatically `public static final`, and methods are `public abstract`.\nClasses, interfaces or annotations nested in an interface or annotation are automatically `public static`\n(all nested interfaces and annotations are automatically static).\nNested enums are automatically `static`.\nFor historical reasons, modifiers which are implied by the context are accepted by the compiler, but are superfluous.\n        ",
+  "example": "public @interface Annotation {\n    public abstract void bar();     // both abstract and public are ignored by the compiler\n    public static final int X = 0;  // public, static, and final all ignored\n    public static class Bar {}      // public, static ignored\n    public static interface Baz {}  // ditto\n}\npublic interface Foo {\n    public abstract void bar();     // both abstract and public are ignored by the compiler\n    public static final int X = 0;  // public, static, and final all ignored\n    public static class Bar {}      // public, static ignored\n    public static interface Baz {}  // ditto\n}\npublic class Bar {\n    public static interface Baz {}  // static ignored\n    public static enum FoorBar {    // static ignored\n        FOO;\n    }\n}\npublic class FooClass {\n    static record BarRecord() {}     // static ignored\n}\npublic interface FooInterface {\n    static record BarRecord() {}     // static ignored\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 219,
+  "branches": 42,
+  "apis": 14,
+  "test": [
+    {
+      "description": "Unneeded 'public' in interface method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public void bar();\n}\n        "
+    },
+    {
+      "description": "class, no problem",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    public abstract void bar();\n}\n        "
+    },
+    {
+      "description": "Unneeded 'abstract' in interface method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    abstract void bar();\n}\n        "
+    },
+    {
+      "description": "all is well in interface method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    void bar();\n}\n        "
+    },
+    {
+      "description": "Unneeded 'public' in interface field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public int X = 0;\n}\n        "
+    },
+    {
+      "description": "Unneeded 'static' in interface field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    static int X = 0;\n}\n        "
+    },
+    {
+      "description": "Unneeded 'final' in interface field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    final int X = 0;\n}\n        "
+    },
+    {
+      "description": "Unneeded 'public static final' in interface field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public static final int X = 0;\n}\n        "
+    },
+    {
+      "description": "OK in interface field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    int X = 0;\n}\n        "
+    },
+    {
+      "description": "Unneeded 'public' in class nested in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public class Bar {}\n}\n        "
+    },
+    {
+      "description": "Unneeded 'static' in class nested in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    static class Bar {}\n}\n        "
+    },
+    {
+      "description": "OK in class nested in interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    class Bar {}\n}\n        "
+    },
+    {
+      "description": "Unneeded 'public' in interface nested in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public interface Baz {}\n}\n        "
+    },
+    {
+      "description": "Unneeded 'static' in interface nested in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    static interface Baz {}\n}\n        "
+    },
+    {
+      "description": "OK in interface nested in interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    interface Baz {}\n}\n        "
+    },
+    {
+      "description": "Unneeded 'static' in interface nested in class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static interface Bar {}\n}\n        "
+    },
+    {
+      "description": "OK in interface nested in class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public interface Bar {}\n}\n        "
+    },
+    {
+      "description": "Unneeded 'public static final' in interface field inside another interface",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public interface Bar {\n        public static final int X = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "Unneeded 'public static final' in annotation field inside another interface",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public @interface Bar {\n        public static final int X = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "OK in interface field inside another interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ninterface Foo {\n    interface Bar {\n        int X = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "Don't check methods in nested classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ninterface Foo {\n    class Bar {\n        public void foo() {}\n    }\n}\n        "
+    },
+    {
+      "description": "Don't check fields in nested classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ninterface Foo {\n    class Bar {\n        public int buz;\n    }\n}\n        "
+    },
+    {
+      "description": "Don't check fields that are anonymous inner classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ninterface Foo {\n    interface Test { int size(); }\n    Test DFLT_IMPL = new Test() {\n        public int size() { return 0;}\n    };\n}\n        "
+    },
+    {
+      "description": "False negative: #1185 UnusedModifier throws NPE when parsing enum with a nested static interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic enum Testing {\n    Test;\n\n    public void test(ITesting tester) {\n        tester.test();\n    }\n    public static interface ITesting {\n        void test();\n    }\n}\n        "
+    },
+    {
+      "description": "#1275 False positive: UnusedModifier rule for static inner class in enum",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum MyEnum\n{\n    VALUE_1,\n    VALUE_2;\n\n    private static class MyInnerClass // violation detected by PMD\n    {\n    }\n}\n        "
+    },
+    {
+      "description": "#1480 false positive on public modifier used with inner interface in enum",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum TestEnum {\n    ;\n    public interface EnumInnerInterface {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary public on annotation element",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    public String message();\n}\n        "
+    },
+    {
+      "description": "Unnecessary abstract on annotation element",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    abstract String message();\n}\n        "
+    },
+    {
+      "description": "Unnecessary final on annotation field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    final String message = \"MESSAGE\";\n}\n        "
+    },
+    {
+      "description": "Unnecessary static on annotation field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    static String message = \"MESSAGE\";\n}\n        "
+    },
+    {
+      "description": "Unnecessary public on annotation field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    public String message = \"MESSAGE\";\n}\n        "
+    },
+    {
+      "description": "Unnecessary public on annotation nested class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    public class Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary static on annotation nested class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    static class Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary public on annotation nested interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    public interface Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary public on annotation nested annotation",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    public @interface Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary static on annotation nested enum",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface TestAnnotation {\n    public static enum Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary static on interface nested enum",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic interface TestInterface {\n    public static enum Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary static on class nested enum",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestClass {\n    public static enum Inner {\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary abstract on interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract interface TestInterface {\n}\n        "
+    },
+    {
+      "description": "Unnecessary abstract on annotation",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract @interface TestAnnotation {\n}\n        "
+    },
+    {
+      "description": "final method on non-final class is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public final void foo() { }\n}\n        "
+    },
+    {
+      "description": "final and non-final methods mixed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public final void foo() { }\n    public void foo2() { }\n}\n        "
+    },
+    {
+      "description": "final method on a final class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    public final void foo() { }\n}\n        "
+    },
+    {
+      "description": "mixed final and non-final methods on final class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    public final void foo() { }\n    public void foo2() { }\n}\n        "
+    },
+    {
+      "description": "multiple final methods on final class",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    public final void fooA() { }\n    public final void fooS() { }\n    public final void fooD() { }\n    public void foo2() { }\n}\n        "
+    },
+    {
+      "description": "final method in inner class of non-final outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    public static class Bar {\n        public final void buz() {}\n    }\n}\n        "
+    },
+    {
+      "description": "final method in inner final class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    public final class Bar {\n        public final void buz() {}\n    }\n}\n        "
+    },
+    {
+      "description": "#1464 UnnecessaryFinalModifier false positive on a @SafeVarargs method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class InboxContents<T> {\n    @SafeVarargs\n    public final InboxContents<T> conflateWith(T... values) { // false positive\n        return null;\n    }\n}\npublic final class InboxContents2 {\n    @java.lang.SafeVarargs\n    public final InboxContents conflateWith(String... values) {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary final of private method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestClass {\n    private final int getValue() {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary final of enum method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic enum Foo {\n    BAR {\n        @Override\n        public final void magic() {}\n    };\n\n    public void magic() {}\n}\n        "
+    },
+    {
+      "description": "Unnecessary final of anonymous class method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    interface Listener { void onEvent(); }\n    public void stuff() {\n        Listener list = new Listener() {\n            @Override\n            public final void onEvent() {}\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary final of try-with-resources resource",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.File;\nimport java.io.FileWriter;\npublic class Foo {\n    public void stuff() {\n        try (final FileWriter fw = new FileWriter(new File(\"something.txt\"))) {\n            // do something on fw\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#817 [java] UnnecessaryModifierRule crashes on valid code",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    @Bar\n    final void method() { }\n}\n@interface Bar {}\n        "
+    },
+    {
+      "description": "Private constructor of enum",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nenum Foo {\n    BAR(\"bar\");\n\n    private String name;\n\n    private Foo(String s) {\n        name = s;\n    }\n}\n        "
+    },
+    {
+      "description": "Static Modifier on interface in class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo{\n    public static interface Bar{\n        void method(){ }\n    }\n}\n        "
+    },
+    {
+      "description": "Static Modifier on class in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Bar {\n    void method() {\n    }\n    static class Foo {}\n}\n        "
+    },
+    {
+      "description": "Static is not necessary for record declaration in class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooClass {\n    static record BarRecord() {}\n}\n        "
+    },
+    {
+      "description": "Correct nested record declaration in classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooClass {\n    record BarRecord() {}\n}\n        "
+    },
+    {
+      "description": "Static is not necessary for record declaration in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface FooInterface {\n    static record BarRecord() {}\n}\n        "
+    },
+    {
+      "description": "Correct nested record declaration in interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface FooInterface {\n    record BarRecord() {}\n}\n        "
+    },
+    {
+      "description": "Final is not necessary for record declaration in class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooClass {\n    final record BarRecord() {}\n}\n        "
+    },
+    {
+      "description": "Final is not necessary for record declaration in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface FooInterface {\n    final record BarRecord() {}\n}\n        "
+    }
+  ]
+}

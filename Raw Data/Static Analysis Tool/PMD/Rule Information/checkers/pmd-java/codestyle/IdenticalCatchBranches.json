@@ -1,0 +1,68 @@
+{
+  "name": "IdenticalCatchBranches",
+  "language": "java",
+  "description": "\n            Identical `catch` branches use up vertical space and increase the complexity of code without\n            adding functionality. It's better style to collapse identical branches into a single multi-catch\n            branch.\n        ",
+  "example": "try {\n    // do something\n} catch (IllegalArgumentException e) {\n    throw e;\n} catch (IllegalStateException e) { // Can be collapsed into the previous block\n    throw e;\n}\n\ntry {\n    // do something\n} catch (IllegalArgumentException | IllegalStateException e) { // This is better\n    throw e;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 142,
+  "branches": 24,
+  "apis": 9,
+  "test": [
+    {
+      "description": "Collapsible statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    {\n        try {\n            // do something\n        } catch (IllegalArgumentException e) {\n            throw e;\n        } catch (IllegalStateException e) { // Can be collapsed into the previous block\n            throw e;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Different statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    {\n        try {\n            // do something\n        } catch (IllegalArgumentException e) {\n            throw e;\n        } catch (IllegalStateException e) {\n            throw new RuntimeException(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Identical statements, with different exception names",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    {\n        try {\n            // do something\n        } catch (IllegalArgumentException e) {\n            throw new RuntimeException(e);\n        } catch (IllegalStateException ise) {\n            throw new RuntimeException(ise);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1158 false positive 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    {\n        try {\n            // do something\n        } catch (NoSuchFieldException e) {\n            throw new IllegalStateException(\"field not found\", e);\n        } catch (NoSuchFieldException | NoSuchFieldError e) {\n            throw new IllegalArgumentException(\"field exception \", e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1158 false positive 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    {\n        try {\n            // do something\n        } catch (IllegalArgumentException exception) {\n            throw new RuntimeException(\"Error message 1\", exception);\n        } catch (IllegalStateException exception) {\n            throw new RuntimeException(\"Error message 2\", exception);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with method name mistaken for exception parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    static {\n        try {\n            // do something\n        } catch (RuntimeException exception) {\n            exception(exception);\n        } catch (IllegalStateException exception2) {\n            exception2(exception2);\n        }\n    }\n\n    private static void exception(Exception exception) {\n        throw new RuntimeException(\"Error message 1\", exception);\n    }\n\n\n    private static exception2(Exception exception) {\n        throw new RuntimeException(\"Error message 2\", exception);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] IdenticalCatchBranches false positive #1480",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                public boolean classNameExists(String fullyQualifiedClassName) {\n                    try {\n                        Foo.class.getClassLoader().loadClass(fullyQualifiedClassName);\n                        return true; // Class found\n                    } catch (ClassNotFoundException e) {\n                        return false;\n                    } catch (LinkageError e2) {\n                        // Class exists, but may be invalid (see https://github.com/pmd/pmd/issues/1131)\n                        return true;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] IdenticalCatchBranches false positive with overloads (control test)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                static <E extends Error> E report(E e, String parm, String other) {\n                    return e;\n                }\n\n                // this is not overloaded so the report is correct\n                static <E extends Error> E wrap(E e) {\n                    return e;\n                }\n\n                public boolean classNameExists(String fullyQualifiedClassName) {\n                    try {\n                        Foo.class.getClassLoader().loadClass(fullyQualifiedClassName);\n                        return true; // Class found\n                    } catch (AssertionError e) {\n                        return report(wrap(e), fullyQualifiedClassName, fullyQualifiedClassName);\n                    } catch (LinkageError e2) {\n                        return report(wrap(e2), fullyQualifiedClassName, fullyQualifiedClassName);\n                    }\n                }\n\n\n            }\n            "
+    },
+    {
+      "description": "[java] IdenticalCatchBranches false positive with overloads",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                static <E extends Error> E report(E e, String parm, String other) {\n                    return e;\n                }\n\n                // these are overloaded so it would not work\n                static AssertionError wrap(AssertionError e) {\n                    return e;\n                }\n\n                static LinkageError wrap(LinkageError e) {\n                    return e;\n                }\n\n                public boolean classNameExists(String fullyQualifiedClassName) {\n                    try {\n                        Foo.class.getClassLoader().loadClass(fullyQualifiedClassName);\n                        return true; // Class found\n                    } catch (AssertionError e) {\n                        return report(wrap(e), fullyQualifiedClassName, fullyQualifiedClassName);\n                    } catch (LinkageError e2) {\n                        return report(wrap(e2), fullyQualifiedClassName, fullyQualifiedClassName);\n                    }\n                }\n\n\n            }\n            "
+    }
+  ]
+}

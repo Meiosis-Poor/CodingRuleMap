@@ -1,0 +1,208 @@
+{
+  "name": "ClassNamingConventions",
+  "language": "java",
+  "description": "\n            Configurable naming conventions for type declarations. This rule reports\n            type declarations which do not match the regex that applies to their\n            specific kind (e.g. enum or interface). Each regex can be configured through\n            properties.\n\n            By default, this rule uses the standard Java naming convention (Pascal case).\n            \n            The rule can detect utility classes and enforce a different naming convention\n            on those. E.g. setting the property `utilityClassPattern` to\n            `[A-Z][a-zA-Z0-9]+(Utils?|Helper|Constants)` reports any utility class, whose name\n            does not end in \"Util(s)\", \"Helper\" or \"Constants\".\n            \n            For this rule, a utility class is defined as: a concrete class that does not\n            inherit from a super class or implement any interface and only has static fields\n            or methods.\n\n            This rule detects test classes using the following convention: Test classes are top-level classes, that\n            either inherit from JUnit 3 TestCase or have at least one method annotated with the Test annotations from\n            JUnit4/5 or TestNG.\n        ",
+  "example": "// This is Pascal case, the recommended naming convention in Java\n// Note that the default values of this rule don't allow underscores\n// or accented characters in type names\npublic class FooBar {}\n\n// You may want abstract classes to be named 'AbstractXXX',\n// in which case you can customize the regex for abstract\n// classes to 'Abstract[A-Z]\\w+'\npublic abstract class Thing {}\n\n// This class doesn't respect the convention, and will be flagged\npublic class Éléphant {}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 112,
+  "branches": 15,
+  "apis": 9,
+  "test": [
+    {
+      "description": "Default config reports on every type decl",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\npublic class foo {\n    public @interface Foo_Bar { }\n\n    public enum $Enum$ { }\n\n    interface café { }\n\n    public abstract class tehehe { }\n}\n        "
+    },
+    {
+      "description": "This is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooBar {\n}\n        "
+    },
+    {
+      "description": "Control annotation convention",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class foo {\n\n    @interface covfefe {\n    }\n\n}\n        "
+    },
+    {
+      "description": "Utility class convention (default) - #3563",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Utility class convention",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": null
+    },
+    {
+      "description": "Class with only empty decls should not be a utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    ;;;\n}\n        "
+    },
+    {
+      "description": "Class with some instance fields should not be a utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Position {\n    final int x;\n    final int y;\n\n\n    private Position(int px, int py) {\n        x = px;\n        y = py;\n    }\n\n    static Position of(int px, int py) {\n        new Position(px, py);\n    }\n\n}\n        "
+    },
+    {
+      "description": "Class with static initializer alone should not be a utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    static {\n        // ugly side effects\n    }\n\n}\n        "
+    },
+    {
+      "description": "Class with instance initializer should not be a utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    {\n        // ugly side effects\n    }\n\n    static final int ZERO = 0;\n\n\n    static int bar() {\n        return bar();\n    }\n\n}\n        "
+    },
+    {
+      "description": "Class with only static members except constructors should be a utility class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    private Foo() {\n    }\n\n    public Foo() {\n        // This constructor shouldn't exist,\n        // but we consider the class a utility class anyway\n    }\n\n    static final int ZERO = 0;\n\n\n    static int bar() {\n        return bar();\n    }\n\n}\n        "
+    },
+    {
+      "description": "Class with only constructors should not be a utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    private Foo() {\n    }\n\n}\n        "
+    },
+    {
+      "description": "Numbers should be allowed by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Md5Checksum {\n}\n        "
+    },
+    {
+      "description": "Class extending another class should not be utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class StringList extends java.util.ArrayList<String> {\n    static StringList emptyList() {\n        return new StringList();\n    }\n}\n        "
+    },
+    {
+      "description": "Class extending another class should not be utility class 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n// I couldn't reproduce the original failure, but we can use another regression test.\npublic class MyException extends RuntimeException {\n    public MyException(Exception exception) {\n        super(exception);\n    }\n}\n        "
+    },
+    {
+      "description": "Class with only main method should not be utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyException {\n\n    public static void main(String[] args) {\n        // whitelisted\n    }\n}\n        "
+    },
+    {
+      "description": "Class with only main method should not be utility class - varargs case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyException {\n\n    public static void main(String... args) {\n        // whitelisted\n    }\n}\n        "
+    },
+    {
+      "description": "Class with main method and private static fields should not be utility class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyException {\n    private static final String foo = \"FOOO\";\n\n    public static void main(String[] args) {\n        // whitelisted\n    }\n}\n        "
+    },
+    {
+      "description": "Utility class can have name constants",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyConstants {\n    public static final String FOOO = \"FOOO\";\n\n    private MyConstants() {\n        // whitelisted\n    }\n}\n        "
+    },
+    {
+      "description": "ClassCastException with records",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic record MyRecordOk(boolean b) {\n    public MyRecordOk {\n    }\n\n    record badlyNamedInnerRecord(int i) {\n        public badlyNamedInnerRecord {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Test class (JUnit3) #2867",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    public void testBar() { }\n}\n"
+    },
+    {
+      "description": "Test class (JUnit4) #2867",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport org.junit.Test;\npublic class Foo {\n    @Test\n    public void testBar() { }\n}\n"
+    },
+    {
+      "description": "Test class (JUnit5) #2867",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\nclass Foo {\n    @Test\n    void testBar() { }\n}\n"
+    },
+    {
+      "description": "Test class (JUnit5) correctly named #2867",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\nclass FooTest {\n    @Test\n    void testBar() { }\n}\n"
+    },
+    {
+      "description": "Test class (JUnit5) with non-default testClassPattern #2867",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\nclass TestFoo {\n    @Test\n    void testBar() { }\n}\n"
+    },
+    {
+      "description": "Test class (JUnit5, Parameterized) #2867",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\nclass Foo {\n    @ParameterizedTest\n    @ValueSource(ints = {1})\n    void testBar(int i) { }\n}\n"
+    },
+    {
+      "description": "Test class (TestNG) #2867",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport org.testng.annotations.Test;\npublic class Foo {\n    @Test\n    public void testBar() {}\n}\n"
+    },
+    {
+      "description": "Not a test class (despite its name) #2867",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooTest {\n    public void testBar() { }\n}\n"
+    },
+    {
+      "description": "Don't consider nested classes #2867",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\nclass MyTests {\n    @Test\n    void firstCheck() {}\n\n    @Nested\n    class Reactor {\n        @Test\n        void secondCheck() {}\n    }\n}\n"
+    },
+    {
+      "description": "TestCase should be a valid pattern by default #2867",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class ExampleTestCase extends TestCase { }\n"
+    },
+    {
+      "description": "[java] ClassNamingConventions: interfaces are identified as abstract classes (regression in 7.0.0) #4881",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface TestInterface {\n  void test();\n}\n"
+    }
+  ]
+}

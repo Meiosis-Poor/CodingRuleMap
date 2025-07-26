@@ -1,0 +1,28 @@
+{
+  "name": "UniqueptrResetRelease",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-uniqueptr-reset-release",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 149,
+  "branches": 14,
+  "apis": 91,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        38,
+        41,
+        44,
+        47,
+        50,
+        53,
+        58
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-uniqueptr-reset-release %t\n\n// CHECK-FIXES: #include <utility>\n\nnamespace std {\n\ntemplate <typename T>\nstruct default_delete {};\n\ntemplate <typename T, class Deleter = std::default_delete<T>>\nstruct unique_ptr {\n  unique_ptr();\n  explicit unique_ptr(T *);\n  template <typename U, typename E>\n  unique_ptr(unique_ptr<U, E> &&);\n  void reset(T *);\n  T *release();\n};\n} // namespace std\n\nstruct Foo {};\nstruct Bar : Foo {};\n\nstd::unique_ptr<Foo> Create();\nstd::unique_ptr<Foo> &Look();\nstd::unique_ptr<Foo> *Get();\n\nusing FooFunc = void (*)(Foo *);\nusing BarFunc = void (*)(Bar *);\n\nvoid f() {\n  std::unique_ptr<Foo> a, b;\n  std::unique_ptr<Bar> c;\n  std::unique_ptr<Foo> *x = &a;\n  std::unique_ptr<Foo> *y = &b;\n\n  a.reset(b.release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: prefer 'unique_ptr<>' assignment over 'release' and 'reset' [misc-uniqueptr-reset-release]\n  // CHECK-FIXES: a = std::move(b);\n  a.reset(c.release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: prefer 'unique_ptr<>' assignment\n  // CHECK-FIXES: a = std::move(c);\n  a.reset(Create().release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: prefer 'unique_ptr<>' assignment\n  // CHECK-FIXES: a = Create();\n  x->reset(y->release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:6: warning: prefer 'unique_ptr<>' assignment\n  // CHECK-FIXES: *x = std::move(*y);\n  Look().reset(Look().release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: prefer 'unique_ptr<>' assignment\n  // CHECK-FIXES: Look() = std::move(Look());\n  Get()->reset(Get()->release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: prefer 'unique_ptr<>' assignment\n  // CHECK-FIXES: *Get() = std::move(*Get());\n\n  std::unique_ptr<Bar, FooFunc> func_a, func_b;\n  func_a.reset(func_b.release());\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: prefer 'unique_ptr<>' assignment\n  // CHECK-FIXES: func_a = std::move(func_b);\n}\n\nvoid negatives() {\n  std::unique_ptr<Foo> src;\n  struct OtherDeleter {};\n  std::unique_ptr<Foo, OtherDeleter> dest;\n  dest.reset(src.release());\n\n  std::unique_ptr<Bar, FooFunc> func_a;\n  std::unique_ptr<Bar, BarFunc> func_b;\n  func_a.reset(func_b.release());\n}"
+    }
+  ]
+}

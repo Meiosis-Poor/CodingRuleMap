@@ -1,0 +1,36 @@
+{
+  "name": "UseEnumCollections",
+  "language": "java",
+  "description": "\n            Wherever possible, use `EnumSet` or `EnumMap` instead of `HashSet` and `HashMap` when the keys\n            are of an enum type. The specialized enum collections are more space- and time-efficient.\n            This rule reports constructor expressions for hash sets or maps whose key\n            type is an enum type.\n        ",
+  "example": "import java.util.EnumMap;\n            import java.util.HashSet;\n\n            enum Example {\n                A, B, C;\n\n                public static Set<Example> newSet() {\n                    return new HashSet<>(); // Could be EnumSet.noneOf(Example.class)\n                }\n\n                public static <V> Map<Example, V> newMap() {\n                    return new HashMap<>(); // Could be new EnumMap<>(Example.class)\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 51,
+  "branches": 8,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Use enumset",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\n            import java.util.*;\n\n            public class Foo {\n\n                enum E {A, B, C}\n\n                public static boolean bar() {\n                    Set<E> set = new HashSet<>();\n                    return set.contains(E.A);\n                }\n            }\n            "
+    },
+    {
+      "description": "Use enummap",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            import java.util.*;\n\n            public class Foo {\n                public enum E {A, B, C}\n\n                public static Map<E, Boolean> bar() {\n                    return new HashMap<>();\n                }\n            }\n            "
+    },
+    {
+      "description": "Neg, LinkedHashSet or LinkedHashMap",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n\n            public class Foo {\n                public enum E {A, B, C}\n\n                public static Map<E, Boolean> bar() {\n                    Set<E> set = new LinkedHashSet<>();\n                    return new LinkedHashMap<>();\n                }\n            }\n            "
+    }
+  ]
+}

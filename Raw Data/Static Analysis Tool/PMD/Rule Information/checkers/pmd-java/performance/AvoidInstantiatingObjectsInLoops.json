@@ -1,0 +1,172 @@
+{
+  "name": "AvoidInstantiatingObjectsInLoops",
+  "language": "java",
+  "description": "\nNew objects created within loops should be checked to see if they can created outside them and reused.\n        ",
+  "example": "public class Something {\n    public static void main( String as[] ) {\n        for (int i = 0; i < 10; i++) {\n            Foo f = new Foo(); // Avoid this whenever you can it's really expensive\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 133,
+  "branches": 25,
+  "apis": 17,
+  "test": [
+    {
+      "description": "TEST1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(;;) {\n            String a = new String();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "TEST2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        while(true) {\n            String a = new String();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "TEST3",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        do {\n            String a = new String();\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "TEST4",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        do {\n            String a = new String();\n            String b = new String();\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "throw new is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(;;) {\n            throw new Exception();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "return new in loop is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String test1() {\n        for(;;) {\n            return new String();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#278 Semi-false positive for instantiating new object in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        while (true) {\n            try {\n            } catch (Exception e) {\n                url = new StringBuffer();\n                break;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1215 AvoidInstantiatingObjectsInLoops matches the right side of a list iteration loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.io.File;\n\npublic class TestInstantiationInLoop {\n    public static void main(String args[]) {\n        for (String test : new ArrayList<String>()) { // facetious but simple example\n            System.out.println(test);\n        }\n        for (String filename : new File(\"subdirectory\").list()) { // complex but realistically conceivable (albeit exagerrated/oversimplified/rarely advisable) example\n            System.out.println(filename);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] False positive: AvoidInstantiatingObjectsInLoops should not flag objects with different parameters or objects assigned or passed as parameters #2207",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.awt.Dimension;\n\npublic class PMDDemo {\n    public static void main(final String[] args) {\n        final Dimension[] arr = new Dimension[10];\n        for (int i = 0; i < arr.length; i++) {\n            arr[i] = new Dimension(i, i); // rule violation here\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when assigning to a list/array (see #2207 and #1043)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Collection;\nimport java.util.ArrayList;\n\npublic class PMDDemo {\n    public void checkArray() {\n        Car[] cars = new Car[3];\n        for(int i = 0; i < cars.length; ++i) {\n           cars[i] = new Car();\n        }\n    }\n    public void checkCollection() {\n        Collection<Car> cars = new ArrayList<>();\n        for(int i = 0; i < 3; ++i) {\n           cars.add(new Car());\n        }\n    }\n\n    private static class Car {}\n}\n        "
+    },
+    {
+      "description": "False negative with break in other for-loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\nimport java.util.function.Function;\nimport java.util.List;\nimport java.util.SortedSet;\nimport java.util.TreeSet;\n\npublic class Message {\n    private List<Function<Message, Boolean>> filters;\n\n    public Message(Message message) {}\n\n    private SortedSet<Message> getFilteredMessages(List<Message> messages) {\n        final SortedSet<Message> result = new TreeSet<>(messages);\n        for (Message element : messages) {\n            Message event = new Message(element);\n            for (Function<Message, Boolean> filter : filters) {\n                if (!filter.apply(event)) {\n                    result.remove(element);\n                    break;\n                }\n            }\n        }\n        return result;\n    }\n}\n        "
+    },
+    {
+      "description": "Instantiation in loop condition",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        while(new String().length() > 0) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "false negative in anonymous classes",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        14
+      ],
+      "code": "\npublic class Sample {\n    private static class Inner {\n        private void baz() {\n            for(;;) {\n                String a = new String();\n            }\n        }\n    }\n\n    public void foo() {\n        Sample anonymousClass = new Sample() {\n            void bar() {\n                for(;;) {\n                    String a = new String();\n                }\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with list",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Collection;\nimport java.util.ArrayList;\n\npublic class Sample {\n    public Collection<Car> checkCollection() {\n        Collection<Car> thisIsACar = new ArrayList<>();\n        for(int i = 0; i < 3; ++i) {\n            thisIsACar.add(new Car());\n        }\n        return thisIsACar;\n    }\n\n    private static class Car {\n    }\n}\n        "
+    },
+    {
+      "description": "Collections with unresolved type",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\n// Types are unresolved\n//import java.util.Collection;\n//import java.util.ArrayList;\n\npublic class Sample {\n    public Collection<Car> checkCollection() {\n        Collection<Car> thisIsACar = new ArrayList<>();\n        for(int i = 0; i < 3; ++i) {\n            thisIsACar.add(new Car());\n        }\n        return thisIsACar;\n    }\n\n    private static class Car {\n    }\n}\n        "
+    },
+    {
+      "description": "False negative with array allocations within loops",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class AvoidInstantiatingArraysInLoops {\n    public static void main(String[] args) {\n        for (String arg : args) {\n            String[] copy = new String[] { arg };\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with for-each loop over new array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidInstantiatingArrayInLoops {\n    public static void main(String[] args) {\n        for (String configName : new String[] {\"config\", \"test\"}) {\n            System.out.println(configName);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with adding to a collection/array field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class AvoidInstantiatingObjectsInLoops {\n    private List<String> field = new ArrayList<>();\n    private String[] arrayField = new String[10];\n\n    public static void main(String[] args) {\n        for (String arg : args) {\n            this.field.add(new String(arg));\n        }\n        for (int i = 0; i < args.length; i++) {\n            this.arrayField[i] = new String(args[i]);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with adding wrapped new arrays to collection",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.nio.ByteBuffer;\nimport java.nio.charset.StandardCharsets;\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class AvoidInstantiatingObjectsInLoops {\n    public void testBytes(String s) {\n        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);\n        List<ByteBuffer> buffers = new ArrayList<>();\n        for (byte b : bytes) {\n            buffers.add(ByteBuffer.wrap(new byte[]{b}));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with temporary object assigned to an array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidInstantiatingObjectsInLoops {\n    public static void main(String[] args) {\n        String[] data = new String[10];\n        for (int i = 0; i < data.length; i++) {\n            data[i] = new StringBuilder().append(\"foo\").toString();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with array allocation and assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidInstantiatingArraysInLoops {\n    public static void main(String[] args) {\n        int[][] arr = new int[10];\n        for (int i = 0; i < 10; i++) {\n            arr[i] = new int[] { i };\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when array is returned",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidInstantiatingArraysInLoops {\n    public int[] test() {\n        for (int i = 0; i < 10; i++) {\n            return new int[] { i };\n        }\n\n        for (int i = 0; i < 10; i++) {\n            int[] a = new int[] { i };\n            break;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when converting collection to array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class AvoidInsantiatingArraysInLoops {\n    public void test() {\n        List<String> data = new ArrayList<>();\n\n        for (String arg : args) {\n            this.consume(data.toArray(new String[0]));\n        }\n    }\n\n    private void consume(String[] array) { }\n}\n        "
+    }
+  ]
+}

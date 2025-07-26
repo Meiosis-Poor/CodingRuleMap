@@ -1,0 +1,176 @@
+{
+  "name": "ImplicitSwitchFallThrough",
+  "language": "java",
+  "description": "\nSwitch statements without break or return statements for each case option\nmay indicate problematic behaviour. Empty cases are ignored as these indicate\nan intentional fall-through.\n\nYou can ignore a violation by commenting `// fallthrough` before the case label\nwhich is reached by fallthrough, or with `@SuppressWarnings(\"fallthrough\")`.\n\nThis rule has been renamed from \"MissingBreakInSwitch\" in PMD 6.37.0.\n        ",
+  "example": "public void bar(int status) {\n    switch(status) {\n      case CANCELLED:\n        doCancelled();\n        // break; hm, should this be commented out?\n      case NEW:\n        doNew();\n        // is this really a fall-through?\n        // what happens if you add another case after this one?\n      case REMOVED:\n        doRemoved();\n        // fallthrough - this comment just clarifies that you want a fallthrough\n      case OTHER: // empty case - this is interpreted as an intentional fall-through\n      case ERROR:\n        doErrorHandling();\n        break;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 77,
+  "branches": 15,
+  "apis": 14,
+  "test": [
+    {
+      "description": "one case, which is not empty",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void main() {\n        switch(i) {\n        case 1:\n            doSomething();\n        default:\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "just skip empty switch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void main() {\n        switch(i) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "one break, but two cases + one default case. But there is an intentional fall through -\nbecause there are no statemenets between case 1 and case 2.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void main() {\n        switch(i) {\n        case 1:\n        case 2:\n            break;\n        default:\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "each case stmt has a return",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int main() {\n        switch(i) {\n        case '1':\n            return 1;\n        case '2':\n            return 2;\n        default:\n            return 3;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "all cases have return or throw",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int main() {\n        switch(i) {\n        case '1':\n            return 1;\n        case '2':\n            return 2;\n        default:\n            throw new Exception(\"bad number\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "3496028: False-",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void m() {\n        switch (s) {\n            case 0 :\n                s2 = s ;\n                // missing break here!\n            case 1 :\n                s2 = (short)(s + 1);\n                break;\n            default :\n                s2 = (short)(s + 2);\n                // and missing break here!\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1246 False positive from MissingBreakInSwitch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static final int x1 = 1;\n    public static final int x2 = 2;\n    public static final int x3 = 3;\n\n    public Object bar(int x, boolean condition) {\n        switch (x)\n        {\n            case x1:\n            case x2:\n                if (condition)\n                    return new Object();\n                else\n                    return null;\n            case x3:\n                if (condition)\n                    return new Object();\n                else\n                    return null;\n            default:\n                return null;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#550 False +: MissingBreakInSwitch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String bar() {\n        switch (sign) {\n        case  1:\n            return \"+\";\n        case  0:\n            return \"0\";\n        case -1:\n            return \"-\";\n        default:\n            throw new IllegalArgumentException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1262 False positive for MissingBreakInSwitch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private boolean isAorB(MyEnum value)\n    {\n      switch (value)\n      {\n        case A:\n        case B:\n        {\n          return true;\n        }\n        default:\n        {\n          return false;\n        }\n      }\n    }\n\n    enum MyEnum { A, B; }\n}\n        "
+    },
+    {
+      "description": "#1552  MissingBreakInSwitch - False positive for continue",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class DemoMissingBreakContinue {\n    public DemoMissingBreakContinue() {\n        method();\n    }\n\n    private void method() {\n        for (int i = 0; i < 10; i = i + 1) {\n            switch (i) {\n            case 1:\n                break;\n            case 2:\n                continue; //PMD complains about missing break which would be unreachable code\n            default:\n                break;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Possible fallthrough",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class DemoMissingBreakContinue {\n\n    private void method() {\n        for (int i = 0; i < 10; i = i + 1) {\n            switch (i) {\n            case 1: break;\n            case 2: if (i != 4) continue;\n            default: break;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Possible fallthrough, commented so ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class DemoMissingBreakContinue {\n\n    private void method() {\n        for (int i = 0; i < 10; i = i + 1) {\n            switch (i) {\n            case 1: break;\n            case 2: if (i != 4) continue;\n            // fallthrough\n            default: break;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] Recognize @SuppressWanings(\"fallthrough\") for MissingBreakInSwitch #1899",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class DemoMissingBreakContinue {\n\n    @SuppressWarnings(\"fallthrough\")\n    private void method() {\n        for (int i = 0; i < 10; i = i + 1) {\n            switch (i) {\n            case 1: break;\n            case 2: if (i != 4) continue;\n            default: break;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] MissingBreakInSwitch detects the lack of break in the last case #2579",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class DemoMissingBreak {\n    private double a, b, c, d, e, tmin, tmax;\n\n    public void foo(int paramInt, double paramDouble) {\n        switch (paramInt) {\n            case 0:\n              this.a = paramDouble; break;\n            case 1:\n              this.b = paramDouble; break;\n            case 2:\n              this.c = paramDouble; break;\n            case 3:\n              this.d = paramDouble; break;\n            case 4:\n              this.e = paramDouble; break;\n            case 5:\n              this.tmin = paramDouble; break;\n            case 6:\n              this.tmax = paramDouble;\n        }\n    }\n\n    public void bar(int type) {\n        switch (type) {\n            case 1:\n                System.out.println(\"one\");\n                break;\n            default:\n                System.out.println(\"def\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] MissingBreakInSwitch - last default case does not contain a break #659",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.MathContext;\npublic class DemoMissingBreak {\n    public MathContext foo(int precission) {\n        MathContext mc = null;\n        switch (precission) {\n            case 32:\n                mc = MathContext.DECIMAL32;\n                break;\n            case 64: \n                mc = MathContext.DECIMAL64;\n                break;\n            case 128:\n                mc = MathContext.DECIMAL128;\n                break;\n            default:\n                mc = new MathContext(precission);\n        }\n        return mc;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] MissingBreakInSwitch - last default case does not contain a break #659",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\nimport java.math.MathContext;\npublic class DemoMissingBreak {\n    public MathContext foo(int precission) {\n        MathContext mc = null;\n        switch (precission) {\n            case 32:\n                mc = MathContext.DECIMAL32;\n                break;\n            case 64:\n                mc = MathContext.DECIMAL64;\n                break;\n            default:\n                mc = new MathContext(precission);\n            case 128: // violation!!\n                mc = MathContext.DECIMAL128;\n                break;\n        }\n        return mc;\n    }\n}\n        "
+    },
+    {
+      "description": "NPE with Switch in record constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "\nrecord MyRecord(boolean b) {\n    public MyRecord {\n        int n = 8;\n        // no fallthrough\n        switch (n) {\n            case 1:\n                doSomething();\n                break;\n            default:\n                break;\n        }\n        // implicit fallthrough\n        switch (n) {\n            case 1:\n                doSomething();\n            default:\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#4505 NPE with Switch in enum constant body",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            enum Foo {\n                A {\n                    void foo() {\n                        switch (A) {\n                        case A:\n                            if (A != null) {}\n                        default:\n                            throw new UnsupportedOperationException();\n                        }\n                    }\n                }\n            }\n\n            "
+    },
+    {
+      "description": "#4948 FP with nested switch stmt",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Test {\n                boolean foo(String a, String b) {\n\n                    switch (a) {\n                    case \"a1\":\n                        return true;\n                    case \"a2\":\n                        switch (b) {\n                        case \"b1\":\n                            return true;\n                        default:\n                            return false;\n                        }\n                    default:\n                        return false;\n                    }\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Switch with loop with break",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        11,
+        14,
+        18
+      ],
+      "code": "\n            public class Test {\n                boolean foo(String a, String b) {\n\n                    switch (a) {\n                    case \"a1\":\n                        switch (b) {\n                        case \"b1\":\n                            for (int i = 0; i < 4; i++) {\n                                break;\n                            } // this loop completes normally\n                        default: // warn\n                            return false;\n                        }\n                    case \"a2\": // warn\n                        for (int i = 0; i < 4; i++) {\n                            break;\n                        } // this loop completes normally\n                    default: // warn\n                        return false;\n                    }\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Switch with loop with break",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            public class Test {\n                boolean foo(int a) {\n                    switch (a) {\n                    case 1:\n                        switch(hashCode()){}\n                    case 2: // violation\n                        System.lineSeparator();\n                    break;\n                    }\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Switch with break to enclosing block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    boolean foo(int a) {\n        parsing:\n        {\n            if (method()) {\n\n            }\n            int index;\n            switch (a) {\n            case 1:\n                if (method()) {\n                    if (method()) {\n                        return true;\n                    }\n                } else {\n                    if (method()) {\n                        return true;\n                    }\n                }\n                break parsing;\n            case 2:\n            case 3:\n                System.lineSeparator();\n                break;\n            }\n        }\n    }\n\n\n\n}\n            "
+    },
+    {
+      "description": "Switch expr",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n\n    private String print2(int i, int j, int k) {\n        return switch (i) {\n            case 0:\n                String r;\n                OUTER: switch (j) {\n                case 0:\n                    String res;\n                    INNER: switch (k) {\n                    case 0: res = \"0-0-0\"; break;\n                    case 1: res = \"0-0-1\"; break;\n                    case 2: res = \"0-0-2\"; break INNER;\n                    default: r = \"0-0-X\"; break OUTER;\n                    }\n                    r = res;\n                    break;\n                case 1:\n                    r = \"0-1\";\n                    break;\n                default:\n                    r = \"0-X\";\n                    break;\n                }\n                yield r;\n            case 1:\n                yield \"1\";\n            case 2:\n                LOP: while (j-- > 0) {\n                    if (k == 5) {\n                        k--;\n                        continue;\n                    }\n                    break LOP;\n                }\n                Supplier<String> getter = () -> { return \"2-X-5\"; };\n                yield getter.get();\n            default:\n                yield \"X\";\n        };\n    }\n}\n            "
+    },
+    {
+      "description": "switch expression with one case, which is not empty",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n  public static void main(String[] args) {\n    int i = 1;\n    String result = switch(i) {\n      case 1: doSomething();\n      default: yield \"default case fall through\";\n    };\n    System.out.println(result);\n  }\n\n  private static void doSomething() {}\n}\n"
+    }
+  ]
+}

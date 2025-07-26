@@ -1,0 +1,358 @@
+{
+  "name": "PreserveStackTrace",
+  "language": "java",
+  "description": "\nReports exceptions that are thrown from within a catch block, yet don't refer to the\nexception parameter declared by that catch block. The stack trace of the original\nexception could be lost, which makes the thrown exception less informative.\n\nTo preserve the stack trace, the original exception may be used as the cause of\nthe new exception, using `Throwable#initCause`, or passed as a constructor argument\nto the new exception. It may also be preserved using `Throwable#addSuppressed`.\nThe rule actually assumes that any method or constructor that takes the original\nexception as argument preserves the original stack trace.\n\nThe rule allows `InvocationTargetException` and `PrivilegedActionException` to be\nreplaced by their cause exception. The discarded part of the stack trace is in those\ncases only JDK-internal code, which is not very useful. The rule also ignores exceptions\nwhose name starts with `ignored`.\n        ",
+  "example": "public class Foo {\n    void good() {\n        try{\n            Integer.parseInt(\"a\");\n        } catch (Exception e) {\n            throw new Exception(e); // Ok, this initializes the cause of the new exception\n        }\n        try {\n            Integer.parseInt(\"a\");\n        } catch (Exception e) {\n            throw (IllegalStateException)new IllegalStateException().initCause(e); // second possibility to create exception chain.\n        }\n    }\n    void wrong() {\n        try{\n            Integer.parseInt(\"a\");\n        } catch (Exception e) {\n            // Violation: this only preserves the message and not the stack trace\n            throw new Exception(e.getMessage());\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 213,
+  "branches": 40,
+  "apis": 27,
+  "test": [
+    {
+      "description": "1, Exception thrown without preserving stack",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw new Exception(e.getMessage());\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "2, Exception thrown, stack preserved",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw new Exception(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "3, Exception thrown, stack preserved",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw new Exception(e, e.getMessage());\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "fillInStackTrace returns this",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw e.fillInStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "fillInStackTrace on another exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw new IllegalArgumentException().fillInStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "5, No exception thrown, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "6, No exception thrown, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "7, No exception thrown, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw new Exception(Foo.foo(e),e);\n        }\n        return \"\";\n    }\n}\n        "
+    },
+    {
+      "description": "8, No exception thrown, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw (Error)e;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "9, Excetion is cast, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            throw (Error)e.fillInStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "9.5, Throwing same exception, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                        int i = Integer.parseInt(a);\n                    } catch(Exception e){\n                        ((Exception)e).fillInStackTrace();\n                        throw e;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "9.55, Throwing same exception, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                        int i = Integer.parseInt(a);\n                    } catch(Exception e){\n                        throw e;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "10, Throwing new Exception, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e10){\n            Exception e1 = new Exception(e10);\n            throw e1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "11, Throwing new Exception, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(Exception e){\n            Exception e1 = (Exception)e.fillInStackTrace();\n            throw e1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "12, Catch and throw RuntimeException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class B {\n    public void bla() {\n        try {\n            ;\n        } catch (IllegalStateException e) {\n            throw new RuntimeException(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "13, Catch and throw RuntimeException, fail",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class B {\n    public void bla() {\n        try {\n            ;\n        } catch (IllegalStateException e) {\n            throw new RuntimeException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "14, Nested with same name catch and throw, fail on inner",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class B {\n    public void bla() {\n        try {\n            try {\n                ;\n            } catch (IllegalStateException ex) {\n                throw new RuntimeException(\"Oh no!\");\n            }\n        } catch (IllegalStateException ex) {\n            throw new RuntimeException(ex);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "15, IllegalStateException can take a cause exception in the constructor, too.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        try {\n        } catch (Exception excep) {\n            throw new IllegalStateException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "16, False -, No violations reported by PreserveStackTrace Rule",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        try {\n        } catch (Exception notUsed) {\n            RuntimeException ex = new RuntimeException();\n            throw ex;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "17, PreserveStackTrace Rule should exclude this as initCause is used.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        try {\n        } catch (Exception e) {\n            IllegalStateException ex = new IllegalStateException();\n            ex.initCause(e);\n            throw ex;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "18, side effects on rules",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar1() {\n        try {\n        } catch (Exception notUsed) {\n            RuntimeException ex = new RuntimeException();\n            throw ex;\n        }\n    }\n\n    public void bar2() {\n        try {\n        } catch (Exception e) {\n            IllegalStateException ex = new IllegalStateException();\n            ex.initCause(e);\n            throw ex;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "19, False positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.security.AccessController;\nimport java.security.PrivilegedExceptionAction;\n\npublic class Logger {\n    static Logger logger;\n\n    void fine(String s, String e) {}\n    void debug(String s, Throwable e) {}\n\n    private static boolean isInstanceOf(final String className) {\n        PrivilegedExceptionAction<Boolean> act =\n            new PrivilegedExceptionAction<Boolean>() {\n                public Boolean run() throws InstantiationException {\n                    throw new InstantiationException();\n                }\n            };\n        try {\n            return AccessController.doPrivileged(act);\n        } catch (Exception e) {\n            logger.fine(\"isInstanceOf\", \"failed: \" + e);\n            logger.debug(\"isInstanceOf\", e);\n            return false;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "20, False positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    java.util.List exception_vec;\n\n    private CodeException[] getCodeExceptions(int cp) {\n        int             size  = exception_vec.size();\n        CodeException[] c_exc = new CodeException[size];\n\n        try {\n            for (int i=0; i < size; i++) {\n                CodeException c = (CodeException)exception_vec.get(i);\n                c_exc[i] = c.getCodeException(cp);\n            }\n        } catch(ArrayIndexOutOfBoundsException e) {}\n        return c_exc;\n    }\n\n    static class CodeException extends Exception {\n        CodeException getCodeException(int i) { return this; }\n    }\n}\n        "
+    },
+    {
+      "description": "21, Java 7's multi-catch, NOK",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass MultiCatch {\n\n    public static void main(String[] args) {\n        try {\n            Class.forName(\"org.example.Foo\").newInstance();\n        } catch (InstantiationException | ClassNotFoundException | IllegalAccessException eMultiCatch) {\n            throw new UnsupportedOperationException(args[0]);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "22, Java 7's multi-catch, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass MultiCatch {\n\n    public static void main(String[] args) {\n        try {\n            Class.forName(\"org.example.Foo\").newInstance();\n        } catch (InstantiationException | ClassNotFoundException | IllegalAccessException eMultiCatch) {\n            throw new UnsupportedOperationException(eMultiCatch);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#943 PreserveStackTrace false positive if a StringBuffer exists",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Stuff {\n    @SuppressWarnings(\"unused\")\n    public void doStuff() throws RuntimeException {\n        try {\n            doMoreStuff();\n        } catch (Exception e) {\n            StringBuffer irrelevantSB = new StringBuffer(\"Irrelevant\").append(\" string\").append(\" buffer\");\n            RuntimeException someException = new RuntimeException(e);\n            throw someException;\n        }\n    }\n\n    private void doMoreStuff() {\n        // Stuff happens\n    }\n}\n        "
+    },
+    {
+      "description": "#1087 PreserveStackTrace (still) ignores initCause()",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.NoSuchElementException;\npublic class Test {\n    public void foo() {\n        try {\n            // do something\n        } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {\n            NoSuchElementException noSuchElementException = new NoSuchElementException(\n                    \"Cannot return next element, because there is none!\");\n            noSuchElementException.initCause(arrayIndexOutOfBoundsException);\n            throw noSuchElementException;\n        }\n\n        try {\n            // do something\n        } catch (ArrayIndexOutOfBoundsException e) {\n            throw (IllegalStateException)new IllegalStateException().initCause(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1087 PreserveStackTrace (still) ignores initCause() - negative test case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.NoSuchElementException;\npublic class Test {\n    public void foo() {\n        try {\n            // do something\n        } catch (ArrayIndexOutOfBoundsException arrayIndexOutOfBoundsException) {\n            NoSuchElementException noSuchElementException = new NoSuchElementException(\n                    \"Cannot return next element, because there is none!\");\n            noSuchElementException.initCause(new RuntimeException(\"some other unrelated exception\"));\n            throw noSuchElementException;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#794 False positive on PreserveStackTrace with anonymous inner",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\n\npublic class Bug {\n    void test() throws IOException {\n        try {\n            // do something\n        } catch (final IOException e) {\n            throw new IOException(\"b\") {\n                {\n                    initCause(e);\n                }\n            };\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#422 False positive when using builder pattern",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\n\npublic class Bug {\n    void test() throws IOException {\n        try {\n            // do something\n        } catch (final IOException e) {\n            throw uncheckedException(\"ErrorCodeCommon.DIRECTORY_NOT_FOUND\")\n                    .withField(\"dirname\", dirname)\n                    .causedBy(e)\n                    .build();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#543 False negative with String concatenation",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String a) throws Exception {\n        try {\n            int i = Integer.parseInt(a);\n        } catch(java.io.FileNotFoundException e) {\n            throw new Exception(\"file not found:\" + e.toString());\n        } catch(java.io.IOException e) {\n            throw new Exception(\"I/O error:\" + e);\n        } catch(Exception e) {\n            throw new Exception(\"something bad:\" + (e));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Don't ignore effectively final parameters",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class Foo {\n\n    public static <T> T getBean(String name, Class<T> requiredType) throws Exception {\n        try {\n            return name != null ? doGetSingleton(name, requiredType) : lookup(name, requiredType);\n        } catch (NameNotFoundException ex) {\n            // this one\n            throw new NoSuchBeanDefinitionException(name, \"not found in JNDI environment\");\n        } catch (NamingException ex) {\n            throw new NoSuchBeanDefinitionException(\"JNDI environment\", name, \"JNDI lookup failed\", ex);\n        }\n    }\n\n    private static <T> T doGetSingleton(String name, Class<T> requiredType) throws NamingException {return null;}\n    private static <T> T lookup(String name, Class<T> requiredType) throws NameNotFoundException {return null;}\n\n    static class NoSuchBeanDefinitionException extends Exception {\n        public NoSuchBeanDefinitionException(String s, String name, String message, Exception ex) {}\n        public NoSuchBeanDefinitionException(String s, String name) {}\n    }\n    static class NameNotFoundException extends Exception { }\n    static class NamingException extends Exception { }\n}\n        "
+    },
+    {
+      "description": "[java] PreserveStackTrace false-positive #1747",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\n\npublic class SomeOtherUserDefinedException extends Exception {\n    public static void foo(String a) throws Exception {\n        try {\n\t          // xxx\n        } catch (IOException exception) {\n            if (exception.getMessage().contains(\"foobar\")) {\n                throw new SomeOtherUserDefinedException(\"Error\", exception);\n            }\n            throw exception;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "FN with method creating exception",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        22,
+        24,
+        26
+      ],
+      "code": "\nimport java.io.Closeable;\nimport java.io.IOException;\nimport java.lang.reflect.InvocationTargetException;\nimport java.rmi.RemoteException;\n\npublic class SomeOtherUserDefinedException extends Exception {\n\n    SomeOtherUserDefinedException(String m, Throwable cause) { super(m, cause); }\n\n    static Object getSomething() throws Throwable { }\n\n    protected void doInvoke() throws Throwable {\n        Object ejb = null;\n        try {\n            ejb = getSomething();\n        } catch (IOException ex) {\n            throw new IllegalArgumentException(\"xxx\", ex); // ok\n        } catch (IOException ex) {\n            Throwable targetEx = ex.getCause();\n            if (targetEx instanceof RemoteException) {\n                RemoteException rex = (RemoteException) targetEx;\n                throw convertRmiAccessException(rex, isConnectFailure(rex)); // not ok\n            } else if (targetEx instanceof CreateException) {\n                throw convertRmiAccessException(targetEx, \"message\"); // not ok\n            }\n            throw targetEx; // not ok\n        } finally {\n            if (ejb instanceof Closeable) {\n                ((Closeable) ejb).close();\n            }\n        }\n    }\n\n    private Throwable convertRmiAccessException(Throwable rex, boolean connectFailure) {return this;}\n\n    private Throwable convertRmiAccessException(Throwable rex, String m) {return this;}\n\n    private static boolean isConnectFailure(RemoteException rex) {return rex != null;}\n\n    static class CreateException extends InvocationTargetException {\n\n    }\n}\n        "
+    },
+    {
+      "description": "Getter called on exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                    } catch(Exception e){\n                        throw e.getSomething();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#2134 [java] PreserveStackTrace not handling Throwable.addSuppressed(...)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.IOException;\n\n            public class Foo {\n\n                public void foo(String a) {\n                    try {\n                        return;\n                    } catch (Exception innerException) {\n                        RuntimeException inner = new RuntimeException();\n                        inner.addSuppressed(innerException);\n                        throw inner;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Consume exception into another",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                        return;\n                    } catch (Exception outerException) {\n                        try {\n                            return;\n                        } catch (Exception innerException) {\n                            innerException.addSuppressed(outerException);\n                            throw new RuntimeException(innerException);\n                        }\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with reassigned exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                        System.out.println(a);\n                    } catch (Exception outerException) {\n                        outerException = new Exception();\n                        throw outerException;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with reassigned exception (branch)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                        System.out.println(a);\n                    } catch (Exception outerException) {\n                        if (a!=null) outerException = new Exception();\n                        else outerException = new RuntimeException();\n\n                        throw outerException;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with reassigned exception",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void foo(String a) {\n                    try {\n                        System.out.println(a);\n                    } catch (Exception outerException) {\n                        Exception e = new Exception();\n                        e = outerException;\n                        throw e; // throws the outer exception here, so this is not a violation\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ignore InvocationTargetException#getTargetException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.reflect.InvocationTargetException;\n\n            public class Foo {\n\n                public void withCast(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (InvocationTargetException ex) {\n                        if (ex.getTargetException() instanceof RuntimeException) {\n                            throw (RuntimeException) ex.getTargetException();\n                        }\n                    }\n                }\n                public void throwRuntime(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (InvocationTargetException ex) {\n                        Exception e = ex.getTargetException();\n                        if (e instanceof RuntimeException) {\n                            throw (RuntimeException) e;\n                        }\n                    }\n                }\n                public void directRethrow(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (InvocationTargetException ex) {\n                        throw ex.getTargetException();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ignore InvocationTargetException#getCause",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.reflect.InvocationTargetException;\n\n            public class Foo {\n\n                public void withCast(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (InvocationTargetException ex) {\n                        if (ex.getCause() instanceof RuntimeException) {\n                            throw (RuntimeException) ex.getCause();\n                        }\n                    }\n                }\n                public void throwRuntime(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (InvocationTargetException ex) {\n                        Exception e = ex.getCause();\n                        if (e instanceof RuntimeException) {\n                            throw (RuntimeException) e;\n                        }\n                    }\n                }\n                public void directRethrow(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (InvocationTargetException ex) {\n                        throw ex.getCause();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ignore PrivilegedActionException#getCause",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.reflect.InvocationTargetException;\n            import java.security.PrivilegedActionException;\n\n            public class Foo {\n\n                public void withCast(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (PrivilegedActionException ex) {\n                        if (ex.getCause() instanceof RuntimeException) {\n                            throw (RuntimeException) ex.getCause();\n                        }\n                    }\n                }\n\n                public void throwRuntime(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (PrivilegedActionException ex) {\n                        Exception e = ex.getCause();\n                        if (e instanceof RuntimeException) {\n                            throw (RuntimeException) e;\n                        }\n                    }\n                }\n\n                public void directRethrow(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (PrivilegedActionException ex) {\n                        throw ex.getCause();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ignore PrivilegedActionException#getException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.reflect.InvocationTargetException;\n            import java.security.PrivilegedActionException;\n\n            public class Foo {\n\n                public void withCast(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (PrivilegedActionException ex) {\n                        if (ex.getException() instanceof RuntimeException) {\n                            throw (RuntimeException) ex.getException();\n                        }\n                    }\n                }\n\n                public void throwRuntime(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (PrivilegedActionException ex) {\n                        Exception e = ex.getException();\n                        if (e instanceof RuntimeException) {\n                            throw (RuntimeException) e;\n                        }\n                    }\n                }\n\n                public void directRethrow(String a) throws Exception {\n                    try {\n                        System.out.println(a);\n                    } catch (PrivilegedActionException ex) {\n                        throw ex.getException();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Arguments may consume exception recursively",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n\n                public void foo(String a) {\n                    try {\n                        System.out.println(a);\n                    } catch (NumberFormatException ex) {\n                        // the exception is consumed by a constructor, which is\n                        // consumed by the thrown expression\n                        throw new InternalParseException(new SpelParseException(ex, \"SpelMessage.NOT_A_LONG\", \"numberToken\"));\n                    }\n                }\n\n                static class InternalParseException {}\n                static class SpelParseException {}\n            }\n            "
+    },
+    {
+      "description": "Arguments may consume exception recursively, even across variables",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n\n                public void foo(String a) {\n                    try {\n                        System.out.println(a);\n                    } catch (NumberFormatException ex) {\n                        // same as above with intermediary variable\n                        SpelParseException other = new SpelParseException(ex, \"SpelMessage.NOT_A_LONG\", \"numberToken\");\n                        throw new InternalParseException(other);\n                    }\n                }\n\n                static class InternalParseException { }\n                static class SpelParseException { }\n            }\n            "
+    },
+    {
+      "description": "StackOverflow with variable RHS which refers to itself",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class TestCase {\n                public final Object resolveArgument(String parameter) throws Exception {\n                    Object arg = resolveName(parameter);\n                    try {\n                        arg = useArg(arg);\n                    } catch (Exception ex) {\n                        throw new Exception(arg, ex);\n                    }\n                    return arg;\n                }\n            }\n            "
+    },
+    {
+      "description": "Avoid NPE for unresolved variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class AbstractNamedValueMethodArgumentResolver {\n                public final Object resolveArgument() {\n                    try { }\n                    catch (Exception e) {\n                        throw unresolved;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ignored exception name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class AbstractNamedValueMethodArgumentResolver {\n\n                public final Object resolveArgument() throws Throwable {\n                    try {\n                    } catch (Throwable ignored) {\n                        throw new Exception();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ternary with both branches ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class AbstractNamedValueMethodArgumentResolver {\n\n                public final Object resolveArgument() throws Throwable {\n                    try {\n                    } catch (Throwable ex) {\n                        Exception rae = transform(ex);\n                        throw rae != null ? rae\n                                          : ex;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Ternary with only one branch ok",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        14
+      ],
+      "code": "\n            public abstract class AbstractNamedValueMethodArgumentResolver {\n\n                public final Object resolveArgument() throws Throwable {\n                    try {\n                    } catch (Throwable ex) {\n                        throw \"\".isEmpty() ? new IllegalArgumentException()\n                                           : ex;\n                    }\n\n                    // equivalent with if\n                    try {\n                    } catch (Throwable ex) {\n                        if (\"\".isEmpty()) {\n                            throw new IllegalArgumentException();\n                        } else {\n                            throw ex;\n                        }\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Branch in dataflow should be merged",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        14,
+        21
+      ],
+      "code": "\n            public abstract class AbstractNamedValueMethodArgumentResolver {\n                // both of those should be equivalent\n\n                public final Object resolveArgument() throws Throwable {\n                    // equivalent with if\n                    try {\n                    } catch (Throwable ex) {\n                        Throwable v;\n                        if (\"\".isEmpty()) {\n                            v = new IllegalArgumentException();\n                        } else {\n                            v = ex;\n                        }\n                        throw v;\n                    }\n\n                    // equivalent without interm. var.\n                    try {\n                    } catch (Throwable ex) {\n                        if (\"\".isEmpty()) {\n                            throw new IllegalArgumentException();\n                        } else {\n                            throw ex;\n                        }\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Test the message",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class AbstractNamedValueMethodArgumentResolver {\n                protected void setThrowingNameNoCheck(String name) {\n                    try {\n                        // this.discoveredThrowingType = ClassUtils.forName(name, getAspectClassLoader());\n                    } catch (Throwable ex) {\n                        throw new IllegalArgumentException(\"Throwing name '\" + name  +\n                                                                   \"' is neither a valid argument name nor the fully-qualified \" +\n                                                                   \"name of a Java type on the classpath. Root cause: \" + ex);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Avoid stackoverflow",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo(Foo foo) {}\n    Foo() {}\n\n    public void inject(Object bean, String beanName) throws Throwable {\n        Foo field = new Foo();\n        Object value;\n        Foo desc = new Foo(field);\n        try {\n            value = Foo.resolveDependency(desc, beanName);\n        } catch (IllegalArgumentException ex) {\n            throw new FooException(beanName, new Foo(field), ex);\n        }\n        if (value != null) {\n            field.set(bean, value);\n        }\n    }\n\n    static Object resolveDependency(Foo f, String n) { return null; }\n    void set(Object b, Object v) { }\n\n    static class FooException extends RuntimeException {\n\n        FooException(String s, Foo f, Throwable e) {}\n    }\n}\n            "
+    },
+    {
+      "description": "#5318 [java] PreserveStackTraceRule: false-positive on Pattern Matching with instanceof",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Consumer;\n\npublic class Foo {\n    public void withPatternMatching(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch (RuntimeException e) {\n            throw e instanceof NumberFormatException numberFormatException\n                    ? formatExceptionHandler.accept(numberFormatException)\n                    : e;\n        }\n    }\n\n    public void withExplicitCast(String a) {\n        try {\n            int i = Integer.parseInt(a);\n        } catch (RuntimeException e) {\n            throw e instanceof NumberFormatException\n                    ? formatExceptionHandler.accept((NumberFormatException) e)\n                    : e;\n        }\n    }\n\n    private Consumer<NumberFormatException> formatExceptionHandler = e -> { e.printStackTrace(); };\n}\n"
+    }
+  ]
+}

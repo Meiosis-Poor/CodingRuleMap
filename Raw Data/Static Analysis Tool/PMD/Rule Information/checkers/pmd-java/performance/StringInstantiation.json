@@ -1,0 +1,91 @@
+{
+  "name": "StringInstantiation",
+  "language": "java",
+  "description": "\nAvoid instantiating String objects; this is usually unnecessary since they are immutable and can be safely shared.\n        ",
+  "example": "private String bar = new String(\"bar\"); // just do a String bar = \"bar\";",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 40,
+  "branches": 8,
+  "apis": 6,
+  "test": [
+    {
+      "description": "new 'new String's",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String bar = new String(\"bar\");\n    private String baz = new String();\n}\n        "
+    },
+    {
+      "description": "new String array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String[] bar = new String[5];\n}\n        "
+    },
+    {
+      "description": "using multiple parameter constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        byte[] bytes = new byte[50];\n        String bar = new String(bytes, 0, bytes.length);\n    }\n}\n        "
+    },
+    {
+      "description": "using 4 parameter constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        byte[] bytes = new byte[50];\n        String bar = new String(bytes, 0, bytes.length, \"some-encoding\");\n    }\n}\n        "
+    },
+    {
+      "description": "byte array constructor is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        byte[] bytes = new byte[50];\n        String bar = new String(bytes);\n    }\n}\n        "
+    },
+    {
+      "description": "Method returning new String",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String foo() {\n        return new String(\"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "Not a new String",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.String;\npublic class Foo {\n    String foo() {\n        return new String(\"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "Returns new String(str)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String foo(String str) {\n        return new String(str);\n    }\n}\n        "
+    },
+    {
+      "description": "#2141 [java] StringInstatiation: False negative with String-array access",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        10
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        String[] arr = getArray();\n        String s = new String(arr[0]);\n        // better\n        String s2 = arr[0];\n    }\n    public void bar2() {\n        String[][] arr = getArray2();\n        String s = new String(arr[0][0]);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] StringInstantiation: false negative when using method result #3848",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    String getLiteral() {\n        return \"foo\";\n    }\n    String foo() {\n        return new String(getLiteral()); // should report a warning at this line\n    }\n}\n"
+    },
+    {
+      "description": "[java] StringInstantiation: False-positive when using new String(charArray) #4874",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void barVar() {\n        var charArray = new char[] { 'a', 'b' };\n        var s1 = new String(charArray);\n        var s2 = new String(charArray, 0, charArray.length);\n    }\n\n    public void barTyped() {\n        char[] charArray = new char[] { 'a', 'b' };\n        String s1 = new String(charArray);\n        String s2 = new String(charArray, 0, charArray.length);\n    }\n\n    public void codePoints() {\n        int[] intArray = new int[] { 65, 66, 67 }; // ABC\n        String s = new String(intArray, 0, intArray.length);\n    }\n}\n"
+    },
+    {
+      "description": "FP in switch #5050",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Example {\n                String foo(Object foo) {\n                    return switch (foo) {\n                        case char[] array -> new String(array);\n                        case String string -> string;\n                        default -> throw new RuntimeException();\n                    };\n                }\n            }\n            "
+    }
+  ]
+}

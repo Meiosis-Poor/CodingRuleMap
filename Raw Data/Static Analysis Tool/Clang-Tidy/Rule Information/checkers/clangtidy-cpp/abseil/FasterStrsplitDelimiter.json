@@ -1,0 +1,35 @@
+{
+  "name": "FasterStrsplitDelimiter",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-faster-strsplit-delimiter",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 126,
+  "branches": 11,
+  "apis": 95,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        43,
+        47,
+        51,
+        55,
+        59,
+        64,
+        68,
+        72,
+        77,
+        87,
+        91,
+        95,
+        99,
+        117
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11-or-later %s abseil-faster-strsplit-delimiter %t\n\nnamespace absl {\n\nclass string_view {\n  public:\n    string_view();\n    string_view(const char *);\n};\n\nnamespace strings_internal {\nstruct Splitter {};\nstruct MaxSplitsImpl {\n  MaxSplitsImpl();\n  ~MaxSplitsImpl();\n};\n} // namespace strings_internal\n\ntemplate <typename Delim>\nstrings_internal::Splitter StrSplit(absl::string_view, Delim) {\n  return {};\n}\ntemplate <typename Delim, typename Pred>\nstrings_internal::Splitter StrSplit(absl::string_view, Delim, Pred) {\n  return {};\n}\n\nclass ByAnyChar {\n  public:\n    explicit ByAnyChar(absl::string_view);\n    ~ByAnyChar();\n};\n\ntemplate <typename Delim>\nstrings_internal::MaxSplitsImpl MaxSplits(Delim, int) {\n  return {};\n}\n\n} // namespace absl\n\nvoid SplitDelimiters() {\n  absl::StrSplit(\"ABC\", \"A\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", 'A');\n\n  absl::StrSplit(\"ABC\", \"\\x01\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\x01');\n\n  absl::StrSplit(\"ABC\", \"\\001\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\001');\n\n  absl::StrSplit(\"ABC\", R\"(A)\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", 'A');\n\n  absl::StrSplit(\"ABC\", R\"(')\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\'');\n\n  absl::StrSplit(\"ABC\", R\"(\n)\");\n  // CHECK-MESSAGES: [[@LINE-2]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\n');\n\n  absl::StrSplit(\"ABC\", R\"delimiter(A)delimiter\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit() called with a string literal consisting of a single character; consider using the character overload [abseil-faster-strsplit-delimiter]\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", 'A');\n\n  absl::StrSplit(\"ABC\", absl::ByAnyChar(\"\\n\"));\n  // CHECK-MESSAGES: [[@LINE-1]]:41: warning: absl::StrSplit()\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\n');\n\n  // Works with predicate\n  absl::StrSplit(\"ABC\", \"A\", [](absl::string_view) { return true; });\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit()\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", 'A', [](absl::string_view) { return true; });\n\n  // Doesn't do anything with other strings lenghts.\n  absl::StrSplit(\"ABC\", \"AB\");\n  absl::StrSplit(\"ABC\", absl::ByAnyChar(\"\"));\n  absl::StrSplit(\"ABC\", absl::ByAnyChar(\" \\t\"));\n\n  // Escapes a single quote in the resulting character literal.\n  absl::StrSplit(\"ABC\", \"'\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit()\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\'');\n\n  absl::StrSplit(\"ABC\", \"\\\"\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit()\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", '\\\"');\n\n  absl::StrSplit(\"ABC\", absl::MaxSplits(\"\\t\", 1));\n  // CHECK-MESSAGES: [[@LINE-1]]:41: warning: absl::MaxSplits()\n  // CHECK-FIXES: absl::StrSplit(\"ABC\", absl::MaxSplits('\\t', 1));\n\n  auto delim = absl::MaxSplits(absl::ByAnyChar(\" \"), 1);\n  // CHECK-MESSAGES: [[@LINE-1]]:48: warning: absl::MaxSplits()\n  // CHECK-FIXES: auto delim = absl::MaxSplits(' ', 1);\n}\n\n#define MACRO(str) absl::StrSplit(\"ABC\", str)\n\nvoid Macro() {\n  MACRO(\"A\");\n}\n\ntemplate <typename T>\nvoid FunctionTemplate() {\n  // This one should not warn because ByAnyChar is a dependent type.\n  absl::StrSplit(\"TTT\", T(\"A\"));\n\n  // This one will warn, but we are checking that we get a correct warning only\n  // once.\n  absl::StrSplit(\"TTT\", \"A\");\n  // CHECK-MESSAGES: [[@LINE-1]]:25: warning: absl::StrSplit()\n  // CHECK-FIXES: absl::StrSplit(\"TTT\", 'A');\n}\n\nvoid FunctionTemplateCaller() {\n  FunctionTemplate<absl::ByAnyChar>();\n  FunctionTemplate<absl::string_view>();\n}"
+    }
+  ]
+}

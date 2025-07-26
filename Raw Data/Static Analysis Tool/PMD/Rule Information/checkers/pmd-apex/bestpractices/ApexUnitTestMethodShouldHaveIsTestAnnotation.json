@@ -1,0 +1,41 @@
+{
+  "name": "ApexUnitTestMethodShouldHaveIsTestAnnotation",
+  "language": "apex",
+  "description": "\nApex test methods should have `@isTest` annotation instead of the `testMethod` keyword,\nas `testMethod` is deprecated.\nSalesforce advices to use [@isTest](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_classes_annotation_isTest.htm)\nannotation for test classes and methods.\n        ",
+  "example": "@isTest\nprivate class ATest {\n    @isTest\n    static void methodATest() {\n    }\n    static void methodBTest() {\n    }\n    @isTest static void methodCTest() {\n        System.assert(1==2);\n    }\n    static testmethod void methodCTest() {\n        System.debug('I am a debug statement');\n    }\n    private void fetchData() {\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Problematic apex unit test methods - test methods should have @isTest annotation.",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        18
+      ],
+      "code": "\n@isTest\nprivate class ATest {\n    @isTest\n    static void methodATest() {\n    }\n    static testmethod void methodBTest() {\n        System.assert(1==2);\n    }\n    @isTest static void methodCTest() {\n    }\n    @isTest\n    static void methodDTest() {\n        System.assert(3==3);\n    }\n    static void methodETest() {\n        System.debug('I am a debug statement.');\n    }\n    static testmethod void methodFTest() {\n        System.assertEquals(1,2);\n    }\n    private void fetchData() {\n    }\n}\n        "
+    },
+    {
+      "description": "Test methods should have @isTest annotation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\nprivate class ATest {\n    @setUp\n    static void setUp(){\n    }\n    @isTest\n    static void methodATestOne() {\n        System.assertEquals(1,2);\n    }\n    @isTest\n    static void methodBTest() {\n        System.assertEquals(1,2);\n    }\n    @isTest static void methodC() {\n        System.assertEquals(1,2);\n    }\n    private void fetchData() {\n    }\n}\n        "
+    },
+    {
+      "description": "Avoid false positive in non test class methods.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nprivate class A {\n    private void fetchData() {\n        System.assertEquals(1,1);\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with @testsetup #3282",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\npublic class TestFactory {\n    @testsetup static void setup() {\n        System.assertEquals(null, null, 'this should be null');\n    }\n    @isTest static void testCase1() { }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "StaticDefinitionInAnonymousNamespace",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-static-definition-in-anonymous-namespace",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 60,
+  "branches": 5,
+  "apis": 37,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        8,
+        11,
+        14,
+        23,
+        31,
+        43,
+        49,
+        56
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-static-definition-in-anonymous-namespace %t\n\nnamespace {\n\nint a = 1;\nconst int b = 1;\nstatic int c = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: 'c' is a static definition in anonymous namespace; static is redundant here [readability-static-definition-in-anonymous-namespace]\n// CHECK-FIXES: {{^}}int c = 1;\nstatic const int d = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'd' is a static definition in anonymous namespace\n// CHECK-FIXES: {{^}}const int d = 1;\nconst static int e = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'e' is a static definition in anonymous namespace\n// CHECK-FIXES: {{^}}const int e = 1;\n\nvoid f() {\n  int a = 1;\n  static int b = 1;\n}\n\nstatic int g() {\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: 'g' is a static definition in anonymous namespace\n// CHECK-FIXES: {{^}}int g() {\n  return 1;\n}\n\n#define DEFINE_STATIC static\n// CHECK-FIXES: {{^}}#define DEFINE_STATIC static\nDEFINE_STATIC int h = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:19: warning: 'h' is a static definition in anonymous namespace\n// CHECK-FIXES: {{^}}DEFINE_STATIC int h = 1;\n\n#define DEFINE_STATIC_VAR(x) static int x = 2\n// CHECK-FIXES: {{^}}#define DEFINE_STATIC_VAR(x) static int x = 2\nDEFINE_STATIC_VAR(i);\n// CHECK-FIXES: {{^}}DEFINE_STATIC_VAR(i);\n\nnamespace inner {\nint a = 1;\nconst int b = 1;\nstatic int c = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: 'c' is a static definition in anonymous namespace; static is redundant here [readability-static-definition-in-anonymous-namespace]\n// CHECK-FIXES: {{^}}int c = 1;\nnamespace deep_inner {\nint a = 1;\nconst int b = 1;\nstatic int c = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: 'c' is a static definition in anonymous namespace; static is redundant here [readability-static-definition-in-anonymous-namespace]\n// CHECK-FIXES: {{^}}int c = 1;\n} // namespace deep_inner\n} // namespace inner\n\ntemplate<typename T>\nstatic void printTemplate(T&&) {}\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: 'printTemplate' is a static definition in anonymous namespace; static is redundant here [readability-static-definition-in-anonymous-namespace]\n// CHECK-FIXES: {{^}}void printTemplate(T&&) {}\n\nvoid testTemplate() {\n  printTemplate(5);\n  printTemplate(5U);\n  printTemplate(\"some string\");\n}\n\n} // namespace\n\nnamespace N {\n\nint a = 1;\nconst int b = 1;\nstatic int c = 1;\nstatic const int d = 1;\nconst static int e = 1;\n\n} // namespace N"
+    }
+  ]
+}

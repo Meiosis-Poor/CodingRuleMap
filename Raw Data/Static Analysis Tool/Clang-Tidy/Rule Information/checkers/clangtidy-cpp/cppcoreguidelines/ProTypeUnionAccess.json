@@ -1,0 +1,26 @@
+{
+  "name": "ProTypeUnionAccess",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-pro-type-union-access",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 32,
+  "branches": 2,
+  "apis": 15,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        32,
+        34,
+        36,
+        38,
+        47
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-union-access %t\n\nunion U {\n  bool union_member1;\n  char union_member2;\n} u;\n\nunion W {\n  template <class TP> operator TP *() const;\n};\n\nstruct S {\n  int non_union_member;\n  union {\n    bool union_member;\n  };\n  union {\n    char union_member2;\n  } u;\n} s;\n\n\nvoid f(char);\nvoid f2(U);\nvoid f3(U&);\nvoid f4(U*);\nW f5();\n\nvoid check()\n{\n  u.union_member1 = true;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not access members of unions; consider using (boost::)variant instead [cppcoreguidelines-pro-type-union-access]\n  auto b = u.union_member2;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not access members of unions; consider using (boost::)variant instead\n  auto a = &s.union_member;\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: do not access members of unions; consider using (boost::)variant instead\n  f(s.u.union_member2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: do not access members of unions; consider using (boost::)variant instead\n\n  s.non_union_member = 2; // OK\n\n  U u2 = u; // OK\n  f2(u); // OK\n  f3(u); // OK\n  f4(&u); // OK\n  void *ret = f5();\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: do not access members of unions; consider using (boost::)variant instead\n}"
+    }
+  ]
+}

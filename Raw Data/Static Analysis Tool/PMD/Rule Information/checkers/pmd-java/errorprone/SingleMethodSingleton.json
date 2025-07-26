@@ -1,0 +1,34 @@
+{
+  "name": "SingleMethodSingleton",
+  "language": "java",
+  "description": "\nSome classes contain overloaded getInstance. The problem with overloaded getInstance methods\nis that the instance created using the overloaded method is not cached and so,\nfor each call and new objects will be created for every invocation.\n        ",
+  "example": "public class Singleton {\n\n    private static Singleton singleton = new Singleton( );\n\n    private Singleton(){ }\n\n    public static Singleton getInstance( ) {\n        return singleton;\n    }\n\n    public static Singleton getInstance(Object obj){\n        Singleton singleton = (Singleton) obj;\n        return singleton;           //violation\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 38,
+  "branches": 3,
+  "apis": 3,
+  "test": [
+    {
+      "description": "Not OK! Has overridden getInstance() methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Singleton {\n\n    private static Singleton singleton = new Singleton();\n\n    private Singleton() { }\n\n    public static Singleton getInstance() {\n        return singleton;\n    }\n\n    public static Singleton getInstance(Object obj) {\n        Singleton singleton = (Singleton) obj;\n        return singleton;\n    }\n}\n        "
+    },
+    {
+      "description": "OK! Has only one Singleton",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Singleton {\n    private static Singleton instance = null;\n\n    public static Singleton getInstance() {\n        synchronized(Singleton.class) {\n            if (instance == null) {\n                instance = new Singleton();\n            }\n        }\n        return instance;\n    }\n}\n        "
+    },
+    {
+      "description": "OK! Has two different getInstance() in different classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            \nfinal class Siblings {\n    static class Inner1 {\n        static Inner1 getInstance() { return null; }\n    }\n    static class Inner2 {\n        static Inner2 getInstance() { return null; }\n    }\n}\n        "
+    }
+  ]
+}

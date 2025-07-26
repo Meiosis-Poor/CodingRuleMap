@@ -1,0 +1,56 @@
+{
+  "name": "TypeShadowsBuiltInNamespace",
+  "language": "apex",
+  "description": "\n            This rule finds Apex classes, enums, and interfaces that have the same name as a class, enum, or interface in the `System`\n            or `Schema` namespace.\n            Shadowing these namespaces in this way can lead to confusion and unexpected behavior.\n            Code that intends to reference a `System` or `Schema` class, enum, or interface may inadvertently reference the locally defined type instead.\n            This can result in ambiguous code and unexpected runtime behavior.\n            It is best to avoid naming your types the same as those in the `System` or `Schema` namespace to prevent these issues.\n\n            Note that the list of classes, enums, and interfaces in the `System` and `Schema` namespaces are determined through\n            [io.github.apex-dev-tools:standard-types](https://github.com/apex-dev-tools/standard-types). It is based on the contents of\n            Salesforce's [Apex Reference Guide / System Namespace](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_namespace_System.htm)\n            and [Apex Reference Guide / Schema Namespace](https://developer.salesforce.com/docs/atlas.en-us.apexref.meta/apexref/apex_namespace_Schema.htm).\n            As Salesforce introduces new types into the `System` and `Schema` namespaces, the rule might not always recognize\n            the new types and produce false-negatives und the standard types are updated.\n        ",
+  "example": "// Violation: Causes a collision with the `System.Database` class.\npublic class Database {\n    public static String query() {\n        return 'Hello World';\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 113,
+  "branches": 12,
+  "apis": 9,
+  "test": [
+    {
+      "description": "Shadows a class in the System namespace",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Database {\n}\n        "
+    },
+    {
+      "description": "Shadows an enum in the System namespace",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class AccessType {\n}\n        "
+    },
+    {
+      "description": "Shadows an interface in the System namespace",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Callable {\n}\n        "
+    },
+    {
+      "description": "No shadowing",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooBar{\n}\n        "
+    },
+    {
+      "description": "Shadows a class in the Schema namespace",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class DataCategory { }\n"
+    },
+    {
+      "description": "Shadows an enum in the Schema namespace",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class DisplayType { }\n"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "CleanupCtad",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-cleanup-ctad",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 40,
+  "branches": 1,
+  "apis": 29,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        81,
+        85,
+        89,
+        93,
+        98,
+        103
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s abseil-cleanup-ctad -std=c++17 %t\n\nnamespace std {\n\ntemplate <typename, typename>\nstruct is_same {\n  static const bool value = false;\n};\n\ntemplate <typename T>\nstruct is_same<T, T> { static const bool value = true; };\n\ntemplate <typename>\nclass function {\npublic:\n  template <typename T>\n  function(T) {}\n  function(const function &) {}\n};\n\n} // namespace std\n\nnamespace absl {\n\nnamespace cleanup_internal {\n\nstruct Tag {};\n\ntemplate <typename Callback>\nclass Storage {\npublic:\n  Storage() = delete;\n\n  explicit Storage(Callback callback) {}\n\n  Storage(Storage &&other) {}\n\n  Storage(const Storage &other) = delete;\n\n  Storage &operator=(Storage &&other) = delete;\n\n  Storage &operator=(const Storage &other) = delete;\n\nprivate:\n  bool is_callback_engaged_;\n  alignas(Callback) char callback_buffer_[sizeof(Callback)];\n};\n\n} // namespace cleanup_internal\n\ntemplate <typename Arg, typename Callback = void()>\nclass Cleanup final {\npublic:\n  Cleanup(Callback callback) // NOLINT\n      : storage_(static_cast<Callback &&>(callback)) {}\n\n  Cleanup(Cleanup &&other) = default;\n\n  void Cancel() &&;\n\n  void Invoke() &&;\n\n  ~Cleanup();\n\nprivate:\n  cleanup_internal::Storage<Callback> storage_;\n};\n\ntemplate <typename Callback>\nCleanup(Callback callback) -> Cleanup<cleanup_internal::Tag, Callback>;\n\ntemplate <typename... Args, typename Callback>\nabsl::Cleanup<cleanup_internal::Tag, Callback> MakeCleanup(Callback callback) {\n  return {static_cast<Callback &&>(callback)};\n}\n\n} // namespace absl\n\nvoid test() {\n  auto a = absl::MakeCleanup([] {});\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer absl::Cleanup's class template argument deduction pattern in C++17 and higher\n  // CHECK-FIXES: {{^}}  absl::Cleanup a = [] {};{{$}}\n\n  auto b = absl::MakeCleanup(std::function<void()>([] {}));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer absl::Cleanup{{.*}}C++17 and higher\n  // CHECK-FIXES: {{^}}  absl::Cleanup b = std::function<void()>([] {});{{$}}\n\n  const auto c = absl::MakeCleanup([] {});\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: prefer absl::Cleanup{{.*}}C++17 and higher\n  // CHECK-FIXES: {{^}}  const absl::Cleanup c = [] {};{{$}}\n\n  const auto d = absl::MakeCleanup(std::function<void()>([] {}));\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: prefer absl::Cleanup{{.*}}C++17 and higher\n  // CHECK-FIXES: {{^}}  const absl::Cleanup d = std::function<void()>([] {});{{$}}\n\n  // Preserves extra parens\n  auto e = absl::MakeCleanup(([] {}));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer absl::Cleanup{{.*}}C++17 and higher\n  // CHECK-FIXES: {{^}}  absl::Cleanup e = ([] {});{{$}}\n\n  // Preserves comments\n  auto f = /* a */ absl::MakeCleanup(/* b */ [] { /* c */ } /* d */) /* e */;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer absl::Cleanup{{.*}}C++17 and higher\n  // CHECK-FIXES: {{^}}  absl::Cleanup f = /* a */ /* b */ [] { /* c */ } /* d */ /* e */;{{$}}\n}"
+    }
+  ]
+}

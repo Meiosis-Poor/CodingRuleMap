@@ -1,0 +1,213 @@
+{
+  "name": "EqualsAvoidNull",
+  "language": "java",
+  "description": "<div>\n Checks that any combination of String literals\n is on the left side of an {@code equals()} comparison.\n Also checks for String literals assigned to some field\n (such as {@code someString.equals(anotherString = \"text\")}).\n </div>\n\n <p>Rationale: Calling the {@code equals()} method on String literals\n will avoid a potential {@code NullPointerException}. Also, it is\n pretty common to see null checks right before equals comparisons\n but following this rule such checks are not required.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 345,
+  "branches": 48,
+  "apis": 59,
+  "test": [
+    {
+      "description": "Auto test from InputEqualsAvoidNull.java",
+      "expected-problems": 55,
+      "expected-linenumbers": [
+        42,
+        44,
+        46,
+        48,
+        50,
+        52,
+        74,
+        76,
+        78,
+        80,
+        82,
+        84,
+        244,
+        249,
+        251,
+        252,
+        254,
+        255,
+        256,
+        257,
+        274,
+        275,
+        276,
+        277,
+        279,
+        280,
+        301,
+        306,
+        307,
+        314,
+        317,
+        318,
+        320,
+        321,
+        322,
+        326,
+        327,
+        328,
+        329,
+        342,
+        343,
+        344,
+        345,
+        346,
+        350,
+        351,
+        352,
+        353,
+        364,
+        375,
+        401,
+        422,
+        423,
+        424,
+        429
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\nimport java.util.Map;\npublic class InputEqualsAvoidNull {\n    public boolean equals(Object o) {\n    return false;\n    }\n    public void flagForEquals() {\n        Object o = new Object();\n        String s = \"pizza\";\n        o.equals(\"hot pizza\");\n        o.equals(s = \"cold pizza\");\n        o.equals(((s = \"cold pizza\")));\n        o.equals(\"cheese\" + \"ham\" + \"sauce\");\n        o.equals((\"cheese\" + \"ham\") + \"sauce\");\n        o.equals(((\"cheese\" + \"ham\")) + \"sauce\");\n    }\n    public void flagForEqualsIgnoreCase() {\n        String s = \"pizza\";\n        s.equalsIgnoreCase(\"hot pizza\"); \n        s.equalsIgnoreCase(s = \"cold pizza\"); \n        s.equalsIgnoreCase(((s = \"cold pizza\"))); \n        s.equalsIgnoreCase(\"cheese\"+\"ham\"+\"sauce\");\n        s.equalsIgnoreCase((\"cheese\"+\"ham\")+\"sauce\");\n        s.equalsIgnoreCase(((\"cheese\"+\"ham\"))+\"sauce\");\n    }\n    public void flagForBoth() {\n        Object o = new Object();\n        String s = \"pizza\";\n        o.equals(\"hot pizza\");\n        o.equals(s = \"cold pizza\");\n        o.equals(((s = \"cold pizza\")));\n        o.equals(\"cheese\" + \"ham\" + \"sauce\");\n        o.equals((\"cheese\" + \"ham\") + \"sauce\");\n        o.equals(((\"cheese\" + \"ham\")) + \"sauce\");\n        s.equalsIgnoreCase(\"hot pizza\");\n        s.equalsIgnoreCase(s = \"cold pizza\");\n        s.equalsIgnoreCase(((s = \"cold pizza\")));\n        s.equalsIgnoreCase(\"cheese\"+\"ham\"+\"sauce\");\n        s.equalsIgnoreCase((\"cheese\"+\"ham\")+\"sauce\");\n        s.equalsIgnoreCase(((\"cheese\"+\"ham\"))+\"sauce\");\n    }\n    public void noFlagForEquals() {\n        Object o = new Object();\n        String s = \"peperoni\";\n        o.equals(s += \"mushrooms\");\n        (s = \"thin crust\").equals(\"thick crust\");\n        (s += \"garlic\").equals(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equals(\"California Style\" + \"Any Style\");\n        equals(\"peppers\");\n        \"onions\".equals(o);\n        o.equals(new Object());\n        o.equals(equals(o));\n        equals(\"yummy\");\n        new Object().equals(\"more cheese\");\n        InputEqualsAvoidNullOutter outter = new InputEqualsAvoidNullOutter();\n        outter.new InputEqualsAvoidNullInner().equals(\"eat pizza and enjoy inner classes\");\n    }\n    public void noFlagForEqualsIgnoreCase() {\n        String s = \"peperoni\";\n        String s1 = \"tasty\";\n        s.equalsIgnoreCase(s += \"mushrooms\");\n        s1.equalsIgnoreCase(s += \"mushrooms\");\n        (s = \"thin crust\").equalsIgnoreCase(\"thick crust\");\n        (s += \"garlic\").equalsIgnoreCase(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equalsIgnoreCase(\"California Style\" + \"Any Style\");\n        \"onions\".equalsIgnoreCase(s);\n        s.equalsIgnoreCase(new String());\n        s.equals(s1);\n        new String().equalsIgnoreCase(\"more cheese\");\n    }\n    public void noFlagForBoth() {\n        Object o = new Object();\n        String s = \"peperoni\";\n        String s1 = \"tasty\";\n        o.equals(s += \"mushrooms\");\n        (s = \"thin crust\").equals(\"thick crust\");\n        (s += \"garlic\").equals(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equals(\"California Style\" + \"Any Style\");\n        equals(\"peppers\");\n        \"onions\".equals(o);\n        o.equals(new Object());\n        o.equals(equals(o));\n        equals(\"yummy\");\n        new Object().equals(\"more cheese\");\n        InputEqualsAvoidNullOutter outter = new InputEqualsAvoidNullOutter();\n        outter.new InputEqualsAvoidNullInner().equals(\"eat pizza and enjoy inner classes\");\n        s.equalsIgnoreCase(s += \"mushrooms\");\n        s1.equalsIgnoreCase(s += \"mushrooms\");\n        (s = \"thin crust\").equalsIgnoreCase(\"thick crust\");\n        (s += \"garlic\").equalsIgnoreCase(\"basil\");\n        (\"Chicago Style\"+\"NY Style\").equalsIgnoreCase(\"California Style\"+\"Any Style\");\n        \"onions\".equalsIgnoreCase(s);\n        s.equalsIgnoreCase(new String());\n        s.equals(s1);\n        new String().equalsIgnoreCase(\"more cheese\");\n    }\n}\nclass InputEqualsAvoidNullOutter {\n    public class InputEqualsAvoidNullInner {\n            public boolean equals(Object o) {\n                return true;\n            }\n    }\n}\nclass MyString {\n    public boolean equals() {\n        return true;\n    }\n    public boolean equals(String s1) {\n        return true;\n    }\n    public boolean equalsIgnoreCase() {\n        return true;\n    }\n    public boolean equalsIgnoreCase(String s1) {\n        return true;\n    }\n    private String pizza;\n    public void main() {\n        MyString myString = new MyString();\n        myString.equals();\n        myString.equals(\"what\");\n        myString.equalsIgnoreCase();\n        myString.equalsIgnoreCase(\"what\");\n        myString.equals(this.pizza = \"cold pizza\");\n    }\n}\nclass NewTest {\n    static String classVar;\n    String instanceVar;\n    NewTest testObj = new NewTest(\"\");\n    NewTest(String param) {\n        param.equals(\"\"); \n    }\n    public void method(String param) {\n        final String localVar = \"\";\n        localVar.equals(\"\"); \n        param.equals(\"\"); \n        classVar.equals(\"\"); \n        instanceVar.equals(\"\"); \n        NewTest.classVar.equals(\"\"); \n        this.classVar.equals(\"\"); \n        this.instanceVar.equals(\"\"); \n        NewTest testObj = new NewTest(\"\");\n        this.testObj.instanceVar.equals(\"\"); \n        testObj.classVar.equals(\"\"); \n        for (Nested instanceVar = new Nested(); instanceVar != null; ) {\n            instanceVar.equals(1);\n            if (instanceVar.equals(\"\")) {\n                instanceVar.equals(\"\");\n            }\n        }\n        class Inner {\n            String instanceVarInner;\n            public void main() {\n                classVar.equals(\"\"); \n                instanceVar.equals(\"\"); \n                NewTest.classVar.equals(\"\"); \n                instanceVarInner.equals(\"\"); \n                this.instanceVarInner.equals(\"\"); \n                localVar.equals(\"\"); \n                NewTest testObj = new NewTest(\"\");\n                testObj.instanceVar.equals(\"\"); \n                testObj.classVar.equals(\"\"); \n                Inner testInnerObj = new Inner();\n                testInnerObj.instanceVarInner.equals(\"\"); \n            }\n        }\n        Inner testInnerObj = new Inner();\n        testInnerObj.instanceVarInner.equals(\"\"); \n        Nested.nestedClassVar.equals(\"\"); \n        Nested Nested = new Nested(); \n        Nested.nestedInstanceVar.equals(\"\"); \n        Nested.nestedClassVar.equals(\"\");\n    }\n    static {\n        final String s = \"\";\n        s.equals(\"\"); \n        {\n            final String x = \"\";\n            class A {\n                void foo() {\n                    s.equals(\"\"); \n                    x.equals(\"\"); \n                }\n            }\n        }\n    }\n    void foo(String param) {\n        try {\n            param.equals(\"\"); \n            do {\n                String s = \"\";\n                s.equals(\"\"); \n            } while (param.equals(\"\")); \n        } catch (Exception e) {\n            while (param.equals(\"\")) { \n                for (String s = \"\"; s.equals(\"\"); ){ \n                    if (s.equals(\"\")) { \n                        synchronized (this) {\n                            switch (s) {\n                                case \"1\": String str = \"\";\n                                str.equals(\"\"); \n                                case \"2\": s.equals(\"\"); str = \"\"; \n                                str.equals(\"\"); \n                                case \"3\": param.equals(\"\"); \n                                    break;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n    static class Nested {\n        static String nestedClassVar;\n        String nestedInstanceVar;\n        public void method() {\n            classVar.equals(\"\"); \n            NewTest.classVar.equals(\"\"); \n            this.nestedInstanceVar.equals(\"\"); \n            nestedClassVar.equals(\"\"); \n            nestedInstanceVar.equals(\"\"); \n            class Inner {\n                public void method() {\n                    classVar.equals(\"\"); \n                    NewTest.classVar.equals(\"\"); \n                    nestedClassVar.equals(\"\"); \n                    nestedInstanceVar.equals(\"\"); \n                }\n            }\n        }\n    }\n    enum EmbeddedEnum {\n        A(129),\n        B(283),\n        C(1212) {\n            String constDefVar;\n            public void doSomething() {\n                constDefVar.equals(\"\"); \n            }\n        };\n        Map.Entry<String,Long> enumInstance;\n        EmbeddedEnum(int i) {\n            enumInstance.equals(\"\");\n        }\n        public static void doSomethingStatic() {\n            enumStatic.equals(\"\"); \n            enumStatic.equals(null);\n        }\n        static String enumStatic;\n    }\n    private String foo() {return \"\";}\n    private Object foo(int i) {return i;}\n    Object o2 = new Object();\n    Object o3 = new Object();\n    private void bar() {\n        foo().equals(\"\"); \n        foo(0).equals(\"\");\n        this.foo().equals(\"\");\n        Object o1 = new Object(); o1.equals(\"\");\n        o2.equals(\"\"); String o2 = \"\";\n        o3.equals(\"\");\nString o3 = \"\";\n    }\n}\nclass Anonymous {\n    public static void main(String[] args) {\n        Runnable anonym = new Runnable() {\n            String nullableStr = null;\n            public void run() {\n                nullableStr.equals(\"Null\"); \n            };\n        };\n        Object nullableStr = new Object();\n        nullableStr.equals(\"\");\n    }\n    {}\n}\nenum TestEnum {\n    ONE;\n    public void foo() {\n        TestEnum.ONE.equals(this);\n        this.ONE.equals(this);\n    }\n}\nclass TestConcatenations {\n    String s = null;\n    void foo() {\n        s.equals(s + s); \n        s.equals(\"a\" + \"b\"); \n        s.equals(getInt() + s); \n        s.equals(getInt() + getInt());\n        s.endsWith(\"a\");\n        String s = \"\";\n        if (!s.equals(\"Hi[EOL]\"+System.getProperty(\"line.separator\")))\n            foo();\n    }\n    int getInt() {\n        return (Integer) null;\n    }\n}\nclass TestThisWithNotStringInstance {\n    MyString notString;\n    void foo() {\n        this.notString.equals(\"\");\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNull2.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        11,
+        12,
+        13,
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\npublic class InputEqualsAvoidNull2 {\n    void foo() {\n        String s = \"\";\n        s.equals(s + s); \n        s.equals(\"a\" + \"b\"); \n        s.equals(getInt() + s); \n        s.equals(getInt() + getInt());\n        s.endsWith(\"a\");\n        if (!s.equals(\"Hi[EOL]\"+System.getProperty(\"\"))) \n            foo();\n    }\n    int getInt() {\n        return 0;\n    }\n    public void flagForEquals() {\n        Object o = new Object();\n        String s = \"pizza\";\n        o.equals(\"hot pizza\");\n        o.equals(s = \"cold pizza\");\n        o.equals(((s = \"cold pizza\")));\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullEnhancedInstanceof.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        14,
+        17,
+        25,
+        26,
+        27,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\npublic class InputEqualsAvoidNullEnhancedInstanceof {\n    public InputEqualsAvoidNullEnhancedInstanceof(Object str) {\n        if (str instanceof String myString) {\n            System.out.println(\"Mystring!!\");\n            boolean myBool = myString.equals(\"MyString!!\"); \n            boolean myOtherBool = myString.equals(str);\n        } else if (str instanceof String oneMoreString) {\n            if(oneMoreString.equals(\"test\")) { \n                System.out.println(\"Test!!\");\n            }\n        }\n    }\n    void foo (Object string) {\n        if(string instanceof String string1) {\n            final boolean myBool = string1.equals(\"test1\") \n                    || string1.equals(\"test1.5\") \n                    || string1.equals(\"test2\") || \n                    string1.equals(\"test3\"); \n            if(string instanceof Integer integer) {\n                String string5 = integer.toString();\n                if(integer.toString().equals(\"integer\")) {\n                }\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullIgnoreCase.java",
+      "expected-problems": 43,
+      "expected-linenumbers": [
+        244,
+        249,
+        251,
+        252,
+        254,
+        255,
+        256,
+        257,
+        274,
+        275,
+        276,
+        277,
+        279,
+        280,
+        301,
+        306,
+        307,
+        314,
+        317,
+        318,
+        320,
+        321,
+        322,
+        325,
+        327,
+        328,
+        329,
+        342,
+        343,
+        344,
+        345,
+        346,
+        350,
+        351,
+        352,
+        353,
+        364,
+        375,
+        401,
+        422,
+        423,
+        424,
+        428
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\nimport java.util.Map;\npublic class InputEqualsAvoidNullIgnoreCase {\n    public boolean equals(Object o) {\n    return false;\n    }\n    public void flagForEquals() {\n        Object o = new Object();\n        String s = \"pizza\";\n        o.equals(\"hot pizza\");\n        o.equals(s = \"cold pizza\");\n        o.equals(((s = \"cold pizza\")));\n        o.equals(\"cheese\" + \"ham\" + \"sauce\");\n        o.equals((\"cheese\" + \"ham\") + \"sauce\");\n        o.equals(((\"cheese\" + \"ham\")) + \"sauce\");\n    }\n    public void flagForEqualsIgnoreCase() {\n        String s = \"pizza\";\n        s.equalsIgnoreCase(\"hot pizza\");\n        s.equalsIgnoreCase(s = \"cold pizza\");\n        s.equalsIgnoreCase(((s = \"cold pizza\")));\n        s.equalsIgnoreCase(\"cheese\" + \"ham\" + \"sauce\");\n        s.equalsIgnoreCase((\"cheese\" + \"ham\") + \"sauce\");\n        s.equalsIgnoreCase(((\"cheese\" + \"ham\")) + \"sauce\");\n    }\n    public void flagForBoth() {\n        Object o = new Object();\n        String s = \"pizza\";\n        o.equals(\"hot pizza\");\n        o.equals(s = \"cold pizza\");\n        o.equals(((s = \"cold pizza\")));\n        o.equals(\"cheese\" + \"ham\" + \"sauce\");\n        o.equals((\"cheese\" + \"ham\") + \"sauce\");\n        o.equals(((\"cheese\" + \"ham\")) + \"sauce\");\n        s.equalsIgnoreCase(\"hot pizza\");\n        s.equalsIgnoreCase(s = \"cold pizza\");\n        s.equalsIgnoreCase(((s = \"cold pizza\")));\n        s.equalsIgnoreCase(\"cheese\" + \"ham\" + \"sauce\");\n        s.equalsIgnoreCase((\"cheese\" + \"ham\") + \"sauce\");\n        s.equalsIgnoreCase(((\"cheese\" + \"ham\")) + \"sauce\");\n    }\n    public void noFlagForEquals() {\n        Object o = new Object();\n        String s = \"peperoni\";\n        o.equals(s += \"mushrooms\");\n        (s = \"thin crust\").equals(\"thick crust\");\n        (s += \"garlic\").equals(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equals(\"California Style\" + \"Any Style\");\n        equals(\"peppers\");\n        \"onions\".equals(o);\n        o.equals(new Object());\n        o.equals(equals(o));\n        equals(\"yummy\");\n        new Object().equals(\"more cheese\");\n        InputEqualsAvoidNullOutter1 outter = new InputEqualsAvoidNullOutter1();\n        outter.new InputEqualsAvoidNullInner().equals(\"eat pizza and enjoy inner classes\");\n    }\n    public void noFlagForEqualsIgnoreCase() {\n        String s = \"peperoni\";\n        String s1 = \"tasty\";\n        s.equalsIgnoreCase(s += \"mushrooms\");\n        s1.equalsIgnoreCase(s += \"mushrooms\");\n        (s = \"thin crust\").equalsIgnoreCase(\"thick crust\");\n        (s += \"garlic\").equalsIgnoreCase(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equalsIgnoreCase(\"California Style\" + \"Any Style\");\n        \"onions\".equalsIgnoreCase(s);\n        s.equalsIgnoreCase(new String());\n        s.equals(s1);\n        new String().equalsIgnoreCase(\"more cheese\");\n    }\n    public void noFlagForBoth() {\n        Object o = new Object();\n        String s = \"peperoni\";\n        String s1 = \"tasty\";\n        o.equals(s += \"mushrooms\");\n        (s = \"thin crust\").equals(\"thick crust\");\n        (s += \"garlic\").equals(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equals(\"California Style\" + \"Any Style\");\n        equals(\"peppers\");\n        \"onions\".equals(o);\n        o.equals(new Object());\n        o.equals(equals(o));\n        equals(\"yummy\");\n        new Object().equals(\"more cheese\");\n        InputEqualsAvoidNullOutter1 outter = new InputEqualsAvoidNullOutter1();\n        outter.new InputEqualsAvoidNullInner().equals(\"eat pizza and enjoy inner classes\");\n        s.equalsIgnoreCase(s += \"mushrooms\");\n        s1.equalsIgnoreCase(s += \"mushrooms\");\n        (s = \"thin crust\").equalsIgnoreCase(\"thick crust\");\n        (s += \"garlic\").equalsIgnoreCase(\"basil\");\n        (\"Chicago Style\" + \"NY Style\").equalsIgnoreCase(\"California Style\" + \"Any Style\");\n        \"onions\".equalsIgnoreCase(s);\n        s.equalsIgnoreCase(new String());\n        s.equals(s1);\n        new String().equalsIgnoreCase(\"more cheese\");\n    }\n}\nclass InputEqualsAvoidNullOutter1 {\n    public class InputEqualsAvoidNullInner {\n            public boolean equals(Object o) {\n                return true;\n            }\n    }\n}\nclass MyString1 {\n    public boolean equals() {\n        return true;\n    }\n    public boolean equals(String s1) {\n        return true;\n    }\n    public boolean equalsIgnoreCase() {\n        return true;\n    }\n    public boolean equalsIgnoreCase(String s1) {\n        return true;\n    }\n    private String pizza;\n    public void main() {\n        MyString1 myString = new MyString1();\n        myString.equals();\n        myString.equals(\"what\");\n        myString.equalsIgnoreCase();\n        myString.equalsIgnoreCase(\"what\");\n        myString.equals(this.pizza = \"cold pizza\");\n    }\n}\nclass NewTest1 {\n    static String classVar;\n    String instanceVar;\n    NewTest1 testObj = new NewTest1(\"\");\n    NewTest1(String param) {\n        param.equals(\"\"); \n    }\n    public void method(String param) {\n        final String localVar = \"\";\n        localVar.equals(\"\"); \n        param.equals(\"\"); \n        classVar.equals(\"\"); \n        instanceVar.equals(\"\"); \n        NewTest1.classVar.equals(\"\"); \n        this.classVar.equals(\"\"); \n        this.instanceVar.equals(\"\"); \n        NewTest1 testObj = new NewTest1(\"\");\n        this.testObj.instanceVar.equals(\"\"); \n        testObj.classVar.equals(\"\"); \n        for (Nested instanceVar = new Nested(); instanceVar != null; ) {\n            instanceVar.equals(1);\n            if (instanceVar.equals(\"\")) {\n                instanceVar.equals(\"\");\n            }\n        }\n        class Inner {\n            String instanceVarInner;\n            public void main() {\n                classVar.equals(\"\"); \n                instanceVar.equals(\"\"); \n                NewTest1.classVar.equals(\"\"); \n                instanceVarInner.equals(\"\"); \n                this.instanceVarInner.equals(\"\"); \n                localVar.equals(\"\"); \n                NewTest1 testObj = new NewTest1(\"\");\n                testObj.instanceVar.equals(\"\"); \n                testObj.classVar.equals(\"\"); \n                Inner testInnerObj = new Inner();\n                testInnerObj.instanceVarInner.equals(\"\"); \n            }\n        }\n        Inner testInnerObj = new Inner();\n        testInnerObj.instanceVarInner.equals(\"\"); \n        Nested.nestedClassVar.equals(\"\"); \n        Nested Nested = new Nested(); \n        Nested.nestedInstanceVar.equals(\"\"); \n        Nested.nestedClassVar.equals(\"\");\n    }\n    static {\n        final String s = \"\";\n        s.equals(\"\"); \n        {\n            final String x = \"\";\n            class A {\n                void foo() {\n                    s.equals(\"\"); \n                    x.equals(\"\"); \n                }\n            }\n        }\n    }\n    void foo(String param) {\n        try {\n            param.equals(\"\"); \n            do {\n                String s = \"\";\n                s.equals(\"\"); \n            } while (param.equals(\"\")); \n        } catch (Exception e) {\n            while (param.equals(\"\")) { \n                for (String s = \"\"; s.equals(\"\"); ){ \n                    if (s.equals(\"\")) { \n                        synchronized (this) {\n                            switch (s) {\n                                case \"1\":String str=\"\";str.equals(\"\");\n                                case \"2\": s.equals(\"\"); \n                                str = \"\"; str.equals(\"\"); \n                                case \"3\": param.equals(\"\"); \n                                    break;\n                            }\n                        }\n                    }\n                }\n            }\n        }\n    }\n    static class Nested {\n        static String nestedClassVar;\n        String nestedInstanceVar;\n        public void method() {\n            classVar.equals(\"\"); \n            NewTest1.classVar.equals(\"\"); \n            this.nestedInstanceVar.equals(\"\"); \n            nestedClassVar.equals(\"\"); \n            nestedInstanceVar.equals(\"\"); \n            class Inner {\n                public void method() {\n                    classVar.equals(\"\"); \n                    NewTest1.classVar.equals(\"\"); \n                    nestedClassVar.equals(\"\"); \n                    nestedInstanceVar.equals(\"\"); \n                }\n            }\n        }\n    }\n    enum EmbeddedEnum {\n        A(129),\n        B(283),\n        C(1212) {\n            String constDefVar;\n            public void doSomething() {\n                constDefVar.equals(\"\"); \n            }\n        };\n        Map.Entry<String,Long> enumInstance;\n        EmbeddedEnum(int i) {\n            enumInstance.equals(\"\");\n        }\n        public static void doSomethingStatic() {\n            enumStatic.equals(\"\"); \n            enumStatic.equals(null);\n        }\n        static String enumStatic;\n    }\n    private String foo() {return \"\";}\n    private Object foo(int i) {return i;}\n    Object o2 = new Object();\n    Object o3 = new Object();\n    private void bar() {\n        foo().equals(\"\"); \n        foo(0).equals(\"\");\n        this.foo().equals(\"\");\n        Object o1 = new Object(); o1.equals(\"\");\n        o2.equals(\"\"); String o2 = \"\";\n        o3.equals(\"\");\nString o3 = \"\";\n    }\n}\nclass Anonymous1 {\n    public static void main(String[] args) {\n        Runnable anonym = new Runnable() {\n            String nullableStr = null;\n            public void run() {\n                nullableStr.equals(\"Null\"); \n            };\n        };\n        Object nullableStr = new Object();\n        nullableStr.equals(\"\");\n    }\n    {}\n}\nenum TestEnum1 {\n    ONE;\n    public void foo() {\n        TestEnum1.ONE.equals(this);\n        this.ONE.equals(this);\n    }\n}\nclass TestConcatenations1 {\n    String s = null;\n    void foo() {\n        s.equals(s + s); \n        s.equals(\"a\" + \"b\"); \n        s.equals(getInt() + s); \n        s.equals(getInt() + getInt());\n        s.endsWith(\"a\");\n        String s = \"\";\n        if (!s.equals(\"Hi[EOL]\"+System.getProperty(\"line.separator\")))\n            foo();\n    }\n    int getInt() {\n        return (Integer) null;\n    }\n}\nclass TestThisWithNotStringInstance1 {\n    MyString1 notString;\n    void foo() {\n        this.notString.equals(\"\");\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullMisc.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        19
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\nimport java.util.function.BiFunction;\nimport java.util.function.Function;\npublic enum InputEqualsAvoidNullMisc {\n    TEST;\n    public void method() {}\n}\nclass Receiver {\n    public void foo4(Receiver this, String s) {\n        s.equals(\"abc\"); \n    }\n    private class Inner {\n        public Inner(Receiver Receiver.this) {}\n    }\n}\nclass Lambda {\n    Function<String, Integer> field1 =\n            notTrimmedString -> notTrimmedString.trim().length();\n    BiFunction<String, String, Integer> field2 =\n            (first, second) -> (first + second).length();\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullNested.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        24,
+        25,
+        26,
+        32,
+        35,
+        38,
+        41,
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\nimport java.io.IOException;\nimport java.io.Reader;\npublic class InputEqualsAvoidNullNested {\n  public void foo(Reader in) throws IOException {\n    int c;\n    while(true) {\n      c = in.read();\n      if (c == -1)\n        break;\n      if (c == '<') {\n        c = in.read();\n        if (c == '/') {\n          String nm = in.toString();\n          if (nm.equalsIgnoreCase(\"applet\") || \n              nm.equalsIgnoreCase(\"object\") || \n              nm.equalsIgnoreCase(\"embed\")) { \n            break;\n          }\n        }\n        else {\n          String nm = scanIdentifier(in);\n          if (nm.equalsIgnoreCase(\"param\")) { \n            ;\n          }\n          else if (nm.equalsIgnoreCase(\"applet\")) { \n            ;\n          }\n          else if (nm.equalsIgnoreCase(\"object\")) { \n            ;\n          }\n          else if (nm.equalsIgnoreCase(\"embed\")) { \n            ;\n          }\n          else if (nm.equalsIgnoreCase(\"app\")) { \n            ;\n          }\n        }\n      }\n    }\n  }\n  public static String scanIdentifier(Reader in) throws IOException {\n    return null;\n  }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullOnTheSameLine.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        20
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\npublic class InputEqualsAvoidNullOnTheSameLine {\n    static {\n        String b = \"onion\";\n        String a=b;a.equals(\"ONION\"); \n    }\n    private String a = \"\";\n    private A b = null;\n    public void shouldWarn() {\n        a.equals(\"\");A a=b; \n    }\n    public void shouldNotWarn() {\n        A a=b;a.equals(\"\");\n    }\n    class A {}\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullRecordsAndCompactCtors.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        14,
+        21,
+        33,
+        40,
+        48
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\npublic class InputEqualsAvoidNullRecordsAndCompactCtors {\n    record TestRecord1(String str) {\n        public TestRecord1 {\n            str.equals(\"my string\"); \n            \"my string\".equals(str);\n        }\n    }\n    record TestRecord2() {\n        public boolean stringCheck1 (String toCheck){\n            return toCheck.equals(\"my string\"); \n        }\n        public boolean stringCheck2 (String toCheck){\n            return \"my string\".equals(toCheck);\n        }\n    }\n    record TestRecord3() {\n        private static String str;\n        TestRecord3 (String str){\n            this();\n            str.equalsIgnoreCase(\"my string\"); \n            \"my string\".equals(str);\n        }\n    }\n    record TestRecord4(String str) {\n        public TestRecord4 {\n            str.equalsIgnoreCase(\"my string\"); \n            \"my string\".equals(str);\n        }\n    }\n    record TestRecord5() {\n        TestRecord5 (int num) {\n            this();\n            str.equalsIgnoreCase(\"my string\"); \n            \"my string\".equals(str);\n        }\n        private static String str;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullSuperClass.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        22
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\npublic abstract class InputEqualsAvoidNullSuperClass {\n   protected String stringFromBaseClass = \"ABC\";\n}\nclass DerivedClass extends InputEqualsAvoidNullSuperClass {\n   protected String classField = \"DEF\";\n    void m1() {\n        if (this.stringFromBaseClass.equals(\"JKHKJ\")) {\n        }\n    }\n    void m2() {\n        if (this.classField.equals(\"JKHKJ\")) { \n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputEqualsAvoidNullTextBlocks.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        12,
+        13,
+        20,
+        30
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.equalsavoidnull;\npublic class InputEqualsAvoidNullTextBlocks {\n  public void equalsAvoid(String myString) {\n    if (myString.equals(\"stuff\")) { \n    } \n    if (myString.equals(\"\"\"\n        stuff\"\"\")) {\n    }\n  }\n  public void method(Object object) {\n    if (object instanceof String s) { \n      if (s.equals(\"\"\"\n          my string\"\"\")) {\n        System.out.println(s);\n      }\n    }\n  }\n  record MyRecord(String a, Object obj) {\n    public MyRecord {\n      if (obj instanceof String s) { \n        if (s.equalsIgnoreCase(\"\"\"\n            my other string\"\"\" + \"\"\"\n            plus this string\"\"\" + \"\"\"\n            and also this one.\"\"\")) {\n          System.out.println(\"this is my other string\");\n        }\n        else if (\"\"\"\n            one more string\"\"\".equals(s)) {\n          System.out.println(\"This is one more string\");\n        }\n      }\n    }\n  }\n}"
+    }
+  ]
+}

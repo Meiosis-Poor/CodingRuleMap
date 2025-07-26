@@ -1,0 +1,59 @@
+{
+  "name": "MutableException",
+  "language": "java",
+  "description": "<div>\n Ensures that exception classes (classes with names conforming to some pattern\n and explicitly extending classes with names conforming to other\n pattern) are immutable, that is, that they have only final fields.\n </div>\n\n <p>\n The current algorithm is very simple: it checks that all members of exception are final.\n The user can still mutate an exception's instance (e.g. Throwable has a method called\n {@code setStackTrace} which changes the exception's stack trace). But, at least, all\n information provided by this exception type is unchangeable.\n </p>\n\n <p>\n Rationale: Exception instances should represent an error\n condition. Having non-final fields not only allows the state to be\n modified by accident and therefore mask the original condition but\n also allows developers to accidentally forget to set the initial state.\n In both cases, code catching the exception could draw incorrect\n conclusions based on the state.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 87,
+  "branches": 12,
+  "apis": 29,
+  "test": [
+    {
+      "description": "Auto test from InputMutableException.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        13,
+        30,
+        53
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.mutableexception;\npublic class InputMutableException {\n    public class FooException extends Exception {\n        private final int finalErrorCode;\n        private int errorCode = 1; \n        public FooException() {\n            finalErrorCode = 1;\n        }\n        public class FooExceptionThisIsNot extends RuntimeException {\n            private final int finalErrorCode;\n            private int errorCode = 1;\n            public FooExceptionThisIsNot() {\n                finalErrorCode = 1;\n            }\n        }\n    }\n    public class BarError extends Throwable {\n        private int errorCode; \n    }\n    public class BazDoesNotExtendError {\n        private int errorCode;\n    }\n    public class CustomProblem extends ThreadDeath {\n        private int errorCode;\n        public class CustomFailure extends ThreadDeath {\n            private int errorCode;\n            public void someMethod() {\n                if(true) {\n                    final int i = 0;\n                }\n            }\n        }\n    }\n    class CustomException extends java.lang.Exception {}\n    class CustomMutableException extends java.lang.Exception {\n        int errorCode; \n    }\n    class ExampleException extends java.lang.Exception {\n        public void test() {\n            Throwable cause = super.getCause();\n            if (!(cause instanceof java.io.IOException))\n                throw new IllegalStateException(\"Test\");\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMutableException2.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        13,
+        30,
+        53
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.mutableexception;\npublic class InputMutableException2 {\n    public class FooException extends Exception {\n        private final int finalErrorCode;\n        private int errorCode = 1; \n        public FooException() {\n            finalErrorCode = 1;\n        }\n        public class FooExceptionThisIsNot extends RuntimeException {\n            private final int finalErrorCode;\n            private int errorCode = 1;\n            public FooExceptionThisIsNot() {\n                finalErrorCode = 1;\n            }\n        }\n    }\n    public class BarError extends Throwable {\n        private int errorCode; \n    }\n    public class BazDoesNotExtendError {\n        private int errorCode;\n    }\n    public class CustomProblem extends ThreadDeath {\n        private int errorCode;\n        public class CustomFailure extends ThreadDeath {\n            private int errorCode;\n            public void someMethod() {\n                if(true) {\n                    final int i = 0;\n                }\n            }\n        }\n    }\n    class CustomException extends Exception {}\n    class CustomMutableException extends Exception {\n        int errorCode; \n    }\n    class ExampleException extends Exception {\n        public void test() {\n            Throwable cause = super.getCause();\n            if (!(cause instanceof java.io.IOException))\n                throw new IllegalStateException(\"Test\");\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMutableException3.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        41
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.mutableexception;\npublic class InputMutableException3 {\n    public class FooException extends Exception {\n        private final int finalErrorCode;\n        private int errorCode = 1;\n        public FooException() {\n            finalErrorCode = 1;\n        }\n        public class FooExceptionThisIsNot extends RuntimeException {\n            private final int finalErrorCode;\n            private int errorCode = 1;\n            public FooExceptionThisIsNot() {\n                finalErrorCode = 1;\n            }\n        }\n    }\n    public class BarError extends Throwable {\n        private int errorCode;\n    }\n    public class BazDoesNotExtendError {\n        private int errorCode;\n    }\n    public class CustomProblem extends ThreadDeath {\n        private int errorCode;\n        public class CustomFailure extends ThreadDeath {\n            private int errorCode; \n            public void someMethod() {\n                if(true) {\n                    final int i = 0;\n                }\n            }\n        }\n    }\n    class CustomException extends Exception {}\n    class CustomMutableException extends Exception {\n        int errorCode;\n    }\n    class ExampleException extends Exception {\n        public void test() {\n            Throwable cause = super.getCause();\n            if (!(cause instanceof java.io.IOException))\n                throw new IllegalStateException(\"Test\");\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMutableExceptionMultipleInputs.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        17
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.mutableexception;\npublic class InputMutableExceptionMultipleInputs {\n    public class BarError extends Throwable {\n        private int errorCode; \n    }\n    class CustomMutableException extends java.lang.Exception {\n        int errorCode; \n        final int errorCount = 6;\n    }\n    private String variable;\n}"
+    },
+    {
+      "description": "Auto test from InputMutableExceptionNested.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.mutableexception;\npublic class InputMutableExceptionNested {\n    class Example2Exception extends java.lang.Exception {\n        class NormalClass {}\n        private int code; \n    }\n}"
+    }
+  ]
+}

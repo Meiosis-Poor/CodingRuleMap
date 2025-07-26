@@ -1,0 +1,24 @@
+{
+  "name": "OverloadedUnaryAnd",
+  "language": "cpp",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 38,
+  "branches": 1,
+  "apis": 16,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        5,
+        11,
+        18
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s google-runtime-operator %t\n\nstruct Foo {\n  void *operator&();\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not overload unary operator&, it is dangerous. [google-runtime-operator]\n};\n\ntemplate <typename T>\nstruct TFoo {\n  T *operator&();\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not overload unary operator&\n};\n\nTFoo<int> tfoo;\n\nstruct Bar;\nvoid *operator&(Bar &b);\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: do not overload unary operator&\n\n// No warnings on binary operators.\nstruct Qux {\n  void *operator&(Qux &q);\n};\n\nvoid *operator&(Qux &q, Qux &r);"
+    }
+  ]
+}

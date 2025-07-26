@@ -1,0 +1,68 @@
+{
+  "name": "IdempotentOperations",
+  "language": "java",
+  "description": "\nAvoid idempotent operations - they have no effect.\n        ",
+  "example": "public class Foo {\n public void bar() {\n  int x = 2;\n  x = x;\n }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 27,
+  "branches": 4,
+  "apis": 4,
+  "test": [
+    {
+      "description": "assignment of a variable (field) to itself",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int x;\n    private void bar() {\n        x = x;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment of a variable (local) to itself",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        int x;\n        x = x;\n    }\n}\n        "
+    },
+    {
+      "description": "no fp for unknown reference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        x = x;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment of one array element to another",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        int[] x = {2,3};\n        x = x[1];\n    }\n}\n        "
+    },
+    {
+      "description": "qualified names causing NPE troubleshooting",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo x;\n    Foo foo;\n    void bar() {this.x = foo;}\n    void buz() {foo = this.x;}\n}\n        "
+    },
+    {
+      "description": "check for method calls",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {x = x();}\n}\n        "
+    },
+    {
+      "description": "compound assignments are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {x += x;}\n}\n        "
+    },
+    {
+      "description": "#1104 IdempotentOperation false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n// uncompilable\npublic class Foo {\n    void bar() {\n        SignDelayer.this.sign = SignDelayer.this.arg.sign();\n        MMultiplexer.this.lastEvent = MMultiplexer.this.firstEvent;\n    }\n}\nclass MMultiplexer {}\nclass SignDelayer {}\n        "
+    },
+    {
+      "description": "#1104 IdempotentOperation false positive (compilable)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class MMultiplexer {\n                SignDelayer lastEvent, firstEvent;\n\n                class SignDelayer {\n                    int sign;\n                    Foo arg;\n\n                    public class Foo {\n                        void bar() {\n                            SignDelayer.this.sign = SignDelayer.this.arg.sign();\n                            MMultiplexer.this.lastEvent = MMultiplexer.this.firstEvent;\n                        }\n                        int sign() {return 0;}\n                    }\n                }\n            }\n            "
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "name": "MissingSwitchDefault",
+  "language": "java",
+  "description": "<div>\n Checks that switch statement has a {@code default} clause.\n </div>\n\n <p>\n Rationale: It's usually a good idea to introduce a\n default case in every switch statement. Even if\n the developer is sure that all currently possible\n cases are covered, this should be expressed in the\n default branch, e.g. by using an assertion. This way\n the code is protected against later changes, e.g.\n introduction of new types in an enumeration type.\n </p>\n\n <p>\n This check does not validate any switch expressions. Rationale:\n The compiler requires switch expressions to be exhaustive. This means\n that all possible inputs must be covered.\n </p>\n\n <p>\n This check does not validate switch statements that use pattern or null\n labels. Rationale: Switch statements that use pattern or null labels are\n checked by the compiler for exhaustiveness. This means that all possible\n inputs must be covered.\n </p>\n\n <p>\n See the <a href=\"https://docs.oracle.com/javase/specs/jls/se22/html/jls-15.html#jls-15.28\">\n     Java Language Specification</a> for more information about switch statements\n     and expressions.\n </p>\n\n <p>\n See the <a href=\"https://docs.oracle.com/javase/specs/jls/se22/html/jls-14.html#jls-14.30\">\n     Java Language Specification</a> for more information about patterns.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 75,
+  "branches": 2,
+  "apis": 20,
+  "test": [
+    {
+      "description": "Auto test from InputMissingSwitchDefault.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        22,
+        34,
+        45,
+        51
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.missingswitchdefault;\npublic class InputMissingSwitchDefault {\n    public void foo() {\n        int i = 1;\n        switch (i) {\n            case 1: i++; break;\n            case 2: i--; break;\n            default: return;\n        }\n    }\n}\nclass bad_test {\n    public void foo() {\n        int i = 1;\n        switch (i) { \n            case 1: i++; break;\n            case 2: i--; break;\n        }\n    }\n    public void nestedSwitch1() {\n        int i = 1;\n        switch (i) {\n            case 1: i++; break;\n            case 2: i--; break;\n            default:\n                switch (i++) { \n                    case 2: i++; break;\n                    case 3: i--; break;\n            }\n        }\n    }\n    public void nestedSwitch2() {\n        int i = 1, j = 2;\n        switch(i) {\n            case 1:\n                switch (j) { \n                    case 2: break;\n                    case 3: break;\n            }\n            default: break;\n        }\n        switch(i) { \n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMissingSwitchDefaultCheckSwitchExpressions.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.missingswitchdefault;\npublic class InputMissingSwitchDefaultCheckSwitchExpressions {\n    enum Nums {ONE, TWO, THREE}\n    int howMany1(Nums k) {\n        switch (k) { \n            case ONE:\n            case TWO:\n            case THREE:\n        }\n        return 5;\n    }\n    int howMany2(Nums k) {\n        return switch (k) {\n            case ONE -> {\n                yield 4;\n            }\n            case TWO -> {\n                yield 42;\n            }\n            case THREE -> {\n                yield 99;\n            }\n        };\n    }\n    int howMany3(Nums k) {\n        return switch (k) {\n            case ONE:\n                yield 3;\n            case TWO:\n                yield 5;\n            case THREE:\n                yield 9;\n        };\n    }\n    int howMany4(Nums k) {\n        return switch (k) {\n            case ONE -> {\n                yield 4;\n            }\n            case TWO -> {\n                yield 42;\n            }\n            case THREE -> {\n                yield 99;\n            }\n            default -> {\n                yield 67;\n            }\n        };\n    }\n    int howMany5(Nums k) {\n        return switch (k) {\n            case ONE:\n                yield 3;\n            case TWO:\n                yield 5;\n            case THREE:\n                yield 9;\n            default:\n                yield 22;\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMissingSwitchDefaultCheckSwitchExpressionsTwo.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.missingswitchdefault;\npublic class InputMissingSwitchDefaultCheckSwitchExpressionsTwo {\n    enum Nums {ONE, TWO, THREE}\n    int howMany1(Nums k) {\n        switch (k) { \n            case ONE:\n                System.out.println(\"One!\");\n            case TWO:\n                System.out.println(\"Two!\");\n            case THREE:\n                System.out.println(\"Three!\");\n        }\n        return 5;\n    }\n    int howMany2(Nums k) {\n        switch (k) { \n            case ONE -> System.out.println(\"One!\");\n            case TWO -> System.out.println(\"Two!\");\n            case THREE -> System.out.println(\"Three!\");\n        }\n        return 5;\n    }\n    int howMany3(Nums k) {\n        int x;\n        boolean bool = (switch (k) {\n            case ONE -> {\n                x = 1;\n                yield true;\n            }\n            case TWO -> {\n                x = 2;\n                yield true;\n            }\n            case THREE -> {\n                x = 3;\n                yield false;\n            }\n        });\n        return 5;\n    }\n    int howMany4(Nums k) {\n        int x;\n        boolean bool = (switch (k) {\n            case ONE: {\n                x = 1;\n                yield true;\n            }\n            case TWO: {\n                x = 2;\n                yield true;\n            }\n            case THREE: {\n                x = 3;\n                yield false;\n            }\n        });\n        return 5;\n    }\n    int howMany5(Nums k) {\n        return switch (k) {\n            case ONE -> {\n                yield 4;\n            }\n            case TWO -> {\n                yield 42;\n            }\n            case THREE -> {\n                yield 99;\n            }\n            default -> {\n                yield 67;\n            }\n        };\n    }\n    int howMany6(Nums k) {\n        return switch (k) {\n            case ONE: {\n                yield 4;\n            }\n            case TWO: {\n                yield 42;\n            }\n            case THREE: {\n                yield 99;\n            }\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMissingSwitchDefaultCheckSwitchExpressionUnderMethodCall.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        18
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.missingswitchdefault;\nimport java.util.Optional;\npublic class InputMissingSwitchDefaultCheckSwitchExpressionUnderMethodCall {\n    enum Case {\n        ONE,\n        TWO,\n    }\n    Optional<String> faulty(Case value) {\n        switch (value) {  \n            case ONE -> System.out.println(\"one\");\n            case TWO -> System.out.println(\"two\");\n        }\n        return (\n                switch (value) { \n                    case ONE -> Optional.of(\"One\");\n                    case TWO -> Optional.of(\"Two\");\n                }\n        ).map(String::toUpperCase);\n    }\n    Optional<String> working(Case value) {\n        var x = switch (value) { \n            case ONE -> Optional.of(\"One\");\n            case TWO -> Optional.of(\"Two\");\n        };\n        return x.map(String::toUpperCase);\n    }\n}"
+    }
+  ]
+}

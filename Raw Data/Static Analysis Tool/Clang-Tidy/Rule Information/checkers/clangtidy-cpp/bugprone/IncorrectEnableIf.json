@@ -1,0 +1,28 @@
+{
+  "name": "IncorrectEnableIf",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-incorrect-enable-if",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 72,
+  "branches": 4,
+  "apis": 38,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        27,
+        33,
+        39,
+        45,
+        50,
+        51,
+        57
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11 %s bugprone-incorrect-enable-if %t\n// RUN: %check_clang_tidy -check-suffix=CXX20 -std=c++20 %s bugprone-incorrect-enable-if %t\n\n// NOLINTBEGIN\nnamespace std {\ntemplate <bool B, class T = void> struct enable_if { };\n\ntemplate <class T> struct enable_if<true, T> { typedef T type; };\n\ntemplate <bool B, class T = void>\nusing enable_if_t = typename enable_if<B, T>::type;\n\n} // namespace std\n// NOLINTEND\n\ntemplate <typename T, typename = typename std::enable_if<T::some_value>::type>\nvoid valid_function1() {}\n\ntemplate <typename T, typename std::enable_if<T::some_value>::type = nullptr>\nvoid valid_function2() {}\n\ntemplate <typename T, typename std::enable_if<T::some_value>::type = nullptr>\nstruct ValidClass1 {};\n\ntemplate <typename T, typename = std::enable_if<T::some_value>>\nvoid invalid() {}\n// CHECK-MESSAGES: [[@LINE-2]]:23: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-FIXES: template <typename T, typename = typename std::enable_if<T::some_value>::type>\n// CHECK-FIXES-CXX20: template <typename T, typename = std::enable_if<T::some_value>::type>\n\ntemplate <typename T, typename = std::enable_if<T::some_value> >\nvoid invalid_extra_whitespace() {}\n// CHECK-MESSAGES: [[@LINE-2]]:23: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-FIXES: template <typename T, typename = typename std::enable_if<T::some_value>::type >\n// CHECK-FIXES-CXX20: template <typename T, typename = std::enable_if<T::some_value>::type >\n\ntemplate <typename T, typename=std::enable_if<T::some_value>>\nvoid invalid_extra_no_whitespace() {}\n// CHECK-MESSAGES: [[@LINE-2]]:23: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-FIXES: template <typename T, typename=typename std::enable_if<T::some_value>::type>\n// CHECK-FIXES-CXX20: template <typename T, typename=std::enable_if<T::some_value>::type>\n\ntemplate <typename T, typename /*comment1*/ = /*comment2*/std::enable_if<T::some_value>/*comment3*/>\nvoid invalid_extra_comment() {}\n// CHECK-MESSAGES: [[@LINE-2]]:23: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-FIXES: template <typename T, typename /*comment1*/ = /*comment2*/typename std::enable_if<T::some_value>::type/*comment3*/>\n\ntemplate <typename T, typename = std::enable_if<T::some_value>, typename = std::enable_if<T::other_value>>\nvoid invalid_multiple() {}\n// CHECK-MESSAGES: [[@LINE-2]]:23: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-MESSAGES: [[@LINE-3]]:65: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-FIXES: template <typename T, typename = typename std::enable_if<T::some_value>::type, typename = typename std::enable_if<T::other_value>::type>\n// CHECK-FIXES-CXX20: template <typename T, typename = std::enable_if<T::some_value>::type, typename = std::enable_if<T::other_value>::type>\n\ntemplate <typename T, typename = std::enable_if<T::some_value>>\nstruct InvalidClass {};\n// CHECK-MESSAGES: [[@LINE-2]]:23: warning: incorrect std::enable_if usage detected; use 'typename std::enable_if<...>::type' [bugprone-incorrect-enable-if]\n// CHECK-FIXES: template <typename T, typename = typename std::enable_if<T::some_value>::type>\n// CHECK-FIXES-CXX20: template <typename T, typename = std::enable_if<T::some_value>::type>"
+    }
+  ]
+}

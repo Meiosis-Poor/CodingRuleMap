@@ -1,0 +1,45 @@
+{
+  "name": "ComparePointerToMemberVirtualFunction",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-compare-pointer-to-member-virtual-function",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 101,
+  "branches": 9,
+  "apis": 56,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 24,
+      "expected-linenumbers": [
+        19,
+        22,
+        27,
+        31,
+        32,
+        33,
+        35,
+        36,
+        37,
+        41,
+        42,
+        43,
+        53,
+        57,
+        58,
+        59,
+        65,
+        69,
+        70,
+        71,
+        79,
+        83,
+        84,
+        85
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-compare-pointer-to-member-virtual-function %t\n\nstruct A {\n  virtual ~A();\n  void f1();\n  void f2();\n  virtual void f3();\n  virtual void f4();\n\n  void g1(int);\n};\n\nbool Result;\n\nvoid base() {\n  Result = (&A::f1 == &A::f2);\n\n  Result = (&A::f1 == &A::f3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n\n  Result = (&A::f1 != &A::f3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n\n  Result = (&A::f3 == nullptr);\n\n  Result = (&A::f3 == &A::f4);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n\n  void (A::*V1)() = &A::f3;\n  Result = (V1 == &A::f1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n  // CHECK-MESSAGES: :7:3: note: potential member virtual function is declared here.\n  // CHECK-MESSAGES: :8:3: note: potential member virtual function is declared here.\n  Result = (&A::f1 == V1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n  // CHECK-MESSAGES: :7:3: note: potential member virtual function is declared here.\n  // CHECK-MESSAGES: :8:3: note: potential member virtual function is declared here.\n\n  auto& V2 = V1;\n  Result = (&A::f1 == V2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n  // CHECK-MESSAGES: :7:3: note: potential member virtual function is declared here.\n  // CHECK-MESSAGES: :8:3: note: potential member virtual function is declared here.\n\n  void (A::*V3)(int) = &A::g1;\n  Result = (V3 == &A::g1);\n  Result = (&A::g1 == V3);\n}\n\nusing B = A;\nvoid usingRecordName() {\n  Result = (&B::f1 == &B::f3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n\n  void (B::*V1)() = &B::f1;\n  Result = (V1 == &B::f1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n  // CHECK-MESSAGES: :7:3: note: potential member virtual function is declared here.\n  // CHECK-MESSAGES: :8:3: note: potential member virtual function is declared here.\n}\n\ntypedef A C;\nvoid typedefRecordName() {\n  Result = (&C::f1 == &C::f3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n\n  void (C::*V1)() = &C::f1;\n  Result = (V1 == &C::f1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n  // CHECK-MESSAGES: :7:3: note: potential member virtual function is declared here.\n  // CHECK-MESSAGES: :8:3: note: potential member virtual function is declared here.\n}\n\nstruct A1 : public A {\n};\n\nvoid inheritClass() {\n  Result = (&A1::f1 == &A1::f3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n\n  void (A1::*V1)() = &A1::f1;\n  Result = (V1 == &A1::f1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: comparing a pointer to member virtual function with other pointer is unspecified behavior, only compare it with a null-pointer constant for equality.\n  // CHECK-MESSAGES: :7:3: note: potential member virtual function is declared here.\n  // CHECK-MESSAGES: :8:3: note: potential member virtual function is declared here.\n}"
+    }
+  ]
+}

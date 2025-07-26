@@ -1,0 +1,32 @@
+{
+  "name": "ConnectUsingNonConnector",
+  "language": "modelica",
+  "description": "\n            Modelica specification requires passing connectors to the `connect` clause,\n            while some implementations tolerate using it on plain variables, etc..\n        ",
+  "example": "package Example\n  connector Conn\n    Real x;\n    Real y;\n  end Conn;\n\n  model Test\n    input Conn c1;\n    output Conn c2;\n    input Real x1;\n    output Real x2;\n  equation\n    connect(c1, c2); // OK\n    connect(x1, x2); // error, x1 and x2 are not (both) connectors\n    // x1 = x2; // OK\n  end Test;\nend Example;",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 52,
+  "branches": 7,
+  "apis": 8,
+  "test": [
+    {
+      "description": "Valid example #1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    connector Conn\n        Real x;\n    end Conn;\n    input Conn a;\n    output Conn b;\nequation\n    connect(a, b);\nend Test;\n        "
+    },
+    {
+      "description": "Plain variables are connected",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    input Real x;\n    output Real y;\nequation\n    connect(x, y);\nend Test;\n        "
+    },
+    {
+      "description": "Records are connected",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    record R\n        Real a;\n    end R;\n    input R x;\n    output R y;\nequation\n    connect(x, y);\nend Test;\n        "
+    }
+  ]
+}

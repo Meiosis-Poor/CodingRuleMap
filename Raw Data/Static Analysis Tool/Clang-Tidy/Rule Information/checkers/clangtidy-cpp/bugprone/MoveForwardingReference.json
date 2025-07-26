@@ -1,0 +1,31 @@
+{
+  "name": "MoveForwardingReference",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-move-forwarding-reference",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 122,
+  "branches": 16,
+  "apis": 79,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        20,
+        27,
+        36,
+        44,
+        53,
+        58,
+        100,
+        108,
+        116,
+        123
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes -std=c++14-or-later %s bugprone-move-forwarding-reference %t -- -- -fno-delayed-template-parsing\n\nnamespace std {\ntemplate <typename> struct remove_reference;\n\ntemplate <typename _Tp> struct remove_reference { typedef _Tp type; };\n\ntemplate <typename _Tp> struct remove_reference<_Tp &> { typedef _Tp type; };\n\ntemplate <typename _Tp> struct remove_reference<_Tp &&> { typedef _Tp type; };\n\ntemplate <typename _Tp>\nconstexpr typename std::remove_reference<_Tp>::type &&move(_Tp &&__t);\n\n} // namespace std\n\n// Standard case.\ntemplate <typename T, typename U> void f1(U &&SomeU) {\n  T SomeT(std::move(SomeU));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n  // CHECK-FIXES: T SomeT(std::forward<U>(SomeU));\n}\n\n// Ignore parentheses around the argument to std::move().\ntemplate <typename T, typename U> void f2(U &&SomeU) {\n  T SomeT(std::move((SomeU)));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n  // CHECK-FIXES: T SomeT(std::forward<U>((SomeU)));\n}\n\n// Handle the case correctly where std::move() is being used through a using\n// declaration.\ntemplate <typename T, typename U> void f3(U &&SomeU) {\n  using std::move;\n  T SomeT(move(SomeU));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n  // CHECK-FIXES: T SomeT(std::forward<U>(SomeU));\n}\n\n// Handle the case correctly where a global specifier is prepended to\n// std::move().\ntemplate <typename T, typename U> void f4(U &&SomeU) {\n  T SomeT(::std::move(SomeU));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n  // CHECK-FIXES: T SomeT(::std::forward<U>(SomeU));\n}\n\n// Create a correct fix if there are spaces around the scope resolution\n// operator.\ntemplate <typename T, typename U> void f5(U &&SomeU) {\n  {\n    T SomeT(::  std  ::  move(SomeU));\n    // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: forwarding reference passed to\n    // CHECK-FIXES: T SomeT(::std::forward<U>(SomeU));\n  }\n  {\n    T SomeT(std  ::  move(SomeU));\n    // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: forwarding reference passed to\n    // CHECK-FIXES: T SomeT(std::forward<U>(SomeU));\n  }\n}\n\n// Ignore const rvalue reference parameters.\ntemplate <typename T, typename U> void f6(const U &&SomeU) {\n  T SomeT(std::move(SomeU));\n}\n\n// Ignore the case where the argument to std::move() is a lambda parameter (and\n// thus not actually a parameter of the function template).\ntemplate <typename T, typename U> void f7() {\n  [](U &&SomeU) { T SomeT(std::move(SomeU)); };\n}\n\n// Ignore the case where the argument is a lvalue reference.\ntemplate <typename T, typename U> void f8(U &SomeU) {\n  T SomeT(std::move(SomeU));\n}\n\n// Ignore the case where the template parameter is a class template parameter\n// (i.e. no template argument deduction is taking place).\ntemplate <typename T, typename U> class SomeClass {\n  void f(U &&SomeU) { T SomeT(std::move(SomeU)); }\n};\n\n// Ignore the case where the function parameter in the template isn't an rvalue\n// reference but the template argument is explicitly set to be an rvalue\n// reference.\nclass A {};\ntemplate <typename T> void foo(T);\nvoid f8() {\n  A a;\n  foo<A &&>(std::move(a));\n}\n\n// A warning is output, but no fix is suggested, if a macro is used to rename\n// std::move.\n#define MOVE(x) std::move((x))\ntemplate <typename T, typename U> void f9(U &&SomeU) {\n  T SomeT(MOVE(SomeU));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n}\n\n// Same result if the argument is passed outside of the macro.\n#undef MOVE\n#define MOVE std::move\ntemplate <typename T, typename U> void f10(U &&SomeU) {\n  T SomeT(MOVE(SomeU));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n}\n\n// Same result if the macro does not include the \"std\" namespace.\n#undef MOVE\n#define MOVE move\ntemplate <typename T, typename U> void f11(U &&SomeU) {\n  T SomeT(std::MOVE(SomeU));\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: forwarding reference passed to\n}\n\n// Handle the case correctly where the forwarding reference is a parameter of a\n// generic lambda.\ntemplate <typename T> void f12() {\n  [] (auto&& x) { T SomeT(std::move(x)); };\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: forwarding reference passed to\n  // CHECK-FIXES: [] (auto&& x) { T SomeT(std::forward<decltype(x)>(x)); }\n}"
+    }
+  ]
+}

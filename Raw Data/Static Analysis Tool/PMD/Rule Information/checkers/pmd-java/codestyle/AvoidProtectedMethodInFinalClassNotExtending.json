@@ -1,0 +1,68 @@
+{
+  "name": "AvoidProtectedMethodInFinalClassNotExtending",
+  "language": "java",
+  "description": "\nDo not use protected methods in most final classes since they cannot be subclassed. This should\nonly be allowed in final classes that extend other classes with protected methods (whose\nvisibility cannot be reduced). Clarify your intent by using private or package access modifiers instead.\n        ",
+  "example": "public final class Foo {\n  private int bar() {}\n  protected int baz() {} // Foo cannot be subclassed, and doesn't extend anything, so is baz() really private or package visible?\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "ok, protected method in non final class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    protected int bar() {}\n}\n        "
+    },
+    {
+      "description": "bad, protected method in final class that doesn't extend anything",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    protected int bar(){}\n}\n        "
+    },
+    {
+      "description": "bad, protected method in final class that doesn't extend anything but implements interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo implements java.io.Serializable {\n    protected int bar(){}\n}\n        "
+    },
+    {
+      "description": "ok, protected method in final class that does extend something",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo extends Bar {\n    protected int bar(){}\n}\nclass Bar {}\n        "
+    },
+    {
+      "description": "ok, private method in final class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    private int bar(){}\n}\n        "
+    },
+    {
+      "description": "protected method in non-final inner class is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    private class Bar { protected int baz(){} }\n}\n        "
+    },
+    {
+      "description": "protected method in final inner class that extends something is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    private final class Bar extends Super { protected int baz(){} }\n}\nclass Super {}\n        "
+    },
+    {
+      "description": "protected method in final inner class that does not extend something is bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final class Bar { protected int baz(){} }\n}\n        "
+    },
+    {
+      "description": "#1241 False+ AvoidProtectedMethodInFinalClassNotExtending",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nprivate final class Dummy {\n    @Override\n    protected void finalize() {\n    }\n}\n        "
+    }
+  ]
+}

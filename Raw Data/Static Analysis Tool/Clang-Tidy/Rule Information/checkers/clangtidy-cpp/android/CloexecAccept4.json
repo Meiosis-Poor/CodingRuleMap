@@ -1,0 +1,25 @@
+{
+  "name": "CloexecAccept4",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-accept4",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 33,
+  "branches": 1,
+  "apis": 25,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        22,
+        25,
+        31,
+        34
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-accept4 %t\n\ntypedef int socklen_t;\nstruct sockaddr {};\n\n#define SOCK_NONBLOCK 1\n#define __O_CLOEXEC 3\n#define SOCK_CLOEXEC __O_CLOEXEC\n#define TEMP_FAILURE_RETRY(exp) \\\n  ({                            \\\n    int _rc;                    \\\n    do {                        \\\n      _rc = (exp);              \\\n    } while (_rc == -1);        \\\n  })\n#define NULL 0\n\nextern \"C\" int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);\n\nvoid a() {\n  accept4(0, NULL, NULL, SOCK_NONBLOCK);\n  // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: 'accept4' should use SOCK_CLOEXEC where possible [android-cloexec-accept4]\n  // CHECK-FIXES: accept4(0, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);\n  TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, SOCK_NONBLOCK));\n  // CHECK-MESSAGES: :[[@LINE-1]]:58: warning: 'accept4'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC));\n}\n\nvoid f() {\n  accept4(0, NULL, NULL, 3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: 'accept4'\n  // CHECK-FIXES: accept4(0, NULL, NULL, 3 | SOCK_CLOEXEC);\n  TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, 3));\n  // CHECK-MESSAGES: :[[@LINE-1]]:46: warning: 'accept4'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, 3 | SOCK_CLOEXEC));\n\n  int flag = SOCK_NONBLOCK;\n  accept4(0, NULL, NULL, flag);\n  TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, flag));\n}\n\nnamespace i {\nint accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);\n\nvoid d() {\n  accept4(0, NULL, NULL, SOCK_NONBLOCK);\n  TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, SOCK_NONBLOCK));\n}\n\n} // namespace i\n\nvoid e() {\n  accept4(0, NULL, NULL, SOCK_CLOEXEC);\n  TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, SOCK_CLOEXEC));\n  accept4(0, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC);\n  TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, SOCK_NONBLOCK | SOCK_CLOEXEC));\n}\n\nclass G {\npublic:\n  int accept4(int sockfd, struct sockaddr *addr, socklen_t *addrlen, int flags);\n  void d() {\n    accept4(0, NULL, NULL, SOCK_NONBLOCK);\n    TEMP_FAILURE_RETRY(accept4(0, NULL, NULL, SOCK_NONBLOCK));\n  }\n};"
+    }
+  ]
+}

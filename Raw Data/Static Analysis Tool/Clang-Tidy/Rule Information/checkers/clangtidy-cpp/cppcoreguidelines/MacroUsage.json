@@ -1,0 +1,30 @@
+{
+  "name": "MacroUsage",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-macro-usage",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 110,
+  "branches": 13,
+  "apis": 57,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        7,
+        10,
+        13,
+        16,
+        19,
+        22,
+        25,
+        28,
+        31
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-macro-usage -std=c++17-or-later %t -- -header-filter=.* -system-headers --\n\n#ifndef INCLUDE_GUARD\n#define INCLUDE_GUARD\n\n#define PROBLEMATIC_CONSTANT 0\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: macro 'PROBLEMATIC_CONSTANT' used to declare a constant; consider using a 'constexpr' constant\n\n#define PROBLEMATIC_CONSTANT_CHAR '0'\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: macro 'PROBLEMATIC_CONSTANT_CHAR' used to declare a constant; consider using a 'constexpr' constant\n\n#define PROBLEMATIC_CONSTANT_WIDE_CHAR L'0'\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: macro 'PROBLEMATIC_CONSTANT_WIDE_CHAR' used to declare a constant; consider using a 'constexpr' constant\n\n#define PROBLEMATIC_CONSTANT_UTF8_CHAR u8'0'\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: macro 'PROBLEMATIC_CONSTANT_UTF8_CHAR' used to declare a constant; consider using a 'constexpr' constant\n\n#define PROBLEMATIC_CONSTANT_UTF16_CHAR u'0'\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: macro 'PROBLEMATIC_CONSTANT_UTF16_CHAR' used to declare a constant; consider using a 'constexpr' constant\n\n#define PROBLEMATIC_CONSTANT_UTF32_CHAR U'0'\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: macro 'PROBLEMATIC_CONSTANT_UTF32_CHAR' used to declare a constant; consider using a 'constexpr' constant\n\n#define PROBLEMATIC_FUNCTION(x, y) ((a) > (b) ? (a) : (b))\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: function-like macro 'PROBLEMATIC_FUNCTION' used; consider a 'constexpr' template function\n\n#define PROBLEMATIC_VARIADIC(...) (__VA_ARGS__)\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: variadic macro 'PROBLEMATIC_VARIADIC' used; consider using a 'constexpr' variadic template function\n\n#define PROBLEMATIC_VARIADIC2(x, ...) (__VA_ARGS__)\n// CHECK-MESSAGES: [[@LINE-1]]:9: warning: variadic macro 'PROBLEMATIC_VARIADIC2' used; consider using a 'constexpr' variadic template function\n\n// These are all examples of common macros that shouldn't have constexpr suggestions.\n#define CONCAT_NAME(a, b) a##b\n\n#define CONCAT_STR(a, b) #a #b\n\n#define COMMA ,\n\n#define NORETURN [[noreturn]]\n\n#define DEPRECATED attribute((deprecated))\n\n#if LIB_EXPORTS\n#define DLLEXPORTS __declspec(dllexport)\n#else\n#define DLLEXPORTS __declspec(dllimport)\n#endif\n\n#endif"
+    }
+  ]
+}

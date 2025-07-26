@@ -1,0 +1,26 @@
+{
+  "name": "BufferDeref",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - mpi-buffer-deref",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 129,
+  "branches": 29,
+  "apis": 71,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        9,
+        13,
+        17,
+        21,
+        25
+      ],
+      "code": "\n// REQUIRES: static-analyzer\n// RUN: %check_clang_tidy %s mpi-buffer-deref %t -- -- -I %S/Inputs/type-mismatch\n\n#include \"mpimock.h\"\n\nvoid negativeTests() {\n  char *buf;\n  MPI_Send(&buf, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer is insufficiently dereferenced: pointer->pointer [mpi-buffer-deref]\n\n  unsigned **buf2;\n  MPI_Send(buf2, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer is insufficiently dereferenced: pointer->pointer\n\n  short buf3[1][1];\n  MPI_Send(buf3, 1, MPI_SHORT, 0, 0, MPI_COMM_WORLD);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer is insufficiently dereferenced: array->array\n\n  long double _Complex *buf4[1];\n  MPI_Send(buf4, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer is insufficiently dereferenced: pointer->array\n\n  std::complex<float> *buf5[1][1];\n  MPI_Send(&buf5, 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: buffer is insufficiently dereferenced: pointer->array->array->pointer\n}\n\nvoid positiveTests() {\n  char buf;\n  MPI_Send(&buf, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD);\n\n  unsigned *buf2;\n  MPI_Send(buf2, 1, MPI_UNSIGNED, 0, 0, MPI_COMM_WORLD);\n\n  short buf3[1][1];\n  MPI_Send(buf3[0], 1, MPI_SHORT, 0, 0, MPI_COMM_WORLD);\n\n  long double _Complex *buf4[1];\n  MPI_Send(*buf4, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);\n\n  long double _Complex buf5[1];\n  MPI_Send(buf5, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);\n\n  std::complex<float> *buf6[1][1];\n  MPI_Send(*buf6[0], 1, MPI_CXX_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD);\n\n  // Referencing an array with '&' is valid, as this also points to the\n  // beginning of the array.\n  long double _Complex buf7[1];\n  MPI_Send(&buf7, 1, MPI_C_LONG_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD);\n}"
+    }
+  ]
+}

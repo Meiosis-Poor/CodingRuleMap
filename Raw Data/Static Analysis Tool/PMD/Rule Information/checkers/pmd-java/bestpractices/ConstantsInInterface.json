@@ -1,0 +1,52 @@
+{
+  "name": "ConstantsInInterface",
+  "language": "java",
+  "description": "\nUsing constants in interfaces is a bad practice. Interfaces define types, constants are implementation details better placed in classes or enums. If the constants are best viewed as members of an enumerated type, you should export them with an enum type.\nFor other scenarios, consider using a utility class. See Effective Java's 'Use interfaces only to define types'.\n        ",
+  "example": "public interface ConstantInterface {\n    public static final int CONST1 = 1; // violation, no fields allowed in interface!\n    static final int CONST2 = 1;        // violation, no fields allowed in interface!\n    final int CONST3 = 1;               // violation, no fields allowed in interface!\n    int CONST4 = 1;                     // violation, no fields allowed in interface!\n}\n\n// with ignoreIfHasMethods = false\npublic interface AnotherConstantInterface {\n    public static final int CONST1 = 1; // violation, no fields allowed in interface!\n\n    int anyMethod();\n}\n\n// with ignoreIfHasMethods = true\npublic interface YetAnotherConstantInterface {\n    public static final int CONST1 = 1; // no violation\n\n    int anyMethod();\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "constants in interface, no methods",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public static final int CONST1 = 1;\n    static final int CONST2 = 1;\n    final int CONST3 = 1;\n    int CONST4 = 1;\n}\n        "
+    },
+    {
+      "description": "constants in interface, with methods, ignoreIfHasMethods is false",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface AnotherConstantInterface {\n    public static final int CONST1 = 1;\n\n    int anyMethod();\n}\n        "
+    },
+    {
+      "description": "constants in interface, with methods, ignoreIfHasMethods is true",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface AnotherConstantInterface {\n    public static final int CONST1 = 1;\n\n    int anyMethod();\n}\n        "
+    },
+    {
+      "description": "#1505 [java] ConstantsInInterface false negative",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\npackage some.pkg;\n\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic interface SomeInterfaceName {\n\n    /**\n     * The logger service managers can use to record traces.\n     */\n    Logger LOGGER = LoggerFactory.getLogger(SomeInterfaceName.class);\n}\n        "
+    },
+    {
+      "description": "clear rule violation (from AvoidConstantsInInterface)",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n public static final int FOO = 2;\n public static final String BAR = \"bar\";\n}\n     "
+    },
+    {
+      "description": "ok (from AvoidConstantsInInterface)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n public static final int FOO = 2;\n public void buz();\n}\n     "
+    }
+  ]
+}

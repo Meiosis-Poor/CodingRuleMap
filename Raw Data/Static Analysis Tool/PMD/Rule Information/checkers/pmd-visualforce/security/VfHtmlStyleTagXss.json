@@ -1,0 +1,62 @@
+{
+  "name": "VfHtmlStyleTagXss",
+  "language": "visualforce",
+  "description": "\nChecks for the correct encoding in `<style/>` tags in Visualforce pages.\n\nThe rule is based on Salesforce Security's recommendation to prevent XSS in Visualforce as mentioned\non [Secure Coding Cross Site Scripting](https://developer.salesforce.com/docs/atlas.en-us.secure_coding_guide.meta/secure_coding_guide/secure_coding_cross_site_scripting.htm).\n\nIn order to avoid cross site scripting, the relevant encoding must be used in HTML tags. The rule expects\n`URLENCODING` or `JSINHTMLENCODING` for URL-based style values and any kind of encoding\n(e.g. `HTMLENCODING`) for non-url style values.\n\nSee also {% rule \"VfUnescapeEl\" %} to check escaping in other places on Visualforce pages.\n        ",
+  "example": "<apex:page>\n    <style>\n        div {\n            background: url('{!XSSHere}'); // Potential XSS\n        }\n        div {\n            background: url('{!URLENCODE(XSSHere)}'); // correct encoding\n        }\n    </style>\n</apex:page>",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 172,
+  "branches": 20,
+  "apis": 8,
+  "test": [
+    {
+      "description": "sObject field (from controller) assigned to url variable in style tag (html encoded)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\n div {\n  background: url('{!HTMLENCODE(XSSHere)}');\n}\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "sObject field (from controller) assigned to url variable in style tag (JS encoded)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\n div {\n  background: url('{!JSENCODE(XSSHere)}');\n}\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "sObject field (from controller) assigned to url variable in style tag (JSINHTML encoded)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\n div {\n  background: url('{!JSINHTMLENCODE(XSSHere)}');\n}\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "sObject field (from controller) assigned to url variable in style tag (URL encoded)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\n div {\n  background: url('{!URLENCODE(XSSHere)}');\n}\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "sObject field (from controller) assigned to url variable in style tag",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\n div {\n  background: url('{!XSSHere}');\n}\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "sObject field (from controller) assigned to variable in style tag",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\na { {!XSSHere} }\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "sObject field (from controller) assigned to variable in style tag with some encoding",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\na { {!JSENCODE(XSSHere)} }\n</style>\n</apex:page>\n        "
+    },
+    {
+      "description": "EL assigned to url variable in style tag within a safe resource",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n<style>\n div {\n  background:url({!URLFOR($Resource.valid)});\n}\n</style>\n</apex:page>\n        "
+    }
+  ]
+}

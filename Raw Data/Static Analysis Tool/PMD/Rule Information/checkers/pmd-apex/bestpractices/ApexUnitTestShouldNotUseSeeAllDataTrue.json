@@ -1,0 +1,51 @@
+{
+  "name": "ApexUnitTestShouldNotUseSeeAllDataTrue",
+  "language": "apex",
+  "description": "\nApex unit tests should not use @isTest(seeAllData=true) because it opens up the existing database data for unexpected modification by tests.\n        ",
+  "example": "@isTest(seeAllData = true)\npublic class Foo {\n    public static testMethod void testSomething() {\n        Account a = null;\n        // This is better than having a NullPointerException\n        // System.assertNotEquals(a, null, 'account not found');\n        a.toString();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 60,
+  "branches": 10,
+  "apis": 5,
+  "test": [
+    {
+      "description": "Problematic apex unit test class - uses SeeAllData = true",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n@isTest (seeAllData = true)\npublic class Foo {\n   public static testMethod void testSomething() {\n      Account a = null;\n      // This is better than having a NullPointerException\n      System.assertNotEquals(a, null, 'account not found');\n   }\n}\n        "
+    },
+    {
+      "description": "Problematic apex unit test method - uses SeeAllData = true",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\npublic class Foo {\n   @isTest (seeAllData = true)\n   public static void testSomething() {\n      Account a = null;\n      // This is better than having a NullPointerException\n      System.assertNotEquals(a, null, 'account not found');\n   }\n}\n        "
+    },
+    {
+      "description": "[apex] ApexUnitTestShouldNotUseSeeAllDataTrue false negative due to casing (regression in PMD 7) #5095",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        2,
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40
+      ],
+      "code": "\n@isTest(SeeAllData = true)\npublic class SomeTest {\n\n    @IsTest(SeeAllData=true)\n    public static void testMethod1() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @isTest(SeeAllData=true)\n    public static void testMethod2() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @IsTest(seeAllData=true)\n    public static void testMethod3() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @isTest(seeAllData=true)\n    public static void testMethod4() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @IsTest(SeeAllData=True)\n    public static void testMethod5() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @isTest(SeeAllData=True)\n    public static void testMethod6() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @IsTest(seeAllData=True)\n    public static void testMethod7() {\n        System.assertEquals(1 + 2, 3);\n    }\n\n    @isTest(seeAllData=True)\n    public static void testMethod8() {\n        System.assertEquals(1 + 2, 3);\n    }\n}\n"
+    },
+    {
+      "description": "[apex] ApexUnitTestShouldNotUseSeeAllDataTrue seeAllData boolean enclosed in quote #5667",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        5
+      ],
+      "code": "\n@isTest(SeeAllData = 'true')\npublic class SomeTest {\n\n    @IsTest(SeeAllData=true)\n    public static void testMethod1() {\n        System.assertEquals(1 + 2, 3);\n    }\n}\n"
+    }
+  ]
+}

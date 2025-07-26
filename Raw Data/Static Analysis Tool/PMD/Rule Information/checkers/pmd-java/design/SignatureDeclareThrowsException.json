@@ -1,0 +1,156 @@
+{
+  "name": "SignatureDeclareThrowsException",
+  "language": "java",
+  "description": "\nA method/constructor shouldn't explicitly throw the generic java.lang.Exception, since it\nis unclear which exceptions that can be thrown from the methods. It might be\ndifficult to document and understand such vague interfaces. Use either a class\nderived from RuntimeException or a checked exception.\n        ",
+  "example": "public void foo() throws Exception {\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 66,
+  "branches": 10,
+  "apis": 7,
+  "test": [
+    {
+      "description": "method throws Exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    void foo() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {}\n}\n        "
+    },
+    {
+      "description": "constructor throws Exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Foo() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "constructor throws IOException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.IOException;\n            public class Foo {\n                Foo() throws IOException { }\n            }\n            "
+    },
+    {
+      "description": "method throws IOException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.IOException;\n            public class Foo {\n                void foo() throws IOException { }\n            }\n            "
+    },
+    {
+      "description": "skip junit3 setUp method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\npublic class Foo extends TestCase {\n    void setUp() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "skip junit3 tearDown method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\npublic class Foo extends TestCase {\n    void tearDown() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "JUnit 4 testcase",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.*;\npublic class Foo {\n    @Before\n    void setUp() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "Don't skip other methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport junit.framework.*;\npublic class Foo extends TestCase {\n    void bar() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "Skip any method in junit3 test cases if ignoreJUnitCompletely",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\npublic class Foo extends TestCase {\n    void bar() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "skip junit setUp method where the superclass is TestCase",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo extends net.sourceforge.pmd.lang.java.rule.design.signaturedeclarethrowsexception.MyTestCase {\n    void setUp() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "skip junit setUp method where the superclass is TestCase, imported explicitly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.design.signaturedeclarethrowsexception.MyTestCase;\npublic class Foo extends MyTestCase {\n    void setUp() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "skip junit setUp method where the superclass is TestCase, but is imported implicitly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.design.signaturedeclarethrowsexception.*;\npublic class Foo extends MyTestCase {\n void setUp() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "skip junit setUp method where the superclass is TestCase  and is in the same package",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.signaturedeclarethrowsexception;\n\npublic class Foo extends MyTestCase {\n    void setUp() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "Generics",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public <T> Bar<T> foo() { /* blah */}\n}\nclass Bar<X> {}\n        "
+    },
+    {
+      "description": "skip any method starting with 'test' for junit3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\npublic class FooTest extends TestCase {\n    public void testFoo() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "#913 SignatureDeclareThrowsException is raised twice",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport javax.swing.SwingWorker;\npublic class BugSignature {\n  public void record() {\n    SwingWorker worker = new SwingWorker() {\n      protected String construct() throws Exception {\n        //\n      }\n    };\n  }\n}\n        "
+    },
+    {
+      "description": "#1535 [java] SignatureDeclareThrowsException: ClassCastException with Annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class UnmodifiableList<T> implements @Readonly List<@Readonly T> {}\n@interface Readonly {}\n        "
+    },
+    {
+      "description": "#350 allow throws exception when overriding a method defined elsewhere",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class BugSignature implements LousyInterface {\n    @Override\n    public void record() throws Exception {\n    }\n}\ninterface LousyInterface {\n    void record() throws Exception; // <-- this is reported\n}\n        "
+    },
+    {
+      "description": "SignatureDeclareThrowsException's IgnoreJUnitCompletely property not honored for constructors",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\n\npublic class JUnitAnnotationTest extends TestCase {\n    public JUnitAnnotationTest() throws Exception {\n    }\n}\n        "
+    },
+    {
+      "description": "#1369 ClassCastException in annotated extends",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\n\npublic final class Namespace {\n\n    @Target(ElementType.TYPE_USE)\n    public @interface Weird {\n    }\n\n    public class WeirdException extends @Weird Exception {\n    }\n\n}\n        "
+    },
+    {
+      "description": "#4477:[java] SignatureDeclareThrowsException: false-positive with TestNG annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.design.signaturedeclarethrowsexception.MyTestCase;\npublic class Foo extends MyTestCase {\n    @org.testng.annotations.AfterClass\n    void setUp() throws Exception {}\n}\n        "
+    }
+  ]
+}

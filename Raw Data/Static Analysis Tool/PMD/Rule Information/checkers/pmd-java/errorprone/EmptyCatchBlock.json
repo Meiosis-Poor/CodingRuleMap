@@ -1,0 +1,114 @@
+{
+  "name": "EmptyCatchBlock",
+  "language": "java",
+  "description": "\nEmpty Catch Block finds instances where an exception is caught, but nothing is done.\nIn most circumstances, this swallows an exception which should either be acted on\nor reported.\n        ",
+  "example": "public void doSomething() {\n    try {\n        FileInputStream fis = new FileInputStream(\"/tmp/bugger\");\n    } catch (IOException ioe) {\n        // not good\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {} catch (Exception e) {}\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {} catch (RuntimeException e) {e.getMessage();}\n    }\n}\n        "
+    },
+    {
+      "description": "no catch with nested catch in finally",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {\n        } finally {\n            try {\n                int x =2;\n            } catch (Exception e) {}\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "multiple catch blocks",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {\n        } catch (Exception e) {\n        } catch (Throwable t) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "empty try with finally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {\n        } catch (Exception e) {\n            ;\n        } finally {}\n    }\n}\n        "
+    },
+    {
+      "description": "InterruptedException is not OK - changed behavior in PMD7",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public class Foo {\n                void foo() {\n                    try {\n                    } catch (InterruptedException ignored) {}\n\n                    try {\n                    } catch (InterruptedException notok) {}\n                }\n            }\n            "
+    },
+    {
+      "description": "CloneNotSupportedException is not OK - changed behavior in PMD7",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {\n        } catch (CloneNotSupportedException ignored) {}\n\n        try {\n        } catch (CloneNotSupportedException notok) {}\n    }\n}\n        "
+    },
+    {
+      "description": "empty block is not OK with allowCommentedBlocks",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {} catch (Exception e) {}\n    }\n}\n"
+    },
+    {
+      "description": "single-line comment is not OK",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "single-line comment is OK with allowCommentedBlocks",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "multiple-line comment is not OK",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "multiple-line comment is OK with allowCommentedBlocks",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Javadoc comment is not OK",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Javadoc comment is OK with allowCommentedBlocks",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Exceptions named \"ignored\" and \"expected\" are ignored by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {\n        } catch (NullPointerException expected) {\n        } catch (IllegalArgumentException ignored) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Allow to ignore exceptions by name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        try {\n        } catch (NullPointerException idontcare) {\n        }\n    }\n}\n        "
+    }
+  ]
+}

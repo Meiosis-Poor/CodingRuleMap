@@ -1,0 +1,44 @@
+{
+  "name": "ReturnConstRefFromParameter",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-return-const-ref-from-parameter",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 119,
+  "branches": 14,
+  "apis": 85,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 23,
+      "expected-linenumbers": [
+        19,
+        22,
+        25,
+        28,
+        31,
+        32,
+        36,
+        40,
+        44,
+        48,
+        52,
+        56,
+        57,
+        76,
+        80,
+        188,
+        192,
+        196,
+        214,
+        218,
+        220,
+        224,
+        226
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-return-const-ref-from-parameter %t -- -- -fno-delayed-template-parsing\n\nusing T = int;\nusing TConst = int const;\nusing TConstRef = int const&;\n\ntemplate <typename T>\nstruct Wrapper { Wrapper(T); };\n\ntemplate <typename T>\nstruct Identity { using type = T; };\n\ntemplate <typename T>\nstruct ConstRef { using type = const T&; };\n\nnamespace invalid {\n\nint const &f1(int const &a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:38: warning: returning a constant reference parameter\n\nint const &f2(T const &a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:36: warning: returning a constant reference parameter\n\nint const &f3(TConstRef a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:37: warning: returning a constant reference parameter\n\nint const &f4(TConst &a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:35: warning: returning a constant reference parameter\n\nint const &f5(TConst &a) { return true ? a : a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:42: warning: returning a constant reference parameter\n// CHECK-MESSAGES: :[[@LINE-2]]:46: warning: returning a constant reference parameter\n\ntemplate <typename T>\nconst T& tf1(const T &a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:35: warning: returning a constant reference parameter\n\ntemplate <typename T>\nconst T& itf1(const T &a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:36: warning: returning a constant reference parameter\n\ntemplate <typename T>\ntypename ConstRef<T>::type itf2(const T &a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:54: warning: returning a constant reference parameter\n\ntemplate <typename T>\ntypename ConstRef<T>::type itf3(typename ConstRef<T>::type a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:72: warning: returning a constant reference parameter\n\ntemplate <typename T>\nconst T& itf4(typename ConstRef<T>::type a) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:54: warning: returning a constant reference parameter\n\ntemplate <typename T>\nconst T& itf5(const T &a) { return true ? a : a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:43: warning: returning a constant reference parameter\n// CHECK-MESSAGES: :[[@LINE-2]]:47: warning: returning a constant reference parameter\n\nvoid instantiate(const int &param, const float &paramf, int &mut_param, float &mut_paramf) {\n        itf1(0);\n        itf1(param);\n        itf1(paramf);\n        itf2(0);\n        itf2(param);\n        itf2(paramf);\n        itf3<int>(0);\n        itf3<int>(param);\n        itf3<float>(paramf);\n        itf4<int>(0);\n        itf4<int>(param);\n        itf4<float>(paramf);\n}\n\nstruct C {\n    const C& foo(const C&c) { return c; }\n// CHECK-MESSAGES: :[[@LINE-1]]:38: warning: returning a constant reference parameter\n};\n\nconst auto Lf1 = [](const T& t) -> const T& { return t; };\n// CHECK-MESSAGES: :[[@LINE-1]]:54: warning: returning a constant reference parameter\n\n} // namespace invalid\n\nnamespace false_negative_because_dependent_and_not_instantiated {\ntemplate <typename T>\ntypename ConstRef<T>::type tf2(const T &a) { return a; }\n\ntemplate <typename T>\ntypename ConstRef<T>::type tf3(typename ConstRef<T>::type a) { return a; }\n\ntemplate <typename T>\nconst T& tf4(typename ConstRef<T>::type a) { return a; }\n} // false_negative_because_dependent_and_not_instantiated\n\nnamespace valid {\n\nint const &f1(int &a) { return a; }\n\nint const &f2(int &&a) { return a; }\n\nint f1(int const &a) { return a; }\n\ntemplate <typename T>\nT tf1(T a) { return a; }\n\ntemplate <typename T>\nT tf2(const T a) { return a; }\n\ntemplate <typename T>\nT tf3(const T &a) { return a; }\n\ntemplate <typename T>\nIdentity<T>::type tf4(const T &a) { return a; }\n\ntemplate <typename T>\nT itf1(T a) { return a; }\n\ntemplate <typename T>\nT itf2(const T a) { return a; }\n\ntemplate <typename T>\nT itf3(const T &a) { return a; }\n\ntemplate <typename T>\nWrapper<T> itf4(const T& a) { return a; }\n\ntemplate <typename T>\nconst T& itf5(T& a) { return a; }\n\ntemplate <typename T>\nT itf6(T& a) { return a; }\n\nvoid instantiate(const int &param, const float &paramf, int &mut_param, float &mut_paramf) {\n        itf1(0);\n        itf1(param);\n        itf1(paramf);\n        itf2(0);\n        itf2(param);\n        itf2(paramf);\n        itf3(0);\n        itf3(param);\n        itf3(paramf);\n        itf2(0);\n        itf2(param);\n        itf2(paramf);\n        itf3(0);\n        itf3(param);\n        itf3(paramf);\n        itf4(param);\n        itf4(paramf);\n        itf5(mut_param);\n        itf5(mut_paramf);\n        itf6(mut_param);\n        itf6(mut_paramf);\n}\n\ntemplate<class T>\nvoid f(const T& t) {\n    const auto get = [&t] -> const T& { return t; };\n    return T{};\n}\n\nconst auto Lf1 = [](T& t) -> const T& { return t; };\n\n} // namespace valid\n\nnamespace overload {\n\nint const &overload_base(int const &a) { return a; }\nint const &overload_base(int &&a);\n\nint const &overload_ret_type(int const &a) { return a; }\nvoid overload_ret_type(int &&a);\n\nint const &overload_params1(int p1, int const &a) { return a; }\nint const & overload_params1(int p1, int &&a);\n\nint const &overload_params2(int p1, int const &a, int p2) { return a; }\nint const &overload_params2(int p1, int &&a, int p2);\n\nint const &overload_params3(T p1, int const &a, int p2) { return a; }\nint const &overload_params3(int p1, int &&a, T p2);\n\nint const &overload_params_const(int p1, int const &a, int const p2) { return a; }\nint const &overload_params_const(int const p1, int &&a, int p2);\n\nint const &overload_params_difference1(int p1, int const &a, int p2) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:79: warning: returning a constant reference parameter\nint const &overload_params_difference1(long p1, int &&a, int p2);\n\nint const &overload_params_difference2(int p1, int const &a, int p2) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:79: warning: returning a constant reference parameter\nint const &overload_params_difference2(int p1, int &&a, long p2);\n\nint const &overload_params_difference3(int p1, int const &a, int p2) { return a; }\n// CHECK-MESSAGES: :[[@LINE-1]]:79: warning: returning a constant reference parameter\nint const &overload_params_difference3(int p1, long &&a, int p2);\n\n} // namespace overload\n\nnamespace gh117696 {\nnamespace use_lifetime_bound_attr {\nint const &f(int const &a [[clang::lifetimebound]]) { return a; }\n} // namespace use_lifetime_bound_attr\n} // namespace gh117696\n\n\nnamespace lambda {\nusing T = const int &;\nusing K = const float &;\nT inner_valid_lambda(T a) {\n  [&]() -> T { return a; };\n  return a;\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: returning a constant reference parameter\n}\nT inner_invalid_lambda(T a) {\n  [&](T a) -> T { return a; };\n  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: returning a constant reference parameter\n  return a;\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: returning a constant reference parameter\n}\nT inner_invalid_lambda2(T a) {\n  [&](K a) -> K { return a; };\n  // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: returning a constant reference parameter\n  return a;\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: returning a constant reference parameter\n}\n} // namespace lambda"
+    }
+  ]
+}

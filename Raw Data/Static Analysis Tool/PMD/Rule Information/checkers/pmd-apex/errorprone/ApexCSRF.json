@@ -1,0 +1,56 @@
+{
+  "name": "ApexCSRF",
+  "language": "apex",
+  "description": "\n      Having DML operations in Apex class constructor or initializers can have unexpected side effects:\n      By just accessing a page, the DML statements would be executed and the database would be modified.\n      Just querying the database is permitted.\n      \n      In addition to constructors and initializers, any method called `init` is checked as well.\n      \n      Salesforce Apex already protects against this scenario and raises a runtime exception.\n      \n      Note: This rule has been moved from category \"Security\" to \"Error Prone\" with PMD 6.21.0, since\n      using DML in constructors is not a security problem, but crashes the application.\n    ",
+  "example": "public class Foo {\n    // initializer\n    {\n        insert data;\n    }\n\n    // static initializer\n    static {\n        insert data;\n    }\n\n    // constructor\n    public Foo() {\n        insert data;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 63,
+  "branches": 15,
+  "apis": 5,
+  "test": [
+    {
+      "description": "Apex CSRF in constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public Foo() {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n        upsert accounts;\n    }\n}\n        "
+    },
+    {
+      "description": "Queueable class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements Queueable {\n\n    public Foo() {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n        upsert accounts;\n    }\n}\n        "
+    },
+    {
+      "description": "Apex CSRF in init method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public void init() {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n        upsert accounts;\n    }\n}\n        "
+    },
+    {
+      "description": "Apex CSRF in initializer",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n        upsert accounts;\n    }\n}\n        "
+    },
+    {
+      "description": "Apex CSRF in static initializer",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n        upsert accounts;\n    }\n}\n        "
+    },
+    {
+      "description": "Apex CSRF in init method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public void init() {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n    }\n}\n        "
+    },
+    {
+      "description": "Apex CSRF in constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public Foo() {\n        List<Account> accounts = [SELECT Id FROM Account LIMIT 1];\n    }\n}\n        "
+    }
+  ]
+}

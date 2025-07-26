@@ -1,0 +1,28 @@
+{
+  "name": "MisplacedPragma",
+  "language": "plsql",
+  "description": "\nOracle states that the PRAQMA AUTONOMOUS_TRANSACTION must be in the declaration block,\nbut the code does not complain, when being compiled on the 11g DB.\nhttps://docs.oracle.com/cd/B28359_01/appdev.111/b28370/static.htm#BABIIHBJ\n        ",
+  "example": "create or replace package inline_pragma_error is\n\nend;\n/\n\ncreate or replace package body inline_pragma_error is\n  procedure do_transaction(p_input_token        in varchar(200)) is\n  PRAGMA AUTONOMOUS_TRANSACTION; /* this is correct place for PRAGMA */\n  begin\n    PRAGMA AUTONOMOUS_TRANSACTION; /* this is the wrong place for PRAGMA -> violation */\n    /* do something */\n    COMMIT;\n   end do_transaction;\n\nend inline_pragma_error;\n/",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Correct Syntax",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ncreate or replace package inline_pragma_ok is\n\nend;\n/\n\ncreate or replace package body inline_pragma_ok is\n    procedure do_transaction(p_input_token        in varchar(200)) is\n        PRAGMA AUTONOMOUS_TRANSACTION;\n    begin\n        bno74.log_hentglass_request(p_hentglass_request\n                                   ,v_logging_req_seq_no);\n        COMMIT;\n    end do_transaction;\n\nend inline_pragma_ok;\n/\n        "
+    },
+    {
+      "description": "Wrong Syntax",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\ncreate or replace package inline_pragma_error is\n\nend;\n/\n\ncreate or replace package body inline_pragma_error is\n    procedure do_transaction(p_input_token        in varchar(200)) is\n\n    begin\n        PRAGMA AUTONOMOUS_TRANSACTION;\n        bno74.log_hentglass_request(p_hentglass_request\n                                   ,v_logging_req_seq_no);\n        COMMIT;\n    end do_transaction;\n\nend inline_pragma_error;\n/\n        "
+    }
+  ]
+}

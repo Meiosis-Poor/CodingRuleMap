@@ -1,0 +1,42 @@
+{
+  "name": "ExhaustiveSwitchHasDefault",
+  "language": "java",
+  "description": "\nWhen switching over an enum or sealed class, the compiler will ensure that all possible cases are covered.\nIf a case is missing, this will result in a compilation error. But if a default case is added, this compiler\ncheck is not performed anymore, leading to difficulties in noticing bugs at runtime.\n\nNot using a default case makes sure, a compiler error is introduced whenever a new enum constant or a\nnew subclass to the sealed class hierarchy is added. We will discover this problem at compile time\nrather than at runtime (if at all).\n\nNote: The fix it not necessarily just removing the default case. Maybe a case is missing which needs to be implemented.\n        ",
+  "example": "class Foo {\n    enum MyEnum { A, B };\n\n    void doSomething(MyEnum e) {\n        switch(e) {\n            case A -> System.out.println(\"a\");\n            case B -> System.out.println(\"b\");\n            default -> System.out.println(\"unnecessary default\");\n        };\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Exhaustive Enum Switch - no default: ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    enum MyEnum { A, B };\n\n    void doSomething(MyEnum e) {\n        switch(e) {\n            case A -> System.out.println(\"a\");\n            case B -> System.out.println(\"b\");\n        };\n    }\n}\n"
+    },
+    {
+      "description": "Exhaustive Enum Switch - with default: nok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Foo {\n    enum MyEnum { A, B };\n\n    void doSomething(MyEnum e) {\n        switch(e) {\n            case A -> System.out.println(\"a\");\n            case B -> System.out.println(\"b\");\n            default -> System.out.println(\"unnecessary default\");\n        };\n    }\n}\n"
+    },
+    {
+      "description": "Exhaustive Switch with sealed classes - without default: ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nsealed interface Foo {\n    final class A implements Foo {}\n    record B() implements Foo {}\n\n    default void doSomething(Foo foo) {\n        switch (foo) {\n            case A a -> System.out.println(\"a\");\n            case B b -> System.out.println(\"b\");\n        }\n    }\n}\n"
+    },
+    {
+      "description": "Exhaustive Switch with sealed classes - with default: nok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nsealed interface Foo {\n    final class A implements Foo {}\n    record B() implements Foo {}\n\n    default void doSomething(Foo foo) {\n        switch (foo) {\n            case A a -> System.out.println(\"a\");\n            case B b -> System.out.println(\"b\");\n            default -> System.out.println(\"unnecessary default\");\n        }\n    }\n}\n"
+    }
+  ]
+}

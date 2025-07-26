@@ -1,0 +1,86 @@
+{
+  "name": "CheckResultSet",
+  "language": "java",
+  "description": "\nAlways check the return values of navigation methods (next, previous, first, last) of a ResultSet.\nIf the value return is 'false', it should be handled properly.\n        ",
+  "example": "Statement stat = conn.createStatement();\nResultSet rst = stat.executeQuery(\"SELECT name FROM person\");\nrst.next();     // what if it returns false? bad form\nString firstName = rst.getString(1);\n\nStatement stat = conn.createStatement();\nResultSet rst = stat.executeQuery(\"SELECT name FROM person\");\nif (rst.next()) {    // result is properly examined and used\n    String firstName = rst.getString(1);\n    } else  {\n        // handle missing data\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 55,
+  "branches": 7,
+  "apis": 6,
+  "test": [
+    {
+      "description": "The result set is appropriately tested before using it, no violation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\npublic class ResultSetTesting\n{\n    public String goodBehavior(Connection conn) throws SQLException\n    {\n        String firsString = \"\";\n        Statement stat = (Statement) conn.createStatement();\n        ResultSet rst = stat.executeQuery(\"SELECT name FROM person\");\n\n        if (rst.next())\n        {\n            firsString = rst.getString(1);\n        }\n        else\n        {\n            // deal properly with the problem..\n        }\n        return firsString;\n    }\n}\n        "
+    },
+    {
+      "description": "This most common violation case, not testing is done before a call to 'last()'.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\npublic class ResultSetTesting\n{\n    public void executeSql(Statement statement, String query) throws SQLException\n    {\n        ResultSet rs = statement.executeQuery(query);\n        String object = rs.getString(1);\n        rs.last();\n        object.hashCode();\n    }\n}\n        "
+    },
+    {
+      "description": "This most common violation case, not testing is done before a call to 'first()'.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\npublic class ResultSetTesting\n{\n    public void executeSql(Statement statement, String query) throws SQLException\n    {\n        ResultSet rs = statement.executeQuery(query);\n        String object = rs.getString(1);\n        rs.first();\n        object.hashCode();\n    }\n}\n        "
+    },
+    {
+      "description": "Using a 'while' instead of 'if' shouldn't result in a violation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\npublic class ResultSetTesting\n{\n    public void executeSql(Statement stat, String query) throws SQLException\n    {\n        int _count = 1;\n        ResultSet rst = stat.executeQuery(\"SELECT name FROM person\");\n        // stupid while loop to have an unrelated while\n        while (_count > 0) {\n            _count--;\n        }\n        while (rst.next())\n        {\n            firsString = rst.getString(1);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#942 CheckResultSet False Positive",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\npublic class Test {\n    public int countReadOnlyForwardOnlyJDBC(Connection conn) throws SQLException, ClassNotFoundException {\n        int _count = 0;\n        Statement stmt;\n\n        if (conn == null) {\n            conn = getConnection();\n            if (conn == null) {\n                return null;\n            }\n        }\n\n        if (stmt == null) {\n            stmt = conn.createStatement(\n                ResultSet.TYPE_FORWARD_ONLY,\n                ResultSet.CONCUR_READ_ONLY);\n        }\n\n        ResultSet _rs = stmt.executeQuery(QueryString);\n\n        while (_rs.next() != false) {\n            _count++;\n        }\n\n        return _count;\n    }\n\n    public int countReadOnlyForwardOnlyJDBC2(Connection conn) throws SQLException, ClassNotFoundException {\n        int _count = 0;\n        Statement stmt;\n\n        if (conn == null) {\n            conn = getConnection();\n            if (conn == null) {\n                return null;\n            }\n        }\n\n        if (stmt == null) {\n            stmt = conn.createStatement(\n                ResultSet.TYPE_FORWARD_ONLY,\n                ResultSet.CONCUR_READ_ONLY);\n        }\n\n        ResultSet _rs = stmt.executeQuery(QueryString);\n        _rs.next();  // This line should throw a PMD violation.  < - - - violation here\n        while (_rs.next() != false) {\n            _count++;\n        }\n\n        return _count;\n    }\n}\n        "
+    },
+    {
+      "description": "#1135 CheckResultSet ignores results set declared outside of try/catch (good case)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\npublic class Foo {\n  public int bar(String query, Connection connection) {\n      int result = 0;\n      try {\n        PreparedStatement ps = null;\n        ResultSet rs = null;\n        ps = connection.prepareStatement(query);\n        ps.setInt(1, fiscalYear);\n        rs = ps.executeQuery();\n        if (rs.next()) {\n            result = rs.getInt(\"value\");\n        }\n        return result;\n    } catch (SQLException se) {\n        throw new RuntimeException(se);\n    }\n    return result;\n  }\n}\n        "
+    },
+    {
+      "description": "#1135 CheckResultSet ignores results set declared outside of try/catch",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\n\npublic class Foo {\n  public void bar(String query, Connection connection) {\n    PreparedStatement ps = null;\n    ResultSet rs = null;\n      int result = 0;\n      try {\n        ps = connection.prepareStatement(query);\n        ps.setInt(1, fiscalYear);\n        rs = ps.executeQuery();\n        rs.next(); //this should be a PMD warning, but it is not\n        result = rs.getInt(\"value\");\n    } catch (SQLException se) {\n        throw new RuntimeException(se);\n    } finally {\n        //call method to close the ResultSet and PreparedStatement\n    }\n    return result;\n  }\n}\n        "
+    },
+    {
+      "description": "#1135 CheckResultSet ignores results set declared outside of try/catch - prevent false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport com.special.ResultSet;\n\npublic class Foo {\n  public void bar() {\n    ResultSet rs = doExecuteQuery();\n    rs.next(); // no warning here because it's not a java.sql.ResultSet\n    int result = rs.getInt(\"baz\");\n  }\n}\n        "
+    },
+    {
+      "description": "#1199 PMD CheckResultSet gives false positive in a do/while loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.ResultSet;\nimport java.util.*;\npublic class Foo {\n    public void bar(ResultSet results) {\n        String answer;\n        List<String> stringList =  new ArrayList<String>();\n\n        //check the result set.  Yes, this moves the cursor to the first position\n        if (results.first()) {\n            //do a little logic\n            do {\n                //this is handeling paging\n                if (results.getInt(\"RowNum\") >= firstEntry && results.getInt(\"RowNum\") <= lastEntry) {\n                    answer  = results.getString(\"answer\");\n                    stringList.add(answer);\n                } else {\n                    results.last();\n                }\n            } while(results.next());  //advance the cursor to the next position\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1273 CheckResultSet false positive in try-with-resources nested in if",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.ResultSet;\nimport java.sql.PreparedStatement;\nimport java.sql.Connection;\n\npublic class Foo {\n    public boolean bar(Connection con) {\n        boolean result;\n        if (checkIsCached()) {\n            result = true;\n        } else {\n            try (PreparedStatement stmt = con.prepareStatement(\"select * from foo where a = ?1 and b = ?2\")) {\n                stmt.setString(1, \"a\");\n                stmt.setLong(2, 1L);\n                try (ResultSet queryResults = stmt.executeQuery()) { // HERE -> Violation\n                    if (queryResults.next()) {\n                        result = true;\n                    } else {\n                        result = false;\n                    }\n                }\n            }\n        }\n        return result;\n    }\n}\n        "
+    },
+    {
+      "description": "#1263 PMD reports CheckResultSet violation in completely unrelated source files.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport java.util.Iterator;\n\npublic class Foo {\n    public void firstMethod(Statement stmt) {\n        ResultSet results = stmt.executeQuery();\n        if (results.next()) {\n            // do something\n        }\n    }\n\n    public void secondMethod() {\n        MyIterator results = getMyResultsIterator();\n        results.next();\n    }\n}\nclass MyIterator implements Iterator<Boolean> { }\n        "
+    },
+    {
+      "description": "Allow the result of ResultSet navigation methods to be returned",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\n\npublic class Foo {\n    public boolean bar(Statement stmt) {\n        ResultSet results = stmt.executeQuery();\n        return results.next();\n    }\n}\n        "
+    }
+  ]
+}

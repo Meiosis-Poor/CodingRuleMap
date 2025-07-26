@@ -1,0 +1,106 @@
+{
+  "name": "AvoidDuplicateLiterals",
+  "language": "java",
+  "description": "\nCode containing duplicate String literals can usually be improved by declaring the String as a constant field.\n        ",
+  "example": "private void bar() {\n     buz(\"Howdy\");\n     buz(\"Howdy\");\n     buz(\"Howdy\");\n     buz(\"Howdy\");\n}\nprivate void buz(String x) {}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 126,
+  "branches": 12,
+  "apis": 6,
+  "test": [
+    {
+      "description": "duplicate literals in argument list",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"Howdy\");\n        buz(\"Howdy\");\n        buz(\"Howdy\");\n        buz(\"Howdy\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "literal int argument, ok for now",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(2);\n    }\n    private void buz(int x) {}\n}\n        "
+    },
+    {
+      "description": "duplicate literals in field decl",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    String[] FOO = {\"foo\", \"foo\", \"foo\", \"foo\", \"foo\", \"foo\", \"foo\", \"foo\", \"foo\"};\n}\n        "
+    },
+    {
+      "description": "duplicate literals in annotations, default case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\npublic class Foo {\n}\n        "
+    },
+    {
+      "description": "duplicate literals in annotations, skipped",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\n@SuppressWarnings(\"foo\")\npublic class Foo {\n}\n        "
+    },
+    {
+      "description": "threshold property",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"Howdy\");\n        buz(\"Howdy\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "exception list property",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"Howdy\"); buz(\"Howdy\"); buz(\"Howdy\"); buz(\"Howdy\");\n        buz(\"foo\"); buz(\"foo\"); buz(\"foo\"); buz(\"foo\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "exception list with escape",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"Howdy,foo\");\n    buz(\"Howdy,foo\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "minimum length property, minimum length reached",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"Howdy\"); buz(\"Howdy\"); buz(\"Howdy\"); buz(\"Howdy\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "minimum length property, minimum length not reached",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"foo\"); buz(\"foo\"); buz(\"foo\"); buz(\"foo\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "minimum length property, default value",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    private void bar() {\n        buz(\"foo\"); buz(\"foo\"); buz(\"foo\"); buz(\"foo\");\n        buz(\"fo\"); buz(\"fo\"); buz(\"fo\"); buz(\"fo\");\n    }\n    private void buz(String x) {}\n}\n        "
+    },
+    {
+      "description": "#1425 Invalid XML Characters in Output",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Duplicate {\n    String s1 = \"Tokenizer \\ud801\\udc1ctest\";\n    String s2 = \"Tokenizer \\ud801\\udc1ctest\";\n    String s3 = \"Tokenizer \\ud801\\udc1ctest\";\n    String s4 = \"Tokenizer \\ud801\\udc1ctest\";\n    char c = '\\uffef';\n    char c\\u0030 = 'a';\n}\n        "
+    },
+    {
+      "description": "Duplicated string literals as annotation parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AnnotationParams {\n    public static void foo(@SuppressWarnings(\"unused\") Object str,\n                           @SuppressWarnings(\"unused\") String str2,\n                           @SuppressWarnings(\"unused\") String str3,\n                           @SuppressWarnings(\"unused\") String str4) {}\n}\n        "
+    }
+  ]
+}

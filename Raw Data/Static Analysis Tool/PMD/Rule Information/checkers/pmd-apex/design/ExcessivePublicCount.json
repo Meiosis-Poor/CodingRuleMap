@@ -1,0 +1,79 @@
+{
+  "name": "ExcessivePublicCount",
+  "language": "apex",
+  "description": "\nClasses with large numbers of public methods, attributes, and properties require disproportionate testing efforts\nsince combinatorial side effects grow rapidly and increase risk. Refactoring these classes into\nsmaller ones not only increases testability and reliability but also allows new variations to be\ndeveloped easily.\n        ",
+  "example": "public class Foo {\n    public String value;\n    public Bar something;\n    public Variable var;\n    // [... more more public attributes ...]\n\n    public void doWork() {}\n    public void doMoreWork() {}\n    public void doWorkAgain() {}\n    // [... more more public methods ...]\n\n    public String property1 { get; set; }\n    // [... more more public properties ...]\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 6,
+  "apis": 5,
+  "test": [
+    {
+      "description": "Few public fields",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Integer foo;\n}\n        "
+    },
+    {
+      "description": "Too many public fields",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Integer foo;\n    public Integer bif;\n    public Integer baz;\n    public Integer bof;\n}\n        "
+    },
+    {
+      "description": "Static final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static final Integer foo;\n    public static final Integer foo1;\n    public static final Integer foo2;\n    public static final Integer foo3;\n}\n        "
+    },
+    {
+      "description": "Some public methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Reduced minimum",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Private fields",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final Integer foo;\n    private static final Integer foo1;\n    private static final Integer foo2;\n    private static final Integer foo3;\n}\n        "
+    },
+    {
+      "description": "Private methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Integer foo1() {return 1;}\n    private Integer foo2() {return 1;}\n    private Integer foo3() {return 1;}\n}\n        "
+    },
+    {
+      "description": "#1396 Class with javadoc",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/**\n * Class comment\n */\npublic class SomeClass {\n\n    /**\n     * Comment\n     */\n    public void doSomething() {\n        System.debug('hello world');\n    }\n\n    /** Field comment */\n    private String field;\n}\n       "
+    },
+    {
+      "description": "#4509 class with inner classes",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        1,
+        5
+      ],
+      "code": "\npublic class OuterClass {\n    public int outerField1;\n    public int outerField2;\n\n    public class InnerClass {\n        public String field1;\n        public int field2;\n\n        public void method1() { }\n        public void method2() { }\n    }\n}\n"
+    },
+    {
+      "description": "[apex] ExcessivePublicCount ignores properties #4596",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Example {\n    public void publicMethod1() { }             // count: 1\n    public Integer publicField;                 // count: 2\n    public String publicProperty1 {get; set; }  // count: 3\n    public String publicProperty2 {             // count: 4\n        get {\n            return publicProperty2;\n        }\n        set {\n            publicProperty2 = value;\n        }\n    }\n    private String privateProperty1 {get; set;}\n}\n"
+    }
+  ]
+}

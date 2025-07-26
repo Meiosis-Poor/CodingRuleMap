@@ -1,0 +1,62 @@
+{
+  "name": "ReturnFromFinallyBlock",
+  "language": "java",
+  "description": "\nAvoid returning from a finally block, this can discard exceptions.\n        ",
+  "example": "public class Bar {\n    public String foo() {\n        try {\n            throw new Exception( \"My Exception\" );\n        } catch (Exception e) {\n            throw e;\n        } finally {\n            return \"A. O. K.\"; // return not recommended here\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "throw exception but return from finally",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String bugga() {\n        try {\n            throw new Exception( \"My Exception\" );\n        } catch (Exception e) {\n            throw e;\n        } finally {\n            return \"A. O. K.\"; // Very bad.\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "lots of returns",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String getBar() {\n        try {\n            return \"buz\";\n        } catch (Exception e) {\n            return \"biz\";\n        } finally {\n            return \"fiddle!\"; // bad!\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String getBar() {\n        try {\n            return \"buz\";\n        } finally {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1035 [java] ReturnFromFinallyBlock: False positive on lambda expression in finally block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String bar() {\n        try {\n        } finally {\n            Object o = new Object() {\n                @Override\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Return from Lambda in Finally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String getBar() {\n        try {\n        } finally {\n            Collection<ServiceExecutionEntry> untracked = serviceExecutionTracker.untrackMatchingEntries(e -> {\n                ServiceExecutionIdentifiers ids = e.getIdentifiers();\n                Long execBqiId = (ids == null) ? null : ids.getBqiId();\n                return Objects.equals(bqiId, execBqiId);\n            });\n            untracked.forEach(e -> logger.info(\"overwriteLastBqi(bqId={}, bqiId={}) untracked {}\", bqId, bqiId, e));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "return from a lambda should not cause issues",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void printSomething() {\n        try {\n            System.out.println(\"Integers: \");\n        } finally {\n            Arrays.asList(0, 1, 2).map(i -> { return i + 1; }).forEach(i -> System.out.println(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Return in finally should give error but not in lambda",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String printSomething() {\n        try {\n            System.out.println(\"Integers: \");\n        } finally {\n            Arrays.asList(0, 1, 2).map(i -> { return i + 1; }).forEach(i -> System.out.println(i));\n            return \"foo\";\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Return from anonyous class should not give any error",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void printSomething() {\n        try {\n            System.out.println(\"Integers: \");\n        } finally {\n            Arrays.asList(0, 1, 2).map(new Function<Integer, Integer>() {\n               @Override\n               public Integer apply(Integer i) {\n                   return i + 1;\n               }\n           }).forEach(i -> System.out.println(i));\n        }\n    }\n}\n        "
+    }
+  ]
+}

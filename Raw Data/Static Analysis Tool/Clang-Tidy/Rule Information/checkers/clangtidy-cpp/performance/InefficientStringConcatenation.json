@@ -1,0 +1,28 @@
+{
+  "name": "InefficientStringConcatenation",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-inefficient-string-concatenation",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 79,
+  "branches": 6,
+  "apis": 63,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        27,
+        29,
+        31,
+        33,
+        35,
+        37,
+        39
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s performance-inefficient-string-concatenation %t\n\nnamespace std {\ntemplate <typename T>\nclass basic_string {\npublic:\n  basic_string() {}\n  ~basic_string() {}\n  basic_string<T> *operator+=(const basic_string<T> &);\n  friend basic_string<T> operator+(const basic_string<T> &, const basic_string<T> &);\n};\ntypedef basic_string<char> string;\ntypedef basic_string<wchar_t> wstring;\n}\n\nvoid f(std::string) {}\nstd::string g(std::string);\n\nint main() {\n  std::string mystr1, mystr2;\n  std::wstring mywstr1, mywstr2;\n  auto myautostr1 = mystr1;\n  auto myautostr2 = mystr2;\n\n  for (int i = 0; i < 10; ++i) {\n    f(mystr1 + mystr2 + mystr1);\n    // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: string concatenation results in allocation of unnecessary temporary strings; consider using 'operator+=' or 'string::append()' instead\n    mystr1 = mystr1 + mystr2;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: string concatenation\n    mystr1 = mystr2 + mystr2 + mystr2;\n    // CHECK-MESSAGES: :[[@LINE-1]]:30: warning: string concatenation\n    mystr1 = mystr2 + mystr1;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: string concatenation\n    mywstr1 = mywstr2 + mywstr1;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: string concatenation\n    mywstr1 = mywstr2 + mywstr2 + mywstr2;\n    // CHECK-MESSAGES: :[[@LINE-1]]:33: warning: string concatenation\n    myautostr1 = myautostr1 + myautostr2;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: string concatenation\n\n    mywstr1 = mywstr2 + mywstr2;\n    mystr1 = mystr2 + mystr2;\n    mystr1 += mystr2;\n    f(mystr2 + mystr1);\n    mystr1 = g(mystr1);\n  }\n  return 0;\n}"
+    }
+  ]
+}

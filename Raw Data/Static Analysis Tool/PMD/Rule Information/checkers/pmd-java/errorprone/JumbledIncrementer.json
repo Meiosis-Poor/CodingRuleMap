@@ -1,0 +1,54 @@
+{
+  "name": "JumbledIncrementer",
+  "language": "java",
+  "description": "\nAvoid jumbled loop incrementers - it's usually a mistake, and is confusing even if intentional.\n        ",
+  "example": "public class JumbledIncrementerRule1 {\n    public void foo() {\n        for (int i = 0; i < 10; i++) {          // only references 'i'\n            for (int k = 0; k < 20; i++) {      // references both 'i' and 'k'\n                System.out.println(\"Hello\");\n            }\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "nested loop, wrong incrementer",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo() {\n        for (int i = 0; i < 10; i++) {\n            for (int k = 0; k < 20; i++) {\n                int x = 2;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "correct incrementer in nested loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        for (int i = 0; i < 10; i++) {\n            for (int k = 0; k < 20; k++) {\n                int x = 2;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "loops with and without incrementer - all ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        for (int i = 0; i < 5; ) {\n            i++;\n        }\n        for (int i = 0;;) {\n            if (i < 5) {\n                break;\n            }\n            i++;\n        }\n        for (;;) {\n            int x =5;\n        }\n        for (int i=0; i<5;i++) ;\n        for (int i=0; i<5;i++)\n            foo();\n    }\n}\n        "
+    },
+    {
+      "description": "using outer loop incrementer as array index is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        for (int i = 0; i < 10; i++) {\n            for (int k = 0; k < 20; j[i]++) {\n                int x = 2;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "1424989, use of variable with same name in inner loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/**\n * Falsely notes the second for loop as modifying the\n * i variable in the first for loop.\n */\npublic class Foo {\n    public void bar() {\n        for (int i = 0; i < 7; i++) {\n            for (int i = 0; i < 10; i++) {\n                System.out.println(\"\" + i);\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No ForInit in nested loop - False negative ",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    public void bar(String s) {\n        int length = s.length();\n        for (int i = 0; i < length; i++) {\n            int j = 5;\n            for (; i < j; i++) {\n                //\n            }\n        }\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{
+  "name": "ConsecutiveAppendsShouldReuse",
+  "language": "java",
+  "description": "\nConsecutive calls to StringBuffer/StringBuilder .append should be chained, reusing the target object. This can improve the performance\nby producing a smaller bytecode, reducing overhead and improving inlining. A complete analysis can be found [here](https://github.com/pmd/pmd/issues/202#issuecomment-274349067)\n        ",
+  "example": "String foo = \" \";\n\nStringBuffer buf = new StringBuffer();\nbuf.append(\"Hello\"); // poor\nbuf.append(foo);\nbuf.append(\"World\");\n\nStringBuffer buf = new StringBuffer();\nbuf.append(\"Hello\").append(foo).append(\"World\"); // good",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 117,
+  "branches": 30,
+  "apis": 14,
+  "test": [
+    {
+      "description": "1, Single append, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"foo\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "2, Consecutive appends with reuse, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.log4j.Logger;\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\").append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\").append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "3, Single append on different method, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\");\n    }\n\n    public void bar2() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\");\n    }\n\n    public void bar3() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\");\n    }\n\n    public void bar4() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\");\n    }\n}\n        "
+    },
+    {
+      "description": "4, Single append on different objects, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\");\n        StringBuffer sb2 = new StringBuffer(15);\n        sb2.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\");\n        StringBuilder sb2 = new StringBuilder(15);\n        sb2.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "5, Consecutive literal appends without reuse, not ok",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "6, Consecutive variable appends without reuse, not ok",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        String foo = \"Hello\";\n        String foo2 = \"World\";\n        sb.append(foo);\n        sb.append(foo2);\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(15);\n        String foo = \"Hello\";\n        String foo2 = \"World\";\n        sb.append(foo);\n        sb.append(foo2);\n    }\n}\n        "
+    },
+    {
+      "description": "7, Consecutive appends in different blocks, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\");\n        while(true) {\n            sb.append(\"World\");\n        }\n    }\n\n    public void bar2() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"Hello\");\n        if(true) {\n            sb.append(\"World\");\n        }\n    }\n\n    public void bar3() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\");\n        while(true) {\n            sb.append(\"World\");\n        }\n    }\n\n    public void bar4() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"Hello\");\n        if(true) {\n            sb.append(\"World\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1180 False Positive for ConsecutiveAppendsShouldReuse on different variable names",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuilder columns = new StringBuilder();\n        StringBuilder values = new StringBuilder();\n\n        columns.append(',');\n        values.append(',');\n    }\n    public void bar2() {\n        StringBuffer columns = new StringBuffer();\n        StringBuffer values = new StringBuffer();\n\n        columns.append(',');\n        values.append(',');\n    }\n}\n        "
+    },
+    {
+      "description": "#1370 ConsecutiveAppendsShouldReuse not detected properly on StringBuffer",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        final StringBuffer stringBuffer = new StringBuffer().append(\"agrego \").append(\"un \");\n        stringBuffer.append(\"string \");\n    }\n}\n        "
+    },
+    {
+      "description": "#1370 ConsecutiveAppendsShouldReuse not detected properly on StringBuffer - part 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        7
+      ],
+      "code": "\npublic class StringBufferTest {\n    private static String TAG = \"TAG\";\n    public String test() {\n         final StringBuffer stringBuffer2 = new StringBuffer();\n        // the following 2 lines are reported as ConsecutiveAppendsShouldReuse\n        stringBuffer2.append(\"agrego \");\n        stringBuffer2.append(\"un \");\n        stringBuffer2.append(\"string \");    // but not on this one\n        return stringBuffer2.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "#1370 ConsecutiveAppendsShouldReuse not detected properly on StringBuffer - part 3",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        final StringBuffer stringBuffer; // declaration of the var is a different statement\n        stringBuffer = new StringBuffer().append(\"agrego \").append(\"un \");\n        stringBuffer.append(\"string \");\n    }\n}\n        "
+    },
+    {
+      "description": "#1051 ConsecutiveAppendsShouldReuse not detect on parameter",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void asd(StringBuilder builder, String b) {\n        builder.append(\"asd\");\n        builder.append(b);\n        builder.append(123);\n    }\n}\n        "
+    },
+    {
+      "description": "#1081 ConsecutiveAppendsShouldReuse not detect on field",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final StringBuilder sb = new StringBuilder();\n\n    public String bar() {\n        sb.append(\"foo\");\n        sb.append(\"bar\");\n        sb.append(\"baz\");\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "FN within lambda #1160",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.stream.Stream;\n            public class Foo {\n                private final StringBuilder sb = new StringBuilder();\n\n                public String bar(Stream<String> stream) {\n                 return    stream.reduce(new StringBuilder(1_000), (builder, string) -> {\n                        switch (string) {\n                        case \"asd\":\n                            builder.append(\"asd\");\n                            builder.append(\"qwe\");\n                            break;\n                        }\n                        return builder;\n                    }, (t, s) -> {\n                     t.append(s);\n                     return t;\n                 }).toString();\n                }\n            }\n        "
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "name": "InefficientStringBuffering",
+  "language": "java",
+  "description": "\nAvoid concatenating non-literals in a StringBuffer constructor or append() since intermediate buffers will\nneed to be be created and destroyed by the JVM.\n        ",
+  "example": "// Avoid this, two buffers are actually being created here\nStringBuffer sb = new StringBuffer(\"tmp = \"+System.getProperty(\"java.io.tmpdir\"));\n\n// do this instead\nStringBuffer sb = new StringBuffer(\"tmp = \");\nsb.append(System.getProperty(\"java.io.tmpdir\"));",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 69,
+  "branches": 11,
+  "apis": 10,
+  "test": [
+    {
+      "description": "concatenating a literal to a method return value",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"hello\"+ world());\n    }\n}\n        "
+    },
+    {
+      "description": "same as TEST1, but in SB constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer(\"hello\"+ world());\n    }\n}\n        "
+    },
+    {
+      "description": "chained appends",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"hello\").append(world());\n    }\n}\n        "
+    },
+    {
+      "description": "concatenating two literals in SB constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer(\"hello\"+ \"world\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenating two literals post-construction",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"hello\"+\"world\");\n    }\n}\n        "
+    },
+    {
+      "description": "case where concatenation is not a child of a BlockStatement, but instead is a child of an ExplicitConstructorInvocation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo extends Exception {\n    public Foo(Exception ex) {\n        super(\"CauseMsg:\" + ex.getMessage(), ex);\n    }\n}\n        "
+    },
+    {
+      "description": "don't error out on array instantiation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        int t[] = new int[x+y+1];\n    }\n}\n        "
+    },
+    {
+      "description": "usage of the StringBuffer constructor that takes an int",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int foor() {return 2;}\n    public void bar(int x) {\n        StringBuffer buf = new StringBuffer(1 + foo());\n    }\n}\n        "
+    },
+    {
+      "description": "nested",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int x) {\n        StringBuffer buf = new StringBuffer(x);\n    }\n}\n        "
+    },
+    {
+      "description": "looking up too high",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        if (foo) {\n            StringBuffer buf = new StringBuffer();\n            buf.append(\"hello\");\n            Object x = a(\"world\" + x, buf.toString());\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "looking too deep",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int i) {\n        StringBuffer buf = new StringBuffer();\n        buf.append(getFoo(getBar(i + \"hi\")));\n    }\n}\n        "
+    },
+    {
+      "description": "concatenating two non-literals",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String a, String b) {\n        StringBuffer buf = new StringBuffer();\n        buf.append(a + b);\n    }\n}\n        "
+    },
+    {
+      "description": "concatenating method + int",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Date;\npublic class Foo {\n    public void bar(Date a) {\n        StringBuffer buf = new StringBuffer();\n        buf.append(a.getYear() + 1900);\n    }\n}\n        "
+    },
+    {
+      "description": "JTextArea.append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.swing.JTextArea;\npublic class Foo {\n    public void bar(JTextArea jta) {\n        jta.append(f + \"hi\");\n    }\n}\n        "
+    },
+    {
+      "description": "don't get thrown off by a buried literal",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer(\"hello\"+ System.getProperty(\"blah\"));\n    }\n}\n        "
+    },
+    {
+      "description": "sb.delete shouldn't trigger it",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.delete(x, y+z);\n    }\n}\n        "
+    },
+    {
+      "description": "skip additions involving static finals, compiler will do constant folding for these",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static final String FOO = \"bar\";\n    public void bar(StringBuffer sb) {\n        sb.append(\"foo\" + FOO);\n    }\n}\n        "
+    },
+    {
+      "description": "for statement without braces",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer();\n        for(int ix = 0; ix < 100; ix++)\n            sb.append(\"hello\"+ world());\n    }\n}\n        "
+    },
+    {
+      "description": "if statement without braces",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer sb = new StringBuffer();\n        if(true)\n            sb.append(\"hello\"+ world());\n    }\n}\n        "
+    },
+    {
+      "description": "3 args version of StringBuffer.append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz(StringBuffer s, char[] chars, int start, int end) {\n        s.append(chars, start, start - end);\n    }\n}\n        "
+    },
+    {
+      "description": "compile-time concats are ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void baz() {\n        StringBuffer buffer = new StringBuffer(\"a\" + \"b\" + \"c\");\n    }\n}\n        "
+    },
+    {
+      "description": "compile-time concats are ok, v2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static final String BAR = \"foo\";\n    private void baz() {\n        StringBuffer buffer = new StringBuffer(\"a\" + BAR + \"b\" + BAR);\n    }\n}\n        "
+    },
+    {
+      "description": "1503099, init with two string lengths",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String str1, String str2) {\n        StringBuffer buf = new StringBuffer(str1.length() + str2.length());\n        buf.append(str1);\n        buf.append(str2);\n    }\n}\n        "
+    },
+    {
+      "description": "1503099, append with two string lengths",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String str1, String str2) {\n        StringBuffer buf = new StringBuffer();\n        buf.append(str1.length() + str2.length());\n    }\n}\n        "
+    },
+    {
+      "description": "3109408, false + with adding two integers in constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Test {\n    List m_profileItems;\n    public void method(boolean s_profiling_details_enabled, Test profilingContext) {\n        int initialSizeGlobal = (int) (profilingContext.m_profileItems.size() * (150.0 * 0.30));\n        int initialSizeDetail = s_profiling_details_enabled ? profilingContext.m_profileItems.size() * 150 : 0;\n        StringBuilder sb = new StringBuilder(initialSizeGlobal + initialSizeDetail);\n    }\n}\n        "
+    },
+    {
+      "description": "1503099, adding two integers",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int a, int b, long c, long d) {\n        StringBuffer buf = new StringBuffer();\n        buf.append(a + b);\n        buf.append(c - d);\n\n        String str1 = \"a\";\n        String str2 = \"b\";\n        StringBuffer sb = new StringBuffer(str1.length() + str2.length());\n    }\n}\n        "
+    },
+    {
+      "description": "Violation: Avoid concat in append method invocations",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        9,
+        13,
+        18,
+        27,
+        33
+      ],
+      "code": "\npublic class Foo {\n\n    private static final String STATIC_FINAL_F = \"static_final_field\";\n    private static String static_f = \"static_field\";\n    private final String FINAL_F = \"final_field\";\n\n    private void concatIsBad(String arg) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"arg='\" + arg + \"'\"); // bad\n    }\n\n    private void concatIsBad2(String arg) {\n        StringBuilder sb = new StringBuilder().append(\"arg='\" + arg + \"'\"); // bad\n    }\n\n    private void concatIsBad3(String arg) {\n        StringBuilder sb;\n        sb = new StringBuilder().append(\"arg='\" + arg + \"'\"); // bad\n    }\n\n    private void concatNumeric() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(1 + 2);\n    }\n\n    private String testStaticBad() {\n        StringBuilder sb = new StringBuilder().append(\"fld:\" + static_f); // bad\n        return sb.toString();\n    }\n\n    private String testFinalLocalBad() {\n        String local = \"local\"; // non-final, jdk9+ optimized with indified Strings, assumed still worse\n        return new StringBuilder().append(\"fld:\" + local).toString(); // assumed bad\n    }\n}\n        "
+    },
+    {
+      "description": "No violation: Avoid concat in append method invocations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    private static final String STATIC_FINAL_F = \"static_final_field\";\n    private final String FINAL_F = \"final_field\";\n\n    private void good(String arg) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"arg='\").append(arg).append(\"'\");\n    }\n\n    public void testAddInSecondOrThirdArgAppendGood() {\n        StringBuilder wrappedLine = new StringBuilder();\n        String str = \"bar\";\n        int offset = 1;\n        int wrapLength = 2;\n        wrappedLine.append(str, offset + 1, wrapLength + offset + 1); // + but no string concat\n    }\n\n    private String testLiteralsGood(String arg) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"lit:\" + \"etc\");\n        return sb.toString();\n    }\n\n    private String testFinalFieldGood() {\n        return new StringBuilder().append(\"fld:\" + FINAL_F).toString(); // good, it's a compile time constant\n    }\n\n    private String testStaticFinalFieldGood() {\n        return new StringBuilder().append(\"fld:\" + STATIC_FINAL_F).toString(); // good\n    }\n\n    private String testFinalLocalGood() {\n        final String local = \"local\"; // final assumed a constant expression\n        return new StringBuilder().append(\"fld:\" + local).toString(); // good\n    }\n\n    private String testFinalLocalGood2() {\n        final String local = \"local\"; // final assumed a constant expression\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"local:\" + local); // good\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with ternary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int someInt = 1;\n    public String toString() {\n        StringBuilder sb = new StringBuilder(\"Foo{\");\n        sb.append(\"someInt=\").append(this.someInt < 0 ? \"n/a\" : this.someInt + \"ms\");\n        sb.append(\"someInt2=\").append(this.someInt >= 0 ? this.someInt + \"ms\" : \"n/a\");\n        sb.append('}');\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "[java] NPE in InefficientStringBuffering with Records #3420",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage a;\n\nimport java.io.InputStream;\n\nimport com.google.common.io.ByteStreams;\n\npublic record A(long from, long to) {\n    public InputStream a() {\n        return ByteStreams.limit(null, to - from);\n    }\n}\n        "
+    }
+  ]
+}

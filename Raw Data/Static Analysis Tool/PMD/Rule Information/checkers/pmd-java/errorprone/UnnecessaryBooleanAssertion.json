@@ -1,0 +1,83 @@
+{
+  "name": "UnnecessaryBooleanAssertion",
+  "language": "java",
+  "description": "\nA JUnit test assertion with a boolean literal is unnecessary since it always will evaluate to the same thing.\nConsider using flow control (in case of `assertTrue(false)` or similar) or simply removing\nstatements like `assertTrue(true)` and `assertFalse(false)`. If you just want a test to halt after finding\nan error, use the `fail()` method and provide an indication message of why it did.\n        ",
+  "example": "public class SimpleTest extends TestCase {\n    public void testX() {\n        assertTrue(true);            // serves no real purpose - remove it\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    void bar() {\n        assertTrue(true);\n    }\n}\n        "
+    },
+    {
+      "description": "variations",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    void bar() {\n        assertTrue(true);\n        assertTrue(false);\n        assertFalse(true);\n        assertFalse(false);\n    }\n}\n        "
+    },
+    {
+      "description": "nested boolean literal",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    void bar() {\n        assertTrue(foobar(fiddle, true));\n    }\n}\n        "
+    },
+    {
+      "description": "asserting true a ! (see also #3087)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    private boolean flag;\n    private Foo field;\n    void bar(boolean foo) {\n        assertTrue(!foo);   // not relevant for this rule, but SimplifiableTestAssertion\n        assertFalse(foo);   // that's ok\n\n        assertTrue(!this.flag); // not relevant for this rule, but SimplifiableTestAssertion\n        assertFalse(this.flag);\n        assertTrue(!field.flag);\n        assertFalse(field.flag); // not relevant for this rule, but SimplifiableTestAssertion\n\n        assertTrue(!false); // unnecessary\n    }\n}\n        "
+    },
+    {
+      "description": "asserting false a ! (see also #3087)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    private boolean flag;\n    private Foo field;\n    void bar(boolean foo) {\n        assertFalse(!foo);  // not relevant for this rule, but SimplifiableTestAssertion\n        assertTrue(foo);    // that's ok\n\n        assertFalse(!this.flag); // not relevant for this rule, but SimplifiableTestAssertion\n        assertTrue(this.flag);\n        assertFalse(!field.flag); // not relevant for this rule, but SimplifiableTestAssertion\n        assertTrue(field.flag);\n\n        assertFalse(!true); // unnecessary\n    }\n}\n        "
+    },
+    {
+      "description": "buz",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    void bar(String s) {\n        assertTrue(!s.contains(new Foo(s, s.toString())));\n    }\n}\n        "
+    },
+    {
+      "description": "not a JUnit test - failure case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        assertTrue(true);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 - failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport org.junit.Test;\npublic class Foo {\n    @Test\n    void bar() {\n        assertTrue(true);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 5 - failure case - @Test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.assertTrue;\npublic class Foo {\n    @Test\n    void bar() {\n        assertTrue(true);\n    }\n}\n        "
+    }
+  ]
+}

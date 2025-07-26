@@ -1,0 +1,50 @@
+{
+  "name": "MathMissingParentheses",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-math-missing-parentheses",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 98,
+  "branches": 14,
+  "apis": 50,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 29,
+      "expected-linenumbers": [
+        37,
+        47,
+        48,
+        54,
+        55,
+        56,
+        62,
+        68,
+        74,
+        75,
+        76,
+        88,
+        94,
+        100,
+        106,
+        113,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        128,
+        131,
+        134,
+        137,
+        140,
+        163,
+        170
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s readability-math-missing-parentheses %t\n\n#define MACRO_AND &\n#define MACRO_ADD +\n#define MACRO_OR |\n#define MACRO_MULTIPLY *\n#define MACRO_XOR ^\n#define MACRO_SUBTRACT -\n#define MACRO_DIVIDE /\n\nint foo(){\n    return 5;\n}\n\nint bar(){\n    return 4;\n}\n\nint sink(int);\n#define FUN(ARG) (sink(ARG))\n#define FUN2(ARG) sink((ARG))\n#define FUN3(ARG) sink(ARG)\n#define FUN4(ARG) sink(1 + ARG)\n#define FUN5(ARG) sink(4 * ARG)\n\nclass fun{\npublic:\n    int A;\n    double B;\n    fun(){\n        A = 5;\n        B = 5.4;\n    }\n};\n\nvoid f(){\n    //CHECK-MESSAGES: :[[@LINE+2]]:17: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int a = 1 + (2 * 3);\n    int a = 1 + 2 * 3;\n\n    int a_negative = 1 + (2 * 3); // No warning\n\n    int b = 1 + 2 + 3; // No warning\n\n    int c = 1 * 2 * 3; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+3]]:17: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+2]]:25: warning: '/' has higher precedence than '-'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int d = 1 + (2 * 3) - (4 / 5);\n    int d = 1 + 2 * 3 - 4 / 5;\n\n    int d_negative = 1 + (2 * 3) - (4 / 5); // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+4]]:13: warning: '&' has higher precedence than '|'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+3]]:17: warning: '+' has higher precedence than '&'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+2]]:25: warning: '*' has higher precedence than '|'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int e = (1 & (2 + 3)) | (4 * 5);\n    int e = 1 & 2 + 3 | 4 * 5;\n\n    int e_negative = (1 & (2 + 3)) | (4 * 5); // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+2]]:13: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int f = (1 * -2) + 4;\n    int f = 1 * -2 + 4;\n\n    int f_negative = (1 * -2) + 4; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+2]]:13: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int g = (1 * 2 * 3) + 4 + 5;\n    int g = 1 * 2 * 3 + 4 + 5;\n\n    int g_negative = (1 * 2 * 3) + 4 + 5; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+4]]:13: warning: '&' has higher precedence than '|'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+3]]:19: warning: '+' has higher precedence than '&'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+2]]:27: warning: '*' has higher precedence than '|'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int h = (120 & (2 + 3)) | (22 * 5);\n    int h = 120 & 2 + 3 | 22 * 5;\n\n    int h_negative = (120 & (2 + 3)) | (22 * 5); // No warning\n\n    int i = 1 & 2 & 3; // No warning\n\n    int j = 1 | 2 | 3; // No warning\n\n    int k = 1 ^ 2 ^ 3; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+2]]:13: warning: '+' has higher precedence than '^'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int l = (1 + 2) ^ 3;\n    int l = 1 + 2 ^ 3;\n\n    int l_negative = (1 + 2) ^ 3; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+2]]:13: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int m = (2 * foo()) + bar();\n    int m = 2 * foo() + bar();\n\n    int m_negative = (2 * foo()) + bar(); // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+2]]:13: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int n = (1.05 * foo()) + double(bar());\n    int n = 1.05 * foo() + double(bar());\n\n    int n_negative = (1.05 * foo()) + double(bar()); // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+3]]:17: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int o = 1 + (obj.A * 3) + obj.B;\n    fun obj;\n    int o = 1 + obj.A * 3 + obj.B;\n\n    int o_negative = 1 + (obj.A * 3) + obj.B; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+2]]:18: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int p = 1U + (2 * 3);\n    int p = 1U + 2 * 3;\n\n    int p_negative = 1U + (2 * 3); // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+7]]:13: warning: '+' has higher precedence than '|'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+6]]:25: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+5]]:53: warning: '&' has higher precedence than '^'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+4]]:53: warning: '^' has higher precedence than '|'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+3]]:77: warning: '-' has higher precedence than '^'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-MESSAGES: :[[@LINE+2]]:94: warning: '/' has higher precedence than '-'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: int q = (1 MACRO_ADD (2 MACRO_MULTIPLY 3)) MACRO_OR ((4 MACRO_AND 5) MACRO_XOR (6 MACRO_SUBTRACT (7 MACRO_DIVIDE 8)));\n    int q = 1 MACRO_ADD 2 MACRO_MULTIPLY 3 MACRO_OR 4 MACRO_AND 5 MACRO_XOR 6 MACRO_SUBTRACT 7 MACRO_DIVIDE 8; // No warning\n\n    //CHECK-MESSAGES: :[[@LINE+1]]:21: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    int r = FUN(0 + 1 * 2);\n\n    //CHECK-MESSAGES: :[[@LINE+1]]:22: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    int s = FUN2(0 + 1 * 2);\n\n    //CHECK-MESSAGES: :[[@LINE+1]]:22: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    int t = FUN3(0 + 1 * 2);\n\n    //CHECK-MESSAGES: :[[@LINE+1]]:18: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    int u = FUN4(1 * 2);\n\n    //CHECK-MESSAGES: :[[@LINE+1]]:13: warning: '*' has higher precedence than '+'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    int v = FUN5(0 + 1);\n}\n\nnamespace PR92516 {\n  void f(int i) {\n    int j, k;\n    for (j = i + 1, k = 0; j < 1; ++j) {}\n  }\n\n  void f2(int i) {\n    int j;\n    for (j = i + 1; j < 1; ++j) {}\n  }\n\n  void f3(int i) {\n    int j;\n    for (j = i + 1, 2; j < 1; ++j) {}\n  }\n}\n\nnamespace PR141249 {\n  void AssignAsParentBinOp(int* netChange, int* nums, int k, int i) {\n    //CHECK-MESSAGES: :[[@LINE+2]]:30: warning: '-' has higher precedence than '^'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n    //CHECK-FIXES: netChange[i] = nums[i] ^ (k - nums[i]);\n    netChange[i] = nums[i] ^ k - nums[i];\n  }\n}\n\nvoid CompareAsParentBinOp(int b) {\n  //CHECK-MESSAGES: :[[@LINE+2]]:12: warning: '*' has higher precedence than '-'; add parentheses to explicitly specify the order of operations [readability-math-missing-parentheses]\n  //CHECK-FIXES: if (b == (1 * 2) - 3)   {\n  if (b == 1 * 2 - 3)   {\n\n  }\n}"
+    }
+  ]
+}

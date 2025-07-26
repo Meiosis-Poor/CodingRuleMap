@@ -1,0 +1,413 @@
+{
+  "name": "UnnecessaryCast",
+  "language": "java",
+  "description": "\nDetects casts which could be removed as the operand of the cast is already suitable\nfor the context type. For instance, in the following:\n```\nObject context = (Comparable) \"o\";\n```\nThe cast is unnecessary. This is because `String` already is a subtype of both\n`Comparable` and `Object`.\n\nThis will also flag casts that can be avoided because of the autoboxing feature of Java 5.\n```\nInteger integer = (Integer) 1;\n```\nThe literal would be autoboxed to `Integer` anyway.\n            ",
+  "example": "import java.util.function.Function;\nclass SomeClass {\n   static {\n      Object o; long l; int i; Integer boxedInt;\n\n      // reference conversions\n\n      o = (Object) new SomeClass();      // unnecessary\n      o = (SomeClass) o;                 // necessary (narrowing cast)\n      o = (Comparable<String>) \"string\"; // unnecessary\n\n      // primitive conversions\n\n      l = (long) 2;   // unnecessary\n      l = (long) 2.0; // necessary (narrowing cast)\n      l = (byte) i;   // necessary (narrowing cast)\n\n      // boxing/unboxing casts (since java 5)\n\n      o = (Integer) 3;    // unnecessary (autoboxing would apply)\n      o = (long) 3;       // necessary (would be boxed to Long)\n      l = (int) boxedInt; // necessary (cannot cast Integer to long)\n\n      // casts that give a target type to a lambda/ method ref are necessary\n\n      o = (Function<Integer, String>) Integer::toString; // necessary (no target type)\n   }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 312,
+  "branches": 52,
+  "apis": 25,
+  "test": [
+    {
+      "description": "Basic Violations",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        12,
+        15,
+        18,
+        23,
+        28
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Map;\nimport java.uilt.HashMap;\n\npublic class UnnecessaryCastSample {\n    private Map<Integer, String> map = new HashMap<>();\n\n    public void localVars() {\n        List<String> stringList = Arrays.asList(\"a\");\n        String element = (String) stringList.get(0);\n\n        List<Double> doubleList = new ArrayList<>();\n        Double number = (Double) doubleList.get(0);\n\n        Map<String, String> stringMap = new HashMap<>();\n        String mapData = (String) stringMap.get(\"a\");\n    }\n\n    public void fields() {\n        map.put(1, \"test\");\n        String val = (String) map.get(1);\n    }\n\n    public void fields2() {\n        this.map.put(1, \"test\");\n        String val = (String) this.map.get(1);\n    }\n}\n        "
+    },
+    {
+      "description": "Without casts there should be no violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.Map;\nimport java.uilt.HashMap;\n\npublic class UnnecessaryCastSample {\n    private Map<Integer, String> map = new HashMap<>();\n\n    public void localVars() {\n        List<String> stringList = Arrays.asList(\"a\");\n        String element = stringList.get(0);\n\n        List<Double> doubleList = new ArrayList<>();\n        Double number = doubleList.get(0);\n    }\n\n    public void fields() {\n        map.put(1, \"test\");\n        String val = map.get(1);\n    }\n\n    public void fields2() {\n        this.map.put(1, \"test\");\n        String val = this.map.get(1);\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary casts with iterator",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        15
+      ],
+      "code": "\nimport java.util.*;\n\npublic class UnnecessaryCastSample {\n    public void localVars() {\n        List<String> stringList = Arrays.asList(\"a\");\n        Iterator<String> stringIt = stringList.iterator();\n        while (stringIt.hasNext()) {\n            String element = (String) stringIt.next();\n            String element2 = stringIt.next();\n        }\n\n        List<Double> doubleList = new ArrayList<>();\n        Iterator<Double> doubleIt = doubleList.iterator();\n        while (doubleIt.hasNext()) {\n            Double number = (Double) doubleIt.next();\n            Double number2 = doubleIt.next();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Avoid cast false-positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class UnnecessaryCastSample {\n    public void localVars() {\n        List<Number> numbers = Arrays.asList(1, 2, 3);\n        Integer myInt = (Integer) numbers.get(0);\n\n        List<Object> data = new ArrayList<>();\n        String item = (String) data.get(0);\n\n        Map<String, ?> map = new HashMap<>();\n        String dataFromMap = (String) map.get(\"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "Avoid clone false-positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class UnnecessaryCastSample {\n    public void localVars() {\n        List<String> strings = new ArrayList<>();\n        List<String> copy = (List<String>) strings.clone();\n    }\n}\n        "
+    },
+    {
+      "description": "Necessary Map Cast (nested generics) false-positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\nimport java.util.concurrent.ConcurrentHashMap;\n\npublic class MapCasts {\n    private final Map<Class<?>, Map<String, ?>> resourceCaches = new ConcurrentHashMap<>(4);\n\n    @SuppressWarnings(\"unchecked\")\n    public <T> Map<String, T> getResourceCache(Class<T> valueType) {\n        return (Map<String, T>) this.resourceCaches.computeIfAbsent(valueType, key -> new ConcurrentHashMap<>());\n    }\n}\n        "
+    },
+    {
+      "description": "Unnecessary (primitive -> primitive) casts",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "code": "\n            class Scratch {\n                public static void main(String[] args) {\n                    Integer integer = 2; // ok\n\n                    long a = (int) Integer.valueOf(2);  // explicit boxing where the value would be autoboxed\n                    int b = (int) 2;                    // unnecessary, it's the same type\n                    long c = (int) 4;                   // widening can be implicit\n                    double c = (int) 4;                 // widening can be implicit\n                    double c = (int) 4.0;               // cast is narrowing so necessary\n                }\n            }\n            "
+    },
+    {
+      "description": "Tests from the doc",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                public static void main(String[] args) {\n                    Object context = (Comparable) \"o\";\n                    Integer integer = (Integer) 1;\n                }\n            }\n            "
+    },
+    {
+      "description": "Context is array index",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\n            class Scratch {\n                public static void main(String[] args, Integer i, Double d) {\n                    args[(int) i] = \"\";   // unnecessary\n                    args[(int) '0'] = \"\"; // unnecessary\n                    args[(int) 0.5] = \"\"; // narrowing so necessary\n                    args[(int) d] = \"\";   // unboxing + narrowing so necessary\n                }\n            }\n            "
+    },
+    {
+      "description": "Context is invocation, no overloads",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                public static void main(String[] args, Integer i, Double d) {\n                    doSt((int) i); // unnecessary\n                }\n\n                static void doSt(int i) {}\n            }\n            "
+    },
+    {
+      "description": "Context is invocation, some overloads",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                public static void main(String[] args, Integer i, Double d) {\n                    doSt((int) i); // necessary\n                }\n\n                static void doSt(int i) {}\n                static void doSt(Integer i) {}\n            }\n            "
+    },
+    {
+      "description": "Unchecked cast FP",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            // Note: Enum is raw, not Enum<T>\n            class StringToEnum<T extends Enum> implements Converter<String, T> {\n\n                private final Class<T> enumType;\n\n                public StringToEnum(Class<T> enumType) {\n                    this.enumType = enumType;\n                }\n\n                @Override\n                public T convert(String source) {\n                    // Because `this.enumType` is raw, the expr `Enum.valueOf(...)` has its\n                    // return type erased to Enum\n                    // So the cast is necessary\n                    return (T) Enum.valueOf(this.enumType, source.trim());\n                }\n            }\n\n            interface Converter<From, To> {\n                To convert(From source);\n            }\n            "
+    },
+    {
+      "description": "Cast as target type for method reference/lambda FP",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Comparator;\n\n            class Test {\n\n                static {\n                    Comparator<Object> comparator;\n                    comparator = OrderComparator.withSourceProvider(object -> {\n                        if (object instanceof InterceptorRegistration) {\n                            // Context type for the return is Object.\n                            // The method ref cannot target Object though\n                            // it needs Ordered as a functional interface\n                            return (Ordered) ((InterceptorRegistration) object)::getOrder;\n                        }\n                        return null;\n                    });\n                    // same here\n                    comparator = OrderComparator.withSourceProvider(object -> {\n                        return (Ordered) () -> 0;\n                    });\n                    // same here\n                    comparator = OrderComparator.withSourceProvider(object -> (Ordered) () -> 0);\n                }\n\n\n            }\n\n            interface InterceptorRegistration {\n                int getOrder();\n            }\n\n            class OrderComparator implements Comparator<Object> {\n                public static Comparator<Object> withSourceProvider(OrderSourceProvider sourceProvider) {\n                    return (o1, o2) -> null; // body is irrelevant\n                }\n\n                @FunctionalInterface\n                public interface OrderSourceProvider {\n                    Object getOrderSource(Object obj);\n                }\n            }\n\n            @FunctionalInterface\n            interface Ordered {\n                int getOrder();\n            }\n\n            "
+    },
+    {
+      "description": "Cast as target type for method reference/lambda FP (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Comparator;\n\n            class Test {\n\n                static {\n                    InterceptorRegistration comparator;\n                    comparator = (Ordered) Test::getAnInt;\n                    comparator = (Ordered) () -> 0;\n                }\n\n                static int getAnInt() {return 0;}\n            }\n\n            interface InterceptorRegistration {\n                int getOrder();\n            }\n\n            @FunctionalInterface\n            interface Ordered extends InterceptorRegistration {\n                int getOrder();\n            }\n\n            "
+    },
+    {
+      "description": "Cast as target type for method reference/lambda (ok)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        8
+      ],
+      "code": "\n            import java.util.Comparator;\n\n            class Test {\n\n                static {\n                    Ordered comparator;\n                    comparator = (Ordered) Test::getAnInt;\n                    comparator = (Ordered) () -> 0;\n                }\n\n                static int getAnInt() {return 0;}\n            }\n\n            interface InterceptorRegistration {\n                int getOrder();\n            }\n\n            @FunctionalInterface\n            interface Ordered extends InterceptorRegistration {\n                int getOrder();\n            }\n\n            "
+    },
+    {
+      "description": "Cast as target type for method reference/lambda, with enclosing invoc context",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.reflect.Constructor;\n            import java.security.AccessController;\n            import java.security.PrivilegedAction;\n\n            class Test {\n                static {\n                    Object beanInstance;\n\n                    if (System.getSecurityManager() != null) {\n                        // these method calls are ambiguous if the cast is omitted\n                        // (there's a PrivilegedExceptionAction overload)\n                        beanInstance = AccessController.doPrivileged((PrivilegedAction<Object>) () -> new Object());\n                        beanInstance = AccessController.doPrivileged((PrivilegedAction<Object>) Object::new);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast over a ternary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\n            import java.lang.reflect.Constructor;\n            import java.security.AccessController;\n            import java.security.PrivilegedAction;\n\n            class Test {\n\n                void fun(boolean messageSelector) {\n                    String textFromMessage = (String) (messageSelector ? methodThatReturnsObject(\"selectorString\")\n                                                                       : \"string\");\n                    textFromMessage = (String) (messageSelector ? methodThatReturnsObject(\"selectorString\")\n                                                                : another());\n\n                    // only this one is unnecessary\n                    textFromMessage = (String) (messageSelector ? \"methodThatReturnsObject(selectorString)\"\n                                                                : \"string\");\n                }\n\n                Object methodThatReturnsObject(String s) {return null;}\n\n                Object another() {return null;}\n\n            }\n            "
+    },
+    {
+      "description": "Cast over target-dependent ternary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Collection;\n            import java.util.List;\n            import java.util.Set;\n\n            class Test {\n\n                Collection<String> fun(boolean messageSelector) {\n                    Collection<String> textFromMessage =\n                            // compile error: a cast doesn't contribute a target type,\n                            // the ternary is inferred to Collection<Object>\n                            // TODO should this be a positive? If you remove the cast the code will still compile,\n                            // but its typing will change\n                            (Collection<String>) (messageSelector ? emptyList() : emptySet());\n\n                    // ok\n                    return (messageSelector ? emptyList() : emptySet());\n                }\n\n                <T> List<T> emptyList() {return null;}\n\n                <T> Set<T> emptySet() {return null;}\n\n            }\n            "
+    },
+    {
+      "description": "Cast over ternary mixing boxing/null/primitive",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            class Scratch {\n\n                public static void main(String[] args) {\n                    double z = (Integer) // here\n                            ((0.2 == Math.random()) ? (Integer) null + apply(null) // this one is required so that + applies\n                                                    : (0.3 == Math.random()) ? (Integer) null // this one could be removed but whatever\n                                                                             : (int) Math.sin(300 * (12 + 30))); // this one is narrowing\n                }\n\n                public static int apply(Object o) { return 0; }\n            }\n            "
+    },
+    {
+      "description": "Cast that determines boxing when context is Object",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        7,
+        10,
+        12,
+        14,
+        16
+      ],
+      "code": "\n            class Scratch {\n                public Object zero() {\n                    switch (this) {\n                    case BOOLEAN:\n                        return Boolean.FALSE;\n                    case INT:\n                        return (Integer)0; // here\n                    // in the following double casts, the first one is unnecessary\n                    case BYTE:\n                        return (Byte)(byte)0;\n                    case CHAR:\n                        return (Character)(char)0;\n                    case SHORT:\n                        return (Short)(short)0;\n                    case LONG:\n                        return (Long)(long)0;\n                    case FLOAT:\n                        return FLOAT_ZERO;\n                    case DOUBLE:\n                        return DOUBLE_ZERO;\n                    case VOID:\n                    case OBJECT:\n                    default:\n                        return null;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Byte arithmetic",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                public void putTag(byte tagClass, boolean form, byte val) {\n                    // result of the OR is widened to int,\n                    // then needs to be narrowed\n                    byte tag = (byte) (tagClass | val);\n                    if (form) {\n                        tag |= (byte) 0x20; // narrowing from int\n                    }\n                    write(tag);\n                }\n            }\n            "
+    },
+    {
+      "description": "FP, removing both casts changes program",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n\n                public void putTag(boolean useLong, int n) {\n                    // ONE of them is necessary, because if we remove both they'd\n                    //  both be mapped to long, then boxed to Long and stored in Number\n\n                    Number result =\n                            useLong ? (Number) Long.valueOf(n)\n                                    : (Number) Integer.valueOf(n);\n                }\n            }\n            "
+    },
+    {
+      "description": "TP in ternary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            class Scratch {\n\n                public void putTag(boolean useLong, int n) {\n                    double result = useLong ? (double) 1\n                                            : (int) 2;   // removable, (2 : int)\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UnnecessaryCast false positive #2748 with unchecked cast",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.List;\n\n            class Scratch {\n\n                public static <T> T[] asArray(List<T> list) {\n                    T[] result = (T[]) list.toArray();\n                    return result;\n                }\n            }\n            "
+    },
+    {
+      "description": "Boxing cast needs to box to the same type to be unnecessary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Scratch {\n    static {\n        Object o = (Long) 3; // compile time error (int cannot be converted to Long)\n        o = (long) 3; // makes it box to Long\n    }\n}\n            "
+    },
+    {
+      "description": "Chained casts to convert int to Long",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Scratch {\n    static m(Integer boxedInt) {\n        Object o = (long)\n                (int) boxedInt; // both are necessary\n    }\n}\n            "
+    },
+    {
+      "description": "Assignment context is more flexible than cast",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\nclass Scratch {\n    static m(Integer boxedInt) {\n        long l = (int) boxedInt; // unnecessary\n        l = (long)               // unnecessary\n                (int) boxedInt;  // necessary\n        Object l = (long) (int) boxedInt; // both necessary\n    }\n}\n            "
+    },
+    {
+      "description": "Assert statements",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                static void m(Boolean boxedBool, boolean bool, String str) {\n                    assert (boolean) boxedBool;\n                    assert (boolean) bool;\n                    assert bool : (String) str;\n                }\n            }\n            "
+    },
+    {
+      "description": "Conditionals and loop statements",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                static void m(Boolean boxedBool, boolean bool, String str, int[] ints) {\n                    if ((boolean) boxedBool);\n                    while ((boolean) boxedBool);\n                    for (int i = 0; (boolean) boxedBool; i++) {}\n                    do; while ((boolean) boxedBool);\n                    for (int i : (int[]) ints);\n                }\n            }\n            "
+    },
+    {
+      "description": "Conditional expr condition",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                static void m(Boolean boxedBool, boolean bool, String str, int[] ints) {\n                    str = (boolean) boxedBool ? \"a\" : \"b\";\n                }\n            }\n            "
+    },
+    {
+      "description": "Necessary cast for condition",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                static void m(Object obj) {\n                    // both are necessary\n                    if ((Boolean) obj\n                        || (boolean) obj);\n                }\n            }\n            "
+    },
+    {
+      "description": "Missing context identity cast",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n\n                static void m(Boolean boxedBool) {\n                    ((Boolean) boxedBool).booleanValue(); // same type\n                    ((Object) boxedBool).toString(); // supertype\n                }\n            }\n            "
+    },
+    {
+      "description": "Casts in arithmetic",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            class Scratch {\n                static void m(int i, double d) {\n                    Object o;\n                    o = ((double) i) * d; // unnecessary\n                    o = ((double) i) * i; // necessary\n                }\n            }\n            "
+    },
+    {
+      "description": "Casts in shift exprs",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        5,
+        8,
+        9,
+        10,
+        12,
+        13,
+        14
+      ],
+      "code": "\n            class Scratch {\n                static void m(int i, short s, long l, Integer boxedInt) {\n                    l  = (long) i << 2; // \"necessary\"\n                    l  = (long) i << 34; // definitely necessary\n                    l  = (long) (i << 34); // unnecessary, l5\n\n                    i = i << (int) l;          // necessary\n                    i = i << (int) boxedInt;   // unnecessary\n                    i = (int) i << boxedInt;   // unnecessary\n                    i = (int) (i << boxedInt); // unnecessary\n\n                    i = (int) s << boxedInt;   // unnecessary, widened anyway\n                    i = ((int) s) << boxedInt; // unnecessary, same expression with unnecessary parens\n                    i = (int) (s << boxedInt); // unnecessary\n\n                }\n            }\n            "
+    },
+    {
+      "description": "Casts in arithmetic smaller than int ",
+      "expected-problems": 9,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                // they're all unecessary\n                static void m(int i, byte b, char c, short s) {\n                    i = b * (int) b; // 4\n                    i = (int) b * b;\n                    i = b * (int) s; // 6\n                    i = b * (int) c;\n                    i = b * (short) b; // 8\n                    i = i * (short) b;\n                    i = i * (short) s; // 10\n                    i = i * (int) c;\n                    i = i * (char) c; // 11\n                }\n            }\n            "
+    },
+    {
+      "description": "Casts in arithmetic with unboxing + widening",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                static void m(Integer i, Double d, Object lhs) {\n                    lhs = (int) i * 1.0;\n                    lhs = (double) d * 1.01;\n                    lhs = 1.01 * (int) i;\n                    lhs = 1.01 * (double) d;\n                }\n            }\n            "
+    },
+    {
+      "description": "\"Narrowing\" cast from char to short is necessary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n\n                static void m(int i, byte b, char c, short s) {\n                    i = i * (short) c;\n                }\n            }\n            "
+    },
+    {
+      "description": "char cast to int in string context is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n\n                static void m(String s, char c) {\n                    // the toString is different -> necessary (string contexts aren't implemented yet)\n                    s = \"(\" + (int) c + \")\" + c;\n                }\n            }\n            "
+    },
+    {
+      "description": "String cast determining context",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            class Scratch {\n                static void m(Object a, Object b) {\n                    String s = a + (String) b   // necessary, determines context\n                            + a + (String) b    // technically unnecessary, but narrowing\n                            + a + (String) null // unnecessary\n                            ;\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast on both sides of arithmetic",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            class Scratch {\n                static void m(short s, Object b) {\n                    b = (int) s\n                            + (long) s;\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast with assertion error??",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class InputParenPadLeftRightAndNoSpace {\n                void method(boolean status) {\n                    for (int i = 0; i < (long) (2 * (4 / 2)); i++);\n                }\n            }\n            "
+    },
+    {
+      "description": "Unnecessary cast to detect invocation part 1 - #3219",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nclass MyClass {\n     void m(int i) {}\n     void m(Integer i) {}\n     void m(Object o) {}\n\n     {\n         m(1); // select m(int)\n         m((int) 1); // select m(int), unnecessary\n         m((Integer) 1); // select m(Integer), cast is necessary\n         m((Object) Integer.valueOf(2)); // select m(Object) cast is necessary\n     }\n}\n            "
+    },
+    {
+      "description": "Unnecessary cast to detect invocation part 2 - #3219",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        7
+      ],
+      "code": "\nclass MyClass {\n     void m(int i) {}\n\n     {\n         m(1);   // select m(int)\n         m((int) 1); // unnecessary\n         m((Integer) 1); // unnecessary as the selected overload is anyway `int`\n     }\n}\n            "
+    },
+    {
+      "description": "Boxing in ternary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class Example {\n\n                boolean cast(boolean shouldBeLong, int n) {\n                    // The first valueOf call is necessary, not the second\n                    Number result = shouldBeLong ?\n                                    (Number)Long.valueOf(n) // ok\n                                                 : (Number)Integer.valueOf(n); // warn\n                    short s = 2;\n                    // here both are necessary\n                    result = shouldBeLong ?\n                             (Number)Long.valueOf(s) : (Number)Integer.valueOf(s);\n\n\n                }\n            }\n            "
+    },
+    {
+      "description": "Unboxing in lambda",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            public abstract class Example {\n                VoidSpecies<Integer> mismatch = payload -> (int) payload; // nowarn: here the cast does a null check\n                RefSpecies<Integer, Object> i = t -> (int) t; // nowarn: here the cast does a null check\n                IntSpecies<Integer> i = t -> (int) t; // warn: in this context t->t is equivalent because it will be unboxed\n\n                interface VoidSpecies<T> {\n                    void doSomething(T t);\n                }\n                interface RefSpecies<T, X> {\n                    X foo(T t);\n                }\n                interface IntSpecies<T> {\n                    int foo(T t);\n                }\n            }\n            "
+    },
+    {
+      "description": "#4620 [java] UnnecessaryCast reports false-positive for ByteBuffer methods when targeting Java 8",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        9
+      ],
+      "code": "\nimport java.nio.ByteBuffer;\nclass Tester {\n    public byte[] getArray() {\n        ByteBuffer bb = ByteBuffer.allocate(5 * 4);\n        return (byte[])bb.flip().array(); // cast is unnecessary since Java 9: ByteBuffer.flip() returns a ByteBuffer (and not a Buffer)\n    }\n    ByteBuffer nativeAddress;\n    public void foo(ByteBuffer nativeAddress) {\n        this.nativeAddress = nativeAddress == null ? null : (ByteBuffer) (Object) nativeAddress // casts are unnecessary\n            .duplicate().rewind();\n        // since Java 9: ByteBuffer.rewind() returns a ByteBuffer (and not a Buffer)\n    }\n}\n"
+    },
+    {
+      "description": "#5523 [java] UnnecessaryCast FP with integer division",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Scratch {\n                public static void main(String[] args) {\n                    long x = 100;\n                    Integer y = 75;\n                    System.out.println(Math.ceil((double) x / y)); // <-- Unnecessary cast (double).\n                    System.out.println(Math.ceil(x / y));\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast in return position of lambda (#5073)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            import static java.util.Comparator.nullsFirst;\n\n            public class Foo {\n                public int compare(List<String> someList) {\n                    final Set<String> set = Optional.ofNullable(someList)\n                                                .map(list -> (Set<String>) new HashSet<>(list)) // Code Style | UnnecessaryCast reported here\n                                                .orElseGet(Collections::emptySet);\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast in return position of lambda, true positives",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        13,
+        14,
+        15
+      ],
+      "code": "\n            import java.util.*;\n\n            interface L1<X> { Object foo(X x); }\n            interface L2<X, Q> { Q foo(X x); }\n\n\n            public class Foo {\n                <X> void bar(L1<X> l) {}\n                <X> void bar2(L2<X, ? extends Comparable<?>> l) {}\n                <X> void bar4(L2<X, Comparable<?>> l) {}\n                <X, Q> void bar3(L2<X, Q> l) {}\n                void foor(List<String> someList) {\n                    bar(x -> (Comparable<?>) \"something\"); // redundant\n                    bar2(x -> (Comparable<?>) \"something\"); // redundant: lambda not context dependent\n                    bar4(x -> (Comparable<?>) \"something\"); // redundant: lambda not context dependent\n                    bar3(x -> (Comparable<?>) \"something\"); // not redundant: method uses lambda ret ty\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast in return position of lambda, types are unresolved (#5073)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package org.example;\n\n            import io.vavr.collection.Array;\n            import io.vavr.collection.Seq;\n            import io.vavr.control.Either;\n\n            public class Main {\n\n                public Either<Seq<String>, String> loadAll() {\n                    return load()\n                            .mapLeft(it -> (Seq<String>) Array.of(it))\n                            .map(foo -> \"bar\");\n                }\n\n                private Either<String, String> load() {\n                    return Either.left(\"hello\");\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Cast in return position of lambda, declare types here (#5073)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            interface Function<P,R> { R apply(P p); }\n            interface Seq<T> {}\n            interface Array<T> extends Seq<T> {\n                static <U> Array<U> of(U u) {}\n            }\n            interface Either<L, R> {\n                <T> Either<T, R> mapLeft(Function<? super L, ? extends T> f) {}\n                <T> Either<L, T> map(Function<? super R, ? extends T> f) {}\n            }\n\n            public class Main {\n\n                public Either<Seq<String>, String> loadAll() {\n                    return load()\n                            .mapLeft(it -> (Seq<String>) Array.of(it))\n                            .map(foo -> \"bar\");\n                }\n\n                private Either<String, String> load() {\n                    //                    return Either.left(\"hello\");\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Other example of cast in lambda return (#5440)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Optional;\n            class Scratch {\n                public static void main(String[] args) {\n                    Object object = Optional\n                            .of(new Object())\n                            // necessary otherwise map would return Optional<String>\n                            .map(o -> (Object) o.toString())\n                            .orElse(Boolean.FALSE);\n                }\n            }\n            "
+    },
+    {
+      "description": "Other example of cast in lambda return (#5440) - has explicit type args",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Optional;\n            class Scratch {\n                public static void main(String[] args) {\n                    Object object = Optional\n                            .of(new Object())\n                            // with explicit targs it is unnecessary\n                            .<Object>map(o -> (Object) o.toString())\n                            .orElse(Boolean.FALSE);\n                }\n            }\n            "
+    },
+    {
+      "description": "Other example of cast in lambda return (#5440) - has cast context",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Optional;\n            import java.util.function.UnaryOperator;\n\n            class Scratch {\n                public static void main(String[] args) {\n                    Object object = Optional\n                            .of(new Object())\n                            // the outer cast determines the type of the lambda, not the inner cast\n                            .map((UnaryOperator<Object>) o -> (Object) o.toString())\n                            .orElse(Boolean.FALSE);\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UnnecessaryCast false-positive for raw types #4822",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Objects;\n            import java.util.Comparator;\n            import static java.util.Comparator.nullsFirst;\n\n            public class Foo {\n                public int compare(Comparable<?> o1, Comparable<?> o2) {\n                    final Comparator nullComparator = nullsFirst(null);\n                    if (o1 == null || o2 == null) {\n                        return Objects.compare(o1, o2, nullComparator);\n                    }\n                    Class<?> c1 = o1.getClass();\n                    Class<?> c2 = o2.getClass();\n                    if (c1 != c2) {\n                        return c1.getName().compareTo(c2.getName());\n                    }\n\n                    return ((Comparable) o1).compareTo(o2); // <--- Unnecessary cast (Comparable)\n                }\n            }\n            "
+    },
+    {
+      "description": "Cast is not found as unnecessary (for now)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Objects;\n            import java.util.List;\n            import static java.util.Comparator.nullsFirst;\n\n            public class Foo {\n                public int compare(List<?> o1) {\n                    // note that here the cast is useless, because\n                    // List::size is also available on the generic\n                    // List<?> type. However we don't report this\n                    // as we don't analyse the usages of values for\n                    // now.\n                    return ((List) o1).size();\n                }\n            }\n            "
+    }
+  ]
+}

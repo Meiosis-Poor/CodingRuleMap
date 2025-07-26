@@ -1,0 +1,65 @@
+{
+  "name": "ModifierOrder",
+  "language": "java",
+  "description": "<div>\n Checks that the order of modifiers conforms to the suggestions in the\n <a href=\"https://docs.oracle.com/javase/specs/jls/se16/preview/specs/sealed-classes-jls.html\">\n Java Language specification, &#167; 8.1.1, 8.3.1, 8.4.3</a> and\n <a href=\"https://docs.oracle.com/javase/specs/jls/se11/html/jls-9.html\">9.4</a>.\n The correct order is:\n </div>\n\n <ol>\n <li> {@code public} </li>\n <li> {@code protected} </li>\n <li> {@code private} </li>\n <li> {@code abstract} </li>\n <li> {@code default} </li>\n <li> {@code static} </li>\n <li> {@code sealed} </li>\n <li> {@code non-sealed} </li>\n <li> {@code final} </li>\n <li> {@code transient} </li>\n <li> {@code volatile} </li>\n <li> {@code synchronized} </li>\n <li> {@code native} </li>\n <li> {@code strictfp} </li>\n </ol>\n\n <p>\n In additional, modifiers are checked to ensure all annotations\n are declared before all other modifiers.\n </p>\n\n <p>\n Rationale: Code is easier to read if everybody follows\n a standard.\n </p>\n\n <p>\n ATTENTION: We skip\n <a href=\"https://www.oracle.com/technical-resources/articles/java/ma14-architect-annotations.html\">\n type annotations</a> from validation.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 112,
+  "branches": 38,
+  "apis": 23,
+  "test": [
+    {
+      "description": "Auto test from InputModifierOrderAnnotationDeclaration.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.modifierorder;\npublic @InterfaceAnnotation @interface InputModifierOrderAnnotationDeclaration {\n    int getValue();\n}\n@interface InterfaceAnnotation {}"
+    },
+    {
+      "description": "Auto test from InputModifierOrderItOne.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        7,
+        16,
+        19,
+        35,
+        40,
+        50
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.modifierorder;\nstrictfp final class InputModifierOrderItOne \n{\n    static private boolean sModifierOrderVar = false; \n    strictfp private void doStuff() \n    {\n    }\n    @MyAnnotation2 void someMethod()\n    {\n    }\n    private @MyAnnotation2 void someMethod2()\n    { \n    }\n    private @MyAnnotation2 strictfp void someMethod3()\n    { \n    }\n    @MyAnnotation2 private strictfp void someMethod4()\n    {\n    }\n    @MyAnnotation2 private static @MyAnnotation4 strictfp void someMethod5()\n    { \n    }\n    public static interface InputRedundantPublicModifier\n    {\n        public void a();\n        void b();\n        abstract void c();\n        public float PI_PUBLIC = (float) 3.14;\n        final float PI_FINAL = (float) 3.14;\n        float PI_OK = (float) 3.14;\n    }\n    private final void method()\n    {\n    }\n}\nabstract interface InnerImplementation\n{\n    InnerImplementation inner =\n            new InnerImplementation()\n            {\n                public void method()\n                {\n                }\n            };\n    void method();\n}\n@interface Annotation\n{\n    public String s1 = \"\";\n    final String s2 = \"\";\n    static String s3 = \"\";\n    String s4 = \"\";\n    public String blah();\n    abstract String blah2();\n}\n@interface MyAnnotation2 {\n}\n@interface MyAnnotation4 {\n}"
+    },
+    {
+      "description": "Auto test from InputModifierOrderItTwo.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        54
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.modifierorder;\nstrictfp final class InputModifierOrderItTwo { \n}\nclass SafeVarargsUsage {\n    @Deprecated\n    @SafeVarargs\n    private final void foo(int... k) {}\n    @Deprecated\n    @SafeVarargs\n    @SuppressWarnings(\"\")\n    private final void foo1(Object... obj) {}\n}\nenum TestEnum {\n    ;\n    public void method() {\n    }\n}\nfinal class RedundantFinalClass\n{\n    public final void finalMethod()\n    {\n    }\n    public void method()\n    {\n    }\n}\ninterface InputDefaultPublicModifier\n{\n    default strictfp void a()\n    {\n    }\n    strictfp default void b() \n    {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputModifierOrderSealedAndNonSealed.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        8,
+        27,
+        43,
+        51,
+        52,
+        59
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.modifierorder;\nsealed public class InputModifierOrderSealedAndNonSealed\n    permits CircleOne, SquareOne, RectangleOne {\n}\nfinal class CircleOne extends InputModifierOrderSealedAndNonSealed\n        implements SquircleOne {\n}\nsealed class RectangleOne extends InputModifierOrderSealedAndNonSealed\n    implements Cloneable\n    permits TransparentRectangleOne, FilledRectangleOne {\n}\nfinal class TransparentRectangleOne extends RectangleOne {\n}\nsealed class SquareOne extends InputModifierOrderSealedAndNonSealed implements SquircleOne {\n    sealed private class OtherSquare extends SquareOne permits OtherSquare2 {\n    } \n    private final class OtherSquare2 extends OtherSquare {\n    }\n    static non-sealed strictfp class StaticClass implements SquircleOne {\n    }\n}\nfinal strictfp class FilledRectangleOne extends RectangleOne {\n}\nsealed interface SquircleOne permits CircleOne, SquareOne, Ellipse, SquareOne.StaticClass {\n}\nstrictfp sealed interface Rhombus permits Parallelogram, Parallelogram.Diamond,\n        Parallelogram.Trapezoid {\n}\nrecord Parallelogram(int x, int y, double z) implements Rhombus{\n    final public record Diamond(int x, int y, double z)implements Rhombus {\n    } \n    strictfp static public final record Trapezoid(int x, int y,\n        double z)implements Rhombus {\n    }\n}\nstrictfp non-sealed interface Ellipse extends SquircleOne {\n}\nclass Oval implements Ellipse {\n}"
+    },
+    {
+      "description": "Auto test from InputModifierOrderTypeAnnotationsOne.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.modifierorder;\nimport java.io.File;\nimport java.io.IOException;\nimport java.io.Serializable;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\nimport java.util.Collection;\nimport java.util.Comparator;\nimport java.util.List;\nimport java.util.Map;\npublic class InputModifierOrderTypeAnnotationsOne extends MyClass {\n    private @TypeAnnotation String hello = \"Hello, World!\";\n    private @TypeAnnotation final String jdk = \"JDK8\";\n    @TypeAnnotation private String projectName = \"Checkstyle\";\n    private Map.@TypeAnnotation Entry entry;\n    private List<@TypeAnnotation String> strings;\n    {\n        new @TypeAnnotation Object();\n    }\n    static {\n        new @TypeAnnotation Object();\n    }\n    public void foo1() {\n        new @TypeAnnotation Object();\n    }\n    public void foo2() {\n        Object myObject = new Object();\n    }\n    class MySerializableClass<T> implements @TypeAnnotation Serializable {  }\n    Map<@TypeAnnotation String, @TypeAnnotation List<@TypeAnnotation String>> documents;\n    public <E extends @TypeAnnotation Comparator<E> & @TypeAnnotation Comparable> void foo5() {  }\n    class Folder<F extends @TypeAnnotation File> { }\n    Collection<? super @TypeAnnotation File> c;\n    List<@TypeAnnotation ? extends Comparable<T>> unchangeable;\n    void foo6() throws @TypeAnnotation IOException { }\n    public void foo7() {\n        boolean isNonNull = \"string\" instanceof @TypeAnnotation String;\n    }\n    class Nested { }\n    class T { }\n    @Override\n    public @TypeAnnotation String toString() { return \"\"; }\n    @Override\n    @TypeAnnotation public int hashCode() { return 1; }\n    public @TypeAnnotation int foo8() { return 1; }\n    public @TypeAnnotation boolean equals(Object obj) { return super.equals(obj); }\n    @Override\n    void foo10() {\n        super.foo10();\n    }\n}\nclass MyClass {\n    @MethodAnnotation void foo10() {}\n    private @MethodAnnotation void foo11() {}\n    public @TypeAnnotation MyClass() {}\n    @ConstructorAnnotation public MyClass(String name) {}\n}\n@Target({\n    ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.PARAMETER,\n    ElementType.TYPE_PARAMETER, ElementType.TYPE_USE})\n@interface TypeAnnotation {\n}\n@interface MethodAnnotation {}\n@interface ConstructorAnnotation {}"
+    }
+  ]
+}

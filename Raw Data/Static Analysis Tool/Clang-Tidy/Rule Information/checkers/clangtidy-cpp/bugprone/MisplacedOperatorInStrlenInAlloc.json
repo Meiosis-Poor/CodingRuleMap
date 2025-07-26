@@ -1,0 +1,27 @@
+{
+  "name": "MisplacedOperatorInStrlenInAlloc",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-misplaced-operator-in-strlen-in-alloc",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 109,
+  "branches": 2,
+  "apis": 101,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        19,
+        25,
+        31,
+        37,
+        43,
+        56
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-misplaced-operator-in-strlen-in-alloc %t\n\nnamespace std {\ntypedef __typeof(sizeof(int)) size_t;\nvoid *malloc(size_t);\n\nsize_t strlen(const char *);\n} // namespace std\n\nnamespace non_std {\ntypedef __typeof(sizeof(int)) size_t;\nvoid *malloc(size_t);\n\nsize_t strlen(const char *);\n} // namespace non_std\n\nvoid bad_std_malloc_std_strlen(char *name) {\n  char *new_name = (char *)std::malloc(std::strlen(name + 1));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: addition operator is applied to the argument of strlen\n  // CHECK-FIXES: {{^  char \\*new_name = \\(char \\*\\)std::malloc\\(}}std::strlen(name) + 1{{\\);$}}\n}\n\nvoid ignore_non_std_malloc_std_strlen(char *name) {\n  char *new_name = (char *)non_std::malloc(std::strlen(name + 1));\n  // CHECK-MESSAGES-NOT: :[[@LINE-1]]:28: warning: addition operator is applied to the argument of strlen\n  // Ignore functions of the malloc family in custom namespaces\n}\n\nvoid ignore_std_malloc_non_std_strlen(char *name) {\n  char *new_name = (char *)std::malloc(non_std::strlen(name + 1));\n  // CHECK-MESSAGES-NOT: :[[@LINE-1]]:28: warning: addition operator is applied to the argument of strlen\n  // Ignore functions of the strlen family in custom namespaces\n}\n\nvoid bad_new_strlen(char *name) {\n  char *new_name = new char[std::strlen(name + 1)];\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: addition operator is applied to the argument of strlen\n  // CHECK-FIXES: {{^  char \\*new_name = new char\\[}}std::strlen(name) + 1{{\\];$}}\n}\n\nvoid good_new_strlen(char *name) {\n  char *new_name = new char[std::strlen(name) + 1];\n  // CHECK-MESSAGES-NOT: :[[@LINE-1]]:20: warning: addition operator is applied to the argument of strlen\n}\n\nclass C {\n  char c;\npublic:\n  static void *operator new[](std::size_t count) {\n    return ::operator new(count);\n  }\n};\n\nvoid bad_custom_new_strlen(char *name) {\n  C *new_name = new C[std::strlen(name + 1)];\n  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: addition operator is applied to the argument of strlen\n  // CHECK-FIXES: {{^  C \\*new_name = new C\\[}}std::strlen(name) + 1{{\\];$}}\n}"
+    }
+  ]
+}

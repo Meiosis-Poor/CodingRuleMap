@@ -1,0 +1,584 @@
+{
+  "name": "CloseResource",
+  "language": "java",
+  "description": "\nEnsure that resources (like `java.sql.Connection`, `java.sql.Statement`, and `java.sql.ResultSet` objects\nand any subtype of `java.lang.AutoCloseable`) are always closed after use.\nFailing to do so might result in resource leaks.\n\nNote: It suffices to configure the super type, e.g. `java.lang.AutoCloseable`, so that this rule automatically triggers\non any subtype (e.g. `java.io.FileInputStream`). Additionally specifying `java.sql.Connection` helps in detecting\nthe types, if the type resolution / auxclasspath is not correctly setup.\n\nNote: Since PMD 6.16.0 the default value for the property `types` contains `java.lang.AutoCloseable` and detects\nnow cases where the standard `java.io.*Stream` classes are involved. In order to restore the old behaviour,\njust remove \"AutoCloseable\" from the types.\n        ",
+  "example": "public class Bar {\n    public void withSQL() {\n        Connection c = pool.getConnection();\n        try {\n            // do stuff\n        } catch (SQLException ex) {\n           // handle exception\n        } finally {\n            // oops, should close the connection using 'close'!\n            // c.close();\n        }\n    }\n\n    public void withFile() {\n        InputStream file = new FileInputStream(new File(\"/tmp/foo\"));\n        try {\n            int c = file.in();\n        } catch (IOException e) {\n            // handle exception\n        } finally {\n            // TODO: close file\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 788,
+  "branches": 194,
+  "apis": 41,
+  "test": [
+    {
+      "description": "connection is closed, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n        } catch (Exception e) {\n        } finally {\n            c.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "connection not closed, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n        } catch (Exception e) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "ResultSet not closed, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        ResultSet c = pool.getRS();\n        try {\n        } catch (Exception e) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Statement not closed, should have failed",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Statement c = pool.getStmt();\n        try {\n        } catch (Exception e) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Bad, no closeTargets properties for statements",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Ok, closeTargets properties for statements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Add type param",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class BadClose {\n    private void readData() {\n        File aFile = new File(FileName);\n        FileInputStream anInput = new FileInputStream(aFile);\n        ObjectInputStream aStream = new ObjectInputStream(anInput);\n\n        readExternal(aStream);\n    }\n}\n        "
+    },
+    {
+      "description": "OK with custom closeTargets",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.MyHelper;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Statement c = pool.getStmt();\n        try {\n        } finally {\n            MyHelper.close(c);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "New use case: commit",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.*;\n\npublic class Foo {\n    public void bar(Pool pool, TransactionManager trxManager) throws SQLException\n    {\n        DAOTransaction trx = trxManager.open();\n        Connection cnx = pool.getConnection();\n        ResultSet rs = null;\n        Statement stmt = null;\n\n        try\n        {\n            // ...\n        }\n        finally\n        {\n            //stmt.close(); // Error !!! you have to close the Statement\n            rs.close(); // Correct\n            cnx.commit(); // Correct ( cnx.close() would be equivalent)\n            trx.commit(); // Correct\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[1964798] 3 bugs in CloseResourceRule : Case failing with complete name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.*;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Statement c = pool.getStmt();\n        try {\n        } finally {\n            MyHelper.myClose(c);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[1964798] 3 bugs in CloseResourceRule : null object is passed to close connection method (1)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.*;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c;\n        try {\n            c = pool.getConnection();\n        } finally {\n            this.closeConnection(null);\n        }\n    }\n\n    void closeConnection(Connection c) { }\n}\n        "
+    },
+    {
+      "description": "[1964798] 3 bugs in CloseResourceRule : null object is passed to close connection method (2)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.*;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n            //...\n        } finally {\n            this.closeConnection(null);\n        }\n    }\n\n    void closeConnection(Connection c) { }\n}\n        "
+    },
+    {
+      "description": "[1964798] 3 bugs in CloseResourceRule : If connection is returned, we should not log a violation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    private Pool pool;\n    public Connection getConnection() {\n        Connection c = pool.getConnection();\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "If connection is returned indirectly, we should not log a violation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    private Pool pool;\n    public Object[] getConnection() {\n        Connection c = pool.getConnection();\n        return new Object[] { c };\n    }\n}\n        "
+    },
+    {
+      "description": "invoke an external method that close the resource: bug 2920057",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\n\npublic class StructureFactory {\n\n    public void rechercherListe() {\n\n        Connection _connexion = null;\n        ResultSet _rs = null;\n        PreparedStatement _st = null;\n        try\n        {\n           //\n        }\n\n        finally\n        {\n            getProviderInstance().closeConnexion(_connexion);\n            getProviderInstance().closeResultSet(_rs);\n            getProviderInstance().closeStatement(_st);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "invoke an external method that closes the resource, but one is not the right method and an another is not the right variable: see bug 2920057",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class StructureFactory {\n\n    public void searchList(Pool pool) {\n\n        Connection _connexion = pool.getConn();\n        ResultSet _rs = createResultSet(_connexion);\n        PreparedStatement _st = createPrepStmt(_connexion);\n        Structure _structure = null;\n        try\n        {\n           //\n        }\n\n        finally\n        {\n            getProviderInstance().closeConnexion(_connexion);\n            getProviderInstance().closeYourEyes(_rs); //not the right method\n            getProviderInstance().closeStatement(_badOne); // not the right variable\n        }\n    }\n\n    public class Structure { }\n}\n        "
+    },
+    {
+      "description": "#1011 CloseResource Rule ignores Constructors",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Test {\n    public Test(Pool pool) {\n        Connection c = pool.getConnection();\n    }\n}\n        "
+    },
+    {
+      "description": "#1011 CloseResource Rule ignores Constructors - closed in finally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Test {\n    public Test(Pool pool) {\n        Connection c;\n        try {\n            c = pool.getConnection();\n        } finally {\n            c.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1011 CloseResource Rule ignores Constructors - not a problem - instance variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Test {\n    Connection c;\n    Pool pool;\n    public Test() {\n        c = pool.getConnection();\n    }\n}\n        "
+    },
+    {
+      "description": "#1029 No instance level check in the close resource rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Test {\n    Connection c;\n    Pool pool;\n    public void doIt() {\n        c = pool.getConnection();\n    }\n}\n        "
+    },
+    {
+      "description": "#947 CloseResource rule fails if field is marked with annotation",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        10,
+        11
+      ],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.ResultSet;\nimport java.sql.Statement;\nimport java.sql.SQLException;\n\npublic class CloseResourceRuleBug {\n    public void foo() {\n        try {\n            Connection c = DriverManager.getConnection(\"fake\");\n            Statement s = c.createStatement();\n            @SuppressWarnings(\"PMD.CloseResource\") ResultSet rs = s.executeQuery(\"fake\");\n            while (rs.next()) {\n            }\n            rs.close();\n        } catch (SQLException e) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#992 Class java.beans.Statement triggered in CloseResource rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.beans.Statement;\n\npublic class Test {\n    public void foo(String vector, String prop) {\n        Statement stmt = new Statement(vo, \"set\" + prop, new Object[] { vector });\n\n        try {\n            stmt.execute();\n        } catch (Exception e) {\n            throw new RuntimeException(\"Could not set property prop: \" + prop, e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Custom close method, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.closeresource;\n\npublic class Foo {\n    void bar() {\n        MyClass myClass = null;\n        try {\n            myClass = new MyClass();\n        } catch (Exception e) {\n        } finally {\n            myClass.cleanup(); // should be ok, it's closed with cleanup\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "bug #1131 CloseResource should complain if code between declaration of resource and try: Code between declaration and try, should fail",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        String test = \"\";\n        Connection c = pool.getConnection();\n        if (test != null) {\n            throw new RuntimeException(\"haha\"); // <- RuntimeException, Connection  c is not closed\n        }\n        try {\n        } catch (Exception e) {\n        } finally {\n           c.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "bug #1131 CloseResource should complain if code between declaration of resource and try: Creation inside try, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        String test = \"\";\n        Connection c = null;\n        if (test != null) {\n            throw new RuntimeException(\"haha\");\n        }\n        try {\n            // Creation inside try, ok\n            c = pool.getConnection();\n        } catch (Exception e) {\n        } finally {\n            if (c!= null) {\n                c.close();\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "bug #1131 CloseResource should complain if code between declaration of resource and try: No sentences between creation and try, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        String test = \"\";\n        if (test != null) {\n            throw new RuntimeException(\"haha\");\n        }\n        Connection c = pool.getConnection();\n        // No sentences between creation and try, ok\n        try {\n        } catch (Exception e) {\n        } finally {\n            if (c!= null) {\n                c.close();\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1259 CloseResource rule ignores conditionals within finally blocks",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.SQLException;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Bar {\n    public void foo(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n            // do stuff\n        } catch (SQLException ex) {\n            // handle exception\n        } finally {\n            if(false) {\n                c.close();\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1375 CloseResource not detected properly - ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.ResultSet;\nimport java.sql.Statement;\n\npublic class Foo {\n    void bar() {\n        ResultSet rs;\n        Statement stmt = getConnection().createStatement();\n        try {\n            rs = stmt.getResultSet();\n            rs.getString(0);\n            rs.close();\n        } catch (Exception e) {\n        } finally {\n            stmt.close();\n        }\n    }\n\n    Connection getConnection() { return null; }\n}\n        "
+    },
+    {
+      "description": "#1375 CloseResource not detected properly - false negative",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.ResultSet;\nimport java.sql.Statement;\n\npublic class Foo {\n    void bar() {\n        ResultSet rs = null;\n        Statement stmt = getConnection().createStatement();\n        try {\n            rs = stmt.getResultSet();\n            rs.getString(0);\n            rs.close();\n        } catch (Exception e) {\n        } finally {\n            stmt.close();\n        }\n    }\n\n    Connection getConnection() { return null; }\n}\n        "
+    },
+    {
+      "description": "#1372 False Negative for CloseResource rule.",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.ResultSet;\nimport java.sql.Statement;\nimport java.sql.PreparedStatement;\nimport java.sql.SQLException;\n\npublic class CloseResourceTest {\n    public Object selectOne(final int val, final int val2) {\n        getCurrentSession().doWork(new Work() {\n\n            @Override\n            public void execute(Connection connection) throws SQLException {\n                PreparedStatement stmt = null;\n                ResultSet rs = null;\n                try {\n                    stmt = createDefaultPreparedStatement(connection, CONSTANTS.QUERY_STRING);\n                    stmt.setInt(1, vaL);\n                    stmt.setInt(2, val2);\n                    rs = stmt.executeQuery();\n                    // do result set processing\n                } catch (SQLException se) {\n                    // error\n                } finally {\n                    closeLocalResources(stmt);\n                    //closeResultSet(rs); // --- ERROR\n                }\n            }\n        });\n    }\n    public interface Work {\n        void execute(Connection connection) throws SQLException;\n    }\n    public static final class CONSTANTS {\n        public static final String QUERY_STRING = \"select * from dual\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1387 CloseResource has false positive for ResultSet",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.ResultSet;\nimport java.sql.Statement;\n\npublic class CloseResource {\n    public void querySomething(Connection connection) {\n        Statement stmt = null; // it complains this is not closed\n        ResultSet resultSet = null; // it complains this is not closed\n        String someSql = \"select something...\";\n        try {\n            stmt = connection.createStatement();\n            resultSet = stmt.executQuery(someSql);\n            while (resultSet.next()) {\n                // do something\n            }\n        } finally {\n            if (resultSet != null) {\n                resultSet.close();\n            }\n            if (stmt != null) {\n                stmt.close();\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Verify closeAsDefaultTarget property",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport java.sql.ResultSet;\nimport java.sql.Statement;\n\npublic class CloseResource {\n    public void doSomething(Connection connection) {\n        Statement stmt = connection.createStatement();\n        ResultSet resultSet = stmt.executeQuery(\"select ...\");\n        try {\n        } finally {\n            resultSet.close();\n            stmt.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1479 CloseResource false positive on Statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n\n    public static void main(String[] args) {\n        Statement statement = new Statement();\n    }\n\n    static class Statement {\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for input streams - not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        InputStream in = null;\n        try {\n            in = new FileInputStream(new File(\"/tmp/foo\"));\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for file input streams - not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        FileInputStream in = null;\n        try {\n            in = new FileInputStream(new File(\"/tmp/foo\"));\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for input streams - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        InputStream in = null;\n        try {\n            in = new FileInputStream(new File(\"/tmp/foo\"));\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            in.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for input streams - ok try-with-resources",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        try (InputStream in = new FileInputStream(new File(\"/tmp/foo\"))) {\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for closable - not ok",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        InputStream in = null;\n        OutputStream in2 = null;\n        try {\n            in = new FileInputStream(new File(\"/tmp/foo\"));\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for closable by default - not ok",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        5,
+        6,
+        16
+      ],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        InputStream in = null;\n        OutputStream in2 = null;\n        try {\n            in = new FileInputStream(new File(\"/tmp/foo\"));\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        }\n    }\n\n    public void bar() {\n        InputStream file = new FileInputStream(new File(\"/tmp/foo\"));\n        try {\n            int c = file.in();\n        } catch (IOException e) {\n            // handle exception\n        } finally {\n            // TODO: close file\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "ByteArrayOutputStream and StringWriter do not need closing",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.io.StringWriter;\nimport java.io.OutputStream;\n\npublic class CloseResourceWithExceptions {\n    public void bar() {\n        /*ByteArray*/OutputStream buffer = new ByteArrayOutputStream();\n        try {\n            buffer.write(new byte[] {1, 2, 3});\n        } catch (IOException e) {\n            throw new RuntimeException(e);\n        }\n        byte[] result = buffer.toByteArray();\n        return result;\n    }\n\n    public String baz() {\n        StringWriter writer = new StringWriter();\n        writer.write(\"Test\");\n        return writer.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "ByteArrayInputStream does not need closing",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.ByteArrayInputStream;\nimport java.io.IOException;\nimport java.io.InputStream;\nimport java.nio.charset.StandardCharsets;\n\npublic class CloseResourceWithExceptions {\n\n    {\n        ByteArrayInputStream bis = new ByteArrayInputStream(\"fooString\".getBytes(StandardCharsets.UTF_8));\n    }\n\n    public int bar() {\n        /*ByteArray*/InputStream buffer = new ByteArrayInputStream();\n        try {\n            return buffer.read();\n        } catch (IOException e) {\n            throw new RuntimeException(e);\n        }\n        return -1;\n    }\n}\n        "
+    },
+    {
+      "description": "CharArrayWriter does not need closing",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.Writer;\nimport java.io.CharArrayWriter;\nimport java.io.IOException;\n\npublic class CloseResourceWithExceptions {\n\n    public char[] bar() {\n        /*CharArray*/Writer buffer = new CharArrayWriter();\n        try {\n            buffer.append(\"foo\");\n            return buffer.toCharArray();\n        } catch (IOException e) {\n            throw new RuntimeException(e);\n        }\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "A custom StringWriter does need closing",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.ByteArrayOutputStream;\nimport java.io.IOException;\nimport java.io.StringWriter;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.CustomStringWriter;\n\npublic class CloseResourceWithExceptions {\n    public void bar() {\n        ByteArrayOutputStream buffer = new ByteArrayOutputStream();\n        try {\n            buffer.write(new byte[] {1, 2, 3});\n        } catch (IOException e) {\n            throw new RuntimeException(e);\n        }\n        byte[] result = buffer.toByteArray();\n        return result;\n    }\n\n    public String baz() {\n        StringWriter writer = new CustomStringWriter();\n        writer.write(\"Test\");\n        return writer.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "closed with try-with-resources",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class Foo {\n    public int bar() {\n        InputStream inputStream = getInputStreamFromSomewhere();\n        if (inputStream != null) {\n            try (InputStreamReader reader = new InputStreamReader(inputStream, \"UTF-8\")) {\n                char c = reader.read();\n                return c;\n            }\n        }\n        return -1;\n    }\n\n    InputStream getInputStreamFromSomewhere() { return null; }\n}\n        "
+    },
+    {
+      "description": "Correctly determine the type with method calls",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        9
+      ],
+      "code": "\nimport java.sql.*;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.MyClass;\n\npublic class CloseResourceSQL {\n    public void run(Pool pool) {\n        try {\n            Connection con = pool.getConnection();\n            PreparedStatement ps = con.prepareStatement(\"some SQL statement\");\n            MyClass.applyTransactionTimeout(ps);\n        } catch (SQLException ex) {\n            throw new RuntimeException(\"\", ex);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "JMS Connections without auxclasspath",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\n// javax.jms.* is not on the (aux)classpath during unit tests\nimport javax.jms.Connection;\nimport javax.jms.Session;\n\npublic class CloseResourceJMS {\n    private Factory resourceFactory = new Factory();\n    public void run() {\n        Session session = resourceFactory.getSession();\n        if (session != null) {\n            if (startConnection) {\n                Connection con = resourceFactory.getConnection();\n                if (con != null) {\n                    con.start();\n                }\n            }\n            return session;\n        }\n        return null;\n    }\n\n    public class Factory {\n        Session getSession() { return null; }\n        Connection getConnection() { return null; }\n    }\n}\n        "
+    },
+    {
+      "description": "CloseResource for closable - ignored if the types do not contain AutoCloseable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceTest {\n    public static void main(String[] args) {\n        InputStream in = null;\n        OutputStream in2 = null;\n        try {\n            in = new FileInputStream(new File(\"/tmp/foo\"));\n            in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        }\n    }\n\n    public void bar() {\n        InputStream file = new FileInputStream(new File(\"/tmp/foo\"));\n        try {\n            int c = file.in();\n        } catch (IOException e) {\n            // handle exception\n        } finally {\n            // TODO: close file\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "PrintWriter based on StringWriter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourcePrintWriter {\n    public String run1() {\n        StringWriter sw = new StringWriter();\n        PrintWriter pw = new PrintWriter(sw);\n\n        pw.println(\"Foo\");\n        String result = sw.toString();\n        return result;\n    }\n\n    public String run2() {\n        StringWriter sw = new StringWriter();\n        PrintWriter pw = new PrintWriter(sw, true);\n\n        pw.println(\"Foo\");\n        String result = sw.toString();\n        return result;\n    }\n\n    public String run3() {\n        StringWriter sw = new StringWriter();\n        PrintWriter pw = new PrintWriter(new BufferedWriter(sw));\n\n        pw.println(\"Foo\");\n        return sw.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "Correctly determine the type for the message",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        7,
+        8,
+        10
+      ],
+      "code": "\nimport java.io.*;\nimport java.util.Scanner;\n\npublic class CloseResourceCase {\n    public void run() {\n        try {\n            FileInputStream in = new FileInputStream(\"MyFile.txt\");\n            Scanner input = new Scanner(System.in, \"utf-8\");\n            String file = \"MyFile.txt\";\n            FileInputStream in2 = new FileInputStream(file);\n        } catch (Exception e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1966 [java] CloseResource false positive if Stream is passed as method parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class CloseResourceFP {\n    public void check(InputStream in) {\n        if (in instanceof FileInputStream) {\n            FileInputStream fin = (FileInputStream) in;\n            doCheck(fin);\n        } else if (in instanceof ByteArrayInputStream) {\n            ByteArrayInputStream bin = (ByteArrayInputStream) in;\n            doCheck(bin);\n        } else {\n            BufferedInputStream buf = new BufferedInputStream(in);\n            doCheck(buf);\n        }\n    }\n\n    public void dump(final Writer writer) {\n        final PrintWriter printWriter = writer instanceof PrintWriter ? (PrintWriter) writer : new PrintWriter(writer);\n        printWriter.println(this);\n    }\n}\n        "
+    },
+    {
+      "description": "#1967 [java] CloseResource false positive with late assignment of variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\nimport java.nio.file.Files;\n\npublic class CloseResourceFP {\n    public void check(File outputFile) {\n        final OutputStream os;\n        if (outputFile == null) {\n            os = System.out;\n        } else if (outputFile.isAbsolute()) {\n            os = Files.newOutputStream(outputFile.toPath());\n        } else {\n            os = Files.newOutputStream(new File(getProject().getBaseDir(), outputFile.toString()).toPath());\n        }\n\n        try (Writer writer = new BufferedWriter(new OutputStreamWriter(os, \"UTF-8\"))) {\n            render(\"...\", writer);\n        }\n    }\n\n    private void render(String data, Writer writer) { }\n}\n        "
+    },
+    {
+      "description": "#1922 [java] CloseResource possible false positive with Streams",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nimport java.util.function.*;\nimport java.util.stream.*;\n\npublic class CloseResourceStream {\n     public static <T> Stream<MatchResult<T>> filterResults(List<T> candidates, Function<T, String> matchExtractor, String query, MatchSelector<T> limiter) {\n        if (query.length() < MIN_QUERY_LENGTH) {\n            return Stream.empty();\n        }\n\n        // violation here\n        Stream<MatchResult<T>> base = candidates.stream()\n                                                .map(it -> {\n                                                    String cand = matchExtractor.apply(it);\n                                                    return new MatchResult<>(0, it, cand, query, new TextFlow(makeNormalText(cand)));\n                                                });\n        return limiter.selectBest(base);\n    }\n\n    public interface MatchSelector<T> {\n        Stream<MatchResult<T>> selectBest(Stream<MatchResult<T>> raw);\n    }\n    public class MatchResult<T> implements Comparable<MatchResult<?>> { }\n    public class TextFlow { }\n}\n        "
+    },
+    {
+      "description": "#2835 [java] CloseResource false positive with Stream and ternary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.stream.*;\nimport java.util.*;\n\npublic class Foo {\n    public List<String> getContainers() {\n        return null;\n    }\n\n    public void bar() {\n        Foo foo = new Foo();\n        final Stream<String> containers = foo.getContainers() != null ? foo.getContainers().stream() : Stream.empty();\n        System.out.println(\"count: \" + containers.count());\n    }\n}\n"
+    },
+    {
+      "description": "#2402 [java] CloseResource possible false positive with primitive  Streams",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.stream.*;\n\npublic class CloseResourceStreamInt {\n     public void reproduceIntStream() {\n        IntStream iStream = IntStream.of(1).filter(i -> i < 5);\n        iStream.anyMatch(i -> i < 5);\n    }\n\n    public void reproduceIntStream() {\n        LongStream lStream = LongStream.of(1).filter(i -> i < 5);\n        lStream.anyMatch(i -> i < 5);\n    }\n\n    public void reproduceIntStream() {\n        DoubleStream dStream = DoubleStream.of(1).filter(i -> i < 5);\n        dStream.anyMatch(i -> i < 5);\n    }\n}\n        "
+    },
+    {
+      "description": "#1076 [java] CloseResource false positive on non-SQL classes called Statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Statement;\n\npublic class CloseResourceStatementFP {\n    public void check() {\n        Statement s = new Statement();\n    }\n}\n        "
+    },
+    {
+      "description": "NullPointerException if type of method parameter is not known",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class CloseResourceNullPointer {\n    public void check(UnknownType param) {\n        InputStream in = param;\n        // note: in doesn't need to be closed here, because it is from outside via method parameter.\n    }\n}\n        "
+    },
+    {
+      "description": "#2470 false-positive at lambda returned from method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\nimport java.util.function.Supplier;\npublic class Foo {\n    public Supplier<Integer> bar() throws IOException {\n        InputStream inputStream = new FileInputStream(\"/test.txt\");\n        return () -> {\n            try {\n                return inputStream.read();\n            } finally {\n                inputStream.close();\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "wrapped ByteArrayInputStream false-negative test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.io.*;\npublic class Foo {\n    public void bar() {\n        ByteArrayOutputStream bos = new ByteArrayOutputStream(new byte[10]);\n        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));\n        int c = ois.read();\n        bos.close();\n    }\n}\n        "
+    },
+    {
+      "description": "lambda doesn't close resource false-negative test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.io.*;\npublic class Foo {\n    public Runnable bar() {\n        InputStream is = new FileInputStream(\"text.txt\");\n        return () -> {\n            try {\n                int d = is.read();\n            } catch (IOException e) {\n                e.printStackTrace();\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "don't wrap try-with-resource variable test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.io.*;\npublic class Foo {\n    public void bar() {\n        try (InputStream is = new FileInputStream(\"text.txt\")) {\n            ObjectInputStream ois = new ObjectInputStream(is);\n            int d = ois.read();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with close on not closeable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\nimport com.google.common.io.Closeables;\nimport com.google.common.io.Flushables;\n\npublic class Foo {\n    private static void flushAndCloseOutStream(OutputStream stream) throws IOException {\n        if (stream != null) {\n            Flushables.flush(stream, false);\n        }\n        Closeables.close(stream, false);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] [6.27.0] Exception applying rule CloseResource on file ... java.lang.NullPointerException #2755",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\n\npublic class Foo {\n    public int bar() {\n        var inputStream = getInputStreamFromSomewhere();\n        if (inputStream != null) {\n            try (InputStreamReader reader = new InputStreamReader(inputStream, \"UTF-8\")) {\n                char c = reader.read();\n                return c;\n            }\n        }\n        return -1;\n    }\n\n    InputStream getInputStreamFromSomewhere() { return null; }\n}\n        "
+    },
+    {
+      "description": "CloseResource with var",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.io.*;\npublic class CloseResourceWithVar {\n    public int bar() throws IOException {\n        var inputStream = new FileInputStream(\"bar.txt\");\n        int c = inputStream.read();\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "#2764 false-negative when re-assigning connection",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n          c = pool.getConnection();\n        } catch (Exception e) {\n        } finally {\n            c.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2764 false-negative when re-assigning connection - no problem when closed before",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n          c.close();\n          c = pool.getConnection();\n        } catch (Exception e) {\n        } finally {\n            c.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CloseResource: false positive with reassignment detection #2977",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.RandomAccessFile;\n\npublic class FalsePositive {\n    private boolean isHundredBytes = false;\n\n    public void bar() throws Exception {\n        RandomAccessFile file = null;\n        try {\n            file = new RandomAccessFile(\"name\", \"r\");\n            this.isHundredBytes = file.length() == 100;  /* violation here... */\n        } finally {\n            file.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3062 CloseResource FP with reassigned stream",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.stream.Stream;\n\npublic class Foo {\n    void bar() {\n        Stream<Integer> stream = Stream.of(2);\n        if (condition) {\n            stream = stream.skip(2);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CloseResource rule throws exception on spaces in property types #3089",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class Foo {\n    public void bar() {\n        InputStream in = null;\n        try {\n            in = new FileInputStream(\"test\");\n        } catch (IOException ignored) {\n        } finally {\n            if (in != null) {\n                in.close();\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CloseResource with close target nested in a if null-check and try within finally #3148",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\n\npublic class FalsePositive {\n\n    public void bar(Connection conn, String sqL) {\n        PreparedStatement lPreparedStmt = null;\n        try {\n            lPreparedStmt = conn.prepareStatement(sqL);\n            lPreparedStmt.execute();\n        } catch (SQLException ex) {\n            System.out.println(\"lPreparedStmt.execute();loooooooooooooose\" + ex);\n        } finally {\n            if (lPreparedStmt != null) {\n                try {\n                    lPreparedStmt.close();\n                } catch (SQLException pEx) {\n                    System.err.println(\"unrecoverable:\" + pEx);\n                }\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CloseResource with close target nested in a if Objects.nonNull and try within finally (1) #3148",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport java.util.Objects;\n\npublic class FalsePositive {\n\n    public void bar(Connection conn, String sqL) {\n        PreparedStatement lPreparedStmt = null;\n        try {\n            lPreparedStmt = conn.prepareStatement(sqL);\n            lPreparedStmt.execute();\n        } catch (SQLException ex) {\n            System.out.println(\"lPreparedStmt.execute();loooooooooooooose\" + ex);\n        } finally {\n            if (Objects.nonNull(lPreparedStmt)) {\n                try {\n                    lPreparedStmt.close();\n                } catch (SQLException pEx) {\n                    System.err.println(\"unrecoverable:\" + pEx);\n                }\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CloseResource with close target nested in a if Objects.nonNull and try within finally (2) #3148",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport static java.util.Objects.nonNull;\n\npublic class FalsePositive {\n\n    public void bar(Connection conn, String sqL) {\n        PreparedStatement lPreparedStmt = null;\n        try {\n            lPreparedStmt = conn.prepareStatement(sqL);\n            lPreparedStmt.execute();\n        } catch (SQLException ex) {\n            System.out.println(\"lPreparedStmt.execute();loooooooooooooose\" + ex);\n        } finally {\n            if (nonNull(lPreparedStmt)) {\n                try {\n                    lPreparedStmt.close();\n                } catch (SQLException pEx) {\n                    System.err.println(\"unrecoverable:\" + pEx);\n                }\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CloseResource with close target nested in a if Objects.nonNull and try within finally (3) #3148",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.*;\nimport static java.util.Objects.*;\n\npublic class FalsePositive {\n\n    public void bar(Connection conn, String sqL) {\n        PreparedStatement lPreparedStmt = null;\n        try {\n            lPreparedStmt = conn.prepareStatement(sqL);\n            lPreparedStmt.execute();\n        } catch (SQLException ex) {\n            System.out.println(\"lPreparedStmt.execute();loooooooooooooose\" + ex);\n        } finally {\n            if (nonNull(lPreparedStmt)) {\n                try {\n                    lPreparedStmt.close();\n                } catch (SQLException pEx) {\n                    System.err.println(\"unrecoverable:\" + pEx);\n                }\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2757 support @lombok.Cleanup annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package net.sourceforge.pmd.lang.java.rule.errorprone.closeresource;\n            import lombok.Cleanup;\n            import lombok.val;\n\n            public class Mwe2757 {\n                private static SomeClass getCreator() {\n                    @Cleanup val context = new FakeContext(); // FakeContext is is the package\n                    return context.getBean(SomeClass.class);\n                }\n\n                public Mwe2757() {\n\n                }\n                static class SomeClass {}\n            }\n            "
+    },
+    {
+      "description": "NPE with null literal",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.BufferedReader;\nimport java.io.IOException;\n\nclass CloseResourceWithNull {\n    void test() throws IOException {\n        try (BufferedReader br1 = new BufferedReader(null)) {\n            ;\n        }\n        catch (IOException e) {\n            ;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with multiple resources in try-with-resources",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\nimport java.nio.charset.StandardCharsets;\n\nclass CloseResourceFP {\n    private final ByteArrayOutputStream stream = new ByteArrayOutputStream();\n\n    void test() throws Exception {\n        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(stream.toByteArray());\n             LineNumberReader lnr = new LineNumberReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {\n              ;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with single resource in try-with-resources multiple lines",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage foopackage;\n\nimport java.io.*;\nimport java.nio.charset.Charset;\nimport java.nio.charset.StandardCharsets;\nimport java.nio.file.*;\n\nclass CloseResourceFP {\n    private CloseResourceFP() { }\n\n    static void test(String name) throws Exception {\n        Charset charset = StandardCharsets.US_ASCII;\n        Path outputFilePath = Paths.get(name);\n\n        try (\n            final BufferedWriter writer = Files.newBufferedWriter(outputFilePath, charset);\n        ) {\n            ;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with reassignment after null check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\nimport net.sourceforge.pmd.lang.java.rule.errorprone.closeresource.Pool;\n\npublic class Foo {\n    void bar(Pool pool) {\n        Connection c = pool.getConnection();\n        try {\n          if (c == null) {\n            // this reassignment is ok, since the previous value was null\n            // so there is no unclosed resource left behind\n            c = pool.getConnection();\n          }\n        } catch (Exception e) {\n        } finally {\n            c.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "false negative with classloader",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.net.URLClassLoader;\n\nclass CloseResourceFN {\n    void test() throws Exception {\n        // only URLClassLoader implements Closeable, but not ClassLoader\n        ClassLoader loader = new URLClassLoader(null, null);\n        try {\n        } catch (Exception e) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "a directory stream build from a path as formal parameter should be reported",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.nio.file.Path;\nimport java.nio.file.DirectoryStream;\nimport java.nio.file.Files;\nimport java.io.IOException;\n\nclass CloseResourceUnclosedStream {\n    public static void list(Path dir) throws IOException {\n        DirectoryStream<Path> ds = Files.newDirectoryStream(dir);\n    }\n}\n        "
+    },
+    {
+      "description": "a returned stream should not be reported",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.nio.file.Path;\nimport java.nio.file.DirectoryStream;\nimport java.nio.file.Files;\nimport java.io.IOException;\n\nclass CloseResourceReturnedStream {\n    public static DirectoryStream<Path> list(Path dir) throws IOException {\n        DirectoryStream<Path> ds = Files.newDirectoryStream(dir);\n        return ds;\n    }\n}\n\n        "
+    },
+    {
+      "description": "a returned, wrapped stream should not be reported",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.nio.file.Path;\nimport java.nio.file.DirectoryStream;\nimport java.nio.file.Files;\nimport java.io.IOException;\nimport java.util.stream.Stream;\nimport java.util.stream.StreamSupport;\nimport java.util.Spliterator;\nimport java.util.Spliterators;\n\nclass CloseResourceWrappedStream {\n    public static Stream<Path> list(Path dir) throws IOException {\n        DirectoryStream<Path> ds = Files.newDirectoryStream(dir);\n        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(ds.iterator, Spliterator.DISTINCT), false);\n    }\n}\n        "
+    },
+    {
+      "description": "a reassignment that wraps the original stream should not be reported",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.BufferedOutputStream;\nimport java.io.OutputStream;\n\npublic class CloseResourceWrapAssignment {\n    public OutputStream wrap() throws Exception {\n        OutputStream os = System.out;\n        os = new BufferedOutputStream(os);\n        return os;\n    }\n}\n        "
+    },
+    {
+      "description": "stream in for-each-loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.InputStream;\n\npublic class CloseResourceForEachLoop {\n    public void testUnclosed() throws Exception {\n        InputStream[] streams = getStreams();\n        for (InputStream stream : streams) {\n            stream.read();\n        }\n    }\n\n    public void testClosed() throws Exception {\n        InputStream[] streams = getStreams();\n        for (InputStream stream : streams) { // this is not reported, as the stream is being closed\n            try {\n                stream.read();\n            } finally {\n                stream.close();\n            }\n        }\n    }\n\n    private InputStream[] getStreams() { return null; }\n}\n        "
+    },
+    {
+      "description": "ClassCastException with pattern matching",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class TypePattern {\n    static boolean doStuff(Object obj) {\n        return obj instanceof Integer myIntVar && myIntVar > 0;\n    }\n}\n        "
+    },
+    {
+      "description": "ClassCastException with local record",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic record MyRecord(boolean a) {\n    public void foo () {\n        record TestInnerRecord() {\n            private static Object test;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "NullPointerException with type inference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\n\npublic class LocalVariableTypeInference {\n\n    public void aMethod() {\n        var list = new ArrayList<String>();  // infers ArrayList<String>\n        var stream = list.stream();          // infers Stream<String>, is never closed\n    }\n}\n        "
+    },
+    {
+      "description": "Parameters don't need to be closed even if casted #2056",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.net.URLClassLoader;\n\npublic class CastedParameter {\n\n    public void checkValidity(ClassLoader auxclassPathClassLoader) {\n        if (auxclassPathClassLoader instanceof URLClassLoader) {\n            final URLClassLoader urlClassLoader = (URLClassLoader) auxclassPathClassLoader;\n            // doesn't need to be closed, it's still a paramter…\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#5067: FileSystems.getDefault() can't be closed ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.nio.file.FileSystem;\nimport java.nio.file.FileSystems;\n\npublic class DefaultFileSystemUsage {\n    public void useDefaultFS() {\n        FileSystem defaultFS = FileSystems.getDefault();\n    }\n}\n        "
+    }
+  ]
+}

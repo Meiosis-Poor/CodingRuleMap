@@ -1,0 +1,104 @@
+{
+  "name": "CyclomaticComplexity",
+  "language": "java",
+  "description": "\nThe complexity of methods directly affects maintenance costs and readability. Concentrating too much decisional logic\nin a single method makes its behaviour hard to read and change.\n\nCyclomatic complexity assesses the complexity of a method by counting the number of decision points in a method,\nplus one for the method entry. Decision points are places where the control flow jumps to another place in the\nprogram. As such, they include all control flow statements, such as `if`, `while`, `for`, and `case`. For more\ndetails on the calculation, see the documentation {% jdoc java::lang.java.metrics.JavaMetrics#CYCLO %}.\n\nGenerally, numbers ranging from 1-4 denote low complexity, 5-7 denote moderate complexity, 8-10 denote\nhigh complexity, and 11+ is very high complexity. By default, this rule reports methods with a complexity >= 10.\nAdditionally, classes with many methods of moderate complexity get reported as well once the total of their\nmethods' complexities reaches 80, even if none of the methods was directly reported.\n\nReported methods should be broken down into several smaller methods. Reported classes should probably be broken down\ninto subcomponents.\n        ",
+  "example": "class Foo {\n  void baseCyclo() {                // Cyclo = 1\n    highCyclo();\n  }\n\n  void highCyclo() {                // Cyclo = 10: reported!\n    int x = 0, y = 2;\n    boolean a = false, b = true;\n\n    if (a && (y == 1 ? b : true)) { // +3\n      if (y == x) {                 // +1\n        while (true) {              // +1\n          if (x++ < 20) {           // +1\n            break;                  // +1\n          }\n        }\n      } else if (y == t && !d) {    // +2\n        x = a ? y : x;              // +1\n      } else {\n        x = 2;\n      }\n    }\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 129,
+  "branches": 12,
+  "apis": 13,
+  "test": [
+    {
+      "description": "Simple method",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {}\n}\n        "
+    },
+    {
+      "description": "testLessComplicatedThanReportLevel",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {}\n}\n        "
+    },
+    {
+      "description": "Complicated method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Complicated method (ignoreBooleanPath)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {}\n}\n        "
+    },
+    {
+      "description": "Test class report level",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Test method report level",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "#984 Cyclomatic complexity should treat constructors like methods: 1 - reportMethods=true",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "#984 Cyclomatic complexity should treat constructors like methods: 2 -reportMethods=false",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "#985 Suppressed methods shouldn't affect avg CyclomaticComplexity",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    @SuppressWarnings(\"PMD.CyclomaticComplexity\")\n    public Test() {\n        if (a == 1) {\n            if (b == 2) {\n                System.out.println(\"b\");\n            } else if (b == 1) {}\n        } else {}\n    }\n}\n        "
+    },
+    {
+      "description": "Standard Cyclo should count empty switch labels too",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "IgnoreBooleanPaths Cyclo should not count empty switch labels",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Standard Cyclo should count boolean paths",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "IgnoreBooleanPaths Cyclo should not count boolean paths",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Test many unreported methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    }
+  ]
+}

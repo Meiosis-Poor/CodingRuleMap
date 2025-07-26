@@ -1,0 +1,49 @@
+{
+  "name": "DanglingHandle",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-dangling-handle",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 185,
+  "branches": 2,
+  "apis": 169,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 28,
+      "expected-linenumbers": [
+        91,
+        92,
+        95,
+        96,
+        99,
+        103,
+        104,
+        106,
+        109,
+        110,
+        113,
+        114,
+        117,
+        118,
+        123,
+        124,
+        138,
+        141,
+        144,
+        147,
+        185,
+        187,
+        189,
+        191,
+        193,
+        197,
+        199,
+        203
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11,c++14 -check-suffix=,CXX14 %s bugprone-dangling-handle %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {bugprone-dangling-handle.HandleClasses: \\\n// RUN:               'std::basic_string_view; ::llvm::StringRef;'}}\"\n\n// RUN: %check_clang_tidy -std=c++17-or-later -check-suffix=,CXX17 %s bugprone-dangling-handle %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {bugprone-dangling-handle.HandleClasses: \\\n// RUN:               'std::basic_string_view; ::llvm::StringRef;'}}\"\n\nnamespace std {\n\ntemplate <typename T>\nclass vector {\n public:\n  using const_iterator = const T*;\n  using iterator = T*;\n  using size_type = int;\n\n  void assign(size_type count, const T& value);\n  iterator insert(const_iterator pos, const T& value);\n  iterator insert(const_iterator pos, T&& value);\n  iterator insert(const_iterator pos, size_type count, const T& value);\n  void push_back(const T&);\n  void push_back(T&&);\n  void resize(size_type count, const T& value);\n};\n\ntemplate <typename, typename>\nclass pair {};\n\ntemplate <typename T>\nclass set {\n public:\n  using const_iterator = const T*;\n  using iterator = T*;\n\n  std::pair<iterator, bool> insert(const T& value);\n  std::pair<iterator, bool> insert(T&& value);\n  iterator insert(const_iterator hint, const T& value);\n  iterator insert(const_iterator hint, T&& value);\n};\n\ntemplate <typename Key, typename Value>\nclass map {\n public:\n  using value_type = pair<Key, Value>;\n  value_type& operator[](const Key& key);\n  value_type& operator[](Key&& key);\n};\n\nclass basic_string_view;\n\nclass basic_string {\n public:\n  basic_string();\n  basic_string(const char*);\n\n  typedef basic_string_view str_view;\n  operator str_view() const noexcept;\n\n  ~basic_string();\n};\n\ntypedef basic_string string;\n\nclass basic_string_view {\n public:\n  basic_string_view(const char*);\n};\n\ntypedef basic_string_view string_view;\n\n}  // namespace std\n\nnamespace llvm {\n\nclass StringRef {\n public:\n  StringRef();\n  StringRef(const char*);\n  StringRef(const std::string&);\n};\n\n}  // namespace llvm\n\nstd::string ReturnsAString();\n\nvoid Positives() {\n  std::string_view view1 = std::string();\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:20: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:28: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n\n  std::string_view view_2 = ReturnsAString();\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:20: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:29: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n\n  view1 = std::string();\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n\n  const std::string& str_ref = \"\";\n  std::string_view view3 = true ? \"A\" : str_ref;\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:20: warning: std::basic_string_view outlives\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:28: warning: std::basic_string_view outlives\n  view3 = true ? \"A\" : str_ref;\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n\n  std::string_view view4(ReturnsAString());\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:20: warning: std::basic_string_view outlives\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:26: warning: std::basic_string_view outlives\n\n  std::string_view view5 = std::string(\"test\");\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:20: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:28: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n\n  std::string_view view6 = std::string{\"test\"};\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:20: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:28: warning: std::basic_string_view outlives its value [bugprone-dangling-handle]\n}\n\nvoid OtherTypes() {\n  llvm::StringRef ref = std::string();\n  // CHECK-MESSAGES-CXX14: [[@LINE-1]]:19: warning: llvm::StringRef outlives its value\n  // CHECK-MESSAGES-CXX17: [[@LINE-2]]:25: warning: llvm::StringRef outlives its value\n}\n\nconst char static_array[] = \"A\";\nstd::string_view ReturnStatements(int i, std::string value_arg,\n                                  const std::string &ref_arg) {\n  const char array[] = \"A\";\n  const char* ptr = \"A\";\n  std::string s;\n  static std::string ss;\n  switch (i) {\n    // Bad cases\n    case 0:\n      return array;  // refers to local\n      // CHECK-MESSAGES: [[@LINE-1]]:7: warning: std::basic_string_view outliv\n    case 1:\n      return s;  // refers to local\n      // CHECK-MESSAGES: [[@LINE-1]]:7: warning: std::basic_string_view outliv\n    case 2:\n      return std::string();  // refers to temporary\n      // CHECK-MESSAGES: [[@LINE-1]]:7: warning: std::basic_string_view outliv\n    case 3:\n      return value_arg;  // refers to by-value arg\n      // CHECK-MESSAGES: [[@LINE-1]]:7: warning: std::basic_string_view outliv\n\n    // Ok cases\n    case 100:\n      return ss;  // refers to static\n    case 101:\n      return static_array;  // refers to static\n    case 102:\n      return ptr;  // pointer is ok\n    case 103:\n      return ref_arg;  // refers to by-ref arg\n  }\n\n  struct S {\n    std::string_view view() { return value; }\n    std::string value;\n  };\n\n  (void)[&]()->std::string_view {\n    // This should not warn. The string is bound by reference.\n    return s;\n  };\n  (void)[=]() -> std::string_view {\n    // This should not warn. The reference is valid as long as the lambda.\n    return s;\n  };\n  (void)[=]() -> std::string_view {\n    // FIXME: This one should warn. We are returning a reference to a local\n    // lambda variable.\n    std::string local;\n    return local;\n  };\n  return \"\";\n}\n\nvoid Containers() {\n  std::vector<std::string_view> v;\n  v.assign(3, std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n  v.insert(nullptr, std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n  v.insert(nullptr, 3, std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n  v.push_back(std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n  v.resize(3, std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n\n  std::set<std::string_view> s;\n  s.insert(std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n  s.insert(nullptr, std::string());\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n\n  std::map<std::string_view, int> m;\n  m[std::string()];\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: std::basic_string_view outlives\n}\n\nvoid TakesAStringView(std::string_view);\n\nvoid Negatives(std::string_view default_arg = ReturnsAString()) {\n  std::string str;\n  std::string_view view = str;\n\n  TakesAStringView(std::string());\n}\n"
+    }
+  ]
+}

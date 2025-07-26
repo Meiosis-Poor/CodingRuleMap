@@ -1,0 +1,64 @@
+{
+  "name": "NonCaseLabelInSwitch",
+  "language": "java",
+  "description": "\nA non-case label (e.g. a named break/continue label) was present in a switch statement or switch expression.\nThis is legal, but confusing. It is easy to mix up the case labels and the non-case labels.\n\nNote: This rule was renamed from `NonCaseLabelInSwitchStatement` with PMD 7.7.0.\n        ",
+  "example": "public class Foo {\n  void bar(int a) {\n   switch (a) {\n     case 1:\n       // do something\n     mylabel: // this is legal, but confusing!\n       break;\n     default:\n       break;\n    }\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "label inside switch statement, not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        switch (x) {\n            case 2: int y=8;\n            somelabel:\n                break;\n            default:\n                int j=8;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "label inside switch expression, not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        x = switch (x) {\n            case 2: int y=8;\n            somelabel:\n                yield y;\n            default:\n                int j=8;\n                yield j;\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "only cases in switch statement, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        switch (x) {\n            case 2: int y=8;\n                break;\n            default:\n                int j=8;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "only cases in switch expression, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        x = switch (x) {\n            case 2: int y=8;\n                yield y;\n            default:\n                int j=8;\n                yield j;\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "label in switch statement with arrow syntax, not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        switch (x) {\n            case 2 -> {\n                int y=8;\n            somelabel:\n                break;\n            }\n            default -> {\n                int j=8;\n            }\n        }\n    }\n}\n"
+    },
+    {
+      "description": "label in switch expression with arrow syntax, not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        x = switch (x) {\n            case 2 -> { int y=8;\n            somelabel:\n                yield y;\n            }\n            default -> {\n                int j=8;\n                yield j;\n            }\n        };\n    }\n}\n"
+    },
+    {
+      "description": "only cases in switch stmt/expr with arrow syntax, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        switch (x) {\n            case 2 -> {\n                int y=8;\n                break;\n            }\n            default -> {\n                int j=8;\n            }\n        }\n    }\n    void barArrow(int x) {\n        x = switch (x) {\n            case 2 -> { int y=8;\n                yield y;\n            }\n            default -> {\n                int j=8;\n                yield j;\n            }\n        };\n    }\n}\n"
+    }
+  ]
+}

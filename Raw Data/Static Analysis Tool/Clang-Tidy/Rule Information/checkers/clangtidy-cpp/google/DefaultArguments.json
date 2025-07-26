@@ -1,0 +1,24 @@
+{
+  "name": "DefaultArguments",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - google-default-arguments",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 31,
+  "branches": 1,
+  "apis": 14,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        5,
+        10,
+        15
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s google-default-arguments %t\n\nstruct A {\n  virtual void f(int I, int J = 3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: default arguments on virtual or override methods are prohibited [google-default-arguments]\n};\n\nstruct B : public A {\n  void f(int I, int J = 5);\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: default arguments on virtual or override methods are prohibited\n};\n\nstruct C : public B {\n  void f(int I, int J = 5) override;\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: default arguments on virtual or override methods are prohibited\n};\n\n// Negatives.\nstruct D : public B {\n  void f(int I, int J) override;\n};\n\nstruct X {\n  void f(int I, int J = 3);\n};\n\nstruct Y : public X {\n  void f(int I, int J = 5);\n};"
+    }
+  ]
+}

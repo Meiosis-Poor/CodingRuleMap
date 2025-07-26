@@ -1,0 +1,32 @@
+{
+  "name": "StdAllocatorConst",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - portability-std-allocator-const",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 67,
+  "branches": 4,
+  "apis": 44,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        46,
+        47,
+        49,
+        52,
+        54,
+        56,
+        58,
+        61,
+        64,
+        79,
+        90
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11-or-later %s portability-std-allocator-const %t -- -- -fno-delayed-template-parsing\n\nnamespace std {\ntypedef unsigned size_t;\n\ntemplate <class T>\nclass allocator {};\ntemplate <class T>\nclass hash {};\ntemplate <class T>\nclass equal_to {};\ntemplate <class T>\nclass less {};\n\ntemplate <class T, class A = std::allocator<T>>\nclass deque {};\ntemplate <class T, class A = std::allocator<T>>\nclass forward_list {};\ntemplate <class T, class A = std::allocator<T>>\nclass list {};\ntemplate <class T, class A = std::allocator<T>>\nclass vector {};\n\ntemplate <class K, class C = std::less<K>, class A = std::allocator<K>>\nclass multiset {};\ntemplate <class K, class C = std::less<K>, class A = std::allocator<K>>\nclass set {};\ntemplate <class K, class H = std::hash<K>, class Eq = std::equal_to<K>, class A = std::allocator<K>>\nclass unordered_multiset {};\ntemplate <class K, class H = std::hash<K>, class Eq = std::equal_to<K>, class A = std::allocator<K>>\nclass unordered_set {};\n\ntemplate <class T, class C = std::deque<T>>\nclass stack {};\n} // namespace std\n\nnamespace absl {\ntemplate <class K, class H = std::hash<K>, class Eq = std::equal_to<K>, class A = std::allocator<K>>\nclass flat_hash_set {};\n} // namespace absl\n\ntemplate <class T>\nclass allocator {};\n\nvoid simple(const std::vector<const char> &v, std::deque<const short> *d) {\n  // CHECK-MESSAGES: [[#@LINE-1]]:24: warning: container using std::allocator<const T> is a deprecated libc++ extension; remove const for compatibility with other standard libraries\n  // CHECK-MESSAGES: [[#@LINE-2]]:52: warning: container\n  std::list<const long> l;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n\n  std::multiset<int *const> ms;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n  std::set<const std::hash<int>> s;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n  std::unordered_multiset<int *const> ums;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n  std::unordered_set<const int> us;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n\n  absl::flat_hash_set<const int> fhs;\n  // CHECK-MESSAGES: [[#@LINE-1]]:9: warning: container\n\n  using my_vector = std::vector<const int>;\n  // CHECK-MESSAGES: [[#@LINE-1]]:26: warning: container\n  my_vector v1;\n  using my_vector2 = my_vector;\n\n  std::vector<int> neg1;\n  std::vector<const int *> neg2;                     // not const T\n  std::vector<const int, allocator<const int>> neg3; // not use std::allocator<const T>\n  std::allocator<const int> a;                       // not caught, but rare\n  std::forward_list<const int> forward;              // not caught, but rare\n  std::stack<const int> stack;                       // not caught, but rare\n}\n\ntemplate <class T>\nvoid temp1() {\n  std::vector<const T> v;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n\n  std::vector<T> neg1;\n  std::forward_list<const T> neg2;\n}\nvoid use_temp1() { temp1<int>(); }\n\ntemplate <class T>\nvoid temp2() {\n  // Match std::vector<const dependent> for the uninstantiated temp2.\n  std::vector<const T> v;\n  // CHECK-MESSAGES: [[#@LINE-1]]:8: warning: container\n\n  std::vector<T> neg1;\n  std::forward_list<const T> neg2;\n}"
+    }
+  ]
+}

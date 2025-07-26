@@ -1,0 +1,180 @@
+{
+  "name": "UnusedFormalParameter",
+  "language": "java",
+  "description": "\nReports parameters of methods and constructors that are not referenced them in the method body.\nParameters whose name starts with `ignored` or `unused` are filtered out.\n\nRemoving unused formal parameters from public methods could cause a ripple effect through the code base.\nHence, by default, this rule only considers private methods. To include non-private methods, set the\n`checkAll` property to `true`.\n\n        ",
+  "example": "public class Foo {\n    private void bar(String howdy) {\n        // howdy is not used\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 61,
+  "branches": 14,
+  "apis": 11,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private void bar(String x) {}\n}\n        "
+    },
+    {
+      "description": "Explicit receiver parameters are ignored",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private void test(@AnnotatedUsage Foo this) {\n    }\n}\n@interface AnnotatedUsage {}\n        "
+    },
+    {
+      "description": "method called on param",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private void foo (String s) {\n        String str = s.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to param",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private void bar(int s) {\n        s = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    void foo(int x);\n}\n        "
+    },
+    {
+      "description": "don't flag public methods by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "flag public methods if checkall property is set",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": null
+    },
+    {
+      "description": "skip native/abstract methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    public native void bar(int s);\n    protected abstract void foo(Long s);\n}\n        "
+    },
+    {
+      "description": "anonymous inner class npe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    void bar() {\n        Runnable a  = new Runnable() {\n            public void run() {}\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "unused constructor param",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    public Foo(int s) {}\n}\n        "
+    },
+    {
+      "description": "assigned but not used",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private void foo (String s) {\n        s = \"hello\";\n    }\n}\n        "
+    },
+    {
+      "description": "array element is set",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private void foo (String[] s) {\n        s[2] = \"hello\";\n    }\n}\n        "
+    },
+    {
+      "description": "unused array in constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    int type;\n    public Foo (int type, String[] s) {\n        this.type = type;\n    }\n}\n        "
+    },
+    {
+      "description": "unused array in method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private final void setLang(final String lang[]){\n    }\n}\n        "
+    },
+    {
+      "description": "False - ! if \"checkAll\" property is not set",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar2(Object paramA, Object paramB)\n    {\n        paramA.hashCode();\n    }\n}\n        "
+    },
+    {
+      "description": "violation suppression regex works",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar2(Object paramA, Object paramB)\n    {\n        paramA.hashCode();\n    }\n}\n        "
+    },
+    {
+      "description": "violation suppression xpath works, by name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar2(Object paramA, Object paramB)\n    {\n        paramA.hashCode();\n    }\n}\n        "
+    },
+    {
+      "description": "violation suppression xpath works, by type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar2(Object paramA, String paramB)\n    {\n        paramA.hashCode();\n    }\n}\n        "
+    },
+    {
+      "description": "#878 don't flag abstract methods even if checkall property is set when checking an abstract class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nabstract class Foo {\n    protected abstract void foo(Long s);\n}\n        "
+    },
+    {
+      "description": "#1159 false positive UnusedFormalParameter readObject(ObjectInputStream) if not used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class Foo {\n    private void readObject(ObjectInputStream stream) throws InvalidObjectException{\n       throw new InvalidObjectException(\"Proxy required\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1159 correct UnusedFormalParameter for readObject(foo) if not used",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "import java.io.*;\n\npublic class Foo {\n    // throws declaration is missing - so not the serialization readObject method\n    private void readObject(ObjectInputStream stream) {\n       throw new InvalidObjectException(\"Proxy required\");\n    }\n    // argument is not a ObjectInputStream\n    private void readObject(Foo a) throws InvalidObjectException {\n       throw new InvalidObjectException(\"Proxy required\");\n    }\n    // two arguments - two violations\n    private void readObject(ObjectInputStream stream, Object o) throws InvalidObjectException{\n       throw new InvalidObjectException(\"Proxy required\");\n    }\n}\nclass Other {\n    // it's public\n    public void readObject(ObjectInputStream stream) throws InvalidObjectException {\n        throw new InvalidObjectException(\"Proxy required\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1456 UnusedFormalParameter should ignore overriding methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nabstract class Base{\n  abstract public int badMethod(int arg1, String arg2);\n}\n\nclass Imp1 extends Base {\n  @Override\n  public int badMethod(int arg1, String arg2) {\n    return arg2.length();\n  }\n}\n\nclass Imp2 extends Base {\n  @Override\n  public int badMethod(int arg1, String arg2) {\n    return arg2.length() + arg1;\n  }\n}\n        "
+    },
+    {
+      "description": "#2957 Unused rules should ignore some names",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\nclass Imp1 {\n  private void m(int arg1,\n                String arg2,\n                int unusedArg1,\n                int ignoredArg2,\n                int unused,\n                String ignored) {}\n}\n        "
+    },
+    {
+      "description": "anonymous classes defined in methods should be considered",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        12
+      ],
+      "code": "\nclass Impl {\n    public void m1() {\n        class Local {\n            private void m2(int arg1) { }\n            private void m3() { m2(0); }\n        }\n        Local l = new Local();\n        l.m3();\n    }\n    public void m4() {\n        Object o = new Object() {\n            private void m5(int arg1) { }\n            public boolean equals(Object other) { m5(0); return false; }\n        };\n        o.equals(o);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedFormalParameter false-positive with qualified super ctor call #2937",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class SuperClassTest {\n\n  private SuperClassTest() {\n    throw new IllegalStateException(\"Private constructor.\");\n  }\n\n  public static void main(String[] args) {\n    Outer x = new Outer();\n    ChildOfInner a = new ChildOfInner(x);\n    ChildOfInner b = new ChildOfInner(x);\n    System.out.println(b.getSecret());\n    a.setSecret(6);\n    System.out.println(b.getSecret());\n  }\n}\n\nclass Outer {\n  int secret = 5;\n\n  class Inner {\n    int getSecret() {\n      return secret;\n    }\n\n    void setSecret(int s) {\n      secret = s;\n    }\n  }\n}\n\nclass ChildOfInner extends Outer.Inner {\n  ChildOfInner(Outer x) {\n    x.super();  // FP here\n  }\n}\n        "
+    },
+    {
+      "description": "[java] Make UnusedFormalParameter consider enum classes #3628",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Tester {\n  enum EnumClass {\n    FOO;\n    EnumClass() {}\n    private void func(int arg) {}  // should report a warning here\n  }\n}\n"
+    }
+  ]
+}

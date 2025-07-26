@@ -1,0 +1,48 @@
+{
+  "name": "CallSuperFirst",
+  "language": "java",
+  "description": "Super should be called at the start of the method",
+  "example": "import android.app.Activity;\nimport android.os.Bundle;\n\npublic class DummyActivity extends Activity {\n    public void onCreate(Bundle bundle) {\n        // missing call to super.onCreate(bundle)\n        foo();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Success",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport android.app.Activity;\nimport android.os.Bundle;\n\npublic class MyActivity extends Activity {\n    @Override\n    protected void onCreate(final Bundle state) {\n        super.onCreate(state);\n        foo();\n    }\n\n    private void foo() { }\n}\n        "
+    },
+    {
+      "description": "Success",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport android.app.Activity;\nimport android.os.Bundle;\n\npublic class MyActivity extends Activity {\n    @Override\n    protected void onCreate(final Bundle state) {\n        super.onCreate(state);\n        foo();\n    }\n    @Override\n    protected void onResume() {\n        super.onResume();\n        foo();\n    }\n    @Override\n    protected void onStart() {\n        super.onStart();\n        foo();\n    }\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "Failure - missing super",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport android.app.Activity;\nimport android.os.Bundle;\n\npublic class MyActivity extends Activity {\n    @Override\n    protected void onCreate(final Bundle state) {\n        foo();\n    }\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "Failure - super not as first",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport android.app.Activity;\nimport android.os.Bundle;\n\npublic class MyActivity extends Activity {\n    @Override\n    protected void onCreate(final Bundle state) {\n        foo();\n        super.onCreate(state);\n    }\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "#1154 Call super onPause when there is no super",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport android.app.Activity;\n\npublic class NotAnActivity {\n    Activity a = getActivity();\n    protected void onResume() {\n        doSomething();\n    }\n    private Activity getActivity() { return null; }\n    private void doSomething() {}\n}\n        "
+    }
+  ]
+}

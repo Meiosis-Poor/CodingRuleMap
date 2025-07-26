@@ -1,0 +1,70 @@
+{
+  "name": "ApexBadCrypto",
+  "language": "apex",
+  "description": "\nThe rule makes sure you are using randomly generated IVs and keys for `Crypto` calls.\nHard-wiring these values greatly compromises the security of encrypted data.\n        ",
+  "example": "public without sharing class Foo {\n    Blob hardCodedIV = Blob.valueOf('Hardcoded IV 123');\n    Blob hardCodedKey = Blob.valueOf('0000000000000000');\n    Blob data = Blob.valueOf('Data to be encrypted');\n    Blob encrypted = Crypto.encrypt('AES128', hardCodedKey, hardCodedIV, data);\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 131,
+  "branches": 24,
+  "apis": 10,
+  "test": [
+    {
+      "description": "Apex Crypto hardcoded IV",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    public Foo() {\n        Blob exampleIv = Blob.valueOf('0000000000000000');\n        Blob key = Crypto.generateAesKey(128);\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob encrypted = Crypto.encrypt('AES128', key, exampleIv, data);\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto hardcoded key",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        Blob exampleIv = Crypto.generateAesKey(128);\n        Blob key = Blob.valueOf('0000000000000000');\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob encrypted = Crypto.encrypt('AES128', key, exampleIv, data);\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto Safe Random IV",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public test1() {\n        Blob exampleIv = Crypto.generateAesKey(128);\n        Blob key = Crypto.generateAesKey(128);\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob encrypted = Crypto.encrypt('AES128', key, exampleIv, data);\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto Safe Random IV",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public test1() {\n        Blob key = Crypto.generateAesKey(128);\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob encrypted = Crypto.encryptWithManagedIV('AES128', key, data);\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto Non safe Key",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public test1() {\n        Blob key =  Blob.valueOf('Key to be encrypted');\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob encrypted = Crypto.encryptWithManagedIV('AES128', key, data);\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto hardcoded IV in inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Foo {\n    class MyInnerClass {\n        public MyInnerClass() {\n            Blob exampleIv = Blob.valueOf('0000000000000000');\n            Blob key = Crypto.generateAesKey(128);\n            Blob data = Blob.valueOf('Data to be encrypted');\n            Blob encrypted = Crypto.encrypt('AES128', key, exampleIv, data);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto inline hardcoded IV",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public Foo() {\n        Blob key = Crypto.generateAesKey(128);\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob encrypted = Crypto.encrypt('AES128', key, Blob.valueOf('0000000000000000'), data);\n    }\n}\n        "
+    },
+    {
+      "description": "Apex Crypto Inline hardcoded Key",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public Foo() {\n        Blob data = Blob.valueOf('Data to be encrypted');\n        Blob IV = Crypto.generateAesKey(128);\n        Blob encrypted = Crypto.encrypt('AES128', Blob.valueOf('Hard Coded Key'), IV, data);\n    }\n}\n        "
+    }
+  ]
+}

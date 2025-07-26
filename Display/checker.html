@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>checkers信息汇总</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 10px; }
+    select { margin-right: 10px; min-width: 150px; }
+    .block {
+      border: 1px solid #ccc; padding: 8px; margin-top: 10px;
+      height: 16vh; overflow: auto; white-space: pre-wrap;
+      background: #f9f9f9;
+    }
+    #last-block {
+      height: 33vh;
+    }
+    .error-msg {
+      color: red; font-weight: bold; padding: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div>
+    <select v-model="selectedTool" @change="onToolChange">
+      <option value="" disabled>请选择工具</option>
+      <option v-for="tool in tools" :key="tool" :value="tool">{{ tool }}</option>
+    </select>
+
+    <select v-model="selectedModule" @change="onModuleChange" :disabled="modules.length === 0">
+      <option value="" disabled>请选择语言组</option>
+      <option v-for="mod in modules" :key="mod" :value="mod">{{ mod }}</option>
+    </select>
+
+    <select v-model="selectedGroup" @change="onGroupChange" :disabled="groups.length === 0">
+      <option value="" disabled>请选择规则组</option>
+      <option v-for="grp in groups" :key="grp" :value="grp">{{ grp }}</option>
+    </select>
+
+    <select v-model="selectedRule" @change="onRuleChange" :disabled="rules.length === 0">
+      <option value="" disabled>请选择具体规则</option>
+      <option v-for="rule in rules" :key="rule" :value="rule">{{ rule }}</option>
+    </select>
+  </div>
+
+  <div class="block" v-if="toolJson">
+    <h4>main</h4>
+    <pre>{{ JSON.stringify(toolJsonWithoutTools, null, 2) }}</pre>
+  </div>
+
+  <div class="block" v-if="moduleJson">
+    <h4>工具</h4>
+    <pre>{{ JSON.stringify(moduleJsonWithoutModule, null, 2) }}</pre>
+  </div>
+
+  <div class="block" v-if="groupJson">
+    <h4>语言组</h4>
+    <pre>{{ JSON.stringify(groupJsonWithoutGroups, null, 2) }}</pre>
+  </div>
+
+  <div class="block" v-if="ruleListJson">
+    <h4>检查器组</h4>
+    <pre>{{ JSON.stringify(ruleListJsonWithoutRules, null, 2) }}</pre>
+  </div>
+
+  <div class="block" id="last-block" v-if="ruleJson">
+    <h4>检查器具体实现信息</h4>
+    <pre>{{ JSON.stringify(ruleJson, null, 2) }}</pre>
+  </div>
+</div>
+
+<script>
+  const { createApp } = Vue;
+
+  createApp({
+    data() {
+      return {
+        basePath: "../Raw Data/Static Analysis Tool/", // 更新为相对路径
+
+        tools: [],
+        selectedTool: "",
+        toolJson: null,
+
+        modules: [],
+        selectedModule: "",
+        moduleJson: null,
+
+        groups: [],
+        selectedGroup: "",
+        groupJson: null,
+
+        rules: [],
+        selectedRule: "",
+        ruleListJson: null,
+
+        ruleJson: null,
+      };
+    },
+    computed: {
+      toolJsonWithoutTools() {
+        if (!this.toolJson) return null;
+        const copy = { ...this.toolJson };
+        delete copy.tools;
+        return copy;
+      },
+      moduleJsonWithoutModule() {
+        if (!this.moduleJson) return null;
+        const copy = { ...this.moduleJson };
+        delete copy.module;
+        return copy;
+      },
+      groupJsonWithoutGroups() {
+        if (!this.groupJson) return null;
+        const copy = { ...this.groupJson };
+        delete copy.groups;
+        return copy;
+      },
+      ruleListJsonWithoutRules() {
+        if (!this.ruleListJson) return null;
+        const copy = { ...this.ruleListJson };
+        delete copy.rules;
+        return copy;
+      }
+    },
+    methods: {
+      async fetchJson(path) {
+        try {
+          const res = await fetch(path);
+          if (!res.ok) throw new Error("HTTP error " + res.status);
+          return await res.json();
+        } catch (e) {
+          return null;
+        }
+      },
+      async loadTools() {
+        const jsonPath = this.basePath + "main.json";
+        const data = await this.fetchJson(jsonPath);
+        if (data) {
+          this.toolJson = data;
+          this.tools = data.tools || [];
+          this.selectedTool = "";
+
+          this.selectedModule = "";
+          this.modules = [];
+          this.moduleJson = null;
+
+          this.selectedGroup = "";
+          this.groups = [];
+          this.groupJson = null;
+
+          this.selectedRule = "";
+          this.rules = [];
+          this.ruleListJson = null;
+          this.ruleJson = null;
+        }
+      },
+      async onToolChange() {
+        if (!this.selectedTool) return;
+
+        const moduleJsonPath = `${this.basePath}${this.selectedTool}/Rule Information/main/module.json`;
+        const data = await this.fetchJson(moduleJsonPath);
+        if (data) {
+          this.moduleJson = data;
+          this.modules = data.module || [];
+          this.selectedModule = "";
+
+          this.selectedGroup = "";
+          this.groups = [];
+          this.groupJson = null;
+
+          this.selectedRule = "";
+          this.rules = [];
+          this.ruleListJson = null;
+          this.ruleJson = null;
+        }
+      },
+      async onModuleChange() {
+        if (!this.selectedModule) return;
+
+        const groupJsonPath = `${this.basePath}${this.selectedTool}/Rule Information/modules/${this.selectedModule}.json`;
+        const data = await this.fetchJson(groupJsonPath);
+        if (data) {
+          this.groupJson = data;
+          this.groups = data.groups || [];
+          this.selectedGroup = "";
+
+          this.selectedRule = "";
+          this.rules = [];
+          this.ruleListJson = null;
+          this.ruleJson = null;
+        }
+      },
+      async onGroupChange() {
+        if (!this.selectedGroup) return;
+
+        const rulesJsonPath = `${this.basePath}${this.selectedTool}/Rule Information/groups/${this.selectedModule}/${this.selectedGroup}.json`;
+        const data = await this.fetchJson(rulesJsonPath);
+        if (data) {
+          this.ruleListJson = data;
+          this.rules = data.rules || [];
+          this.selectedRule = "";
+          this.ruleJson = null;
+        }
+      },
+      async onRuleChange() {
+        if (!this.selectedRule) return;
+
+        const ruleJsonPath = `${this.basePath}${this.selectedTool}/Rule Information/checkers/${this.selectedModule}/${this.selectedGroup}/${this.selectedRule}.json`;
+        const data = await this.fetchJson(ruleJsonPath);
+        if (data) {
+          this.ruleJson = data;
+        }
+      }
+    },
+    mounted() {
+      this.loadTools();
+    }
+  }).mount("#app");
+</script>
+
+</body>
+</html>
+
+

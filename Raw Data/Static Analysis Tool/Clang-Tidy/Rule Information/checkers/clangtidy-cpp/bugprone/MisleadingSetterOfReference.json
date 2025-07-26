@@ -1,0 +1,32 @@
+{
+  "name": "MisleadingSetterOfReference",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-misleading-setter-of-reference",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 63,
+  "branches": 1,
+  "apis": 60,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        20,
+        24,
+        28,
+        45,
+        51,
+        64,
+        79,
+        83,
+        87,
+        98,
+        118
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-misleading-setter-of-reference %t\n\nstruct X {\n  X &operator=(const X &) { return *this; }\nprivate:\n  int &Mem;\n  friend class Test1;\n};\n\nclass Test1 {\n  X &MemX;\n  int &MemI;\nprotected:\n  long &MemL;\npublic:\n  long &MemLPub;\n\n  Test1(X &MemX, int &MemI, long &MemL) : MemX(MemX), MemI(MemI), MemL(MemL), MemLPub(MemL) {}\n  void setI(int *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setI' can be mistakenly used in order to change the reference 'MemI' instead of the value of it\n    MemI = *NewValue;\n  }\n  void setL(long *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setL' can be mistakenly used in order to change the reference 'MemL' instead of the value of it\n    MemL = *NewValue;\n  }\n  void setX(X *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setX' can be mistakenly used in order to change the reference 'MemX' instead of the value of it\n    MemX = *NewValue;\n  }\n  void set1(int *NewValue) {\n    MemX.Mem = *NewValue;\n  }\n  void set2(int *NewValue) {\n    MemL = static_cast<long>(*NewValue);\n  }\n  void set3(int *NewValue) {\n    MemI = *NewValue;\n    MemL = static_cast<long>(*NewValue);\n  }\n  void set4(long *NewValue, int) {\n    MemL = *NewValue;\n  }\n  void setLPub(long *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setLPub' can be mistakenly used in order to change the reference 'MemLPub' instead of the value of it\n    MemLPub = *NewValue;\n  }\n\nprivate:\n  void set5(long *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'set5' can be mistakenly used in order to change the reference 'MemL' instead of the value of it\n    MemL = *NewValue;\n  }\n};\n\nclass Base {\nprotected:\n  int &MemI;\n};\n\nclass Derived : public Base {\npublic:\n  void setI(int *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setI' can be mistakenly used in order to change the reference 'MemI' instead of the value of it\n    MemI = *NewValue;\n  }\n};\n\nusing UIntRef = unsigned int &;\nusing UIntPtr = unsigned int *;\nusing UInt = unsigned int;\n\nclass AliasTest {\n  UIntRef Value1;\n  UInt &Value2;\n  unsigned int &Value3;\npublic:\n  void setValue1(UIntPtr NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setValue1' can be mistakenly used in order to change the reference 'Value1' instead of the value of it\n    Value1 = *NewValue;\n  }\n  void setValue2(unsigned int *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setValue2' can be mistakenly used in order to change the reference 'Value2' instead of the value of it\n    Value2 = *NewValue;\n  }\n  void setValue3(UInt *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setValue3' can be mistakenly used in order to change the reference 'Value3' instead of the value of it\n    Value3 = *NewValue;\n  }\n};\n\ntemplate <typename T>\nclass TemplateTest {\n  T &Mem;\npublic:\n  TemplateTest(T &V) : Mem{V} {}\n  void setValue(T *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setValue' can be mistakenly used in order to change the reference 'Mem' instead of the value of it\n    Mem = *NewValue;\n  }\n};\n\nvoid f_TemplateTest(char *Value) {\n  char CharValue;\n  TemplateTest<char> TTChar{CharValue};\n  TTChar.setValue(Value);\n}\n\ntemplate <typename T>\nclass AddMember {\nprotected:\n  T &Value;\n};\n\nclass TemplateBaseTest : public AddMember<int> {\npublic:\n  void setValue(int *NewValue) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: function 'setValue' can be mistakenly used in order to change the reference 'Value' instead of the value of it\n    Value = *NewValue;\n  }\n};"
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "name": "MethodReturnsInternalArray",
+  "language": "java",
+  "description": "\nExposing internal arrays to the caller violates object encapsulation since elements can be\nremoved or replaced outside of the object that owns it. It is safer to return a copy of the array.\n        ",
+  "example": "public class SecureSystem {\n    UserData [] ud;\n    public UserData [] getUserData() {\n        // Don't return directly the internal array, return a copy\n        return ud;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 97,
+  "branches": 20,
+  "apis": 15,
+  "test": [
+    {
+      "description": "Clear violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    String [] getArr() {return arr;}\n}\n        "
+    },
+    {
+      "description": "Clear violation with this.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    String [] getArr() {return this.arr;}\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    String [] getArr() {String[] foo; return foo;}\n}\n        "
+    },
+    {
+      "description": "tricky field hiding",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    String [] getArr() {String[] arr; return arr;}\n}\n        "
+    },
+    {
+      "description": "really sick code",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    String [] getArr() {String[] arr; return this.arr;}\n}\n        "
+    },
+    {
+      "description": "returning a local array is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int[] getArr() {\n        int[] x = new int[] {1,2,3};\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "returning a local array is ok part deux",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object[] getArr() {\n        return new Object[] {foo,bar};\n    }\n}\n        "
+    },
+    {
+      "description": "returning a cloned field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Object[] x;\n    Object[] getArr() {\n        return this.x.clone();\n    }\n}\n        "
+    },
+    {
+      "description": "returning a new array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Object x;\n    Object[] getArr() {\n        return new Object[] {x};\n    }\n}\n        "
+    },
+    {
+      "description": "Doesn't return array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    String getArr() {return arr[0];}\n}\n        "
+    },
+    {
+      "description": "Interface with array declaration",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public String[] getArr();\n}\n        "
+    },
+    {
+      "description": "#962 MethodReturnsInternalArray: False positive using a ternary operator",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    byte[] content;\n    public byte[] getContent() {\n        return this.content == null ? null : content.clone();\n    }\n}\n        "
+    },
+    {
+      "description": "#1299 MethodReturnsInternalArray false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\npublic class WebServiceResponseMessage {\n    private Object[] responseObjects;\n    public Object[] getResponseObjects() {\n        return responseObjects == null ? null : Arrays.copyOf(responseObjects, responseObjects.length);\n    }\n}\n        "
+    },
+    {
+      "description": "#1324 MethodReturnsInternalArray false positive with clone()",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    private Hit[] hits;\n    public Hit[] getHits() {\n        return hits == null ? null : hits.clone();\n    }\n    static class Hit {}\n}\n        "
+    },
+    {
+      "description": "#1322 MethodReturnsInternalArray on private methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class A {\n    private Object[] content;\n    // This method should not be a violation of MethodReturnsInternalArray\n    private Object[] getContent() {\n        return content;\n    }\n}\n        "
+    },
+    {
+      "description": "#1475 False positive of MethodReturnsInternalArray",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MethodReturnsInternalArrayCase {\n    private static final byte[] DATA = {};\n\n    protected final byte[] getData()\n    {\n        return DATA;\n    }\n}\n        "
+    },
+    {
+      "description": "#1475 False positive of MethodReturnsInternalArray - ArrayAllocation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MethodReturnsInternalArrayCase {\n    private static final byte[] DATA = new byte[0];\n\n    protected final byte[] getData()\n    {\n        return DATA;\n    }\n}\n        "
+    },
+    {
+      "description": "#3160 nonempty static final fields",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class MyClass {\n                private static final String[] FOO_BAR = new String[] { \"foo\", \"bar\" };\n                public final String[] call() { return FOO_BAR; }\n            }\n            "
+    },
+    {
+      "description": "#3160 empty non-final fields",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\n            public class MyClass {\n                private String[] foobar1 = new String[0];\n                private String[] foobar2 = {};\n                private static String[] FOO_BAR_3 = new String[0];\n                private static String[] FOO_BAR_4 = {};\n                public final String[] call1() { return foobar1; }\n                public final String[] call2() { return foobar2; }\n                public final String[] call3() { return FOO_BAR_3; }\n                public final String[] call4() { return FOO_BAR_4; }\n            }\n            "
+    },
+    {
+      "description": "Unresolved array: assume public",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class MethodReturnsInternalArrayCase {\n                protected final byte[] getData() {\n                    return SomeClass.UNRESOLVED;\n                }\n            }\n            class SomeClass {\n                // unresolved field, should assume public\n            }\n            "
+    },
+    {
+      "description": "#1738 MethodReturnsInternalArray in inner classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Outer {\n    public static class Inner {\n        private int[] arr2;\n\n        public int[] getArr2() {\n            return arr2;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1845 Regression in MethodReturnsInternalArray not handling enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\npublic enum MethodReturnsInternalArrayCaseEnum {\n    ONE(\"One\"),\n    TWO(\"Two\", \"Three\");\n\n    private String[] titles;\n\n    MethodReturnsInternalArrayCaseEnum(String... titles) {\n        this.titles = Arrays.copyOf(titles, titles.length);\n    }\n\n    public String[] getTitles() {\n        return titles.clone();\n    }\n\n    @Override\n    public String toString() {\n        return titles[0];\n    }\n}\n        "
+    },
+    {
+      "description": "Inner interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface OuterInterface {\n       interface InnerInterface {\n            String[] method();\n       }\n}\n        "
+    },
+    {
+      "description": "Inner annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.annotation.RetentionPolicy;\nimport java.lang.annotation.Retention;\npublic final class I {\n    private I() {\n    }\n    @Retention(RetentionPolicy.RUNTIME)\n    public static @interface Inner {\n        String[] value();\n    }\n}\n        "
+    },
+    {
+      "description": "Top-level annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\nimport java.lang.annotation.Target;\n\n@Target(ElementType.METHOD)\n@Retention(RetentionPolicy.RUNTIME)\npublic @interface TopLevelAnnotation {\n\n    String[] value();\n\n}\n        "
+    },
+    {
+      "description": "Enum that returns array instead of copy",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic enum MethodReturnsInternalArrayCaseEnum {\n    ONE(\"One\"),\n    TWO(\"Two\", \"Three\");\n\n    private String[] titles;\n\n    MethodReturnsInternalArrayCaseEnum(String... titles) {\n        this.titles = titles;\n    }\n\n    public String[] getTitles() {\n        return titles;\n    }\n}\n        "
+    },
+    {
+      "description": "Inner enum that returns array instead of copy",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class OuterClass {\n\n    public enum InnerEnum {\n        INNER_ENUM(\"first\", \"second\");\n        private String[] titles;\n\n        InnerEnum(String... titles) {\n            this.titles = titles;\n        }\n\n        public String[] getTitles() {\n            return titles;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Inner enum that returns copy of array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\npublic class OuterClass {\n\n    public enum InnerEnum {\n        INNER_ENUM(\"first\", \"second\");\n        private String[] titles;\n\n        InnerEnum(String... titles) {\n            this.titles = titles;\n        }\n\n        public String[] getTitles() {\n            return Arrays.copyOf(titles, titles.length);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Nested methods and local class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class OuterClass {\n    public int[] arrayReturningMethod() {\n        class LocalClass {\n            private String s;\n            public String getString() {\n                return this.s;\n            }\n        }\n        LocalClass c = new LocalClass();\n        return new int[0];\n    }\n}\n        "
+    },
+    {
+      "description": "Detect returned static arrays",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        16
+      ],
+      "code": "\nimport java.util.concurrent.Callable;\n\npublic class MyClass {\n    private static final String[] FOO_BAR = new String[] { \"foo\", \"bar\" };\n    private final Callable<String[]> returnsFooBar = new Callable<String[]>() {\n        @Override\n        public String[] call() {\n            return FOO_BAR;\n        }\n    };\n\n    private static String[] fooBarNonFinal = new String[] { \"foo\", \"bar\" };\n    private final Callable<String[]> returnsFooBarNonFinal = new Callable<String[]>() {\n        @Override\n        public String[] call() {\n            return fooBarNonFinal; // violation\n        }\n    };\n}\n        "
+    },
+    {
+      "description": "nested class in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic interface Outer {\n    class Foo {\n        String [] arr;\n        String [] getArr() {return arr;}\n    }\n}\n        "
+    },
+    {
+      "description": "[java] MethodReturnsInternalArray doesn't consider anonymous classes #3630",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Outer {\n    private static final String[] names = new String[] {\"a\", \"b\"};\n    public static Provider getProvider() {\n        return new Provider() {\n            @Override\n            public String[] getNames() {\n                return names;\n            }\n        };\n    }\n    public interface Provider {\n        String[] getNames();\n    }\n}\n        "
+    }
+  ]
+}

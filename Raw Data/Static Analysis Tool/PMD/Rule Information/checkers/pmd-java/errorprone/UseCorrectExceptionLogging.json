@@ -1,0 +1,72 @@
+{
+  "name": "UseCorrectExceptionLogging",
+  "language": "java",
+  "description": "\nTo make sure the full stacktrace is printed out, use the logging statement with two arguments: a String and a Throwable.\n\nThis rule only applies to [Apache Commons Logging](https://commons.apache.org/proper/commons-logging/).\n        ",
+  "example": "public class Main {\n    private static final Log _LOG = LogFactory.getLog( Main.class );\n    void bar() {\n        try {\n        } catch( Exception e ) {\n            _LOG.error( e ); //Wrong!\n        } catch( OtherException oe ) {\n            _LOG.error( oe.getMessage(), oe ); //Correct\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class Foo {\n    static final Log _LOG = LogFactory.getLog( Foo.class );\n    void foo() {\n        try {\n        } catch (IllegalArgumentException iae) {\n            _LOG.error(iae.getMessage(), iae);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "failure case - two calls",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        9,
+        10
+      ],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class Foo {\n    static final Log _LOG = LogFactory.getLog( Foo.class );\n    void foo() {\n        try {\n        } catch (Exception e) {\n            _LOG.error(e);\n            _LOG.info(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "must be in a catch block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class Foo {\n    static final Log _LOG = LogFactory.getLog( Foo.class );\n    void foo(int e) {\n        _LOG.error(e);\n    }\n}\n        "
+    },
+    {
+      "description": "bug 1626232, the rule should not be confused by inner classes",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        14
+      ],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class Foo {\n    static class Inner {\n        Log _LOG = LogFactory.getLog( Foo.class );\n    }\n\n    void foo() {\n        try {\n        } catch (Exception e) {\n            Log _LOG = LogFactory.getLog( Foo.class );\n            _LOG.error(e);\n            _LOG.info(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "bug 1626232, should work with a static block",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class Foo {\n    static final Log _LOG = LogFactory.getLog( Foo.class );\n\n    static {}\n\n    void foo() {\n        try {\n        } catch (Exception e) {\n            _LOG.info(e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "XPath problem: A sequence of more than one item is not allowed as the first argument of concat()",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class UseCorrectExceptionLoggingCase {\n    private static final String DISCONNECTED_CLIENT_LOG_CATEGORY = \"thecategory\";\n    protected static final Log logger1 = LogFactory.getLog(DISCONNECTED_CLIENT_LOG_CATEGORY);\n    protected final Log logger2 = LogFactory.getLog(getClass());\n\n    public void run() {\n        try {\n            //...\n        } catch (Exception e) {\n            logger2.debug(\"Error\", e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UseCorrectExceptionLogging FP in 6.31.0 #3100",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\nclass TestUseCorrectExceptionLogging{\n        private static Log log = LogFactory.getLog(TestUseCorrectExceptionLogging.class);\n        public void testPMD(){\n                try{\n                        //something\n                }\n                catch(Exception e){\n                        log.error(TestUseCorrectExceptionLogging.getStackTrace(e));\n                }\n        }\n\n        private static String getStackTrace(Throwable t) {\n            return \"stack...\";\n        }\n}\n        "
+    },
+    {
+      "description": "False negative with string concatenation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\npublic class Foo {\n    static final Log _LOG = LogFactory.getLog( Foo.class );\n    void foo() {\n        try {\n        } catch (IllegalArgumentException iae) {\n            _LOG.error(\"wrong arg: \" + iae);\n        }\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "SuspiciousEnumUsage",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-suspicious-enum-usage",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 208,
+  "branches": 17,
+  "apis": 136,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n// RUN: %check_clang_tidy -std=c++17 %s bugprone-suspicious-enum-usage %t -- -config=\"{CheckOptions: {bugprone-suspicious-enum-usage.StrictMode: false}}\"\n\nenum Empty {\n};\n\nenum A {\n  A = 1,\n  B = 2,\n  C = 4,\n  D = 8,\n  E = 16,\n  F = 32,\n  G = 63\n};\n\nenum X {\n  X = 8,\n  Y = 16,\n  Z = 4\n};\n\nenum {\n  P = 2,\n  Q = 3,\n  R = 4,\n  S = 8,\n  T = 16\n};\n\nenum {\n  H,\n  I,\n  J,\n  K,\n  L\n};\n\nenum Days {\n  Monday,\n  Tuesday,\n  Wednesday,\n  Thursday,\n  Friday,\n  Saturday,\n  Sunday\n};\n\nDays bestDay() {\n  return Friday;\n}\n\nint trigger() {\n  Empty EmptyVal;\n  int emptytest = EmptyVal | B;\n  if (bestDay() | A)\n    return 1;\n  // CHECK-NOTES: :[[@LINE-2]]:17: warning: enum values are from different enum types\n  if (I | Y)\n    return 1;\n  // CHECK-NOTES: :[[@LINE-2]]:9: warning: enum values are from different enum types\n}\n\nint dont_trigger() {\n  unsigned p;\n  p = Q | P;\n\n  if (A + G == E)\n    return 1;\n  else if ((Q | R) == T)\n    return 1;\n  else\n    int k = T | Q;\n\n  Empty EmptyVal;\n  int emptytest = EmptyVal | B;\n\n  int a = 1, b = 5;\n  int c = a + b;\n  int d = c | H, e = b * a;\n  a = B | C;\n  b = X | Z;\n\n  if (Tuesday != Monday + 1 ||\n      Friday - Thursday != 1 ||\n      Sunday + Wednesday == (Sunday | Wednesday))\n    return 1;\n  if (H + I + L == 42)\n    return 1;\n  return 42;\n}\n\nnamespace PR34400 {\nenum { E1 = 0 };\nenum { E2 = -1 };\nenum { l = E1 | E2 };\n}"
+    }
+  ]
+}

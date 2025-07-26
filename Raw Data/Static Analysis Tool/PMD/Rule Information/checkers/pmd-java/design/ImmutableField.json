@@ -1,0 +1,336 @@
+{
+  "name": "ImmutableField",
+  "language": "java",
+  "description": "\nReports non-final fields whose value never changes once object initialization ends,\nand hence may be marked final.\n\nNote that this rule does not enforce that the field value be deeply immutable itself.\nAn object can still have mutable state, even if all its member fields are declared final.\nThis is referred to as shallow immutability. For more information on mutability,\nsee *Effective Java, 3rd Edition, Item 17: Minimize mutability*.\n\nLimitations: We can only check private fields for now.\n        ",
+  "example": "public class Foo {\n  private int x; // could be final\n  public Foo() {\n      x = 7;\n  }\n  public void foo() {\n     int a = x + 2;\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 124,
+  "branches": 18,
+  "apis": 17,
+  "test": [
+    {
+      "description": "Could be immutable, only assigned in constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public Foo() {\n        x = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "Could be immutable, only assigned in decl",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 42;\n}\n        "
+    },
+    {
+      "description": "Ok, assigned twice",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public Foo() {\n        x = 41;\n    }\n\n    public void bar() {\n        x = 42;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, static field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static int x = 0;\n    private final int y;\n\n    public Foo() {\n        y = x;\n        x++;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, one constructor assigns, one doesn't",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public Foo(int y) {\n        x = y;\n    }\n\n    public Foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, assignment via postfix expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public Foo() {\n    }\n\n    private void bar() {\n        x++;\n    }\n}\n        "
+    },
+    {
+      "description": "Postfix expressions imply mutability",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 0;\n\n    private void bar() {\n        x++;\n    }\n}\n        "
+    },
+    {
+      "description": "Compound assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int w;\n    private int z;\n\n    private void bar() {\n        w = 2;\n        z = 4;\n    }\n\n    private void gaz() {\n        w += z++;\n    }\n}\n        "
+    },
+    {
+      "description": "Preincrement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 0;\n\n    public void bar() {\n        ++x;\n    }\n}\n        "
+    },
+    {
+      "description": "Predecrement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 0;\n\n    public void bar() {\n        --x;\n    }\n}\n        "
+    },
+    {
+      "description": "Compound assignment 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 0;\n\n    public void bar() {\n        x += 1;\n    }\n}\n        "
+    },
+    {
+      "description": "Rhs 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 0;\n\n    Foo(int y) {}\n\n    public void bar() {\n        Object y = new Foo(x++);\n    }\n}\n        "
+    },
+    {
+      "description": "Assignment in constructor is in try block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public Foo() {\n        try {\n            mayThrow();\n            x = 2;\n            mayThrow();\n        } catch (Exception e) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Assignment in method is in try block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public void bar() {\n        try {\n            x = 2;\n        } catch (Exception e) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Assignment in constructor in loop is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n\n    public Foo() {\n        for (int i = 0; i < 10; i++) {\n            x += 5;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Assignment in anonymous inner class method is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x = 2;\n    MouseAdapter mouseListener;\n\n    public Foo() {\n        mouseListener = new MouseAdapter() {\n            public void mouseClicked(Object e) {\n                x = e.hashCode();\n            }\n        };\n    }\n}\n\ninterface MouseAdapter {\n    void mouseClicked(Object e);\n}\n        "
+    },
+    {
+      "description": "Assignment through this",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int counter;\n\n    private Foo() {\n        counter = 0;\n    }\n\n    private int foo() {\n        if (++this.counter < 3) {\n            return 0;\n        }\n        return 1;\n    }\n}\n        "
+    },
+    {
+      "description": "Volatile variables can't be final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    private volatile boolean bar = false;\n\n    public Foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1740480, optional override of default value based on constructor argument check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n    private int positive = 1; // cannot be final, is modified in ctor\n\n    public MyClass(int value) {\n        // if negative keep default\n        if (value > 0) {\n            positive = value;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1740480, assignment in single constructor based on constructor argument check",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class MyClass {\n    private int positive; // can be final\n\n    public MyClass(int value) {\n        if (value > 0) {\n            positive = value;\n        } else {\n            positive = 1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "3526212, pmd-5.0.0: ImmutableField false positive on self-inc/dec",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class pmd_inc {\n    private int test;\n\n    public pmd_inc() {\n        this.test = 2;\n    }\n\n    public int get_test() {\n        return this.test;\n    }\n\n    public void inc_test(int val) {\n        this.test += val;\n    }\n}\n        "
+    },
+    {
+      "description": "#946 ImmutableField false +",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n    private long counter = 0;\n\n    public <E> void run(final E entity, final Class<?> m) throws Exception {\n        this.counter += 1;\n    }\n}\n        "
+    },
+    {
+      "description": "#1032 ImmutableField Rule: Private field in inner class gives false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static class Bar {\n        private int i;\n\n        Bar(final int i) {\n            this.i = i;\n        }\n    }\n\n    public int foo() {\n        final Bar b = new Bar(1);\n        b.i = 0;\n        return b.i;\n    }\n}\n        "
+    },
+    {
+      "description": "#1448 [java] ImmutableField: Private field in inner class gives false positive with lambdas",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.BinaryOperator;\npublic class CombinersTest {\n\n    private static final BinaryOperator<Purse> ADDITION = (p1, p2) -> {\n        p1.amount += p2.amount;\n        return p1;\n    };\n\n    private static class Purse {\n        private int amount;\n\n        public Purse(final int amount) {\n            this.amount = amount;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#410 [java] ImmutableField: False positive with lombok on class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Setter;\n\n@Setter\npublic class Foo {\n    private String id;\n\n    public Foo(String id) {\n        this.id = id;\n    }\n}\n        "
+    },
+    {
+      "description": "#4254 [java] ImmutableField: False positive with lombok on field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\nimport lombok.Setter;\n\npublic class Foo {\n    @Setter\n    private String id;\n\n    public Foo(String id) {\n        this.id = id;\n    }\n}\n        "
+    },
+    {
+      "description": "#855 [java] ImmutableField: False positive within lambda",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private Bar bar;\n\n    public Foo() {\n        someMethod(() -> {\n            bar = new Bar();\n        });\n    }\n\n    private void someMethod(Runnable action) {\n        action.run();\n    }\n\n    static class Bar {\n    }\n}\n        "
+    },
+    {
+      "description": "#855 [java] ImmutableField: False positive within lambda (expression style)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private Bar bar;\n\n    public Foo() {\n        someMethod(() -> bar = new Bar());\n    }\n\n    private void someMethod(Runnable action) {\n        action.run();\n    }\n\n    static class Bar {\n    }\n}\n        "
+    },
+    {
+      "description": "#1792 Immutable field should still be detected with @Delegate",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.Delegate;\n\npublic class Foo {\n    @Delegate\n    private String x;\n\n    public Foo() {\n        x = \"bar\";\n    }\n}\n        "
+    },
+    {
+      "description": "#2075 [java] ImmutableField false positive with inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Stack {\n    private Node first;\n    private int n;   // can't be made final\n\n    public void insert(int x) {\n        first = new Node(first, x);\n    }\n\n    public int size() {\n        return n;\n    }\n\n    private class Node {\n        final Node next;\n        final int x;\n        private Node(Node next, int x) {\n            this.next = next;\n            this.x = x;\n            n++;  // inner class updates instance variable in outer class\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Non-private field of private class",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Stack {\n\n    private class Node {\n        Node next;\n        int x;\n        private Node(Node next, int x) {\n            this.next = next;\n            this.x = x;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] ImmutableField: False positive when variable is updated in conditional loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage pmdtests;\n\nimport java.util.Random;\nimport java.math.BigInteger;\n\npublic class TestFinal {\n  private BigInteger e;\n\n  public TestFinal() {\n    Random random = new Random();\n    e = BigInteger.probablePrime(Integer.MAX_VALUE / 2, random);\n\n    while (random.nextBoolean())\n      e = e.add(BigInteger.ONE);\n  }\n}\n        "
+    },
+    {
+      "description": "Blank field should not be considered final, it's most probably not used that way.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.beans.factory.annotation.Qualifier;\n\nprivate static class Person {\n\n    @Autowired @Qualifier(\"special\")\n    private Person larry;\n\n    public Person getLarry() {\n        return larry;\n    }\n}\n\n        "
+    },
+    {
+      "description": "Multiple ctors writing a subset of fields",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            import java.util.Collection;\n            class GroovyBeanDefinitionWrapper {\n\n                private String beanName;\n                private Class<?> clazz;\n                private Collection<?> constructorArgs;\n                private Object definition;\n\n\n                public GroovyBeanDefinitionWrapper(String beanName) {\n                    this.beanName = beanName;\n                }\n\n                public GroovyBeanDefinitionWrapper(String beanName, Class<?> clazz) {\n                    this.beanName = beanName;\n                    this.clazz = clazz;\n                }\n\n                public GroovyBeanDefinitionWrapper(String beanName, Class<?> clazz, Collection<?> constructorArgs) {\n                    this.beanName = beanName;\n                    this.clazz = clazz;\n                    this.constructorArgs = constructorArgs;\n                }\n\n                public Collection<?> getConstructorArgs() {return constructorArgs;}\n                public String getBeanName() {return beanName;}\n                public Object getDefinition() {return definition;}\n                public Class<?> getClazz() {return clazz;}\n            }\n            "
+    },
+    {
+      "description": "[java] ImmutableField - false negative when field assigned in constructor conditionally #3850",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class ExampleImmutableField {\n\n    private String str; // false negative here, could be final\n\n    public ExampleImmutableField(String strLocal, boolean flag) { \n        if (flag){\n            this.str = strLocal;\n        } else {\n            this.str = strLocal+\"123\";\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3874 [java] ImmutableField reports fields annotated with @Autowired (Spring) and @Mock (Mockito)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.mockito.InjectMocks;\nimport org.mockito.Mock;\nimport org.springframework.boot.test.mock.mockito.MockBean;\nimport org.springframework.beans.factory.annotation.Autowired;\n\npublic class ExampleImmutableField {\n\n    @Mock\n    private Foo foo;\n\n    @InjectMocks\n    private Bar bar;\n\n    @MockBean\n    private Baz Baz;\n\n    @Autowired\n    private Foo2 foo2;\n}\n\nclass Foo {}\nclass Bar {}\nclass Baz {}\nclass Foo2 {}\n        "
+    },
+    {
+      "description": "#3981 #3998 [java] ImmutableField reports fields annotated with @Value (Spring) and @Captor (Mockito)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.mockito.Captor;\nimport org.mockito.ArgumentCaptor;\nimport org.springframework.beans.factory.annotation.Value;\n\npublic class ExampleImmutableField {\n\n    @Value(\"${property.value}\")\n    private String bar2;\n\n    @Captor\n    private ArgumentCaptor<Object> baz2;\n}\n        "
+    },
+    {
+      "description": "#4008 FN with field assigned only in initializer",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                private String variable = \"hello\";\n\n                public Goo() {\n\n                }\n                public String getVariable() {\n                    return variable;\n                }\n            }\n            "
+    },
+    {
+      "description": "#4008 FN with field assigned only in initializer (no ctor)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                private String variable = \"hello\";\n\n                public String getVariable() {\n                    return variable;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] ImmutableField: Do not flag fields annotated with @Inject #4011",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.inject.Inject;\npublic class Foo {\n    @Inject\n    private MyService service;\n}\n\ninterface MyService {}\n"
+    },
+    {
+      "description": "[java] ImmutableField reports fields annotated with @FindBy and @FindBys (Selenium) #4020",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SomePage {\n    @org.openqa.selenium.support.FindBy(id = \"id1\")\n    private WebElement field1;\n\n    @org.openqa.selenium.support.FindBys(value = {@org.openqa.selenium.support.FindByFindBy(id = \"id2\"),\n                                                       @org.openqa.selenium.support.FindBy(xpath = \"//div/table\")})\n    private WebElement table;\n}\n"
+    },
+    {
+      "description": "[java] ImmutableField reports fields annotated with @GwtMock (GwtMockito) and @Spy (Mockito) #4004",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SomeTest {\n    @com.google.gwtmockito.GwtMock\n    private String someMock;\n\n    @org.mockito.Spy\n    private String someSpy;\n}\n"
+    },
+    {
+      "description": "[java] ImmutableField: Do not flag fields in @Entity #3823",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.persistence.Entity;\nimport javax.persistence.Table;\nimport javax.persistence.Id;\nimport javax.persistence.Column;\n@Entity\n@Table(name = \"my_table\")\npublic class MyTable implements Serializable\n{\n   private static final long serialVersionUID = 1L;\n\n   @Id\n   @Column(name = \"directory\", nullable = false)\n   private long m_id;  // PMD Violation: ImmutableField\n\n   // other fields\n\n   /**\n    * For JPA\n    */\n   public MyTable()\n   {\n      // nothing to do\n   }\n\n   public long getId()\n   {\n      return m_id;\n   }\n}\n"
+    },
+    {
+      "description": "#4490 False negative with Lombok @Getter only",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport lombok.Getter;\nimport lombok.Setter;\n\nclass Foo {\n    @Getter\n    private String name = \"tada\";\n\n    @Getter\n    @Setter\n    private String name2 = \"tada\";\n}\n"
+    },
+    {
+      "description": "FN with instance method call in ctor",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\n            class BitSieve {\n                private long bits[];\n                private int length;\n\n                private BitSieve() {\n                    length = 150 * 64;\n                    bits = new long[(unitIndex(length - 1) + 1)];\n\n                    // This instance method call will cause the fields to be \"reassigned\"\n                    // to some unknown (unbound) value, to be conservative.\n                    set(0);\n                }\n\n                private static int unitIndex(int bitIndex) {\n                    return bitIndex >>> 6;\n                }\n\n                private static long bit(int bitIndex) {\n                    return 1L << (bitIndex & ((1<<6) - 1));\n                }\n\n                private boolean get(int bitIndex) {\n                    int unitIndex = unitIndex(bitIndex);\n                    return ((bits[unitIndex] & bit(bitIndex)) != 0);\n                }\n\n                private void set(int bitIndex) {\n                    int unitIndex = unitIndex(bitIndex);\n                    bits[unitIndex] |= bit(bitIndex);\n                }\n            }\n            "
+    },
+    {
+      "description": "Instance field assigned by ctor of other instance",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class BitSieve {\n                private BitSieve prev;\n\n                BitSieve(BitSieve other) {\n                    other.prev = this;\n                }\n\n                BitSieve getPrev() {\n                    return prev;\n                }\n            }\n            "
+    },
+    {
+      "description": "Instance field where default value is visible",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class BitSieve {\n                private boolean foo;\n\n                BitSieve(BitSieve other) {\n                    if (other.foo)\n                        this.foo = true;\n                }\n\n                boolean getPrev() {\n                    return foo;\n                }\n            }\n            "
+    },
+    {
+      "description": "Instance field set after throw",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class BitSieve {\n                private boolean foo;\n\n                BitSieve() {\n                    if (System.nanoTime() < 10)\n                        throw new IllegalArgumentException();\n                    this.foo = true;\n                }\n\n                boolean getPrev() {\n                    return foo;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] ImmutableField should consider fields in anonymous classes #3956",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        4
+      ],
+      "code": "\npublic class C {\n    private int g = 0;  // can report a warning in this line\n    public Object o = new Object() {\n        private int f = 0;  // should report a warning in this line\n    };\n}\n"
+    },
+    {
+      "description": "[java] ImmutableField should consider enum class #3957",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class D {\n    enum E {\n        R;\n        private int y = 42;  // should have a warning in this line\n    }\n}\n"
+    },
+    {
+      "description": "#4046 [java] Incorrect ImmutableField error on field with both declaration and constructor initializer",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class NotSoImmutableField {\n    /* Note: field \"foo\" can be made final, when using constructor chaining. For now, the rule won't report this,\n     * as it is not a simple change anymore (e.g. just adding the final keyword).\n     * In the future, either this rule or a new rule can report even such more complicated cases.\n     * See [[java] ImmutableField: false-negative for field with a default + constructor assignment #4869](https://github.com/pmd/pmd/issues/4869)\n     */\n    private int foo = 2;\n\n    NotSoImmutableField() {\n    }\n\n    NotSoImmutableField(final int foo) {\n        this.foo = foo;\n    }\n\n    public int getFoo() {\n        return foo;\n    }\n}\n"
+    }
+  ]
+}

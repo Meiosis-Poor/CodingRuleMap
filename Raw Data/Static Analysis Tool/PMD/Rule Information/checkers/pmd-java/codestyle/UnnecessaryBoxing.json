@@ -1,0 +1,290 @@
+{
+  "name": "UnnecessaryBoxing",
+  "language": "java",
+  "description": "\n            Reports explicit boxing and unboxing conversions that may safely be removed,\n            either because they would be inserted by the compiler automatically,\n            or because they're semantically a noop (eg unboxing a value to rebox it immediately).\n\n            Note that this only handles boxing and unboxing conversions occurring through\n            calls to `valueOf` or one of the `intValue`, `byteValue`, etc. methods. Casts\n            that command a conversion are reported by {% rule UnnecessaryCast %} instead.\n        ",
+  "example": "{\n        // Instead of\n        Integer integer = Integer.valueOf(2);\n        // you may just write\n        Integer integer = 2;\n\n        int i = integer.intValue(); // similarly for unboxing\n\n        // Instead of\n        int x = Integer.valueOf(\"42\");\n        // you may just write\n        int x = Integer.parseInt(\"42\");\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 284,
+  "branches": 75,
+  "apis": 18,
+  "test": [
+    {
+      "description": "pos - new Integer(int)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Integer i = new Integer(42);\n}\n        "
+    },
+    {
+      "description": "neg - new Integer(String)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Integer i = new Integer(\"42\");\n}\n        "
+    },
+    {
+      "description": "neg - Integer.valueOf(String)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Integer i = Integer.valueOf(\"42\");\n}\n        "
+    },
+    {
+      "description": "pos - Integer.valueOf(int)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Integer i = Integer.valueOf(42);\n}\n        "
+    },
+    {
+      "description": "pos - new Integer(int)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Integer i = new Integer(42);\n}\n        "
+    },
+    {
+      "description": "neg - char -> Integer is not possible implicitly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {{\n    char c = 0;\n    Integer i = new Integer(c);\n}}\n        "
+    },
+    {
+      "description": "pos - new Integer(int) assigned to object",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {{\n    char c = 0;\n    Object obj = new Integer(2);\n}}\n        "
+    },
+    {
+      "description": "pos - unboxing",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    void fun(Integer c) {\n        int i0 = c.intValue();\n        double d = c.doubleValue();\n        d = c.longValue();\n\n    }\n}\n        "
+    },
+    {
+      "description": "neg - unboxing to smaller type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void fun(Integer c) {\n        byte i2 = c.byteValue();  // necessary\n        short i = c.shortValue(); // necessary\n        int i = c.byteValue();    // necessary, because it truncates the value before widening it.\n\n    }\n}\n        "
+    },
+    {
+      "description": "pos - unboxing to smaller type",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "code": "\n            class Scratch {\n                public static void main(String[] args) {\n                    Integer integer = 2; // ok\n\n                    Object a = Integer.valueOf(2);  // explicit boxing where the value would be autoboxed\n                    int b = integer.intValue();     // explicit unboxing where the value would be auto-unboxed\n                    Object c = integer.intValue();  // unboxing where the value is immediately reboxed\n                    int i = Integer.valueOf(0);     // boxing where the value is immediately unboxed\n                    Integer.valueOf(integer);       // boxing of already boxed value\n                }\n            }\n        "
+    },
+    {
+      "description": "Unnecessary (primitive -> primitive) casts",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            class Scratch {\n                public static void main(String[] args) {\n                    Integer integer = 2; // ok\n\n                    long a = (int) Integer.valueOf(2);  // explicit boxing where the value would be autoboxed\n                    int b = (int) 2;                    // ignored, left to UnnecessaryCast\n                    long c = (int) 4;                   // widening can be implicit\n                    double c = (int) 4;                 // widening can be implicit\n                    double c = (int) 4.0;               // cast is narrowing so necessary\n                }\n            }\n        "
+    },
+    {
+      "description": "Patch 2075906: Add toString() to the rule UnnecessaryWrapperObjectCreation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Bar {\n                void foo(boolean value) {\n                    String b = Boolean.valueOf(value).toString();\n                }\n            }\n            "
+    },
+    {
+      "description": "#1057 False positive for UnnecessaryWrapperObjectCreation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Test {\n                public void test() {\n                    Float.valueOf(5).toString(); // this will raise the rule\n                    Float.toString(5); // this is the preferred way\n                }\n            }\n            "
+    },
+    {
+      "description": "Uses of Integer.valueOf(someString) where an int is expected",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    public void test(String number) {\n        int i1 = Integer.valueOf(\"42\");\n        int i2 = Integer.valueOf(\"42\", 10);\n        int x1 = Integer.valueOf(number);\n        int x2 = Integer.valueOf(number, 10);\n        int y = Integer.parseInt(\"42\");\n        int z = Integer.parseInt(number);\n    }\n}\n        "
+    },
+    {
+      "description": "Uses of Long.valueOf(someString) where an long is expected",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    public void test(String number) {\n        long l1 = Long.valueOf(\"42\");\n        long l2 = Long.valueOf(\"42\", 10);\n        long x1 = Long.valueOf(number);\n        long x2 = Long.valueOf(number, 10);\n        long y = Long.parseLong(\"42\");\n        long z = Long.parseLong(number);\n    }\n}\n        "
+    },
+    {
+      "description": "Uses of Double.valueOf(someString) where an double is expected",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test(String number) {\n        double d1 = Double.valueOf(\"42\");\n        double x1 = Double.valueOf(number);\n        double y = Double.parseDouble(\"42\");\n        double z = Double.parseDouble(number);\n    }\n}\n        "
+    },
+    {
+      "description": "Uses of Float.valueOf(someString) where an float is expected",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test(String number) {\n        float f1 = Float.valueOf(\"42\");\n        float x1 = Float.valueOf(number);\n        float y = Float.parseFloat(\"42\");\n        float z = Float.parseFloat(number);\n    }\n}\n        "
+    },
+    {
+      "description": "Uses of Short.valueOf(someString) where an short is expected",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    public void test(String number) {\n        short s1 = Short.valueOf(\"42\");\n        short s2 = Short.valueOf(\"42\", 10);\n        short x1 = Short.valueOf(number);\n        short x2 = Short.valueOf(number, 10);\n        short y = Short.parseShort(\"42\");\n        short z = Short.parseShort(number);\n    }\n}\n        "
+    },
+    {
+      "description": "Uses of Boolean.valueOf(someString) where an boolean is expected",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test(String number) {\n        boolean b = Boolean.valueOf(\"42\");\n        boolean x = Boolean.valueOf(number);\n        boolean y = Boolean.parseBoolean(\"42\");\n        boolean z = Boolean.parseBoolean(number);\n    }\n}\n        "
+    },
+    {
+      "description": " [java] UnnecessaryBoxing, but explicit conversion is necessary #4903 ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public final class UnnecessaryBoxing {\n\n                private UnnecessaryBoxing() {\n                }\n\n                public static void addLong(Long parameter) {\n                    System.out.println(\"parameter = \" + parameter);\n                }\n\n                public static Integer getValue() {\n                    return 42;\n                }\n\n                public static void main(String[] args) {\n                    addLong(Long.valueOf(getValue())); // PMD complains: \"Unnecessary explicit conversion from Integer to Long\"\n                    //addLong(getValue()); // Does not compile: \"incompatible types: Integer cannot be converted to Long\"\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] UnnecessaryBoxing FP in lambda #4924",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\n\n            public class Example {\n\n                record Item(int cents) {}\n\n                Object map(Item item) {\n                    // here the conversion is necessary to determine the context type\n                    return map(item, it -> Long.valueOf(it.cents()));\n                }\n                Object map2(Item item) {\n                    // here it is not necessary\n                    return mapToLong(item, it -> Long.valueOf(it.cents()));\n                }\n                interface Fun<T,R> { R apply(T t); }\n                interface ToLongFun<T> { long apply(T t); }\n                <T,R> R map(T t, Fun<T,R> fun) {}\n                <T> long mapToLong(T t, ToLongFun<T> fun) {}\n            }\n        "
+    },
+    {
+      "description": "If method is called on result then boxing is necessary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            public class Example {\n                int val;\n                boolean eq(Integer val) {\n                   return Integer.valueOf(this.val).equals(val) // ok\n                           || Integer.valueOf(val).equals(this.val); // warn\n                }\n\n            }\n        "
+    },
+    {
+      "description": "valueOf something else",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Example {\n                int val;\n                boolean eq(Integer val) {\n Example x =                   valueOf(\"abc\");\n                    x = Example.valueOf(\"abc\");\n                }\n\n                static Example valueOf(String s) {\n                    return null;\n                }\n            }\n        "
+    },
+    {
+      "description": "imported valueOf",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import static java.lang.Integer.valueOf;\n            public class Example {\n                int val;\n                Integer eq(int val) {\n                    return valueOf(val);\n                }\n            }\n        "
+    },
+    {
+      "description": "Boxing to another type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static java.lang.Long.valueOf;\n            public class Example {\n                int val;\n                Object eq(int val) {\n                    // here removing this would box the\n                    // int to an Integer not a Long\n                    return valueOf(val);\n                }\n            }\n        "
+    },
+    {
+      "description": "Unboxing of byte in invocation ctx",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        10,
+        11
+      ],
+      "code": "\n            public abstract class Example {\n                Example eatByte(byte b) {\n                }\n\n                int eatObj(Example b) {\n                }\n\n                void eq(Object val) {\n                    Byte b = (Byte) val;\n                    eatByte(b.byteValue());\n                    eatObj(eatByte(b.byteValue()));\n                }\n            }\n            "
+    },
+    {
+      "description": "Unboxing of byte in numeric ctx",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class Example {\n                byte value;\n\n                boolean eq(Object obj) {\n                    if (obj instanceof Byte) {\n                        return value == ((Byte)obj).byteValue();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Boxing of bool under cast",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class Example {\n\n                <T> T cast(boolean b) {\n                    return (T) Boolean.valueOf(b);\n                }\n            }\n            "
+    },
+    {
+      "description": "Unboxing of bool under neg",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public abstract class Example {\n\n                boolean cast(Boolean b) {\n                    return !b.booleanValue();\n                }\n            }\n            "
+    },
+    {
+      "description": "Boxing in ternary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public abstract class Example {\n\n                boolean cast(boolean shouldBeLong, int n) {\n                    // The first valueOf call is necessary, not the second\n                    Number result = shouldBeLong ?\n                                    (Number)Long.valueOf(n) // ok\n                                 : (Number)Integer.valueOf(n); // warn\n                    short s = 2;\n                    // here both are necessary\n                    result = shouldBeLong ?\n                             (Number)Long.valueOf(s) : (Number)Integer.valueOf(s);\n\n\n                }\n            }\n            "
+    },
+    {
+      "description": "Unboxing of Character",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Example {\n                public void convert(Character source) {\n                    short x = (short) source.charValue();\n                }\n            }\n        "
+    },
+    {
+      "description": "Long valueOf",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            class Example {\n                long uid;\n                Long uid2;\n                public void convert() {\n                    uid = Long.valueOf(0); // unnecessary\n                    uid2 = Long.valueOf(0); // necessary, although it could be written 0L\n                }\n            }\n        "
+    },
+    {
+      "description": "Boolean valueof",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            class Example {\n                boolean value;\n                public boolean equals(Object obj) {\n                    if (obj instanceof Boolean) {\n                        return value == ((Boolean)obj).booleanValue();\n                    }\n                    return false;\n                }\n            }\n        "
+    },
+    {
+      "description": "Long ctor call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n             class LongCache {\n                private LongCache(){}\n\n                static final Long cache[] = new Long[-(-128) + 127 + 1];\n\n                static {\n                    for(int i = 0; i < cache.length; i++)\n                        cache[i] = new Long(i - 128); // necessary\n                }\n            }\n            "
+    },
+    {
+      "description": "Switch scrutinee",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n             class LongCache {\n                private LongCache(){}\n\n                static {\n                    Object o[];\n                    int i;\n                    switch (((Integer) o[i]).intValue()) {\n                    case 0: break;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Unboxing in lambda return position which returns inferred type",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\n            class Example {\n                VoidSpecies<Integer> mismatch = payload -> payload.intValue(); // warn: the interface expects void\n                RefSpecies<Integer, Object> i = t -> t.intValue(); // warn: in this context t->t is equivalent because it will be reboxed\n\n\n                // In this specific situation below, explicit unboxing\n                // is necessary to distinguish overloads. Note that if\n                // the lambda was not explicitly typed it would be an\n                // ambiguity error. Note also that even if the interfaces are\n                // not generic in the parameter type, but rather take an Integer\n                // parameter, implicitly typed lambdas will cause an\n                // ambiguity error.\n                // In our implementation we consider that the return position of a\n                // lambda never needs an explicit boxing or unboxing conversion, and\n                // ignore this corner case, that is unlikely to show up in real code.\n                static <T> void foo(IntSpecies<T> f) {}\n                static <T> void foo(RefSpecies<T, Integer> f) {}\n                static {\n                    foo((Integer i) -> i.intValue());\n                    foo((Integer i) -> i);\n                }\n                interface VoidSpecies<T> {\n                    void doSomething(T t);\n                }\n                interface RefSpecies<T, X> {\n                    X foo(T t);\n                }\n                interface IntSpecies<T> {\n                    int foo(T t);\n                }\n            }\n        "
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "NonZeroEnumToBoolConversion",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-non-zero-enum-to-bool-conversion",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 84,
+  "branches": 2,
+  "apis": 55,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        14,
+        19,
+        24,
+        29,
+        37
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++98-or-later %s bugprone-non-zero-enum-to-bool-conversion %t -- \\\n// RUN:   -config=\"{CheckOptions: {bugprone-non-zero-enum-to-bool-conversion.EnumIgnoreList: '::without::issue::IgnoredEnum;IgnoredSecondEnum'}}\"\n\nnamespace with::issue {\n\ntypedef enum EStatus {\n  SUCCESS       = 1,\n  FAILURE       = 2,\n  INVALID_PARAM = 3,\n  UNKNOWN       = 4\n} Status;\n\nbool testEnumConversion(EStatus value) {\n  // CHECK-MESSAGES: :[[@LINE+1]]:10: warning: conversion of 'EStatus' into 'bool' will always return 'true', enum doesn't have a zero-value enumerator [bugprone-non-zero-enum-to-bool-conversion]\n  return value;\n}\n\nbool testTypedefConversion(Status value) {\n  // CHECK-MESSAGES: :[[@LINE+1]]:10: warning: conversion of 'EStatus' into 'bool' will always return 'true', enum doesn't have a zero-value enumerator [bugprone-non-zero-enum-to-bool-conversion]\n  return value;\n}\n\nbool testExplicitConversion(EStatus value) {\n  // CHECK-MESSAGES: :[[@LINE+1]]:28: warning: conversion of 'EStatus' into 'bool' will always return 'true', enum doesn't have a zero-value enumerator [bugprone-non-zero-enum-to-bool-conversion]\n  return static_cast<bool>(value);\n}\n\nbool testInIfConversion(EStatus value) {\n  // CHECK-MESSAGES: :[[@LINE+1]]:7: warning: conversion of 'EStatus' into 'bool' will always return 'true', enum doesn't have a zero-value enumerator [bugprone-non-zero-enum-to-bool-conversion]\n  if (value) {\n    return false;\n  }\n  return true;\n}\n\nbool testWithNegation(EStatus value) {\n  // CHECK-MESSAGES: :[[@LINE+1]]:14: warning: conversion of 'EStatus' into 'bool' will always return 'true', enum doesn't have a zero-value enumerator [bugprone-non-zero-enum-to-bool-conversion]\n  return not value;\n}\n\n}\n\nnamespace without::issue {\n\nenum StatusWithZero {\n  UNK  = 0,\n  OK   = 1,\n  NOT_OK = 2\n};\n\nbool testEnumConversion(StatusWithZero value) {\n  return value;\n}\n\nenum WithDefault {\n  Value0,\n  Value1\n};\n\nbool testEnumConversion(WithDefault value) {\n  return value;\n}\n\nenum WithNegative : int {\n  Nen2 = -2,\n  Nen1,\n  Nen0\n};\n\nbool testEnumConversion(WithNegative value) {\n  return value;\n}\n\nenum EStatus {\n  SUCCESS = 1,\n  FAILURE,\n  INVALID_PARAM,\n  UNKNOWN\n};\n\nbool explicitCompare(EStatus value) {\n  return value == SUCCESS;\n}\n\nbool explicitBitUsage1(EStatus value) {\n  return (value & SUCCESS);\n}\n\nbool explicitBitUsage2(EStatus value) {\n  return (value | SUCCESS);\n}\n\nbool testEnumeratorCompare() {\n  return SUCCESS;\n}\n\nenum IgnoredEnum {\n  IGNORED_VALUE_1 = 1,\n  IGNORED_VALUE_2\n};\n\nenum IgnoredSecondEnum {\n  IGNORED_SECOND_VALUE_1 = 1,\n  IGNORED_SECOND_VALUE_2\n};\n\nbool testIgnored(IgnoredEnum value) {\n  return value;\n}\n\nbool testIgnored(IgnoredSecondEnum value) {\n  return value;\n}\n\nenum CustomOperatorEnum {\n    E0 = 0x1,\n    E1 = 0x2,\n    E2 = 0x4\n};\n\nCustomOperatorEnum operator&(CustomOperatorEnum a, CustomOperatorEnum b) { return static_cast<CustomOperatorEnum>(a & b); }\n\nvoid testCustomOperator(CustomOperatorEnum e) {\n    if (e & E1) {}\n    if ((e & E1)) {}\n    if (!(e & E1)) {}\n}\n\n}"
+    }
+  ]
+}

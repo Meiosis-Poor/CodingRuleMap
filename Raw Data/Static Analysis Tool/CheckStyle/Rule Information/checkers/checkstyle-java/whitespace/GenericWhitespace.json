@@ -1,0 +1,86 @@
+{
+  "name": "GenericWhitespace",
+  "language": "java",
+  "description": "<div>\n Checks that the whitespace around the Generic tokens (angle brackets)\n \"&lt;\" and \"&gt;\" are correct to the <i>typical</i> convention.\n The convention is not configurable.\n </div>\n\n <p>\n Left angle bracket (\"&lt;\"):\n </p>\n <ul>\n <li> should be preceded with whitespace only\n   in generic methods definitions.</li>\n <li> should not be preceded with whitespace\n   when it is preceded method name or constructor.</li>\n <li> should not be preceded with whitespace when following type name.</li>\n <li> should not be followed with whitespace in all cases.</li>\n </ul>\n\n <p>\n Right angle bracket (\"&gt;\"):\n </p>\n <ul>\n <li> should not be preceded with whitespace in all cases.</li>\n <li> should be followed with whitespace in almost all cases,\n   except diamond operators and when preceding a method name, constructor, or record header.</li>\n </ul>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 164,
+  "branches": 31,
+  "apis": 36,
+  "test": [
+    {
+      "description": "Auto test from InputGenericWhitespaceAfterNew.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        16,
+        21
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\nimport java.lang.annotation.Target;\nimport static java.lang.annotation.ElementType.TYPE_USE;\npublic class InputGenericWhitespaceAfterNew {\n    public class Inner<T> { }\n    Object obj1 = new <String>Object();\n    Object obj2 = new <String> Object(); \n    void method() {\n        new <@A Inner>Inner();\n        new< @A Inner > Inner ();\n        new <@A Inner> @A Inner<@A Inner>(); \n    }\n    void popCan() {\n        Can.Pop cannot = new <String>Can.Pop();\n        Can.Pop burstCan = new< String > Can.Pop();\n        Can.must(\"idk\", new<Can<Can< @A Inner<Can<Can<?> [] >>> >> Can.Pop.But.Wont <String> ());\n    }\n    @Target({TYPE_USE}) @interface A {}\n}\nclass Can<T> {\n    static <T> void must(String why, T whatever) {}\n    static class Pop {\n        static class But {\n            static class Wont<T> {\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputGenericWhitespaceAtStartOfTheLine.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        17
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\nimport java.util.Collections;\nclass InputGenericWhitespaceAtStartOfTheLine {\n    public String getConstructor(Class<?>... parameterTypes)\n    {\n        Collections.<Object\n >emptySet(); \n        Collections.\n <Object>emptySet(); \n        return \"pitest makes me cry\";\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputGenericWhitespaceBeforeCtorInvocation.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        16,
+        19,
+        25,
+        31,
+        38,
+        46,
+        49,
+        51
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\nimport java.lang.annotation.Target;\nimport java.util.ArrayList;\nimport java.util.List;\nimport static java.lang.annotation.ElementType.TYPE_USE;\npublic class InputGenericWhitespaceBeforeCtorInvocation {\n    List<String> music = new ArrayList<>();\n    List todo = new ArrayList<> (); \n    Gen<String, Integer> eel = new Gen<String, Integer > ();\n    Pipe pipe = new Pipe< String>() { \n    };\n    Class<?>[] classy = new Class<?> []{}; \n    void method() {\n        new Very.Deep<Integer>();\n        new Very.Deep.Rabbit.Hole <  Integer  > ();\n        new @A Gen<@A Gen, @A Gen> (); \n        new java.util.HashMap<Integer, Integer> (); \n        new ArrayList<Very <Gen<String,String>>> ();\n    }\n    static final Very<Gen<String, String>> veryGen =\n            new Very<Gen<String, String>> () {}; \n    <T> void mustPatTheCroc(boolean mustPat, T[] crocs) {\n        Very.swampPuppy(new Gen<String, String> ()); \n        if (!mustPat) {\n            mustPatTheCroc(true, new Very<?> []{}); \n        }\n    }\n    class Gen<T, U> {}\n    static class Very<Q> {\n        static void swampPuppy(Gen<String, String> croc) {}\n        static class Deep<D> {\n            static class Rabbit<R> {\n                static class Hole<H> {\n                }\n            }\n        }\n    }\n    interface Pipe<T> {\n    }\n    @Target({TYPE_USE}) @interface A {}\n}"
+    },
+    {
+      "description": "Auto test from InputGenericWhitespaceDefault.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        64,
+        67,
+        86,
+        87,
+        91,
+        92
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\nimport java.io.Serializable;\nimport java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.concurrent.Callable;\nimport java.util.Collections;\nclass InputGenericWhitespaceDefault implements Comparable<Object>, Serializable\n{\n    void meth()\n    {\n        List<Integer> x = new ArrayList<Integer>();\n        List<List<Integer>> y = new ArrayList<List<Integer>>();\n        List < Integer > a = new ArrayList < Integer > (); \n        List < List < Integer > > b = new ArrayList < List < Integer > > (); \n    }\n    public int compareTo(Object aObject)\n    {\n        return 0;\n    }\n    public static <T> Callable<T> callable(Runnable task, T result)\n    {\n        return null;\n    }\n    public static<T>Callable<T> callable2(Runnable task, T result) \n    {\n        Map<Class<?>, Integer> x = new HashMap<Class<?>, Integer>();\n        for (final Map.Entry<Class<?>, Integer> entry : x.entrySet()) {\n            entry.getValue();\n        }\n        Class<?>[] parameterClasses = new Class<?>[0];\n        return null;\n    }\n    public int getConstructor(Class<?>... parameterTypes)\n    {\n        Collections.<Object>emptySet();\n        Collections. <Object> emptySet(); \n        return 666;\n    }\n    <T> InputGenericWhitespaceDefault(List<T> things, int i)\n    {\n    }\n    public <T> InputGenericWhitespaceDefault(List<T> things)\n    {\n    }\n    public interface IntE { \n    }\n    public static class IntEnumValueType<E extends Enum<E> & IntE> {\n    }\n    class IntEVT2<E extends Enum<E>& IntE> { \n    }\n    class IntEVT3<E extends Enum<E>  & IntE> { \n    }\n    public static class IntEnumValueType4<T extends Comparable<List<T>> & IntE> {\n    }\n    public void beforeAndAfter() {\n        List\n<\nInteger> x = new ArrayList<Integer\n>();\n        List\n        <Integer> y = new ArrayList<Integer\n        >();\n        Map<Class<?>, Integer> a = new HashMap<Class<?>, Integer>();\n        Map<Class<?>, Integer> b = (Map<Class<?>, Integer>) a;\n    }\n    Object ok = new <String>Object();\n    Object notOkStart = new<String>Object(); \n    Object notOkEnd = new <String> Object(); \n    Object notOkStartAndEnd = new<String> Object(); \n    Object okWithPackage = new <String>java.lang.Object();\n    Object ok2 = new <String>Outer.Inner();\n    Object notOkSt2 = new<String>Outer.Inner(); \n    Object notOkEnd2 = new <String> Outer.Inner(); \n    Object notOkStartAndEnd2 = new<String> Outer.Inner(); \n}\ninterface SupplierFunction<T> extends Map<List<T>, T> {}\nclass Outer {\n    static class Inner {}\n}"
+    },
+    {
+      "description": "Auto test from InputGenericWhitespaceMethodRef2.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\nimport java.util.Optional;\nimport java.util.function.Supplier;\npublic class InputGenericWhitespaceMethodRef2\n{\n    final Supplier<Optional<Integer>> function1 = Optional::<Integer>empty;\n    Supplier f2 = Optional::<Integer> empty; \n}"
+    },
+    {
+      "description": "Auto test from InputGenericWhitespaceNested.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\npublic class InputGenericWhitespaceNested {\n    interface IntEnum { }\n    interface NumberEnum<T> { }\n    static class IntEnumValue implements IntEnum, NumberEnum<Integer> {}\n    static class IntEnumValueType<E extends Enum<E\n>& IntEnum & NumberEnum<E>> {} \n}"
+    },
+    {
+      "description": "Auto test from InputGenericWhitespaceWithEmoji.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        34,
+        43,
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.genericwhitespace;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.function.Supplier;\npublic class InputGenericWhitespaceWithEmoji {\n        public static class Nested<V> {\n            private Nested() {\n            }\n        }\n    }\n    public <V> void methodName(V value) {\n        List<List<String>[]>\n    }\n    interface NumberEnum<T\n > { } \n    public int getConstructor(Class<?>... parameterTypes)\n    {\n        Collections.<Object>emptySet();\n        Collections.  <Object> emptySet(); \n        return 666;\n    }\n    Object ok2 = new <String>Outer.Inner();\n    Object notOkStart = new<String>Outer.Inner(); \n    }\n}"
+    }
+  ]
+}

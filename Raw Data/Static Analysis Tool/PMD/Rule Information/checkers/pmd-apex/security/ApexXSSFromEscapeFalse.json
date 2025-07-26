@@ -1,0 +1,42 @@
+{
+  "name": "ApexXSSFromEscapeFalse",
+  "language": "apex",
+  "description": "\nReports on calls to `addError` with disabled escaping. The message passed to `addError`\nwill be displayed directly to the user in the UI, making it prime ground for XSS\nattacks if unescaped.\n        ",
+  "example": "public without sharing class Foo {\n    Trigger.new[0].addError(vulnerableHTMLGoesHere, false);\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 68,
+  "branches": 13,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Add error variable with escape false",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void test1(String bad) {\n        Trigger.new[0].addError(bad, false);\n    }\n}\n        "
+    },
+    {
+      "description": "Add error literal with escape false",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        Trigger.new[0].addError('something else', false);\n    }\n}\n        "
+    },
+    {
+      "description": "Add error literal and variable with escape false",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        Trigger.new[0].addError('something else' + bad, false);\n    }\n}\n        "
+    },
+    {
+      "description": "Add error variable with escape false in nested class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    class MyNestedClass {\n        public void test1(String bad) {\n            Trigger.new[0].addError(bad, false);\n        }\n    }\n}\n        "
+    }
+  ]
+}

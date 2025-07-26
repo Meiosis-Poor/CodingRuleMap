@@ -1,0 +1,24 @@
+{
+  "name": "LimitedRandomness",
+  "language": "cpp",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 33,
+  "branches": 2,
+  "apis": 15,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        16,
+        19,
+        26
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cert-msc50-cpp %t\n\nint rand();\nint rand(int);\n\nnamespace std {\nusing ::rand;\n}\n\nnamespace nonstd {\n  int rand();\n}\n\nvoid testFunction1() {\n  int i = std::rand();\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: rand() has limited randomness; use C++11 random library instead [cert-msc50-cpp]\n\n  int j = ::rand();\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: rand() has limited randomness; use C++11 random library instead [cert-msc50-cpp]\n\n  int k = rand(i);\n\n  int l = nonstd::rand();\n\n  int m = rand();\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: rand() has limited randomness; use C++11 random library instead [cert-msc50-cpp]\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "name": "AddEmptyString",
+  "language": "java",
+  "description": "\nThe conversion of literals to strings by concatenating them with empty strings is inefficient.\nIt is much better to use one of the type-specific `toString()` methods instead or `String.valueOf()`.\n        ",
+  "example": "String s = \"\" + 123;                // inefficient\nString t = Integer.toString(456);   // preferred approach",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 50,
+  "branches": 9,
+  "apis": 10,
+  "test": [
+    {
+      "description": "Bad add",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String s = \"\" + 123;\n    }\n}\n        "
+    },
+    {
+      "description": "Good add",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String s = \"1\" + 123;\n    }\n}\n        "
+    },
+    {
+      "description": "Good convert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String t = Integer.toString(456);\n    }\n}\n        "
+    },
+    {
+      "description": "Ignore in annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final int VERSION = 1;\n\n    @Deprecated(since = \"\" + VERSION)\n    public void foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "[java] AddEmptyString - false negative with empty var #3625",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Main {\n    public void func() {\n        final String var = \"\";\n        String test = var + \"123\"; // should report a warning here\n    }\n}\n        "
+    },
+    {
+      "description": "Local Variables be empty String",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        8,
+        9,
+        10
+      ],
+      "code": "\nclass Main {\n    public static void main(String[] args) {\n        final String string1 = \"\";\n        final String string2 = \"\";\n        final String string3 = \"\";\n        String string4 = \"\";\n\n        String a = string1 + 114;\n        String b = string2 + 514;\n        String c = string3 + 1919810;\n\n        string4 = \"foo\";\n        String d = string4 + 1; // should not be flagged, because string4 is not empty anymore\n\n        final String s = \"bar\";\n        String e = s + 2; // should not be flagged, because s is not empty\n    }\n}\n        "
+    },
+    {
+      "description": "Local and global variables be empty String",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "code": "\nclass Main {\n    final String outerString1 = \"\";\n    final String outerString2 = \"\";\n\n    public static void main(String[] args, String otherString) {\n        final String innerString1 = \"\";\n        final String innerString2 = \"\";\n\n        String a = outerString1 + 114;\n        String b = outerString2 + 514;\n        String c = innerString1 + 1919;\n        String d = innerString2 + 810;\n        String e = otherString + 42; // should not be flagged, otherString is a method parameter. Not to be confused with otherString local var in otherMethod\n    }\n\n    void otherMethod() {\n        final String otherString = \"\";\n    }\n}\n        "
+    }
+  ]
+}

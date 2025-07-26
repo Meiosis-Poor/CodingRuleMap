@@ -1,0 +1,35 @@
+{
+  "name": "PreferIsaOrDynCastInConditionals",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - llvm-prefer-isa-or-dyn-cast-in-conditionals",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 127,
+  "branches": 9,
+  "apis": 121,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        24,
+        29,
+        34,
+        39,
+        45,
+        50,
+        55,
+        61,
+        66,
+        71,
+        76,
+        81,
+        86,
+        90
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s llvm-prefer-isa-or-dyn-cast-in-conditionals %t\n\nstruct X;\nstruct Y;\nstruct Z {\n  int foo();\n  X *bar();\n  X *cast(Y*);\n  bool baz(Y*);\n};\n\ntemplate <class X, class Y>\nbool isa(Y *);\ntemplate <class X, class Y>\nX *cast(Y *);\ntemplate <class X, class Y>\nX *dyn_cast(Y *);\ntemplate <class X, class Y>\nX *dyn_cast_or_null(Y *);\n\nbool foo(Y *y, Z *z) {\n  if (auto x = cast<X>(y))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: cast<> in conditional will assert rather than return a null pointer [llvm-prefer-isa-or-dyn-cast-in-conditionals]\n  // CHECK-FIXES: if (auto x = dyn_cast<X>(y))\n\n  while (auto x = cast<X>(y))\n    break;\n  // CHECK-MESSAGES: :[[@LINE-2]]:19: warning: cast<> in conditional\n  // CHECK-FIXES: while (auto x = dyn_cast<X>(y))\n\n  if (cast<X>(y))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: cast<> in conditional\n  // CHECK-FIXES: if (isa<X>(y))\n\n  while (cast<X>(y))\n    break;\n  // CHECK-MESSAGES: :[[@LINE-2]]:10: warning: cast<> in conditional\n  // CHECK-FIXES: while (isa<X>(y))\n\n  do {\n    break;\n  } while (cast<X>(y));\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: cast<> in conditional\n  // CHECK-FIXES: while (isa<X>(y));\n\n  if (dyn_cast<X>(y))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: return value from dyn_cast<> not used [llvm-prefer-isa-or-dyn-cast-in-conditionals]\n  // CHECK-FIXES: if (isa<X>(y))\n\n  while (dyn_cast<X>(y))\n    break;\n  // CHECK-MESSAGES: :[[@LINE-2]]:10: warning: return value from dyn_cast<> not used\n  // CHECK-FIXES: while (isa<X>(y))\n\n  do {\n    break;\n  } while (dyn_cast<X>(y));\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: return value from dyn_cast<> not used\n  // CHECK-FIXES: while (isa<X>(y));\n\n  if (y && isa<X>(y))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: isa_and_nonnull<> is preferred over an explicit test for null followed by calling isa<> [llvm-prefer-isa-or-dyn-cast-in-conditionals]\n  // CHECK-FIXES: if (isa_and_nonnull<X>(y))\n\n  if (z->bar() && isa<Y>(z->bar()))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning:  isa_and_nonnull<> is preferred\n  // CHECK-FIXES: if (isa_and_nonnull<Y>(z->bar()))\n\n  if (z->bar() && cast<Y>(z->bar()))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: isa_and_nonnull<> is preferred\n  // CHECK-FIXES: if (isa_and_nonnull<Y>(z->bar()))\n\n  if (z->bar() && dyn_cast<Y>(z->bar()))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: isa_and_nonnull<> is preferred\n  // CHECK-FIXES: if (isa_and_nonnull<Y>(z->bar()))\n\n  if (z->bar() && dyn_cast_or_null<Y>(z->bar()))\n    return true;\n  // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: isa_and_nonnull<> is preferred\n  // CHECK-FIXES: if (isa_and_nonnull<Y>(z->bar()))\n\n  bool b = z->bar() && cast<Y>(z->bar());\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: isa_and_nonnull<> is preferred\n  // CHECK-FIXES: bool b = isa_and_nonnull<Y>(z->bar());\n\n  // These don't trigger a warning.\n  if (auto x = cast<Z>(y)->foo())\n    return true;\n  if (auto x = z->cast(y))\n    return true;\n  while (auto x = cast<Z>(y)->foo())\n    break;\n  if (cast<Z>(y)->foo())\n    return true;\n  if (z->cast(y))\n    return true;\n  while (cast<Z>(y)->foo())\n    break;\n  if (y && cast<X>(z->bar()))\n    return true;\n  if (z && cast<Z>(y)->foo())\n    return true;\n  bool b2 = y && cast<X>(z);\n  if(z->cast(y))\n    return true;\n  if (z->baz(cast<Y>(z)))\n    return true;\n\n#define CAST(T, Obj) cast<T>(Obj)\n#define AUTO_VAR_CAST(X, Y, Z) auto X = cast<Y>(Z)\n#define ISA(T, Obj) isa<T>(Obj)\n#define ISA_OR_NULL(T, Obj) Obj &&isa<T>(Obj)\n\n  // Macros don't trigger warning.\n  if (auto x = CAST(X, y))\n    return true;\n  if (AUTO_VAR_CAST(x, X, z))\n    return true;\n  if (z->bar() && ISA(Y, z->bar()))\n    return true;\n  if (ISA_OR_NULL(Y, z->bar()))\n    return true;\n\n  return false;\n}"
+    }
+  ]
+}

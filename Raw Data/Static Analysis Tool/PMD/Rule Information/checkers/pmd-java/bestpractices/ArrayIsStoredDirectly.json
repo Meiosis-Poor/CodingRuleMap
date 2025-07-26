@@ -1,0 +1,174 @@
+{
+  "name": "ArrayIsStoredDirectly",
+  "language": "java",
+  "description": "\nConstructors and methods receiving arrays should clone objects and store the copy.\nThis prevents future changes from the user from affecting the original array.\n        ",
+  "example": "public class Foo {\n    private String [] x;\n        public void foo (String [] param) {\n        // Don't do this, make a copy of the array at least\n        this.x=param;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 81,
+  "branches": 14,
+  "apis": 14,
+  "test": [
+    {
+      "description": "Clear violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    String [] arr;\n    void foo (String[] x) {arr = x;}\n}\n        "
+    },
+    {
+      "description": "Clear violation with this.",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    String [] arr;\n    void foo (String[] arr) {this.arr = arr;}\n}\n        "
+    },
+    {
+      "description": "assignment to an internal array",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    String [] arr;\n    void foo (String[] x) {this.arr = x;}\n}\n        "
+    },
+    {
+      "description": "assignment of param to local",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    void getArr(String[] arr) {String[] foo; foo = arr;}\n}\n        "
+    },
+    {
+      "description": "skip interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    void getArr(String[] arr);\n}\n        "
+    },
+    {
+      "description": "skip abstract, native",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    abstract void getArr(String[] arr);\n    native void getArr2(String[] arr);\n}\n        "
+    },
+    {
+      "description": "equality expression, not assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(String[] buf) {\n        x = (buf[0] == 1);\n    }\n}\n        "
+    },
+    {
+      "description": "assignment of array element",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(String[] buf) {\n        x = buf[0];\n    }\n}\n        "
+    },
+    {
+      "description": "Constructor clear violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    String [] arr;\n    Foo (String[] x) {arr = x;}\n}\n        "
+    },
+    {
+      "description": "Constructor no violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    Foo (String[] x) {arr = x.clone();}\n}\n        "
+    },
+    {
+      "description": "No reassignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String [] arr;\n    void foo() {String[] bar = {\"\"};arr = bar;}\n}\n        "
+    },
+    {
+      "description": "Trigger on Varargs",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    String [] arr;\n    void foo(String... arr) {this.arr = arr;}\n}\n        "
+    },
+    {
+      "description": "#1063 False+: ArrayIsStoredDirectly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\n\npublic class TestClass {\n    private final Object[] obj;\n\n    public TestClass(Object[] obj) {\n        if (obj == null) {\n            this.obj = new Object[]{};\n        } else {\n            this.obj = Arrays.copyOf(obj, obj.length);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1476 False positive of ArrayIsStoredDirectly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class NotificationPacket {\n    public NotificationPacket(byte id, byte[] rawTypeData)\n    {\n        super(id);\n        if (rawTypeData == null)\n        {\n            throw new IllegalArgumentException(\"No type data is specified\");\n        }\n        if (rawTypeData.length == 0)\n        {\n            this.message = EMPTY_MESSAGE;\n        }\n        else\n        {\n            this.message = new String(rawTypeData, StandardCharsets.UTF_8);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#468 False positive when qualifying with this",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final int[] a;\n\n    public Foo(int[] b) {\n        this.a = new int[b.length];\n        for (int i = 0; i < b.length; i++) {\n            this.a[i] = b[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] ArrayIsStoredDirectly false positive with private constructor/methods #2622",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AISD {\n    private final byte[] buf;\n    private AISD(final byte[] buf) {\n        this.buf = buf;  // this is not a violation!!\n    }\n    private void set(final byte[] buf) {\n        this.buf = buf;  // this is not a violation!!\n    }\n    public AISD of(final byte[] buf) {\n        return new AISD(buf.clone());\n    }\n}\n        "
+    },
+    {
+      "description": "do not allow private methods",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        7
+      ],
+      "code": "\npublic class AISD {\n    private final byte[] buf;\n    private AISD(final byte[] buf) {\n        this.buf = buf;\n    }\n    private void set(final byte[] buf2) {\n        this.buf = buf2;\n    }\n    public AISD of(final byte[] buf3) {\n        return new AISD(buf3.clone());\n    }\n}\n        "
+    },
+    {
+      "description": "nested classes",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        9,
+        16,
+        20
+      ],
+      "code": "\npublic class Foo {\n    public class Inner {\n        String [] arr;\n        void foo (String[] x) {arr = x;}\n    }\n    public interface InnerInterface {\n        class Nested {\n            String [] arr;\n            void foo (String[] x) {arr = x;}\n        }\n    }\n    public enum InnerEnum {\n        A;\n\n        String [] arr;\n        void foo (String[] x) {arr = x;}\n\n        class Nested {\n            String [] arr;\n            void foo (String[] x) {arr = x;}\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] ArrayIsStoredDirectly reports duplicated violation #3879",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class ExampleAISD {\n\n    public String[] strs;\n\n    public void func(String[] strs, boolean flag) { // line 5\n        if (flag) {\n            this.strs = strs; // line 7\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] ArrayIsStoredDirectly false positive with method call #1474",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestArrayIsStoredDirectly {\n    public double energy(int x) {\n        return 0.0;\n    }\n\n    // if energy[] is replace by energy2[], then no ArrayIsStoredDirectly warning\n    private void f(double[] energy) {\n        energy[0] = energy(1);\n    }\n}\n"
+    },
+    {
+      "description": "[java] ArrayIsStoredDirectly false positive with field access #1185",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass TestArrayIsStoredDirectly {\n    private final boolean[] a;\n    private final foo b;\n\n    private TestArrayIsStoredDirectly(boolean[] a) {\n        this.a = null;\n        this.a = a.clone(); // no violation, it doesn't matter what the state of this.a is\n        this.b = new TestArrayIsStoredDirectly(a); // no violation\n        this.b = new TestArrayIsStoredDirectly(this.a); // false positive violation here\n    }\n}\n"
+    },
+    {
+      "description": "[java] ArrayIsStoredDirectly at enum constructor #1413",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum DemoEnum {\n\n    VAL1(\"str1\", \"str2\"),\n    VAL2(\"str3\");\n\n    private final String[] values;\n\n    DemoEnum(String... values) {\n        this.values = values;\n    }\n}\n"
+    },
+    {
+      "description": "[java] ArrayIsStoredDirectly false negative when parenthesized #3933",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass Tester {\n    String [] arr;\n    void foo (String[] x) {\n        arr = (x);  // should report a warning here\n    }\n}\n"
+    }
+  ]
+}

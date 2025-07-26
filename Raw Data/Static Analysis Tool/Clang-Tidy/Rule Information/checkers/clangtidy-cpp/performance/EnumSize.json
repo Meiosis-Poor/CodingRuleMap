@@ -1,0 +1,29 @@
+{
+  "name": "EnumSize",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-enum-size",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 138,
+  "branches": 17,
+  "apis": 76,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        15,
+        22,
+        28,
+        35,
+        44,
+        51,
+        77,
+        84
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++17-or-later %s performance-enum-size %t -- \\\n// RUN:   -config=\"{CheckOptions: {performance-enum-size.EnumIgnoreList: '::IgnoredEnum;IgnoredSecondEnum'}}\"\n\nnamespace std\n{\nusing uint8_t = unsigned char;\nusing int8_t = signed char;\nusing uint16_t = unsigned short;\nusing int16_t = signed short;\nusing uint32_t = unsigned int;\nusing int32_t = signed int;\n}\n\nenum class Value\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: enum 'Value' uses a larger base type ('int', size: 4 bytes) than necessary for its value set, consider using 'std::uint8_t' (1 byte) as the base type to reduce its size [performance-enum-size]\n{\n    supported\n};\n\n\nenum class EnumClass : std::int16_t\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: enum 'EnumClass' uses a larger base type ('std::int16_t' (aka 'short'), size: 2 bytes) than necessary for its value set, consider using 'std::uint8_t' (1 byte) as the base type to reduce its size [performance-enum-size]\n{\n    supported\n};\n\nenum EnumWithType : std::uint16_t\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: enum 'EnumWithType' uses a larger base type ('std::uint16_t' (aka 'unsigned short'), size: 2 bytes) than necessary for its value set, consider using 'std::uint8_t' (1 byte) as the base type to reduce its size [performance-enum-size]\n{\n    supported,\n    supported2\n};\n\nenum EnumWithNegative\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: enum 'EnumWithNegative' uses a larger base type ('int', size: 4 bytes) than necessary for its value set, consider using 'std::int8_t' (1 byte) as the base type to reduce its size [performance-enum-size]\n{\n    s1 = -128,\n    s2 = -100,\n    s3 = 100,\n    s4 = 127\n};\n\nenum EnumThatCanBeReducedTo2Bytes\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: enum 'EnumThatCanBeReducedTo2Bytes' uses a larger base type ('int', size: 4 bytes) than necessary for its value set, consider using 'std::int16_t' (2 bytes) as the base type to reduce its size [performance-enum-size]\n{\n    a1 = -128,\n    a2 = 0x6EEE\n};\n\nenum EnumOnlyNegative\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: enum 'EnumOnlyNegative' uses a larger base type ('int', size: 4 bytes) than necessary for its value set, consider using 'std::int8_t' (1 byte) as the base type to reduce its size [performance-enum-size]\n{\n    b1 = -125,\n    b2 = -50,\n    b3 = -10\n};\n\nenum CorrectU8 : std::uint8_t\n{\n    c01 = 10,\n    c02 = 11\n};\n\nenum CorrectU16 : std::uint16_t\n{\n    c11 = 10,\n    c12 = 0xFFFF\n};\n\nconstexpr int getValue()\n{\n    return 256;\n}\n\n\nenum CalculatedDueToUnknown1 : unsigned int\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: enum 'CalculatedDueToUnknown1' uses a larger base type ('unsigned int', size: 4 bytes) than necessary for its value set, consider using 'std::uint16_t' (2 bytes) as the base type to reduce its size [performance-enum-size]\n{\n    c21 = 10,\n    c22 = getValue()\n};\n\nenum CalculatedDueToUnknown2 : unsigned int\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: enum 'CalculatedDueToUnknown2' uses a larger base type ('unsigned int', size: 4 bytes) than necessary for its value set, consider using 'std::uint16_t' (2 bytes) as the base type to reduce its size [performance-enum-size]\n{\n    c31 = 10,\n    c32 = c31 + 246\n};\n\nenum class IgnoredEnum : std::uint32_t\n{\n    unused1 = 1,\n    unused2 = 2\n};\n\nnamespace internal\n{\n\nenum class IgnoredSecondEnum\n{\n    unused1 = 1,\n    unused2 = 2\n};\n\nenum class EnumClassWithoutValues : int {};\nenum EnumWithoutValues {};\n\n}"
+    }
+  ]
+}

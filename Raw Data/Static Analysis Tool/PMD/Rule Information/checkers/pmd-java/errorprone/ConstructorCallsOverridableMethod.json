@@ -1,0 +1,226 @@
+{
+  "name": "ConstructorCallsOverridableMethod",
+  "language": "java",
+  "description": "\nReports calls to overridable methods on `this` during object initialization. These\nare invoked on an incompletely constructed object and can be difficult to debug if overridden.\nThis is because the subclass usually assumes that the superclass is completely initialized\nin all methods. If that is not the case, bugs can appear in the constructor, for instance,\nsome fields that are still null may cause a NullPointerException or be stored somewhere\nelse to blow up later.\n\nTo avoid this problem, only use methods that are static, private, or final in constructors.\nNote that those methods also must not call overridable methods transitively to be safe.\n        ",
+  "example": "public class SeniorClass {\n  public SeniorClass(){\n      toString(); //may throw NullPointerException if overridden\n  }\n  public String toString(){\n    return \"IAmSeniorClass\";\n  }\n}\npublic class JuniorClass extends SeniorClass {\n  private String name;\n  public JuniorClass(){\n    super(); //Automatic call leads to NullPointerException\n    name = \"JuniorClass\";\n  }\n  public String toString(){\n    return name.toUpperCase();\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 167,
+  "branches": 22,
+  "apis": 13,
+  "test": [
+    {
+      "description": "calling public method from constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "calling protected method from constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    protected void bar() {}\n}\n        "
+    },
+    {
+      "description": "calling package private method from constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    void bar() {}\n}\n        "
+    },
+    {
+      "description": "calling private method, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    private void bar() {}\n}\n        "
+    },
+    {
+      "description": "overloaded constructors, calling public method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        this(\"Bar\");\n    }\n    private Foo(String bar) {\n        bar();\n    }\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "calling method on literal bug",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo(String s) {\n        \"foo\".equals(s);\n    }\n    public void equals(String bar) {}\n}\n        "
+    },
+    {
+      "description": "method in anonymous inner class is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo(String s) {\n        addRunnable(new Runnable() {\n            public void run() {bar();}\n        });\n    }\n    public void bar() {}\n    final void addRunnable(Runnable r) {}\n}\n        "
+    },
+    {
+      "description": "method in lambda expression is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo(String s) {\n        addActionListener(() -> bar());\n        addActionListener(() -> { bar(); });\n        addActionListener((a) -> { bar(); });\n        addActionListener(this::bar);\n    }\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "bug report 975407",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    private void bar() {}\n}\n        "
+    },
+    {
+      "description": "do not ignore abstract methods [java] ConstructorCallsOverridableMethod ignores abstract methods #3351",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    abstract void bar();\n}\n        "
+    },
+    {
+      "description": "Generics",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage foo.bar;\npublic enum Buz {\n    FOO(2);\n    private Buz(String s) {}\n}\n        "
+    },
+    {
+      "description": "985989, base line",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class SeniorClass {\n    public SeniorClass(){\n        toString(); //may throw NullPointerException if overridden\n    }\n    public String toString(){\n        return \"IAmSeniorClass\";\n    }\n}\npublic class JuniorClass extends SeniorClass {\n    private String name;\n\n    public JuniorClass() {\n        super(); //Automatic call leads to NullPointerException\n        name = \"JuniorClass\";\n    }\n    public String toString(){\n        return name.toUpperCase();\n    }\n}\n        "
+    },
+    {
+      "description": "985989, inner static class should be checked as well",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n\n    public static class SeniorClass {\n        public SeniorClass(){\n            toString(); //may throw NullPointerException if overridden\n        }\n        public String toString(){\n            return \"IAmSeniorClass\";\n        }\n    }\n    public static class JuniorClass extends SeniorClass {\n        private String name;\n\n        public JuniorClass() {\n            super(); //Automatic call leads to NullPointerException\n            name = \"JuniorClass\";\n        }\n        public String toString(){\n            return name.toUpperCase();\n        }\n    }\n    public static void main (String[] args) {\n        System.out.println(\": \"+new SeniorClass());\n        System.out.println(\": \"+new JuniorClass());\n    }\n}\n        "
+    },
+    {
+      "description": "bug #1005 False + for ConstructorCallsOverridableMethod - overloaded methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar(true);\n    }\n    public final void bar(boolean b) {}\n    public void bar(String o) {}\n}\n        "
+    },
+    {
+      "description": "bug #1127 False positive: Constructor Calls Overridable Method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    public Foo() {\n        bar();\n    }\n\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "NullPointer while analyzing ExcessiveLengthRule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design;\n\nimport net.sourceforge.pmd.lang.java.ast.JavaNode;\nimport net.sourceforge.pmd.lang.java.rule.AbstractStatisticalJavaRule;\nimport net.sourceforge.pmd.stat.DataPoint;\n\npublic class ExcessiveLengthRule extends AbstractStatisticalJavaRule {\n    private Class<?> nodeClass;\n    public ExcessiveLengthRule(Class<?> nodeClass) {\n        this.nodeClass = nodeClass;\n    }\n    @Override\n    public Object visit(JavaNode node, Object data) {\n        if (nodeClass.isInstance(node)) {\n            DataPoint point = new DataPoint();\n            point.setNode(node);\n            point.setScore(1.0 * (node.getEndLine() - node.getBeginLine()));\n            point.setMessage(getMessage());\n            addDataPoint(point);\n        }\n        return node.childrenAccept(this, data);\n    }\n}\n        "
+    },
+    {
+      "description": "#1388 ConstructorCallsOverridableMethodRule doesn't work with params?",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar(true);\n    }\n\n    public void bar(boolean b) {}\n}\n        "
+    },
+    {
+      "description": "IndexOutOfBoundsException with annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage sample;\n\nimport java.lang.annotation.*;\n\n@interface CustomAnnotation {\n    Object object = new Object() {\n        @Override\n        public String toString() {\n            return new String(new StringBuilder(\"Hello\").append(\",World\"));\n        }\n    }.toString();\n}\n        "
+    },
+    {
+      "description": "Record creates an IndexOutOfBounds exception",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            record HelloMsg(String msg) {\n\n                    HelloMsg toTheWorld() {\n                       return new HelloMsg(\"World\");\n                    }\n\n                    String hello() {\n                    return \"Hello \" + msg;\n                    }\n            }\n            "
+    },
+    {
+      "description": "transitive dependency",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public Foo() {\n                    bar(true);\n                }\n                public final void bar(boolean b) {\n                    bar(\"\"); // unsafe\n                }\n                public void bar(String o) {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] ConstructorCallsOverridableMethod should consider method calls with var access #4099",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        7,
+        14,
+        21,
+        28,
+        35,
+        42,
+        49,
+        56,
+        63
+      ],
+      "code": "\nimport java.util.Collection;\nimport java.util.Set;\n\nclass Foo1 {\n  final boolean tag = true;\n  public Foo1() {\n    bar(tag);  // should report a warning at this line\n  }\n  public void bar(boolean b) {}\n}\n\nclass Foo2 {\n  public Foo2() {\n    bar(true);  // should report a warning at this line\n  }\n  public void bar(boolean b) {}\n}\n\nclass Foo3 {\n  public Foo3(String arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(String s) {}\n}\n\nclass Foo4 {\n  public Foo4(String[] arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(String[] s) {}\n}\n\nclass Foo5 {\n  public Foo5(int[] arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(int[] i) {}\n}\n\nclass Foo6 {\n  public Foo6(int[] arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(int i[]) {} // note, the different array notation!\n}\n\nclass Foo7 {\n  public Foo7(String[] arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(String s[]) {} // note, the different array notation!\n}\n\nclass Foo8 {\n  public Foo8(String[] arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(String... s) {} // vararg\n}\n\nclass Foo9<E> {\n  public Foo9(Set<E> arg) {\n    bar(arg); // should report a warning at this line\n  }\n  public void bar(Collection<E> s) {} // base type\n}\n"
+    },
+    {
+      "description": "False positive with public method call on new instance",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\nclass Foo {\n  public Foo() {\n    privateInitOk(); // false positive\n    privateInitBad1(); // warning expected here\n    privateInitBad2(); // warning expected here\n  }\n\n  private void privateInitOk() {\n    new Foo().publicMethod();\n  }\n\n  private void privateInitBad1() {\n    publicMethod();\n  }\n\n  private void privateInitBad2() {\n    this.publicMethod();\n  }\n\n  public void publicMethod() { }\n}\n"
+    },
+    {
+      "description": "NPE when trying to find method name of method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    void bar(Object o) {\n      ((String) o).length();\n    }\n}\n"
+    },
+    {
+      "description": "False negative with method call as argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.constructorcallsoverridablemethod;\n\npublic abstract class AbstractThing implements Thing {\n    protected AbstractThing(Thing original) {\n        setName(original.getName());\n    }\n\n    @Override\n    public void setName(String name) { }\n\n    @Override\n    public String getName() { return \"\"; }\n}\n"
+    },
+    {
+      "description": "Clone and finalize overridden #1718",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        3,
+        4,
+        5,
+        7,
+        8,
+        9
+      ],
+      "code": "\nclass Foo {\n    public Foo() throws Throwable {\n        this.equals(new String());\n        this.clone();\n        this.finalize();\n\n        equals(new String());\n        clone();\n        finalize();\n\n        // #1718 - super calls should be ignored\n        super.equals(new String());\n        super.clone();\n        super.finalize();\n    }\n\n    public boolean equals(Object o) { return true; }\n\n    public Object clone() throws CloneNotSupportedException {\n        return super.clone();\n    }\n\n    public void finalize() throws Throwable {\n        super.finalize();\n    }\n}\n"
+    },
+    {
+      "description": "False negative with var args and Arrays.asList",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.util.Arrays;\nimport java.util.Collection;\n\nclass Foo {\n    public Foo(String ... names) {\n        setNames(Arrays.asList(names));\n    }\n\n    public void setNames(Collection<String> names) { }\n}\n"
+    },
+    {
+      "description": "Misleading message for method call chain",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    public Foo() {\n        intermediatePrivateMethod();\n        shorterChain();\n        differentChain();\n    }\n\n    private void intermediatePrivateMethod() {\n        otherMethod1();\n    }\n\n    private final void otherMethod1() {\n        otherMethod2();\n    }\n\n    private final void otherMethod2() {\n        overridableMethod();\n    }\n\n    private void shorterChain() {\n        overridableMethod();\n    }\n\n    void overridableMethod();\n\n    private void differentChain() {\n        otherOverridableMethod();\n    }\n\n    void otherOverridableMethod();\n}\n"
+    },
+    {
+      "description": "[java] ConstructorCallsOverridableMethod occurs when unused overloaded method is defined #2348",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Scratch {\n    private Long member = 0L;\n\n    public Scratch(final Long v) {\n        setMember(v);\n    }\n\n    public final void setMember(final Long v) {\n        this.member = v;\n    }\n\n    // Renaming this or marking it as final prevents the\n    // 'ConstructorCallsOverridableMethod' rule from being broken.\n    public void setMember(final String n) {\n        setMember(Long.valueOf(n));\n    }\n}\n"
+    },
+    {
+      "description": "[java] ConstructorCallsOverridableMethod occurs when unused overloaded method is defined #2348 - sample 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Date;\n\npublic class MyTimestamp {\n    private final long t;\n    public MyTimestamp() {\n        t = new Date().getTime(); // <-- false-positive violation here\n    }\n    public long getTime() {\n        return t;\n    }\n}\n"
+    },
+    {
+      "description": "[java] ConstructorCallsOverridableMethod: false positive with lombok's @Value #4510",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Value;\n@Value\nclass Foo1 {\n    public Foo1(String bar) {\n        bar();  //  false positive warning\n    }\n    public void bar() {}\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "name": "CompareObjectsWithEquals",
+  "language": "java",
+  "description": "\nUse `equals()` to compare object references; avoid comparing them with `==`.\n\nSince comparing objects with named constants is useful in some cases (eg, when\ndefining constants for sentinel values), the rule ignores comparisons against\nfields with all-caps name (eg `this == SENTINEL`), which is a common naming\nconvention for constant fields.\n\nYou may allow some types to be compared by reference by listing the exceptions\nin the `typesThatCompareByReference` property.\n        ",
+  "example": "class Foo {\n  boolean bar(String a, String b) {\n    return a == b;\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure with method params",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String a, String b) {\n        return a == b;\n    }\n}\n        "
+    },
+    {
+      "description": "primitives are ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\npublic class CompareObjectsWithEqualsSample {\n    boolean bar(int a, int b) {\n        return a == b;\n    }\n    void bar(Integer i, Character c) {\n        int l = i;\n        if (1 == i) { }\n        if (i == Integer.MAX_VALUE) { } // ok\n        if (c == Character.MAX_VALUE) { } // ok\n    }\n}\n        "
+    },
+    {
+      "description": "skip nulls",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(int a, int b) {\n        return a == null || null == b;\n    }\n}\n        "
+    },
+    {
+      "description": "Hits it",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo foo;\n\n    boolean bar(Foo b) {\n        return this.foo == b.foo;\n    }\n}\n        "
+    },
+    {
+      "description": "charAt return char - that's ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\npublic class CompareObjectsWithEqualsSample {\n    boolean bar(String a, String b) {\n        return a.charAt(0) == b.charAt(0);\n    }\n}\n        "
+    },
+    {
+      "description": "locals",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar() {\n        String a = \"foo\";\n        String b = \"bar\";\n        return a == b;\n    }\n}\n        "
+    },
+    {
+      "description": "2 locals declared on one line",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String a,b;\n        a = \"foo\";\n        b = \"bar\";\n        if (a == b) {}\n    }\n}\n        "
+    },
+    {
+      "description": "array element comparison",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\npublic class CompareObjectsWithEqualsSample {\n    void array(int[] a, String[] b) {\n        if (a[1] == b[1]) {} // int == String - this comparison doesn't make sense (and doesn't compile...)\n    }\n    void array2(int[] c, int[] d) {\n        if (c[1] == d[1]) {}\n    }\n    void array3(String[] a, String[] b) {\n        if (a[1] == b[1]) {} // not ok\n    }\n}\n        "
+    },
+    {
+      "description": "Comparing against new object should always return false",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        9
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\nimport java.util.Date;\n\npublic class CompareObjectsWithEqualsSample {\n    void bar(Date aDate, int aInt, Integer realInt) {\n        if ( aDate == new Date( 0 ) ) {} // not ok\n        if ( aInt == new Integer(1) ) {} // that's actually ok, since Integer will be unboxed\n        if ( realInt == new Integer(1) ) {} // not ok\n    }\n}\n        "
+    },
+    {
+      "description": "qualified call in allocation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\nimport java.io.File;\n\npublic class CompareObjectsWithEqualsSample {\n    boolean bar(String b) {\n        return new File(b).exists() == false;\n    }\n}\n        "
+    },
+    {
+      "description": "#1028 False-positive: Compare objects with equals for Enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.RoundingMode;\npublic class Test {\n    void doEnums() {\n        RoundingMode mode1 = determineFirstMode();\n        RoundingMode mode2 = determineSecondMode();\n        if (mode1 == mode2) {}\n    }\n}\n        "
+    },
+    {
+      "description": "#1128 CompareObjectsWithEquals False Positive comparing boolean (primitive) values",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SonOfSomeClass extends SomeClass {\n    protected javax.swing.JCheckBox checkBox;\n    public class SomeEmbeddedClass {\n        public boolean someNotWorkingMethod(boolean valid){\n    // This line presents a CompareObjectsWithEquals violation\n            valid |= SonOfSomeClass.this.object.isConfigurationEnabled() != SonOfSomeClass.this.checkBox.isSelected();\n            return valid;\n        }\n        public boolean someWorkingMethod(boolean valid){\n    // This line does not present any violation\n            valid |= (SonOfSomeClass.this.object.isConfigurationEnabled()) != SonOfSomeClass.this.checkBox.isSelected();\n            return valid;\n        }\n    }\n}\n/*\n// just for reference\nclass SomeClass {\n    protected SomeObject object;\n}\nclass SomeObject {\n    private boolean configuration;\n    public SomeObject() {\n        super();\n    }\n    public boolean isConfigurationEnabled() {\n        return configuration;\n    }\n    public void setConfiguration(boolean configuration) {\n        this.configuration = configuration;\n    }\n}\n*/\n        "
+    },
+    {
+      "description": "#1376 CompareObjectsWithEquals fails for type annotated method parameter",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class CompareWithEqualsTest {\n    public static boolean test(@Nullable Object a, Object b)\n    {\n        return a == b;\n    }\n}\n        "
+    },
+    {
+      "description": "#885 CompareObjectsWithEquals fails with Enum class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class CompareWithEqualsTest {\n    public static boolean test(Enum<?> a, Enum<?> b)\n    {\n        return a == b;\n    }\n}\n        "
+    },
+    {
+      "description": "comparing in equals method should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Obj {\n    private int i;\n\n    public boolean equals(Object other) {\n        if (this == other) {\n            return true;\n        }\n        if (other == null || getClass() != other.getClass()) {\n            return false;\n        }\n        final Obj that = (Obj) other;\n        return that.i == this.i;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CompareObjectsWithEqualsRule: False positive with Enums #2716",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class EnumTest {\n    enum Type {\n        A, B;\n    }\n\n    private final Type type = Type.A;\n\n    public String isTypeA(Type param) {\n        return param == type ? \"Yes\" : \"No\";\n    }\n}\n        "
+    },
+    {
+      "description": " [java] CompareObjectsWithEquals - false negative with type res #2880",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            import java.math.BigInteger;\n\n            public class Foo {\n                private BigInteger field = new BigInteger(\"10\");\n                private BigInteger field2 = new BigInteger(\"20\");\n\n                public boolean check(final BigInteger param) {\n                    final BigInteger other = new BigInteger(\"20\");\n\n                    return (field == null\n                            || param != field   // warning expected: Use equals() to compare object references.\n                            && other != field)  // warning expected: Use equals() to compare object references.\n                            && param.testBit(field2.intValue())\n                            && other.testBit(field2.intValue());\n                }\n            }\n        "
+    },
+    {
+      "description": "#2934 False negative - class with fields",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\npublic class ClassWithFields {\n    private Object a;\n    private Object b;\n\n    boolean test1() {\n        return  a == b // violation\n             && this.a == b // violation\n             && a != this.b // violation\n             && this.a == this.b // violation\n             && a.equals(b) // ok\n             && this.a.equals(this.b); // ok\n    }\n}\n        "
+    },
+    {
+      "description": "#2934 comparison with null is valid and with primitive literals",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        18,
+        19
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\npublic class ClassWithFields {\n    private Object a;\n    private Object b;\n\n    boolean test1() {\n        return a == null // ok\n             && this.a == null; // ok\n    }\n\n    void test2(StringBuilder sb) {\n        if (sb != null) { } // ok\n    }\n\n    public void bar(Integer x, Integer y) {\n        if (x == 1) { } // ok\n        if (x == y) { } // not ok! only works -128<x<127 dependent on Integer caching\n        if (x == \"String\") { } // not ok\n    }\n}\n        "
+    },
+    {
+      "description": "#2934 this and class should be ignored",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.compareobjectswithequals;\n\npublic class ClassWithFields {\n    private Object a;\n    private Object b;\n\n    public boolean equals(Object o) {\n        // if (this == o) { } // should be allowed, since this is a often used pattern in Object::equals.\n        // comparing class instances is ok\n        if (o.getClass() == a.getClass()) { }\n        if (this.getClass() == this.a.getClass()) { }\n        if (Object.class == a.getClass()) { }\n    }\n\n    void test(Object o) {\n        if (this == o) { } // this is not allowed here, only in equals\n    }\n}\n        "
+    },
+    {
+      "description": "#2976 FP with array length",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class C0 {\n    public static byte[] myArrayFunc(byte[] a1, byte[] a2) {\n        if (a1.length != a2.length) {\n            throw new IllegalArgumentException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2976 FP with method call (unresolved class)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class C0 {\n    class Unresolved {\n        private final long val;\n        public long getVal() { return val; }\n    }\n\n    {\n        if (c1.getVal() != c2.getVal()) {  // <-- here\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CompareObjectsWithEqualsRule: False positive with Enums #2716",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class EnumTest {\n    enum Type {\n        A, B;\n    }\n    private final Type type = Type.A;\n    public String isTypeA(Type param) {\n        return param == type ? \"Yes\" : \"No\";\n    }\n}\n        "
+    },
+    {
+      "description": "static constant #3205",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class MyClass {\n                static final MyClass MISSING = new MyClass();\n\n                public static void isMissing(MyClass obj) {\n                    return obj == MISSING; // no violation expected...\n                }\n            }\n        "
+    },
+    {
+      "description": "static constant in other class #3205",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class MyClass {\n                static class Ts {\n                    static final MyClass MISSING = new MyClass();\n                }\n\n                public static void isMissing(MyClass obj) {\n                    return obj == Ts.MISSING; // no violation expected...\n                }\n            }\n        "
+    },
+    {
+      "description": "constant field on some object #3205",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class MyClass {\n                static class Ts {\n                    final MyClass MISSING = new MyClass();\n                }\n\n                public static void isMissing(MyClass obj, Ts ts) {\n                    return obj == ts.MISSING; // no violation expected...\n                }\n            }\n        "
+    },
+    {
+      "description": "constant field on some object, more complicated expr #3205",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class MyClass {\n                static class Ts {\n                    final MyClass MISSING = new MyClass();\n                    Ts id() { return this; }\n                }\n\n                public static void isMissing(MyClass obj, Ts ts) {\n                    return obj == (ts.id()).id().MISSING; // no violation expected...\n                }\n            }\n        "
+    },
+    {
+      "description": "Property typesThatCompareByReference #3110",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class MyClass {\n                public static void isMissing(String obj, Object ts) {\n                    return obj == ts;\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] A false negative about the rule CompareObjectsWithEquals #3947",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        9
+      ],
+      "code": "\nclass Tester {\n    int get() {\n        return 1;\n    }\n    void array1(String[] a, String[] b) {\n        if (a[1] == b[get()]) {} // should report a warning\n    }\n    void array2(String[] a, String[] b) {\n        if (a[1] == b[1]) {} // can detect\n    }\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "AvoidThrowingRawExceptionTypes",
+  "language": "java",
+  "description": "\nAvoid throwing certain exception types. Rather than throw a raw RuntimeException, Throwable,\nException, or Error, use a subclassed exception or error instead.\n        ",
+  "example": "public class Foo {\n    public void bar() throws Exception {\n        throw new Exception();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "throwing various types",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        4,
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        throw new Throwable();\n        throw new Exception();\n        throw new Error();\n        throw new RuntimeException();\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1796928 : The code uses a class that uses the same names that the one this rule is looking for...",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.design.AvoidThrowingRawExceptionTypesTest.Throwable;\nimport net.sourceforge.pmd.lang.java.rule.design.AvoidThrowingRawExceptionTypesTest.Exception;\nimport net.sourceforge.pmd.lang.java.rule.design.AvoidThrowingRawExceptionTypesTest.Error;\nimport net.sourceforge.pmd.lang.java.rule.design.AvoidThrowingRawExceptionTypesTest.RuntimeException;\n\npublic class PmdTest {\n\n    public void m() {\n        throw new Throwable();\n        throw new Error();\n        throw new RuntimeException();\n        throw new Exception();\n    }\n}\n        "
+    },
+    {
+      "description": "#1337: False positive \"Avoid throwing raw exception types\" when exception is not thrown",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PmdTest {\n    private Throwable cause;\n\n    public void setUp() {\n        cause = new Throwable();\n    }\n}\n        "
+    },
+    {
+      "description": "False negative when importing another exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.IOException;\n\npublic class Foo {\n\n    public void bar() {\n        throw new Exception();\n    }\n}\n        "
+    },
+    {
+      "description": "Ok when throwing another exception",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\n\npublic class Foo {\n\n    public void bar() {\n        throw new IOException();\n    }\n}\n        "
+    }
+  ]
+}

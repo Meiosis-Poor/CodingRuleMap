@@ -1,0 +1,178 @@
+{
+  "name": "FinalClass",
+  "language": "java",
+  "description": "<div>\n Ensures that identifies classes that can be effectively declared as final are explicitly\n marked as final. The following are different types of classes that can be identified:\n </div>\n <ol>\n   <li>\n       Private classes with no declared constructors.\n   </li>\n   <li>\n       Classes with any modifier, and contains only private constructors.\n   </li>\n </ol>\n\n <p>\n Classes are skipped if:\n </p>\n <ol>\n   <li>\n       Class is Super class of some Anonymous inner class.\n   </li>\n   <li>\n       Class is extended by another class in the same file.\n   </li>\n </ol>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 274,
+  "branches": 56,
+  "apis": 78,
+  "test": [
+    {
+      "description": "Auto test from InputFinalClass.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        9,
+        18
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\nimport java.util.ArrayList;\npublic class InputFinalClass \n{\n    private InputFinalClass() {}\n}\nfinal class test2 {}\nclass test3\n{\n   class test4 \n   {\n       private test4() {}\n   }\n}\nclass test5\n{\n    private test5() {}\n    test5(int i) {}\n}\nclass test6\n{\n    public test6() {}\n}\nfinal class test7 {\n    private test7() {}\n}\nabstract class Operation\n{\n    abstract double eval(double a, double b);\n    public static final Operation PLUS =\nnew Operation(\"+\")\n{\n    double eval(double a, double b)\n    {\nreturn a + b;\n    }\n};\n    public static final Operation MINUS =\nnew Operation(\"-\")\n{\n    double eval(double a, double b)\n    {\nreturn a - b;\n    }\n};\n    private String _name;\n    private Operation(String name)\n    {\nthis._name = name;\n    }\n}\ninterface Evaluable\n{\n    double eval(double a, double b);\n}\nabstract class Operation2 implements Evaluable\n{\n    public static final Operation2 PLUS =\nnew Operation2(\"+\")\n{\n    public double eval(double a, double b)\n    {\nreturn a + b;\n    }\n};\n    public static final Operation2 MINUS =\nnew Operation2(\"-\")\n{\n    public double eval(double a, double b)\n    {\nreturn a - b;\n    }\n};\n    private String _name;\n    private Operation2(String name)\n    {\nthis._name = name;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClass2.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        24,
+        32,
+        38,
+        58,
+        91
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\nimport java.util.ArrayList;\npublic final class InputFinalClass2\n{\n    private InputFinalClass2() {}\n}\nenum testenum1\n{\n    A, B;\n    testenum1() {}\n}\nenum testenum2\n{\n    A, B;\n    public static class someinnerClass\n    {\n        private someinnerClass() {}\n    }\n}\ninterface TestInterface {\n    class SomeClass { \n        private SomeClass() {}\n    }\n}\n@interface SomeAnnotation {\n    class SomeClass { \n        private SomeClass() {}\n    }\n}\nclass TestAnonymousInnerClasses {\n    public static final TestAnonymousInnerClasses ONE = new TestAnonymousInnerClasses() {\n        @Override\n        public int value() {\n            return 1;\n        }\n    };\n    private TestAnonymousInnerClasses() {\n    }\n    public int value() {\n        return 0;\n    }\n}\nclass TestNewKeyword { \n    private TestNewKeyword(String s) {\n        String a = \"hello\" + s;\n    }\n    public int count() {\n        return 1;\n    }\n    public static final TestNewKeyword ONE = new TestNewKeyword(\"world\");\n    public static final test6 TWO = new test6() {\n    };\n    public static void main(String[] args) {\n        ArrayList<String> foo = new ArrayList<>();\n        foo.add(\"world\");\n        foo.forEach(TestNewKeyword::new);\n    }\n}\ninterface TestNewKeywordInsideInterface {\n    ArrayList<String> foo = new ArrayList<>();\n}\nabstract class TestPrivateCtorInAbstractClasses {\n    private TestPrivateCtorInAbstractClasses() {\n    }\n}\nclass TestAnonymousInnerClassInsideNestedClass {\n    private TestAnonymousInnerClassInsideNestedClass() { }\n    static class NestedClass { \n        public final static TestAnonymousInnerClassInsideNestedClass ONE\n                = new TestAnonymousInnerClassInsideNestedClass() {\n        };\n        private NestedClass() {}\n    }\n    static class NestedClass2 {\n        private NestedClass2() {}\n        public static final test6  ONE = new test6() {\n            public final NestedClass2 ONE = new NestedClass2() {\n            };\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassAnnotation.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic @interface InputFinalClassAnnotation {\n    final class FinalClass {\n        private FinalClass() {}\n    }\n    class DerivedClass extends SuperClass {\n        private DerivedClass() {}\n    }\n    class SuperClass {\n        private SuperClass() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassAnonymousInnerClass.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        10,
+        26,
+        39,
+        51,
+        66,
+        70,
+        83,
+        90
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic class InputFinalClassAnonymousInnerClass {\n    static class a {\n        static class b { \n            private b() {\n            }\n        }\n    }\n    static class j {\n        a.b object = new a().new b() {\n        };\n        class a {\n            class b {\n                private b() {\n                }\n            }\n        }\n        class m { \n            private m() {\n            }\n            class q {\n                private q() {\n                }\n            }\n        }\n    }\n    class m {\n        private m() {\n        }\n        class q { \n            private q() {\n            }\n        }\n        j.m.q obj = new j().new m().new q() {\n        };\n    }\n    class jasper {\n        private jasper() {\n        }\n        class a {\n            class b { \n                private b() {\n                }\n            }\n            m obj = new m() {\n            };\n        }\n    }\n    class g {\n        private g() {\n        }\n    }\n    class n {\n        class g { \n            private g() {\n            }\n        }\n        class y { \n            private y() {\n            }\n        }\n        private n() {\n        }\n    }\n    class va {\n        n obj = new n() {\n        };\n    }\n    class vl {\n        class n { \n            private n() {\n            }\n        }\n    }\n    class var1 {\n        class n { \n            private n() {\n            }\n        }\n    }\n    class gang {\n        g obj = new g() {\n        };\n    }\n    jasper obj1 = new com.puppycrawl.tools.checkstyle.checks.design.finalclass\n        .InputFinalClassAnonymousInnerClass().new jasper() {\n    };\n    test3 obj2 = new test3() { \n    };\n    class x {\n        class y {\n            private y() {\n            }\n            class z {\n                y obj = new y() {\n                };\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassConstructorInRecord.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic record InputFinalClassConstructorInRecord(String string) {\n    public InputFinalClassConstructorInRecord {\n    }\n    public InputFinalClassConstructorInRecord(int x) {\n        this(String.valueOf(x));\n    }\n    class F {\n        private F() {\n        }\n    }\n    class K extends F {\n    }\n    class X {\n        class F { \n            private F() {\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassEnum.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic enum InputFinalClassEnum {\n    FINAL(\"Final\", new FinalClass()),\n    DERIVED(\"Derived\", new DerivedClass()),\n    ;\n    private final String initial;\n    private final Object object;\n    private InputFinalClassEnum(String initial, Object object) {\n        this.initial = initial;\n        this.object = object;\n    }\n    public String getName() {\n        return name();\n    }\n    public String getInitial() {\n        return initial;\n    }\n    static final class FinalClass {\n        private FinalClass() {}\n    }\n    static class DerivedClass extends SuperClass {\n        private DerivedClass() {}\n    }\n    static class SuperClass {\n        private SuperClass() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassInnerAndNestedClass.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        16,
+        17,
+        44,
+        68,
+        83
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic class InputFinalClassInnerAndNestedClass {\n    private class SuperClass {\n        private SuperClass() {\n        }\n    }\n    private class SubClass extends SuperClass {\n    } \n    class SameName { \n        private SameName() {\n        }\n    }\n    static class Test {\n        static class SameName {\n            private SameName() {\n            }\n            class Test3 {\n            }\n        }\n    }\n    class TestInnerClass {\n        class SameName {\n            class Test3 {\n                class Test4 extends SameName {\n                }\n            }\n            private SameName() {\n            }\n        }\n    }\n    class TestNestedClasses {\n        class SameName { \n            private SameName() {\n            }\n            class Test3 {\n                class Test4 extends Test.SameName {\n                }\n            }\n        }\n    }\n}\nenum foo {\n    VALUE_1, VALUE_2;\n    class A {\n        class B {\n            private B() {\n            }\n        }\n        class c extends B {\n        }\n        class D {\n            class B { \n                private B() {\n                }\n            }\n        }\n    }\n}\nclass foo2 {\n    class c {\n        private c() {\n        }\n    }\n    class a extends c {\n        class c { \n            private c() {\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassInterface.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic interface InputFinalClassInterface {\n    final class FinalClass {\n        private FinalClass() {}\n    }\n    class DerivedClass extends SuperClass {\n        private DerivedClass() {}\n    }\n    class SuperClass {\n        private SuperClass() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassNestedInEnumWithAnonInnerClass.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        12,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic enum InputFinalClassNestedInEnumWithAnonInnerClass {\n    A;\n    class n {\n        private n() {\n        }\n        class j { \n            private j() {\n            }\n        }\n    }\n    enum k {\n        B;\n        j obj = new j() {\n        };\n        class j {\n            private j() {\n            }\n        }\n        class n { \n            private n() {\n            }\n        }\n    }\n    n obj = new n() {\n    };\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassNestedInInterfaceWithAnonInnerClass.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        22,
+        27,
+        48
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic interface InputFinalClassNestedInInterfaceWithAnonInnerClass {\n    class a {\n        private a() {\n        }\n    }\n    a obj = new a() {\n    };\n    interface foo {\n        class m {\n            private m() {\n            }\n        }\n    }\n    class b { \n        private b() {\n        }\n        class foo {\n            class m { \n                private m() {\n                }\n            }\n        }\n    }\n    @interface annotatedInterface {\n        class b {\n            private b() {\n            }\n        }\n        b obj = new b () {\n        };\n        class c {\n            private c() {\n            }\n        }\n    }\n    class c extends foo.m { \n        private c() {\n        }\n    }\n    class h extends annotatedInterface.c {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassNestedInRecord.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        12,
+        30,
+        48
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic record InputFinalClassNestedInRecord(int a) {\n    record b() {\n        class c { \n            private c() {\n            }\n        }\n    }\n    class k {\n        c obj = new c() {\n        };\n        class c {\n            private c() {\n            }\n        }\n    }\n    record s() {\n        record f() {\n            class j { \n                private j() {\n                }\n            }\n        }\n    }\n    static class h {\n        record f() {\n            final static j obj = new j() {\n            };\n            static class j {\n                private j() {\n                }\n            }\n        }\n    }\n    private class Nothing { \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassNestedStaticClassInsideInnerClass.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        13,
+        31,
+        42,
+        59,
+        75,
+        82
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic class InputFinalClassNestedStaticClassInsideInnerClass {\n    class M {\n        class A {\n            static class B {\n                static class C { \n                    private C() {\n                    }\n                }\n            }\n        }\n    }\n    class Mw {\n        static class B {\n            static class C {\n                private C() {\n                }\n            }\n        }\n    }\n    class A {\n        class B { \n            class C {\n                private C() {}\n            }\n            class D extends C {\n            }\n            private B() {}\n        }\n    }\n    class B {\n        class C { \n            private C() {}\n            class D extends Mw.B.C {\n            }\n        }\n    }\n    class P extends Q {\n    }\n    class Q {\n        private Q() {\n        }\n    }\n    class PR {\n        static class P {\n            static class Q { \n                private Q() {\n                }\n            }\n        }\n    }\n    class F {\n        private F() {\n        }\n    }\n    class K extends F {\n    }\n    class X {\n        class F { \n            private F() {\n            }\n        }\n    }\n    class a {\n        static class c { \n            private c() {\n            }\n        }\n    }\n    class d {\n        class e extends c {\n        }\n    }\n    class c {\n        private c() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassPrivateCtor.java",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        12,
+        17,
+        23,
+        25,
+        30,
+        34,
+        43,
+        50,
+        53,
+        103,
+        106,
+        109
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic class InputFinalClassPrivateCtor {\n    private class Some1 {\n    }\n    private class Some2 extends Some1 { \n    }\n}\nclass Some { \n    private Some(){}\n}\nclass Nothing {\n    private class Some3 { \n    }\n    private class Some4 { } \n}\nclass Exam {\n    private class PaperSetter { \n        int marks;\n        String sub;\n    }\n    private class Paper { \n        void method() {\n        }\n    }\n}\nclass Tree {\n    private class Node { \n        int data;\n        Node next;\n    }\n}\nclass SomeOne {\n    private  class Some1 { \n    }\n}\nclass Some2 { \n    private Some2(){}\n}\nclass Nothing2 {\n    private class Some1 {\n        public Some1() {}\n    }\n    private class Some3 {\n        protected Some3() {}\n    }\n}\nclass Exam2 {\n    private final class PaperSetter {\n        int marks;\n        String sub;\n        PaperSetter(){}\n    }\n    private final class Paper {\n        void method() {\n        }\n        Paper(){}\n    }\n}\nclass Tree2 {\n    private final class Node {\n        int data;\n        Node next;\n        private Node(){}\n    }\n}\nclass IfAbstract {\n    private abstract static class Class extends IfAbstract {\n        public abstract void method();\n    }\n}\nclass Suppression {\n    @SuppressWarnings(\"uncheck\") \n    private static class NewCheck {}\n    @SuppressWarnings(\"uncheck\") \n    private class NewCheck2 {}\n    @SuppressWarnings(\"uncheck\") \n    private class OldCheck {\n        private OldCheck(){}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassPrivateCtor2.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        20,
+        32,
+        43,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic class InputFinalClassPrivateCtor2 {\n    private static class c {\n       private c(){}\n    }\n    class x extends c {}\n    private class a {\n    }\n    class b extends a {}\n    private class PrivateClass { \n    }\n}\nclass TestClass {\n    private class Private {\n           public Private() {}\n    }\n}\nclass Private2 {\n    private class Check { \n        int i = 0;\n    }\n}\nclass Private {\n    public Private() {}\n}\nclass Private3 {\n    private static class K { \n    }\n}\nclass CheckStyle {\n    static class we {\n    }\n    private class Modifiers {} \n}\nclass Check {\n    private class Non {\n        public Non() {}\n        private Non(int i) {}\n    }\n}\nclass CheckCode {\n    private class None {\n        public None() {}\n        protected None(int i) {}\n    }\n}\nclass a {\n    private class Class {\n    }\n    Class newClass = new Class() {\n    };\n    private final class Final { }\n}"
+    },
+    {
+      "description": "Auto test from InputFinalClassPrivateCtor3.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        24,
+        28,
+        30,
+        33,
+        38
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.finalclass;\npublic enum InputFinalClassPrivateCtor3 {\n    VALUE1(\"Value 1\"),\n    VALUE2(\"Value 2\");\n    private String value;\n    private MyClass myPrivateClass;\n    InputFinalClassPrivateCtor3(String value) {\n        this.value = value;\n        this.myPrivateClass = new MyClass();\n    }\n    public String getValue() {\n        return value;\n    }\n    private static class MyClass { \n    }\n    private class Check2 { \n        private class Check3 { \n        }\n    }\n    private class Check4 { \n        protected class Class {\n        }\n    }\n    private class Check {} \n}"
+    }
+  ]
+}

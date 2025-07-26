@@ -1,0 +1,23 @@
+{
+  "name": "VirtualInheritance",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-virtual-inheritance",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 41,
+  "branches": 6,
+  "apis": 18,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        14,
+        22
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s fuchsia-virtual-inheritance %t\n\nclass A {\npublic:\n  A(int value) : val(value) {}\n\n  int do_A() { return val; }\n\nprivate:\n  int val;\n};\n\nclass B : public virtual A {\n  // CHECK-MESSAGES: [[@LINE-1]]:1: warning: direct virtual inheritance is disallowed [fuchsia-virtual-inheritance]\n  // CHECK-NEXT: class B : public virtual A {\npublic:\n  B() : A(0) {}\n  int do_B() { return 1 + do_A(); }\n};\n\nclass C : public virtual A {\n  // CHECK-MESSAGES: [[@LINE-1]]:1: warning: direct virtual inheritance is disallowed [fuchsia-virtual-inheritance]\n  // CHECK-NEXT: class C : public virtual A {\npublic:\n  C() : A(0) {}\n  int do_C() { return 2 + do_A(); }\n};\n\nclass D : public B, public C {\npublic:\n  D(int value) : A(value), B(), C() {}\n\n  int do_D() { return do_A() + do_B() + do_C(); }\n};\n\nint main() {\n  A *a = new A(0);\n  B *b = new B();\n  C *c = new C();\n  D *d = new D(0);\n  return 0;\n}"
+    }
+  ]
+}

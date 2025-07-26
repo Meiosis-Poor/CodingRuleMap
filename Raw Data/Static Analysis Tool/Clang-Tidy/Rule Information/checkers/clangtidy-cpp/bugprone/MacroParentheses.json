@@ -1,0 +1,28 @@
+{
+  "name": "MacroParentheses",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-macro-parentheses",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 269,
+  "branches": 44,
+  "apis": 141,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        4,
+        6,
+        8,
+        10,
+        12,
+        14,
+        16
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-macro-parentheses %t\n\n#define BAD1              -1\n// CHECK-MESSAGES: :[[@LINE-1]]:27: warning: macro replacement list should be enclosed in parentheses [bugprone-macro-parentheses]\n#define BAD2              1+2\n// CHECK-MESSAGES: :[[@LINE-1]]:28: warning: macro replacement list should be enclosed in parentheses [bugprone-macro-parentheses]\n#define BAD3(A)           (A+1)\n// CHECK-MESSAGES: :[[@LINE-1]]:28: warning: macro argument should be enclosed in parentheses [bugprone-macro-parentheses]\n#define BAD4(x)           ((unsigned char)(x & 0xff))\n// CHECK-MESSAGES: :[[@LINE-1]]:44: warning: macro argument should be enclosed in parentheses [bugprone-macro-parentheses]\n#define BAD5(X)           A*B=(C*)X+2\n// CHECK-MESSAGES: :[[@LINE-1]]:35: warning: macro argument should be enclosed in parentheses [bugprone-macro-parentheses]\n#define BAD6(x)           goto *x;\n// CHECK-MESSAGES: :[[@LINE-1]]:33: warning: macro argument should be enclosed in parentheses [bugprone-macro-parentheses]\n#define BAD7(x, y)        if (x) goto y; else x;\n// CHECK-MESSAGES: :[[@LINE-1]]:47: warning: macro argument should be enclosed in parentheses [bugprone-macro-parentheses]\n\n#define GOOD1             1\n#define GOOD2             (1+2)\n#define GOOD3(A)          #A\n#define GOOD4(A,B)        A ## B\n#define GOOD5(T)          ((T*)0)\n#define GOOD6(B)          \"A\" B \"C\"\n#define GOOD7(b)          A b\n#define GOOD8(a)          a B\n#define GOOD9(type)       (type(123))\n#define GOOD10(car, ...)  car\n#define GOOD11            a[b+c]\n#define GOOD12(x)         a[x]\n#define GOOD13(x)         a.x\n#define GOOD14(x)         a->x\n#define GOOD15(x)         ({ int a = x; a+4; })\n#define GOOD16(x)         a_ ## x, b_ ## x = c_ ## x - 1,\n#define GOOD17            case 123: x=4+5; break;\n#define GOOD18(x)         ;x;\n#define GOOD19            ;-2;\n#define GOOD20            void*\n#define GOOD21(a)         case Fred::a:\n#define GOOD22(a)         if (verbose) return a;\n#define GOOD23(type)      (type::Field)\n#define GOOD24(t)         std::set<t> s\n#define GOOD25(t)         std::set<t,t,t> s\n#define GOOD26(x)         (a->*x)\n#define GOOD27(x)         (a.*x)\n#define GOOD28(x)         namespace x {int b;}\n#define GOOD29(...)       std::cout << __VA_ARGS__;\n#define GOOD30(args...)   std::cout << args;\n#define GOOD31(X)         A*X=2\n#define GOOD32(X)         std::vector<X>\n#define GOOD33(x)         if (!a__##x) a_##x = &f(#x)\n#define GOOD34(x, y)      if (x) goto y;\n#define GOOD35(x, y)      if (x) goto *(y);\n\n// These are allowed for now..\n#define MAYBE1            *12.34\n#define MAYBE2            <<3"
+    }
+  ]
+}

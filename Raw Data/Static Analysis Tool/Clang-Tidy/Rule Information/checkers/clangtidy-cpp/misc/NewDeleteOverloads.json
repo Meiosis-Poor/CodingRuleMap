@@ -1,0 +1,28 @@
+{
+  "name": "NewDeleteOverloads",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-new-delete-overloads",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 204,
+  "branches": 44,
+  "apis": 91,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        6,
+        8,
+        12,
+        24,
+        26,
+        56,
+        65
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-new-delete-overloads %t\n\ntypedef decltype(sizeof(int)) size_t;\n\nstruct S {\n  // CHECK-MESSAGES: :[[@LINE+1]]:9: warning: declaration of 'operator new' has no matching declaration of 'operator delete' at the same scope [misc-new-delete-overloads]\n  void *operator new(size_t size) noexcept;\n  // CHECK-MESSAGES: :[[@LINE+1]]:9: warning: declaration of 'operator new[]' has no matching declaration of 'operator delete[]' at the same scope\n  void *operator new[](size_t size) noexcept;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: declaration of 'operator new' has no matching declaration of 'operator delete' at the same scope\nvoid *operator new(size_t size) noexcept(false);\n\nstruct U {\n  void *operator new(size_t size) noexcept;\n  void operator delete(void *ptr) noexcept;\n\n  void *operator new[](size_t) noexcept;\n  void operator delete[](void *) noexcept;\n};\n\nstruct Z {\n  // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: declaration of 'operator delete' has no matching declaration of 'operator new' at the same scope\n  void operator delete(void *ptr) noexcept;\n  // CHECK-MESSAGES: :[[@LINE+1]]:8: warning: declaration of 'operator delete[]' has no matching declaration of 'operator new[]' at the same scope\n  void operator delete[](void *ptr) noexcept;\n};\n\nstruct A {\n  void *operator new(size_t size, Z) noexcept; // ok, placement new\n};\n\nstruct B {\n  void operator delete(void *ptr, A) noexcept; // ok, placement delete\n};\n\n// It is okay to have a class with an inaccessible free store operator.\nstruct C {\n  void *operator new(size_t, A) noexcept; // ok, placement new\nprivate:\n  void operator delete(void *) noexcept;\n};\n\n// It is also okay to have a class with a delete free store operator.\nstruct D {\n  void *operator new(size_t, A) noexcept; // ok, placement new\n  void operator delete(void *) noexcept = delete;\n};\n\nstruct E : U {\n  void *operator new(size_t) noexcept; // okay, we inherit operator delete from U\n};\n\nstruct F : S {\n  // CHECK-MESSAGES: :[[@LINE+1]]:9: warning: declaration of 'operator new' has no matching declaration of 'operator delete' at the same scope\n  void *operator new(size_t) noexcept;\n};\n\nclass G {\n  void operator delete(void *) noexcept;\n};\n\nstruct H : G {\n  // CHECK-MESSAGES: :[[@LINE+1]]:9: warning: declaration of 'operator new' has no matching declaration of 'operator delete' at the same scope\n  void *operator new(size_t) noexcept; // base class operator is inaccessible\n};\n\ntemplate <typename Base> struct Derived : Base {\n  void operator delete(void *);\n};"
+    }
+  ]
+}

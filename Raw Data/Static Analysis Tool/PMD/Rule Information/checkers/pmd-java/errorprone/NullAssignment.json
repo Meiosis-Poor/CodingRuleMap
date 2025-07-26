@@ -1,0 +1,147 @@
+{
+  "name": "NullAssignment",
+  "language": "java",
+  "description": "\nAssigning a \"null\" to a variable (outside of its declaration) is usually bad form.  Sometimes, this type\nof assignment is an indication that the programmer doesn't completely understand what is going on in the code.\n\nNOTE: This sort of assignment may used in some cases to dereference objects and encourage garbage collection.\n        ",
+  "example": "public void bar() {\n  Object x = null; // this is OK\n  x = new Object();\n     // big, complex piece of code here\n  x = null; // this is not required\n     // big, complex piece of code here\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 78,
+  "branches": 17,
+  "apis": 8,
+  "test": [
+    {
+      "description": "initial assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Object foo() {\n        Object x = null; // OK\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "bad assignment",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Object x;\n        x = new Object();\n        bar(x);\n        x = null; // This is bad\n    }\n    private void bar(Object o) { }\n}\n        "
+    },
+    {
+      "description": "check test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Object x;\n        if (x == null) { // This is OK\n            return;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "null param on right hand side",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        String x = null;\n        x = new String(null);\n    }\n}\n        "
+    },
+    {
+      "description": "null assignment in ternary - initialization",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        String x = bar() ? \"fiz\" : null;\n    }\n    private boolean bar() { return false; }\n}\n        "
+    },
+    {
+      "description": "null assignment in ternary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        String x;\n        x = bar() ? \"fiz\" : null;\n    }\n    private boolean bar() { return false; }\n}\n        "
+    },
+    {
+      "description": "null assignment in ternary, part deux - initialization",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        String x = bar() ? null : \"fiz\";\n    }\n    private boolean bar() { return true; }\n}\n        "
+    },
+    {
+      "description": "null assignment in ternary, part deux",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        String x;\n        x = bar() ? null : \"fiz\";\n    }\n    private boolean bar() { return true; }\n}\n        "
+    },
+    {
+      "description": "comparison is not assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String foo(String x) {\n        return x == null ? \"42\" : x;\n    }\n}\n        "
+    },
+    {
+      "description": "final fields must be assigned",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final String x;\n    public Foo(String y) {\n        if (y == \"\") x = null;\n    }\n}\n        "
+    },
+    {
+      "description": "1556594 - Wonky detection of NullAssignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Object parentContext;\n    public void foo() {\n        assert isRoot() ? parentContext == null : parentContext != null;\n    }\n    private boolean isRoot() { return true; }\n}\n        "
+    },
+    {
+      "description": "[java] NullAssignment false positive - initialization #629",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class NullAssignmentFP {\n    private Map<String, Object> someHash = new HashMap<>();\n    public void foo(String a, boolean test, Object truthy) {\n        Object result = someHash.computeIfAbsent(a, _unused -> test ? truthy : null);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] NullAssignment false positive - no direct assignment, but lambda #629",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class NullAssignmentFP {\n    private Map<String, Object> someHash = new HashMap<>();\n    public void foo(String a, boolean test, Object truthy) {\n        Object result;\n        result = someHash.computeIfAbsent(a, _unused -> test ? truthy : null);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] NullAssignment false positive - return with ternary #629",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.time.LocalDateTime;\n\npublic class NullAssignmentFP {\n    public LocalDateTime foo(LocalDateTime dateTime) {\n        return dateTime.getYear() < 2100 ? dateTime : null;\n    }\n}\n        "
+    },
+    {
+      "description": "False negative with ternary",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\npublic class NullAssignmentTernary {\n    public void bar(String a) {\n        String b;\n        b = (a == null || a.length() < 1) ? null : a.substring(1);\n        b = ((a == null || a.length() < 1) ? null : a.substring(1));\n    }\n}\n"
+    },
+    {
+      "description": "Multiple ternaries with null assignment eventually",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class NullAssignmentTernary {\n    public void bar(String a, String b, String c) {\n        String x;\n        x = a != null ? a : b != null ? b : c != null ? c : null;\n    }\n}\n"
+    },
+    {
+      "description": "False positive with initializing final var",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class NullAssignmentFinal {\n    public void bar(String a) {\n        final String b;\n        if (a != null) {\n            b = a;\n        } else {\n            b = null;\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] NullAssignment - FP with ternary and null as method argument #2320",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class NullAssignmentMethodCall {\n    public void bar(String a) {\n        String b = this.getString(a == null ? null : a);\n    }\n\n    private String getString(String a) { return a; }\n\n    public String methodOne(String one, String two) {\n        return \"test\";\n    }\n    public String methodTwo(String one, String two) {\n        List<String> strings = new ArrayList<>();\n        return methodOne(\"one\", strings.isEmpty() ? null : \"two\");\n    }\n}\n"
+    },
+    {
+      "description": "[java] NullAssignment - FP with ternay and null as constructor argument #1669",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class NullAssignmentConstructorCall {\n    public void bar(String discordClient) {\n        throw new IllegalArgumentException(String.format(\n            \"Unsupported client with class '%s' given\",\n            (discordClient == null) ? null : discordClient.getClass()));\n    }\n}\n"
+    },
+    {
+      "description": "[java] A false negative for NullAssignment #3959",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Tester {\n    public void foo() {\n        Object x;\n        x = new Object();\n        bar(x);\n        x = (null); // should report a warning in this line\n    }\n}\n"
+    }
+  ]
+}

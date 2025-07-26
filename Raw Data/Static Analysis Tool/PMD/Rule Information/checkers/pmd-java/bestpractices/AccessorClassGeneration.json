@@ -1,0 +1,90 @@
+{
+  "name": "AccessorClassGeneration",
+  "language": "java",
+  "description": "\nInstantiation by way of private constructors from outside the constructor's class often causes the\ngeneration of an accessor. A factory method, or non-privatization of the constructor can eliminate this\nsituation. The generated class file is actually an interface.  It gives the accessing class the ability\nto invoke a new hidden package scope constructor that takes the interface as a supplementary parameter.\nThis turns a private constructor effectively into one with package scope, and is challenging to discern.\n\n_Note:_ This rule is only executed for Java 10 or lower.\nSince Java 11, [JEP 181: Nest-Based Access Control](https://openjdk.org/jeps/181) has been implemented. This\nmeans that in Java 11 and above accessor classes are not generated anymore.\n        ",
+  "example": "public class Outer {\n void method(){\n  Inner ic = new Inner();//Causes generation of accessor class\n }\n public class Inner {\n  private Inner(){}\n }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 61,
+  "branches": 6,
+  "apis": 5,
+  "test": [
+    {
+      "description": "inner class has private constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo1 {\n    public class InnerClass {\n        private InnerClass() {\n        }\n    }\n    void method() {\n        new InnerClass(); //Causes generation of accessor\n    }\n}\n        "
+    },
+    {
+      "description": "inner class has public constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo2 {\n    public class InnerClass {\n        public InnerClass() {\n        }\n    }\n    void method() {\n        new InnerClass(); //OK, due to public constructor\n    }\n}\n        "
+    },
+    {
+      "description": "outer class has public constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo3 {\n    public class InnerClass {\n      void method() {\n        new Foo3(); //Causes generation of accessor\n      }\n    }\n    private Foo3() {\n    }\n}\n        "
+    },
+    {
+      "description": "final inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void method() {\n        final class Inner {};\n        Inner i = new Inner();\n    }\n}\n        "
+    },
+    {
+      "description": "interface inner class has private constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage foo;\npublic interface Foo1 {\n    public class InnerClass {\n        private InnerClass(){\n        }\n    }\n    void method() {\n        new InnerClass(); //Causes generation of accessor\n    }\n}\n        "
+    },
+    {
+      "description": "there's a check for int declaration - not sure right now why",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo1 {\n    public class InnerClass {\n        private InnerClass(int[] a){\n        }\n    }\n    void method() {\n        new InnerClass(new int[]{1}); //Causes generation of accessor\n    }\n}\n        "
+    },
+    {
+      "description": "#1452 ArrayIndexOutOfBoundsException with Annotations for AccessorClassGenerationRule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface Something { public interface SomthingElse{}; }\n        "
+    },
+    {
+      "description": "#291 - Private constructor called from anonymous class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Example extends View {\n    private int foo;\n\n    private Example(final Context context) {\n        super(context);\n    }\n\n    public static void create() {\n        new Handler().post(new Runnable() {\n            @Override\n            public void run() {\n                Example example = new Example(null); // Should be marked since the constructor is private.\n            }\n        });\n    }\n}\n        "
+    },
+    {
+      "description": "Array initializer is not a class body",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private class Bar {\n        private int size;\n\n        private Bar() {\n        }\n\n        void bar() {\n            new Bar[size];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "AccessorClassGeneration false-negative: subclass calls private constructor #1998",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                private Foo() { }\n                private Foo(String foo) { } //this one is called\n                public Foo(String foo, String bar) { }\n                private static class Bar extends Foo {\n                    public Bar() { super(null); }\n                }\n            }\n        "
+    },
+    {
+      "description": "AccessorClassGeneration false positive for private constructors #755",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Outer {\n                public static class Inner {\n                    private Inner(int x) { }\n                    public Inner(Object x) { }\n                }\n\n                public static void main(String[] args)\n                {\n                    // PMD.AccessorClassGeneration\n                    // Avoid instantiation through private constructors from outside of the constructors class.\n                    new Inner(null); // complains as if Inner(int) is was called\n                }\n            }\n        "
+    },
+    {
+      "description": "#5106 [java] AccessorClassGeneration: Node was null for default constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo1 {\n    private static class InnerClass {\n    }\n    void method() {\n        new InnerClass(); //Causes generation of accessor\n    }\n}\n        "
+    }
+  ]
+}

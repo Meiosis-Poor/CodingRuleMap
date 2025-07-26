@@ -1,0 +1,38 @@
+{
+  "name": "TypeTraits",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-type-traits",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 344,
+  "branches": 29,
+  "apis": 144,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 17,
+      "expected-linenumbers": [
+        44,
+        49,
+        54,
+        59,
+        63,
+        67,
+        71,
+        75,
+        79,
+        84,
+        88,
+        93,
+        101,
+        106,
+        114,
+        118,
+        127
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++14 %s modernize-type-traits %t -check-suffixes=',MACRO'\n// RUN: %check_clang_tidy -std=c++14 %s modernize-type-traits %t -- \\\n// RUN:   -config='{CheckOptions: {modernize-type-traits.IgnoreMacros: true}}'\n// RUN: %check_clang_tidy -std=c++17-or-later %s modernize-type-traits %t -check-suffixes=',CXX17,MACRO,CXX17MACRO'\n\nnamespace std {\n  template <typename>\n  struct is_const {\n    static constexpr bool value = true;\n  };\n\n  template <typename, typename>\n  struct is_same {\n    static constexpr bool value = true;\n  };\n\n  template<bool, typename T = void>\n  struct enable_if {\n    using type = T;\n  };\n\n  template <typename...>\n  struct common_type {\n    using type = int;\n  };\n\ninline namespace __std_lib_version1 {\n  template<typename T>\n  struct add_const {\n    using type = T;\n  };\n} // namespace __std_lib_version1\n\nnamespace ext {\n  template<typename T>\n  struct add_const {\n    using type = T;\n  };\n} // namespace ext\n\n} // namespace std\n\nbool NoTemplate = std::is_const<bool>::value;\n// CHECK-MESSAGES-CXX17: :[[@LINE-1]]:19: warning: use c++17 style variable templates\n// CHECK-FIXES-CXX17: bool NoTemplate = std::is_const_v<bool>;\n\ntemplate<typename T>\nconstexpr bool InTemplate = std::is_const<T>::value;\n// CHECK-MESSAGES-CXX17: :[[@LINE-1]]:29: warning: use c++17 style variable templates\n// CHECK-FIXES-CXX17: constexpr bool InTemplate = std::is_const_v<T>;\n\ntemplate<typename U, typename V>\nconstexpr bool Template2Params = std::is_same<U,V>::value;\n// CHECK-MESSAGES-CXX17: :[[@LINE-1]]:34: warning: use c++17 style variable templates\n// CHECK-FIXES-CXX17: constexpr bool Template2Params = std::is_same_v<U,V>;\n\ntemplate<bool b>\ntypename std::enable_if<b>::type inTemplate();\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: use c++14 style type templates\n// CHECK-FIXES: std::enable_if_t<b>inTemplate();\n\ntypename std::enable_if<true>::type noTemplate();\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: use c++14 style type templates\n// CHECK-FIXES: std::enable_if_t<true>noTemplate();\n\nstd::enable_if<true>::type noTemplateOrTypename();\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: use c++14 style type templates\n// CHECK-FIXES: std::enable_if_t<true>noTemplateOrTypename();\n\nusing UsingNoTypename = std::enable_if<true>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:25: warning: use c++14 style type templates\n// CHECK-FIXES: using UsingNoTypename = std::enable_if_t<true>;\n\nusing VariadicTrait = std::common_type<int, long, bool>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:23: warning: use c++14 style type templates\n// CHECK-FIXES: using VariadicTrait = std::common_type_t<int, long, bool>;\n\nusing UsingSpace = std::enable_if <true>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: use c++14 style type templates\n// CHECK-FIXES: using UsingSpace = std::enable_if_t <true>;\n\ntemplate<bool b>\nusing UsingSpaceTemplate = typename std::enable_if <b>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:37: warning: use c++14 style type templates\n// CHECK-FIXES: using UsingSpaceTemplate = std::enable_if_t <b>;\n\nbool NoTemplateSpace = std::is_const <bool> ::value;\n// CHECK-MESSAGES-CXX17: :[[@LINE-1]]:24: warning: use c++17 style variable templates\n// CHECK-FIXES-CXX17: bool NoTemplateSpace = std::is_const_v <bool> ;\n\ntemplate<typename T>\nconstexpr bool InTemplateSpace = std::is_const  <T> ::value;\n// CHECK-MESSAGES-CXX17: :[[@LINE-1]]:34: warning: use c++17 style variable templates\n// CHECK-FIXES-CXX17: constexpr bool InTemplateSpace = std::is_const_v  <T> ;\n\n// For macros, no diagnostics if IgnoreMacros is set,\n// No fixes emitted even if IgnoreMacros is unset.\n\n#define VALUE_MACRO std::is_same<int, int>::value\nbool MacroValue = VALUE_MACRO;\n// CHECK-MESSAGES-CXX17MACRO: :[[@LINE-1]]:19: warning: use c++17 style variable templates\n// CHECK-FIXES-CXX17MACRO: #define VALUE_MACRO std::is_same<int, int>::value\n\n#define TYPE_MACRO typename std::enable_if<true>::type\nusing MacroType = TYPE_MACRO;\n// CHECK-MESSAGES-MACRO: :[[@LINE-1]]:19: warning: use c++14 style type templates\n// CHECK-FIXES-MACRO: #define TYPE_MACRO typename std::enable_if<true>::type\n\n\n// Names defined and accessed inside an inline namespace should be converted.\n// Whether or not the inline namespace is specified\n\nusing InlineUnspecified = std::add_const<bool>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:27: warning: use c++14 style type templates\n// CHECK-FIXES: using InlineUnspecified = std::add_const_t<bool>;\n\nusing Inline = std::__std_lib_version1::add_const<bool>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: use c++14 style type templates\n// CHECK-FIXES: using Inline = std::__std_lib_version1::add_const_t<bool>;\n\n// Don't try to offer any fix if the name is an extension to the standard library\nusing Ext = std::ext::add_const<bool>::type;\n\nnamespace my_std = std;\n\nusing Alias = my_std::add_const<bool>::type;\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: use c++14 style type templates\n// CHECK-FIXES: using Alias = my_std::add_const_t<bool>;"
+    }
+  ]
+}

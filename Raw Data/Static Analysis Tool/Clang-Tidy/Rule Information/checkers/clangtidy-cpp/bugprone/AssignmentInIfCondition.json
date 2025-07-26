@@ -1,0 +1,29 @@
+{
+  "name": "AssignmentInIfCondition",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-assignment-in-if-condition",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 83,
+  "branches": 7,
+  "apis": 31,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        6,
+        15,
+        24,
+        35,
+        44,
+        48,
+        71,
+        76
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-assignment-in-if-condition %t\n\nvoid f(int arg) {\n  int f = 3;\n  if ((f = arg) || (f == (arg + 1)))\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 5;\n  }\n}\n\nvoid f1(int arg) {\n  int f = 3;\n  if ((f == arg) || (f = (arg + 1)))\n  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 5;\n  }\n}\n\nvoid f2(int arg) {\n  int f = 3;\n  if (f = arg)\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 5;\n  }\n}\n\nvolatile int v = 32;\n\nvoid f3(int arg) {\n  int f = 3;\n  if ((f == arg) || ((arg + 6 < f) && (f = v)))\n  // CHECK-MESSAGES: :[[@LINE-1]]:42: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 5;\n  }\n}\n\nvoid f4(int arg) {\n  int f = 3;\n  if ((f == arg) || ((arg + 6 < f) && ((f = v) || (f < 8))))\n  // CHECK-MESSAGES: :[[@LINE-1]]:43: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 5;\n  } else if ((arg + 8 < f) && ((f = v) || (f < 8)))\n  // CHECK-MESSAGES: :[[@LINE-1]]:35: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 6;\n  }\n}\n\nclass BrokenOperator {\npublic:\n  int d = 0;\n  int operator=(const int &val) {\n    d = val + 1;\n    return d;\n  }\n};\n\nvoid f5(int arg) {\n  BrokenOperator bo;\n  int f = 3;\n  bo = f;\n  if (bo.d == 3) {\n    f = 6;\n  }\n  if (bo = 3)\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 7;\n  }\n  if ((arg == 3) || (bo = 6))\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: an assignment within an 'if' condition is bug-prone [bugprone-assignment-in-if-condition]\n  {\n    f = 8;\n  }\n  v = f;\n}\n\n// Tests that shouldn't trigger warnings.\nvoid awesome_f2(int arg) {\n  int f = 3;\n  if ((f == arg) || (f == (arg + 1))) {\n    f = 5;\n  }\n}\n\nvoid awesome_f3(int arg) {\n  int f = 3;\n  if (f == arg) {\n    f = 5;\n  }\n}\n\nvoid awesome_f4(int arg) {\n  int f = 3;\n  if ((f == arg) || ((arg + 6 < f) && ((f == v) || (f < 8)))) {\n    f = 5;\n  }\n}\n\ntemplate <typename Func> bool exec(Func F) { return F(); }\n\nvoid lambda_if() {\n  int X;\n  if ([&X] {\n        X = 5;\n        return true;\n      }()) {\n  }\n\n  if (exec([&] {\n        X = 5;\n        return true;\n      })) {\n  }\n}"
+    }
+  ]
+}

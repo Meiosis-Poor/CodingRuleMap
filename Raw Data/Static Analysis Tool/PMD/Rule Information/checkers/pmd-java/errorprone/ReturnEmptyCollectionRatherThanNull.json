@@ -1,0 +1,111 @@
+{
+  "name": "ReturnEmptyCollectionRatherThanNull",
+  "language": "java",
+  "description": "\nFor any method that returns an collection (such as an array, Collection or Map), it is better to return\nan empty one rather than a null reference. This removes the need for null checking all results and avoids\ninadvertent NullPointerExceptions.\n\nSee Effective Java, 3rd Edition, Item 54: Return empty collections or arrays instead of null\n        ",
+  "example": "public class Example {\n    // Not a good idea...\n    public int[] badBehavior() {\n        // ...\n        return null;\n    }\n\n    // Good behavior\n    public String[] bonnePratique() {\n        //...\n        return new String[0];\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Returning null array",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    // Not a good idea...\n    public int []bar()\n    {\n        // ...\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Nonnull empty array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    // Good behavior\n    public String[] bar()\n    {\n        //...\n        return new String[0];\n    }\n}\n        "
+    },
+    {
+      "description": "Returning null instead of collection (List)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    // Not a good idea...\n    public List<String> bar()\n    {\n        // ...\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Returning proper empty collection",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.Collections;\n\npublic class Foo {\n    // Not a good idea...\n    public List<String> bar()\n    {\n        // ...\n        return Collections.emptyList();\n    }\n}\n        "
+    },
+    {
+      "description": "Returning null instead of collection (Set)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.Set;\n\npublic class Foo {\n    // Not a good idea...\n    public Set<String> bar()\n    {\n        // ...\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Returning null instead of collection (Map)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.Map;\n\npublic class Foo {\n    // Not a good idea...\n    public Map<String, String> bar()\n    {\n        // ...\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "False negative case #3686",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        6
+      ],
+      "code": "\npublic class Foo {\n    public int[] foo() {\n     if(true) {\n         return null;   //violation\n     } else {\n         return null;   //violation\n     }\n   }\n}\n    "
+    },
+    {
+      "description": "Null is returned from an internal statement, not from the method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    private int[] foo() {\n        bar(new SomeInterface() {\n            @Override\n            public Object run() {\n                baz();\n                return null;\n            }\n        });\n\n        return new int[0];\n    }\n}\n\ninterface SomeInterface {\n    Object run();\n}\n    "
+    },
+    {
+      "description": "Null is returned from an internal statement, not from the method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    private int[] foo() {\n        bar(() -> {\n            baz();\n            return null;\n        });\n\n        return new int[0];\n    }\n}\n    "
+    },
+    {
+      "description": "Null is returned from a loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n  import java.util.List;\n\n  public class Foo {\n      private List<Integer> foo(List<Integer> list) {\n          for(Integer i : list) {\n              if(condition) {\n                  return null;\n              }\n          }\n          return list;\n      }\n  }\n    "
+    },
+    {
+      "description": "[java] ReturnEmptyCollectionRatherThanNull - false positive with stream and lambda #3721",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "\nimport java.util.*;\nimport java.util.stream.*;\nimport java.util.concurrent.*;\nimport java.nio.file.Path;\n\npublic class Foo {\n    private Map<String, List<String>> joinFutures(Map<String, List<Future<String>>> map) {\n        Map<String, List<String>> joined = new HashMap<>();\n\n        for (String p : map.keySet()) {\n            List<String> evaluatedResult = map.get(p).stream()\n                                              .map(f -> {\n                                                  try {\n                                                      return f.get();\n                                                  } catch (InterruptedException | ExecutionException e) {\n                                                      e.printStackTrace();\n                                                      return null; // <----- false positive here\n                                                  }\n                                              })\n                                              .filter(Objects::nonNull)\n                                              .sorted(Comparator.naturalOrder())\n                                              .collect(Collectors.toList());\n\n            if (!evaluatedResult.isEmpty()) {\n                joined.put(p, evaluatedResult);\n            }\n        }\n\n        // checking basic lambdas and anonymous classes as well\n        Callable<Object> c = () -> { return null; }; // <----- false positive here\n        Callable<Object> c2 = new Callable<Object>() {\n            public Object call() {\n                return null; // <----- false positive here\n            }\n        };\n\n        Callable<List<String>> c3 = new Callable<List<String>>() {\n            public List<String> call() {\n                return null;\n            }\n        };\n\n        return joined;\n    }\n}\n    "
+    },
+    {
+      "description": "[java] Array: ReturnEmptyArrayRatherThanNull can not detect return null surrounded by if statement #2540",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.io.IOException;\n\npublic class Example {\n    public byte[] readBytes() throws IOException {\n        int tag = is.read();\n        if (tag == 'N')\n            return null; // violation\n        return new byte[0];\n    }\n}\n"
+    },
+    {
+      "description": "[java] Collection: ReturnEmptyArrayRatherThanNull can not detect return null surrounded by if statement #2540",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.io.IOException;\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Example {\n    public List<Byte> readBytes() throws IOException {\n        int tag = is.read();\n        if (tag == 'N')\n            return null; // violation\n        return new ArrayList<>();\n    }\n}\n"
+    }
+  ]
+}

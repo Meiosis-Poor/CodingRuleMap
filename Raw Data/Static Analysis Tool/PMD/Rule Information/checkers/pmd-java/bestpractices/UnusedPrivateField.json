@@ -1,0 +1,377 @@
+{
+  "name": "UnusedPrivateField",
+  "language": "java",
+  "description": "\nDetects when a private field is declared and/or assigned a value, but not used.\n\nSince PMD 6.50.0 private fields are ignored, if the fields are annotated with any annotation or the\nenclosing class has any annotation. Annotations often enable a framework (such as dependency injection, mocking\nor e.g. Lombok) which use the fields by reflection or other means. This usage can't be detected by static code analysis.\nPreviously these frameworks where explicitly allowed by listing their annotations in the property\n\"ignoredAnnotations\", but that turned out to be prone of false positive for any not explicitly considered framework.\n        ",
+  "example": "public class Something {\n    private static int FOO = 2; // Unused\n    private int i = 5; // Unused\n    private int j = 6;\n    public int addOne() {\n        return j++;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 89,
+  "branches": 16,
+  "apis": 13,
+  "test": [
+    {
+      "description": "simple unused private field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String foo;\n}\n        "
+    },
+    {
+      "description": "private field referenced in another field's initializer",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String foo;\n    private String bar = foo;\n    void buz() {\n        bar = bar + 1;\n    }\n}\n        "
+    },
+    {
+      "description": "private field with field of same name in anonymous inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String foo;\n    void baz() {\n        Runnable r = new Runnable() {\n            public void run() {\n                String foo = \"buz\";\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "field is used semantically before it's declared syntactically",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        foo[0] = foo[0] + 1;\n    }\n    private int[] foo;\n}\n        "
+    },
+    {
+      "description": "private field referenced via 'this' modifier",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String foo;\n    void bar() {\n        bar = this.foo;\n    }\n}\n        "
+    },
+    {
+      "description": "private referenced by anonymous inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final String FOO = \"foo\";\n    public Runnable bar() {\n        return new Runnable() {\n            public void run() {\n                FOO.toString();\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "interface sanity test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public static final String FOO = \"FOO\";\n    public boolean equals(Object another);\n    public int hashCode();\n    public String toString();\n}\n        "
+    },
+    {
+      "description": "unused private field in static inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static class Services {\n        private String x;\n    }\n}\n        "
+    },
+    {
+      "description": "private field referenced in nonstatic inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    private class Bar {\n        void baz() {\n            x = x + 2;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "unused private static field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static String foo;\n}\n        "
+    },
+    {
+      "description": "private static final referenced with qualifier",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final int BAR = 2;\n    int x = Foo.BAR;\n}\n        "
+    },
+    {
+      "description": "unused private field after class decl",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public class Foo {}\n    private int x;\n}\n        "
+    },
+    {
+      "description": "two unused private fields in separate inner classes",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public class Foo {private int x;}\n    public class Bar {private int x;}\n}\n        "
+    },
+    {
+      "description": "method param shadows unused private field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int value;\n    int doSomething(int value) {\n        return value + 1;\n    }\n}\n        "
+    },
+    {
+      "description": "private field referenced via 'this' not shadowed by param of same name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    public Foo(int x) {\n        this.x= this.x + 1;\n    }\n}\n        "
+    },
+    {
+      "description": "don't catch public fields",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static final int FOO = 1;\n}\n        "
+    },
+    {
+      "description": "instantiate self and reference private field on other object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void foo() {\n        Foo foo = new Foo();\n        foo.x = foo.x + 2;\n    }\n}\n        "
+    },
+    {
+      "description": "don't count Serialization fields as being unused",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class Foo {\n    private static final ObjectStreamField[] serialPersistentFields = {new ObjectStreamField(\"foo\", String.class)};\n}\n        "
+    },
+    {
+      "description": "an assignment does not a usage make",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void bar() {\n        x = 4;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to field member is a usage",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo x = new Foo();\n    void bar() {\n        x.y = 42;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to field member using this modifier is a usage",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo x = new Foo();\n    void bar() {\n        this.x.y = 42;\n    }\n}\n        "
+    },
+    {
+      "description": "this.foo++ shouldn't throw an NPE, but isn't a usage",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void bar() {\n        this.x++;\n    }\n}\n        "
+    },
+    {
+      "description": "super.foo++ shouldn't throw an NPE",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        super.x++;\n    }\n}\n        "
+    },
+    {
+      "description": "SuppressWarnings(\"unused\") unused private field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @SuppressWarnings(\"unused\")\n    private String foo;\n}\n        "
+    },
+    {
+      "description": "631681, private field is accessed by outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class XPathFunctionContext {\n\n    private class Singleton {\n        private String foo = \"\";\n    }\n\n    public String getFoo() {\n        return (new Singleton()).foo;\n    }\n}\n        "
+    },
+    {
+      "description": "631681, private field in singleton is accessed by outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class XPathFunctionContext {\n\n    private static class Singleton {\n        private static XPathFunctionContext instance = new XPathFunctionContext();\n    }\n\n    public static XPathFunctionContext getInstance() {\n        return Singleton.instance;\n    }\n}\n        "
+    },
+    {
+      "description": "#1188 False positive in UnusedPrivateField",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum Operation\n{\n    LEFT( Action.PRIVATE_MOVE ), RIGHT( Action.PRIVATE_MOVE ), STOP( Action.PRIVATE_STAY );\n\n    private final int action;\n\n    private Operation(final int action)\n    {\n        this.action = action;\n    }\n\n    public int getAction()\n    {\n        return action;\n    }\n\n    private static final class Action\n    {\n        private static final int PRIVATE_STAY = 0;\n        private static final int PRIVATE_MOVE = 1;\n    }\n}\n        "
+    },
+    {
+      "description": "private field in inner class accessed as method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class InnerPrivateFieldCall {\n    int method() {\n        return Inner.FIELD.length();\n    }\n    static class Inner {\n        private static final String FIELD = \"\";\n    }\n}\n        "
+    },
+    {
+      "description": "private field in inner class accessed by another inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class InnerPrivateFieldInAnotherInner {\n    static class InnerUsing {\n        int method() {\n            return InnerDeclaring.INNER_FIELD;\n        }\n    }\n    static class InnerDeclaring {\n        private static int INNER_FIELD;\n    }\n}\n        "
+    },
+    {
+      "description": "#1302 False Positive: UnusedPrivateField when accessed by inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedPrivateFieldClass\n{\n    private int m_number; // UnusedPrivateField incorrectly errors\n\n    public void increment()\n    {\n        m_number++; // Write\n    }\n\n    public User getUser()\n    {\n        return new User(this);\n    }\n\n    public static class User\n    {\n        private UnusedPrivateFieldClass m_bugTest;\n        private int m_number;\n\n        private User(UnusedPrivateFieldClass bugTest)\n        {\n            m_bugTest = bugTest;\n            m_number = bugTest.m_number; // Read\n        }\n\n        public boolean isValid()\n        {\n            return m_bugTest.m_number == m_number;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@lombok.Data\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Data;\n@Data\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Data;\n@Data\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 4",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\n@Getter\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 5",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\npublic class Foo {\n    @Getter private String bar;\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 6",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\npublic class Foo {\n    @Getter(lazy=true) private String bar;\n}\n        "
+    },
+    {
+      "description": "#1420 UnusedPrivateField: Ignore fields if using lombok - 7",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@lombok.Data\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#907 UnusedPrivateField false-positive with @FXML - 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javafx.fxml.FXML;\nimport javafx.scene.control.TabPane;\n\npublic class NodeInfoPanelController {\n    @FXML\n    private TabPane nodeInfoTabPane;\n}\n        "
+    },
+    {
+      "description": "#907 UnusedPrivateField false-positive with @FXML - 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @Deprecated\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#907 UnusedPrivateField false-positive with @FXML - 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @Deprecated\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#1428 False positive in UnusedPrivateField when local variable hides member variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\nimport org.junit.BeforeClass;\npublic class IssueUnusedPrivateField {\n\n    private static Object helper;   // PMD warns unused\n\n    @BeforeClass\n    public static void setUpClass() {\n        helper = new Object();\n    }\n\n    @Test\n    public void testSomething() {\n        String str = helper.toString();     // used here\n        System.out.println(\"str = \" + str);\n\n        String helper = \"some new string\";  // hidden here\n        System.out.println(\"helper = \" + helper);\n    }\n}\n        "
+    },
+    {
+      "description": "#1190 [java] UnusedLocalVariable/UnusedPrivateField false-positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.InputStream;\n\npublic class IssueUnusedPrivateField {\n\n    private InputStream is;\n\n    public IssueUnusedPrivateField(InputStream is) {\n        this.is = is;\n    }\n\n    public void testSomething() {\n        try (is) {\n            System.out.println(\"foo!\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1703 UnusedPrivateField: False-positive with @Delegate",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.Delegate;\n\npublic class Foo {\n    @Delegate private String bar;\n}\n        "
+    },
+    {
+      "description": "#1952 [java] UnusedPrivateField not triggering if @Value annotation present",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport somewhere.Value; // 3rd party Value annotation, ie not lombok\n\npublic class Foo {\n\n    @Value\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#2673 UnusedPrivateField false positive with lombok annotation EqualsAndHashCode",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.EqualsAndHashCode;\n@EqualsAndHashCode\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#2673 UnusedPrivateField false positive with lombok annotation EqualsAndHashCode",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.RequiredArgsConstructor;\n@RequiredArgsConstructor\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "False positive with field used in unary expression #3671",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int counter;\n    public void skip(int n) {\n        while (counter++ < n) {\n            System.out.println(\"Skipping\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when referenced from within inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final String OUTER_CONSTANT = \"\";\n\n    private static final class Empty {\n        private static final class Inner {\n            public boolean isEmpty(String s) {\n                return OUTER_CONSTANT.equals(s);\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3824 #3825 Do not flag fields annotated with @Id, @EmbeddedId, or @Version",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.persistence.Column;\nimport javax.persistence.Entity;\nimport javax.persistence.Id;\nimport javax.persistence.Table;\nimport javax.persistence.Version;\n\n@Entity\n@Table(name = \"my_table\")\npublic class MyTable implements Serializable {\n   private static final long serialVersionUID = 1L;\n\n   @Id\n   @Column(name = \"id\", nullable = false)\n   private long m_id;\n\n   @Version\n   @Column(name = \"optimistic_lock\", nullable = false)\n   private short m_optimisticLock;\n\n   public MyTable() {\n      // nothing to do\n   }\n}\n        "
+    },
+    {
+      "description": "Do not flag Mockito fields that are injected into test target",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.mockito.Spy;\nimport org.mockito.Mock;\nimport org.mockito.InjectMocks;\nimport org.springframework.boot.test.mock.mockito.MockBean;\n\npublic class MyTest {\n   @Mock\n   private Object mock;\n\n   @MockBean\n   private Object bean;\n\n   @Spy\n   private Object spy;\n\n   @InjectMocks\n   private Object target;\n\n   void test() {\n      target.methodToTest();\n   }\n}\n        "
+    },
+    {
+      "description": "#4037 false positive with Spring @SpyBean",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.springframework.boot.test.mock.mockito.SpyBean;\nimport java.security.Provider.Service;\npublic class C {\n    @SpyBean\n    private Service service; \n}\n        "
+    },
+    {
+      "description": "[java] UnusedPrivateField - false positive with Lombok @ToString.Include #4033",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.ToString;\n\n@ToString\npublic class C {\n    @ToString.Include\n    private int a;  // Should not report a warning in this line\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateField doesn't find annotated unused private fields anymore #4166 (default)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.openqa.selenium.support.FindBy;\nimport org.openqa.selenium.WebElement;\n\nclass ClassWithUnusedField {\n    @FindBy(id = \"myId\")\n    private WebElement myElement;\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateField doesn't find annotated unused private fields anymore #4166 (default, other annotation)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass ClassWithUnusedField {\n    @Deprecated\n    private String unusedField;\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateField doesn't find annotated unused private fields anymore #4166 (configuration)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        9
+      ],
+      "code": "\nimport org.openqa.selenium.WebElement;\nimport org.openqa.selenium.support.FindBy;\n\nclass ClassWithUnusedField {\n    @Deprecated\n    private String unusedField;\n\n    @FindBy(id = \"whatEverId\")\n    private WebElement myElement;\n}\n"
+    },
+    {
+      "description": "#3626 FN within anonymous class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Tester {\n    Object anonymousClass = new Object() {\n        private int x = 2021; // Unused, should report a warning\n    };\n}\n"
+    },
+    {
+      "description": "#3632 [java] Make UnusedPrivateField consider enum classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Test {\n  enum EnumClass {\n      subClass();\n      EnumClass() {}\n      private int a;  // should report a warning here\n  }\n}\n"
+    },
+    {
+      "description": "#3632 [java] Make UnusedPrivateField consider enum classes (top-level)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nenum EnumClass {\n  subClass();\n  EnumClass() {}\n  private int a;  // should report a warning here\n}\n"
+    },
+    {
+      "description": "#1433 [java] UnusedPrivateField: false positive when field has the same name as the class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Board {\n    private int[] Board;\n\n    public Board(int[] b) {\n        for (int i = 0; i < b.length; i++)\n            Board[i] = b[i];\n    }\n\n    public int size() {\n        return Board.length;\n    }\n}\n"
+    }
+  ]
+}

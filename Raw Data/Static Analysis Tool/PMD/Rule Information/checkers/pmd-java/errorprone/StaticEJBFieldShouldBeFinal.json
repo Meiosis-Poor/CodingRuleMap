@@ -1,0 +1,28 @@
+{
+  "name": "StaticEJBFieldShouldBeFinal",
+  "language": "java",
+  "description": "\nAccording to the J2EE specification, an EJB should not have any static fields\nwith write access. However, static read-only fields are allowed. This ensures proper\nbehavior especially when instances are distributed by the container on several JREs.\n        ",
+  "example": "public class SomeEJB extends EJBObject implements EJBLocalHome {\n\n    private static int CountA;          // poor, field can be edited\n\n    private static final int CountB;    // preferred, read-only access\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Good practice",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.ejb.EJBLocalHome;\nimport javax.ejb.EJBObject;\n\npublic class SomeEJB implements EJBLocalHome, EJBObject {\n    private static final int GOOD_STATIC_FIELD;\n}\n        "
+    },
+    {
+      "description": "Bad example",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport javax.ejb.EJBLocalHome;\nimport javax.ejb.EJBObject;\n\npublic class SomeEJB implements EJBLocalHome, EJBObject {\n    private static int BAD_STATIC_FIELD;\n\n    private static final int GOOD_STATIC_FIELD;\n}\n        "
+    }
+  ]
+}

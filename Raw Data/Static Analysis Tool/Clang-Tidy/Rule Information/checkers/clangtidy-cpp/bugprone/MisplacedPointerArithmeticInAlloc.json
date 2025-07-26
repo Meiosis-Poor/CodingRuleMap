@@ -1,0 +1,32 @@
+{
+  "name": "MisplacedPointerArithmeticInAlloc",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-misplaced-pointer-arithmetic-in-alloc",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 100,
+  "branches": 7,
+  "apis": 76,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        11,
+        15,
+        19,
+        23,
+        27,
+        34,
+        38,
+        42,
+        46,
+        50,
+        63
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-misplaced-pointer-arithmetic-in-alloc %t\n\nclass C {\n  int num;\npublic:\n  explicit C(int n) : num(n) {}\n};\n\nvoid bad_new(int n, int m) {\n  C *p = new C(n) + 10;\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: arithmetic operation is applied to the result of operator new() instead of its size-like argument\n  // CHECK-FIXES: C *p = new C(n + 10);\n\n  p = new C(n) - 10;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new() instead of its size-like argument\n  // CHECK-FIXES: p = new C(n - 10);\n\n  p = new C(n) + m;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new() instead of its size-like argument\n  // CHECK-FIXES: p = new C(n + m);\n\n  p = new C(n) - (m + 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new() instead of its size-like argument\n  // CHECK-FIXES: p = new C(n - (m + 10));\n\n  p = new C(n) - m + 10;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new() instead of its size-like argument\n  // CHECK-FIXES: p = new C(n - m) + 10;\n  // FIXME: Should be p = new C(n - m + 10);\n}\n\nvoid bad_new_array(int n, int m) {\n  char *p = new char[n] + 10;\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: arithmetic operation is applied to the result of operator new[]() instead of its size-like argument\n  // CHECK-FIXES: char *p = new char[n + 10];\n\n  p = new char[n] - 10;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new[]() instead of its size-like argument\n  // CHECK-FIXES: p = new char[n - 10];\n\n  p = new char[n] + m;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new[]() instead of its size-like argument\n  // CHECK-FIXES: p = new char[n + m];\n\n  p = new char[n] - (m + 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new[]() instead of its size-like argument\n  // CHECK-FIXES: p = new char[n - (m + 10)];\n\n  p = new char[n] - m + 10;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: arithmetic operation is applied to the result of operator new[]() instead of its size-like argument\n  // CHECK-FIXES: p = new char[n - m] + 10;\n  // FIXME: should be p = new char[n - m + 10];\n}\n\nnamespace std {\ntypedef decltype(sizeof(void*)) size_t;\n}\n\nvoid* operator new(std::size_t, void*);\n\nvoid placement_new_ptr(void *buf, C *old) {\n  C **p = new (buf) C*(old) + 1;\n  // CHECK-MESSAGES-NOT: :[[@LINE-1]]:11: warning: arithmetic operation is applied to the result of operator new() instead of its size-like argument\n}"
+    }
+  ]
+}

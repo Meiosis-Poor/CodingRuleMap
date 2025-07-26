@@ -1,0 +1,206 @@
+{
+  "name": "CustomImportOrder",
+  "language": "java",
+  "description": "<div>\n Checks that the groups of import declarations appear in the order specified\n by the user. If there is an import but its group is not specified in the\n configuration such an import should be placed at the end of the import list.\n </div>\n\n <p>\n The rule consists of:\n </p>\n <ol>\n <li>\n STATIC group. This group sets the ordering of static imports.\n </li>\n <li>\n SAME_PACKAGE(n) group. This group sets the ordering of the same package imports.\n Imports are considered on SAME_PACKAGE group if <b>n</b> first domains in package\n name and import name are identical:\n <pre>\n package java.util.concurrent.locks;\n\n import java.io.File;\n import java.util.*; //#1\n import java.util.List; //#2\n import java.util.StringTokenizer; //#3\n import java.util.concurrent.*; //#4\n import java.util.concurrent.AbstractExecutorService; //#5\n import java.util.concurrent.locks.LockSupport; //#6\n import java.util.regex.Pattern; //#7\n import java.util.regex.Matcher; //#8\n </pre>\n If we have SAME_PACKAGE(3) on configuration file, imports #4-6 will be considered as\n a SAME_PACKAGE group (java.util.concurrent.*, java.util.concurrent.AbstractExecutorService,\n java.util.concurrent.locks.LockSupport). SAME_PACKAGE(2) will include #1-8.\n SAME_PACKAGE(4) will include only #6. SAME_PACKAGE(5) will result in no imports assigned\n to SAME_PACKAGE group because actual package java.util.concurrent.locks has only 4 domains.\n </li>\n <li>\n THIRD_PARTY_PACKAGE group. This group sets ordering of third party imports.\n Third party imports are all imports except STATIC, SAME_PACKAGE(n), STANDARD_JAVA_PACKAGE and\n SPECIAL_IMPORTS.\n </li>\n <li>\n STANDARD_JAVA_PACKAGE group. By default, this group sets ordering of standard java/javax imports.\n </li>\n <li>\n SPECIAL_IMPORTS group. This group may contain some imports that have particular meaning for the\n user.\n </li>\n </ol>\n\n <p>\n Rules are configured as a comma-separated ordered list.\n </p>\n\n <p>\n Note: '###' group separator is deprecated (in favor of a comma-separated list),\n but is currently supported for backward compatibility.\n </p>\n\n <p>\n To set RegExps for THIRD_PARTY_PACKAGE and STANDARD_JAVA_PACKAGE groups use\n thirdPartyPackageRegExp and standardPackageRegExp options.\n </p>\n\n <p>\n Pretty often one import can match more than one group. For example, static import from standard\n package or regular expressions are configured to allow one import match multiple groups.\n In this case, group will be assigned according to priorities:\n </p>\n <ol>\n <li>\n STATIC has top priority\n </li>\n <li>\n SAME_PACKAGE has second priority\n </li>\n <li>\n STANDARD_JAVA_PACKAGE and SPECIAL_IMPORTS will compete using \"best match\" rule: longer\n matching substring wins; in case of the same length, lower position of matching substring\n wins; if position is the same, order of rules in configuration solves the puzzle.\n </li>\n <li>\n THIRD_PARTY has the least priority\n </li>\n </ol>\n\n <p>\n Few examples to illustrate \"best match\":\n </p>\n\n <p>\n 1. patterns STANDARD_JAVA_PACKAGE = \"Check\", SPECIAL_IMPORTS=\"ImportOrderCheck\" and input file:\n </p>\n <pre>\n import com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck;\n import com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck;\n </pre>\n\n <p>\n Result: imports will be assigned to SPECIAL_IMPORTS, because matching substring length is 16.\n Matching substring for STANDARD_JAVA_PACKAGE is 5.\n </p>\n\n <p>\n 2. patterns STANDARD_JAVA_PACKAGE = \"Check\", SPECIAL_IMPORTS=\"Avoid\" and file:\n </p>\n <pre>\n import com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck;\n </pre>\n\n <p>\n Result: import will be assigned to SPECIAL_IMPORTS. Matching substring length is 5 for both\n patterns. However, \"Avoid\" position is lower than \"Check\" position.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 370,
+  "branches": 35,
+  "apis": 82,
+  "test": [
+    {
+      "description": "Auto test from InputCustomImportOrderCompareImports.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport java.util.Map.Entry;\nimport java.util.Map; \nimport com.google.common.base.*;\nimport com.google.common.base.internal.*;\npublic class InputCustomImportOrderCompareImports {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderDefault.java",
+      "expected-problems": 13,
+      "expected-linenumbers": [
+        15,
+        16,
+        18,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File.createTempFile;\nimport static java.awt.Button.ABORT; \nimport static java.awt.print.Paper.*; \nimport static javax.swing.WindowConstants.*;\nimport java.awt.Button; \nimport java.awt.Frame; \nimport java.awt.Dialog; \nimport java.awt.color.ColorSpace; \nimport java.awt.event.ActionEvent; \nimport javax.swing.JComponent; \nimport javax.swing.JTable; \nimport java.io.File; \nimport java.io.IOException; \nimport java.io.InputStream; \nimport java.io.Reader; \nimport com.google.common.collect.*;\nimport org.junit.*;\npublic class InputCustomImportOrderDefault {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderDefault2.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        15,
+        19,
+        20,
+        21,
+        22,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File.createTempFile;\nimport static java.awt.Button.ABORT; \nimport static javax.swing.WindowConstants.*;\nimport java.util.List; \nimport java.util.StringTokenizer; \nimport java.util.*; \nimport java.util.concurrent.AbstractExecutorService; \nimport java.util.concurrent.*; \nimport com.google.errorprone.annotations.concurrent.*;\nimport com.google.errorprone.annotations.*; \nimport com.google.common.base.*; \nimport org.junit.*;\npublic class InputCustomImportOrderDefault2 {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderDefault3.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        15,
+        16,
+        21,
+        26,
+        27,
+        28,
+        29
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File.createTempFile;\nimport static java.awt.Button.ABORT; \nimport static java.awt.print.Paper.*; \nimport static javax.swing.WindowConstants.*;\nimport java.awt.Button;\nimport java.awt.Frame;\nimport java.awt.Dialog; \nimport java.awt.color.ColorSpace;\nimport java.awt.event.ActionEvent;\nimport javax.swing.JComponent;\nimport javax.swing.JTable;\nimport java.io.File; \nimport java.io.IOException; \nimport java.io.InputStream; \nimport java.io.Reader; \nimport com.google.errorprone.annotations.*;\nimport com.google.common.collect.*; \nimport org.junit.*;\npublic class InputCustomImportOrderDefault3 {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderDefault4.java",
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        15,
+        16,
+        21,
+        26,
+        27,
+        28,
+        29,
+        30,
+        32,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File.createTempFile;\nimport static java.awt.Button.ABORT; \nimport static java.awt.print.Paper.*; \nimport static javax.swing.WindowConstants.*;\nimport java.awt.Button;\nimport java.awt.Frame;\nimport java.awt.Dialog; \nimport java.awt.color.ColorSpace;\nimport java.awt.event.ActionEvent;\nimport javax.swing.JComponent;\nimport javax.swing.JTable;\nimport java.io.File; \nimport java.io.IOException; \nimport java.io.InputStream; \nimport java.io.Reader; \nimport com.puppycrawl.tools.checkstyle.*; \nimport com.google.common.collect.*; \nimport org.junit.*; \npublic class InputCustomImportOrderDefault4 {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderDefault9.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        18,
+        30,
+        32
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File.createTempFile;\nimport static java.awt.Button.ABORT;\nimport static java.awt.print.Paper.*;\nimport static javax.swing.WindowConstants.*;\nimport java.awt.Button; \nimport java.awt.Frame;\nimport java.awt.Dialog;\nimport java.awt.color.ColorSpace;\nimport java.awt.event.ActionEvent;\nimport javax.swing.JComponent;\nimport javax.swing.JTable;\nimport java.io.File;\nimport java.io.IOException;\nimport java.io.InputStream;\nimport java.io.Reader;\nimport java.io.*; \nimport com.google.common.collect.*; \nimport org.junit.*;\npublic class InputCustomImportOrderDefault9 {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderEmptyRule.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport java.util.Map;\nimport java.util.List; \npublic class InputCustomImportOrderEmptyRule {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderFindBetterPatternMatch.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        18
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport javax.lang.model.element.AnnotationValue;\nimport java.awt.event.ActionEvent;\nimport java.lang.*;\nimport java.awt.color.ColorSpace;\nimport com.google.common.annotations.Beta; \nimport com.google.common.collect.HashMultimap;\npublic class InputCustomImportOrderFindBetterPatternMatch {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderImportsContainingJava.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport java.io.File;\nimport javax.lang.model.SourceVersion;\nimport com.google.errorprone.annotations.*; \npublic class InputCustomImportOrderImportsContainingJava {}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderListRules.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        15,
+        16,
+        21,
+        26,
+        27,
+        28,
+        29
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File.createTempFile;\nimport static java.awt.Button.ABORT; \nimport static java.awt.print.Paper.*; \nimport static javax.swing.WindowConstants.*;\nimport java.awt.Button;\nimport java.awt.Frame;\nimport java.awt.Dialog; \nimport java.awt.color.ColorSpace;\nimport java.awt.event.ActionEvent;\nimport javax.swing.JComponent;\nimport javax.swing.JTable;\nimport java.io.File; \nimport java.io.IOException; \nimport java.io.InputStream; \nimport java.io.Reader; \nimport com.google.errorprone.annotations.*;\nimport com.google.common.collect.*; \nimport org.junit.*;\npublic class InputCustomImportOrderListRules {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderPossibleIndexOutOfBoundsException.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport javax.xml.transform.Source;\nimport org.w3c.dom.Node; \nclass InputCustomImportOrderPossibleIndexOutOfBoundsException {}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderSingleLine.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        14,
+        19,
+        22
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder; import static java.awt.Button.ABORT; import java.util.Map; import java.util.Map.Entry; \nimport com.google.common.annotations.Beta; import com.google.common.collect.HashMultimap; \nimport org.junit.rules.*;\nimport org.junit.runner.*;\nimport org.junit.validator.*;\nimport com.puppycrawl.tools.checkstyle.*; \nimport picocli.*; \nclass InputCustomImportOrderSingleLine {}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderSingleLineList.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        14,
+        19,
+        22
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder; import static java.awt.Button.ABORT; import java.util.Map; import java.util.Map.Entry; \nimport com.google.common.annotations.Beta; import com.google.common.collect.HashMultimap; \nimport org.junit.rules.*;\nimport org.junit.runner.*;\nimport org.junit.validator.*;\nimport com.puppycrawl.tools.checkstyle.*; \nimport picocli.*; \nclass InputCustomImportOrderSingleLineList {}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrderSpanMultipleLines.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        26,
+        41,
+        45,
+        50,
+        54,
+        58
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.io.File\n    .createTempFile\n    ;\nimport java.util.\n    Arrays\n    ;\nimport java.util. \n    BitSet\n    ;\nimport java.util.\n    Collection\n    ;\nimport java.util.HashMap;\nimport java.util.HashSet; \nimport org.apache.tools.ant.*; \nimport org.apache.commons.beanutils.*;\nimport com.puppycrawl.tools.checkstyle.*; \nimport picocli.*; \nimport picocli.CommandLine; \nclass InputCustomImportOrderSpanMultipleLines {}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrder_MultiplePatternMultipleImport.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport java.util.Scanner;\nimport org.junit.Test; \npublic class InputCustomImportOrder_MultiplePatternMultipleImport {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrder_NoSeparator.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        19
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport static java.awt.Button.ABORT;\nimport static javax.swing.WindowConstants.*;\nimport static java.io.File.createTempFile; \nimport java.util.*;\nimport java.util.StringTokenizer;\nimport java.util.concurrent.locks.AbstractOwnableSynchronizer.*;\nimport java.util.concurrent.locks.*; \nimport org.apache.commons.beanutils.*;\npublic class InputCustomImportOrder_NoSeparator {\n}"
+    },
+    {
+      "description": "Auto test from InputCustomImportOrder_OverlappingPatterns.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        19,
+        23,
+        29,
+        33,
+        37,
+        39,
+        40
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.imports.customimportorder;\nimport com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck;\nimport com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderCheck;\nimport com.puppycrawl.tools.checkstyle.checks.imports.ImportOrderOption;\nimport com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocNodeImpl; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.AbstractJavadocCheck; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.AtclauseOrderCheck; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTagContinuationIndentationCheck; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.InvalidJavadocTag; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.WriteTagCheck; \nimport com.puppycrawl.tools.checkstyle.*;\nimport com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocTag; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.JavadocMethodCheck; \nimport com.puppycrawl.tools.checkstyle.checks.javadoc.NonEmptyAtclauseDescriptionCheck; \npublic class InputCustomImportOrder_OverlappingPatterns {\n}"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "DurationDivision",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-duration-division",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 53,
+  "branches": 1,
+  "apis": 43,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        23,
+        26,
+        29,
+        32,
+        35,
+        40,
+        44
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s abseil-duration-division %t\n\nnamespace absl {\n\nclass Duration {};\n\nint operator/(Duration lhs, Duration rhs);\n\ndouble FDivDuration(Duration num, Duration den);\n\n}  // namespace absl\n\nvoid TakesDouble(double);\n\n#define MACRO_EQ(x, y) (x == y)\n#define MACRO_DIVEQ(x,y,z) (x/y == z)\n#define CHECK(x) (x)\n\nvoid Positives() {\n  absl::Duration d;\n\n  const double num_double = d/d;\n  // CHECK-MESSAGES: [[@LINE-1]]:30: warning: operator/ on absl::Duration objects performs integer division; did you mean to use FDivDuration()? [abseil-duration-division]\n  // CHECK-FIXES: const double num_double = absl::FDivDuration(d, d);\n  const float num_float = d/d;\n  // CHECK-MESSAGES: [[@LINE-1]]:28: warning: operator/ on absl::Duration objects\n  // CHECK-FIXES: const float num_float = absl::FDivDuration(d, d);\n  const auto SomeVal = 1.0 + d/d;\n  // CHECK-MESSAGES: [[@LINE-1]]:31: warning: operator/ on absl::Duration objects\n  // CHECK-FIXES: const auto SomeVal = 1.0 + absl::FDivDuration(d, d);\n  if (MACRO_EQ(d/d, 0.0)) {}\n  // CHECK-MESSAGES: [[@LINE-1]]:17: warning: operator/ on absl::Duration objects\n  // CHECK-FIXES: if (MACRO_EQ(absl::FDivDuration(d, d), 0.0)) {}\n  if (CHECK(MACRO_EQ(d/d, 0.0))) {}\n  // CHECK-MESSAGES: [[@LINE-1]]:23: warning: operator/ on absl::Duration objects\n  // CHECK-FIXES: if (CHECK(MACRO_EQ(absl::FDivDuration(d, d), 0.0))) {}\n\n  // This one generates a message, but no fix.\n  if (MACRO_DIVEQ(d, d, 0.0)) {}\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: operator/ on absl::Duration objects\n  // CHECK-FIXES: if (MACRO_DIVEQ(d, d, 0.0)) {}\n \n  TakesDouble(d/d);\n  // CHECK-MESSAGES: [[@LINE-1]]:16: warning: operator/ on absl::Duration objects\n  // CHECK-FIXES: TakesDouble(absl::FDivDuration(d, d));\n}\n\nvoid TakesInt(int);\ntemplate <class T>\nvoid TakesGeneric(T);\n\nvoid Negatives() {\n  absl::Duration d;\n  const int num_int = d/d;\n  const long num_long = d/d;\n  const short num_short = d/d;\n  const char num_char = d/d;\n  const auto num_auto = d/d;\n  const auto SomeVal = 1 + d/d;\n\n  TakesInt(d/d);\n  TakesGeneric(d/d);\n  // Explicit cast should disable the warning.\n  const double num_cast1 = static_cast<double>(d/d);\n  const double num_cast2 = (double)(d/d);\n}\n\ntemplate <class T>\ndouble DoubleDivision(T t1, T t2) {return t1/t2;}\n\n//This also won't trigger a warning\nvoid TemplateDivision() {\n  absl::Duration d;\n  DoubleDivision(d, d);\n}"
+    }
+  ]
+}

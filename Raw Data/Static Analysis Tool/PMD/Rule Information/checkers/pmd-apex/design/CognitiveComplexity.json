@@ -1,0 +1,59 @@
+{
+  "name": "CognitiveComplexity",
+  "language": "apex",
+  "description": "\nMethods that are highly complex are difficult to read and more costly to maintain. If you include too much decisional\nlogic within a single method, you make its behavior hard to understand and more difficult to modify.\n\nCognitive complexity is a measure of how difficult it is for humans to read and understand a method. Code that contains\na break in the control flow is more complex, whereas the use of language shorthands doesn't increase the level of\ncomplexity. Nested control flows can make a method more difficult to understand, with each additional nesting of the\ncontrol flow leading to an increase in cognitive complexity.\n\nInformation about Cognitive complexity can be found in the original paper here:\n<https://www.sonarsource.com/docs/CognitiveComplexity.pdf>\n\nBy default, this rule reports methods with a complexity of 15 or more. Reported methods should be broken down into less\ncomplex components.\n\n        ",
+  "example": "public class Foo {\n    // Has a cognitive complexity of 0\n    public void createAccount() {\n        Account account = new Account(Name = 'PMD');\n        insert account;\n    }\n\n    // Has a cognitive complexity of 1\n    public Boolean setPhoneNumberIfNotExisting(Account a, String phone) {\n        if (a.Phone == null) {                          // +1\n            a.Phone = phone;\n            update a;\n            return true;\n        }\n\n        return false;\n    }\n\n    // Has a cognitive complexity of 4\n    public void updateContacts(List<Contact> contacts) {\n        List<Contact> contactsToUpdate = new List<Contact>();\n\n        for (Contact contact : contacts) {                           // +1\n            if (contact.Department == 'Finance') {                   // +2 (nesting = 1)\n                contact.Title = 'Finance Specialist';\n                contactsToUpdate.add(contact);\n            } else if (contact.Department == 'Sales') {              // +1\n                contact.Title = 'Sales Specialist';\n                contactsToUpdate.add(contact);\n            }\n        }\n\n        update contactsToUpdate;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 108,
+  "branches": 10,
+  "apis": 8,
+  "test": [
+    {
+      "description": "SonarSource example 1",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        1,
+        3
+      ],
+      "code": "\n            \n            public class Foo {\n              @Nullable\n              private MethodJavaSymbol overriddenSymbolFrom(ClassJavaType classType) {\n                if (classType.isUnknown()) { // +1\n                  return Symbols.unknownMethodSymbol;\n                }\n                boolean unknownFound = false;\n                List<JavaSymbol> symbols = classType.getSymbol().members().lookup(name);\n                for (JavaSymbol overrideSymbol : symbols) { // +1\n                  if (overrideSymbol.isKind(JavaSymbol.MTH) // +2 (nesting = 1)\n                      && !overrideSymbol.isStatic()) { // +1\n                    MethodJavaSymbol methodJavaSymbol = (MethodJavaSymbol)overrideSymbol;\n                    if (canOverride(methodJavaSymbol)) { // +3 (nesting = 2)\n                      Boolean overriding = checkOverridingParameters(methodJavaSymbol,\n                          classType);\n                      if (overriding == null) { // +4 (nesting = 3)\n                        if (!unknownFound) { // +5 (nesting = 4)\n                          unknownFound = true;\n                        }\n                      } else if (overriding) { // +1\n                        return methodJavaSymbol;\n                      }\n                    }\n                  }\n                }\n                if (unknownFound) { // +1\n                  return Symbols.unknownMethodSymbol;\n                }\n                return null;\n              } // total complexity = 19\n            }\n            \n        "
+    },
+    {
+      "description": "SonarSource example 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        1,
+        2
+      ],
+      "code": "\n            \n            public class Foo {\n              private void addVersion(final Entry entry, final Transaction txn)\n                  /*throws PersistitInterruptedException, RollbackException*/ {\n                final TransactionIndex ti = _persistit.getTransactionIndex();\n                while (true) { // +1\n                  try {\n                    //synchronized (this) {\n                      if (frst != null) { // +2 (nesting = 1)\n                        if (frst.getVersion() > entry.getVersion()) { // +3 (nesting = 2)\n                          throw new RollbackException();\n                        }\n                        if (txn.isActive()) { // +3 (nesting = 2)\n                          for // +4 (nesting = 3)\n                          (Entry e = frst; e != null; e = e.getPrevious()) {\n                            final long version = e.getVersion();\n                            final long depends = ti.wwDependency(version,\n                                txn.getTransactionStatus(), 0);\n                            if (depends == TIMED_OUT) { // +5 (nesting = 4)\n                              throw new WWRetryException(version);\n                            }\n                            if (depends != 0 // +5 (nesting = 4)\n                                && depends != ABORTED) { // +1\n                              throw new RollbackException();\n                            }\n                          }\n                        }\n                      }\n                      entry.setPrevious(frst);\n                      frst = entry;\n                      break;\n                    //}\n                  } catch (final WWRetryException re) { // +2 (nesting = 1)\n                    try {\n                      final long depends = _persistit.getTransactionIndex()\n                          .wwDependency(re.getVersionHandle(),txn.getTransactionStatus(),\n                              SharedResource.DEFAULT_MAX_WAIT_TIME);\n                      if (depends != 0 // +3 (nesting = 2)\n                          && depends != ABORTED) { // +1\n                        throw new RollbackException();\n                      }\n                    } catch (final InterruptedException ie) { // +3 (nesting = 2)\n                      throw new PersistitInterruptedException(ie);\n                    }\n                  } catch (final InterruptedException ie) { // +2 (nesting = 1)\n                    throw new PersistitInterruptedException(ie);\n                  }\n                }\n              } // total complexity = 35\n            }\n            \n        "
+    },
+    {
+      "description": "SonarSource example 3",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        1,
+        2
+      ],
+      "code": "\n            \n            public class Foo {\n              private static String toRegexp(String antPattern,\n                  String directorySeparator) {\n                final String escapedDirectorySeparator = '\\\\' + directorySeparator;\n                final StringBuilder sb = new StringBuilder(antPattern.length());\n                sb.append('^');\n                int i = antPattern.startsWith('/') || // +1\n                    antPattern.startsWith('\\\\') ? 1 : 0; // +1\n                while (i < antPattern.length()) { // +1\n                  final char ch = antPattern.charAt(i);\n                  if (SPECIAL_CHARS.indexOf(ch) != -1) { // +2 (nesting = 1)\n                    sb.append('\\\\').append(ch);\n                  } else if (ch == '*') { // +1\n                    if (i + 1 < antPattern.length() // +3 (nesting = 2)\n                        && antPattern.charAt(i + 1) == '*') { // +1\n                      if (i + 2 < antPattern.length() // +4 (nesting = 3)\n                          && isSlash(antPattern.charAt(i + 2))) { // +1\n                        sb.append('(?:.*')\n                            .append(escapedDirectorySeparator).append('|)');\n                        i += 2;\n                      } else { // +1\n                        sb.append('.*');\n                        i += 1;\n                      }\n                    } else { // +1\n                      sb.append('[^').append(escapedDirectorySeparator).append(']*?');\n                    }\n                  } else if (ch == '?') { // +1\n                    sb.append('[^').append(escapedDirectorySeparator).append(']');\n                  } else if (isSlash(ch)) { // +1\n                    sb.append(escapedDirectorySeparator);\n                  } else { // +1\n                    sb.append(ch);\n                  }\n                  i++;\n                }\n                sb.append('$');\n                return sb.toString();\n              } // total complexity = 20\n            }\n            \n        "
+    },
+    {
+      "description": "Rule Doc Example",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        1,
+        9,
+        20
+      ],
+      "code": "\n            \npublic class Foo {\n    // Has a cognitive complexity of 0\n    public void createAccount() {\n        Account account = new Account(Name = 'PMD');\n        insert account;\n    }\n\n    // Has a cognitive complexity of 1\n    public Boolean setPhoneNumberIfNotExisting(Account a, String phone) {\n        if (a.Phone == null) {                          // +1\n            a.Phone = phone;\n            update a;\n            return true;\n        }\n\n        return false;\n    }\n\n    // Has a cognitive complexity of 4\n    public void updateContacts(List<Contact> contacts) {\n        List<Contact> contactsToUpdate = new List<Contact>();\n\n        for (Contact contact : contacts) {                           // +1\n            if (contact.Department == 'Finance') {                   // +2 (nesting = 1)\n                contact.Title = 'Finance Specialist';\n                contactsToUpdate.add(contact);\n            } else if (contact.Department == 'Sales') {              // +1\n                contact.Title = 'Sales Specialist';\n                contactsToUpdate.add(contact);\n            }\n        }\n\n        update contactsToUpdate;\n    }\n}            \n        "
+    },
+    {
+      "description": "Cognitive Complexity within triggers (#5138)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n// https://github.com/SalesforceLabs/Partner-Onboarding/blob/main/Partner%20Onboarding/triggers/AccountTrigger.trigger\ntrigger AccountTrigger on Account (after insert, after update) {\n\n    public List<Account> updatedAccounts = Trigger.new;\n    if(trigger.isAfter){\n        Map<Id,Account> mapOfOldValues = trigger.oldMap;\n        Map<Id,Id> accountWithOnboardingTemplateIDs = new Map<Id,Id>();\n        for(Account updated_Account : updatedAccounts) {\n            if(updated_Account.Onboarding_Plan__c != null)\n            {\n                if(mapOfOldValues == null){\n                    accountWithOnboardingTemplateIDs.put(updated_Account.Id, updated_Account.Onboarding_Plan__c);\n                } else {\n                    if(updated_Account.Onboarding_Plan__c != mapOfOldValues.get(updated_Account.Id).Onboarding_Plan__c)\n                        accountWithOnboardingTemplateIDs.put(updated_Account.Id, updated_Account.Onboarding_Plan__c);\n                }\n            }\n        } //End For\n\n        if(accountWithOnboardingTemplateIDs.size() > 0){\n            OnboardingPlanService.updateContactsWithOndbPlan(accountWithOnboardingTemplateIDs);\n        }\n    }\n}\n"
+    }
+  ]
+}

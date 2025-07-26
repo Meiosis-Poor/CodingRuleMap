@@ -1,0 +1,33 @@
+{
+  "name": "DeleteNullPointer",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-delete-null-pointer",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 74,
+  "branches": 6,
+  "apis": 63,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        11,
+        25,
+        46,
+        60,
+        72,
+        84,
+        95,
+        103,
+        111,
+        119,
+        127,
+        138
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-delete-null-pointer %t -- -- -fno-delayed-template-parsing\n\n#define NULL 0\n\ntemplate <typename T>\nstruct Templ {\n  void foo() {\n    // t1\n    if (mem) // t2\n      delete mem;\n    // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: 'if' statement is unnecessary;\n    // CHECK-FIXES: // t1\n    // CHECK-FIXES-NEXT: // t2\n    // CHECK-FIXES-NEXT: delete mem;\n  }\n  T mem;\n};\n\ntemplate <typename T>\nstruct TemplPtr {\n  void foo() {\n    // t3\n    if (mem) // t4\n      delete mem;\n    // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: 'if' statement is unnecessary;\n    // CHECK-FIXES: // t3\n    // CHECK-FIXES-NEXT: // t4\n    // CHECK-FIXES-NEXT: delete mem;\n  }\n  T *mem;\n};\n\nvoid instantiate() {\n  Templ<int *> ti2;\n  ti2.foo();\n  TemplPtr<int> ti3;\n  ti3.foo();\n}\n\ntemplate <typename T>\nstruct NeverInstantiated {\n  void foo() {\n    // t1\n    if (mem) // t2\n      delete mem;\n    // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: 'if' statement is unnecessary;\n    // CHECK-FIXES: // t1\n    // CHECK-FIXES-NEXT: // t2\n    // CHECK-FIXES-NEXT: delete mem;\n  }\n  T mem;\n};\n\ntemplate <typename T>\nstruct NeverInstantiatedPtr {\n  void foo() {\n    // t3\n    if (mem) // t4\n      delete mem;\n    // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: 'if' statement is unnecessary;\n    // CHECK-FIXES: // t3\n    // CHECK-FIXES-NEXT: // t4\n    // CHECK-FIXES-NEXT: delete mem;\n  }\n  T *mem;\n};\n\nvoid f() {\n  int *ps = 0;\n  if (ps /**/) // #0\n    delete ps;\n  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: 'if' statement is unnecessary; deleting null pointer has no effect [readability-delete-null-pointer]\n\n  // CHECK-FIXES: int *ps = 0;\n  // CHECK-FIXES-NEXT: // #0\n  // CHECK-FIXES-NEXT: delete ps;\n\n  int *p = 0;\n\n  // #1\n  if (p) { // #2\n    delete p;\n  } // #3\n  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: 'if' statement is unnecessary; deleting null pointer has no effect [readability-delete-null-pointer]\n\n  // CHECK-FIXES: // #1\n  // CHECK-FIXES-NEXT: // #2\n  // CHECK-FIXES-NEXT: delete p;\n  // CHECK-FIXES-NEXT: // #3\n\n  int *p2 = new int[3];\n  // #4\n  if (p2) // #5\n    delete[] p2;\n  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: 'if' statement is unnecessary;\n\n  // CHECK-FIXES: // #4\n  // CHECK-FIXES-NEXT: // #5\n  // CHECK-FIXES-NEXT: delete[] p2;\n\n  int *p3 = 0;\n  if (NULL != p3) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'if' statement is unnecessary;\n    delete p3;\n  }\n  // CHECK-FIXES-NOT: if (NULL != p3) {\n  // CHECK-FIXES: delete p3;\n\n  int *p4 = nullptr;\n  if (p4 != nullptr) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'if' statement is unnecessary;\n    delete p4;\n  }\n  // CHECK-FIXES-NOT: if (p4 != nullptr) {\n  // CHECK-FIXES: delete p4;\n\n  char *c;\n  if (c != 0) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'if' statement is unnecessary;\n    delete c;\n  }\n  // CHECK-FIXES-NOT: if (c != 0) {\n  // CHECK-FIXES: delete c;\n\n  char *c2;\n  if (c2) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'if' statement is unnecessary;\n    // CHECK-FIXES: } else {\n    // CHECK-FIXES: c2 = c;\n    delete c2;\n  } else {\n    c2 = c;\n  }\n  struct A {\n    void foo() {\n      if (mp) // #6\n        delete mp;\n      // CHECK-MESSAGES: :[[@LINE-2]]:7: warning: 'if' statement is unnecessary; deleting null pointer has no effect [readability-delete-null-pointer]\n      // CHECK-FIXES: // #6\n      // CHECK-FIXES-NEXT: delete mp;\n    }\n    int *mp;\n  };\n}\n\nvoid g() {\n  int *p5, *p6;\n  if (p5)\n    delete p6;\n\n  if (p5 && p6)\n    delete p5;\n\n  if (p6) {\n    int x = 5;\n    delete p6;\n  }\n}"
+    }
+  ]
+}

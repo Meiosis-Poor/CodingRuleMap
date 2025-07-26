@@ -1,0 +1,36 @@
+{
+  "name": "ProTypeCstyleCast",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-pro-type-cstyle-cast",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 100,
+  "branches": 11,
+  "apis": 69,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 15,
+      "expected-linenumbers": [
+        7,
+        14,
+        23,
+        52,
+        56,
+        66,
+        71,
+        83,
+        89,
+        96,
+        99,
+        103,
+        113,
+        118,
+        123
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-cstyle-cast %t\n\nvoid reinterpretcast() {\n  int i = 0;\n  void *j;\n  j = (int*)j;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use C-style cast to convert between unrelated types [cppcoreguidelines-pro-type-cstyle-cast]\n}\n\nvoid constcast() {\n  int* i;\n  const int* j;\n  i = (int*)j;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use C-style cast to cast away constness\n  j = (const int*)i; // OK, const added\n  (void)j; // OK, not a const_cast\n}\n\nvoid const_and_reinterpret() {\n  int* i;\n  const void* j;\n  i = (int*)j;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use C-style cast to convert between unrelated types\n}\n\nclass Base {\n};\n\nclass Derived : public Base {\n};\n\nclass Base2 {\n};\n\nclass MultiDerived : public Base, public Base2 {\n};\n\nclass PolymorphicBase {\npublic:\n  virtual ~PolymorphicBase();\n};\n\nclass PolymorphicDerived : public PolymorphicBase {\n};\n\nclass PolymorphicMultiDerived : public Base, public PolymorphicBase {\n};\n\nvoid pointers() {\n\n  auto P0 = (Derived*)new Base();\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use C-style cast to downcast from a base to a derived class\n\n  const Base* B0;\n  auto PC0 = (const Derived*)(B0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not use C-style cast to downcast from a base to a derived class\n\n  auto P1 = (Base*)new Derived(); // OK, upcast to a public base\n  auto P2 = (Base*)new MultiDerived(); // OK, upcast to a public base\n  auto P3 = (Base2*)new MultiDerived(); // OK, upcast to a public base\n}\n\nvoid pointers_polymorphic() {\n\n  auto PP0 = (PolymorphicDerived*)new PolymorphicBase();\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not use C-style cast to downcast from a base to a derived class; use dynamic_cast instead\n  // CHECK-FIXES: auto PP0 = dynamic_cast<PolymorphicDerived*>(new PolymorphicBase());\n\n  const PolymorphicBase* B0;\n  auto PPC0 = (const PolymorphicDerived*)B0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: do not use C-style cast to downcast from a base to a derived class; use dynamic_cast instead\n  // CHECK-FIXES: auto PPC0 = dynamic_cast<const PolymorphicDerived*>(B0);\n\n\n  auto B1 = (PolymorphicBase*)new PolymorphicDerived(); // OK, upcast to a public base\n  auto B2 = (PolymorphicBase*)new PolymorphicMultiDerived(); // OK, upcast to a public base\n  auto B3 = (Base*)new PolymorphicMultiDerived(); // OK, upcast to a public base\n}\n\nvoid arrays() {\n  Base ArrayOfBase[10];\n  auto A0 = (Derived*)ArrayOfBase;\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use C-style cast to downcast from a base to a derived class\n}\n\nvoid arrays_polymorphic() {\n  PolymorphicBase ArrayOfPolymorphicBase[10];\n  auto AP0 = (PolymorphicDerived*)ArrayOfPolymorphicBase;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not use C-style cast to downcast from a base to a derived class; use dynamic_cast instead\n  // CHECK-FIXES: auto AP0 = dynamic_cast<PolymorphicDerived*>(ArrayOfPolymorphicBase);\n}\n\nvoid references() {\n  Base B0;\n  auto R0 = (Derived&)B0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use C-style cast to downcast from a base to a derived class\n  Base& RefToBase = B0;\n  auto R1 = (Derived&)RefToBase;\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: do not use C-style cast to downcast from a base to a derived class\n\n  const Base& ConstRefToBase = B0;\n  auto RC1 = (const Derived&)ConstRefToBase;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not use C-style cast to downcast from a base to a derived class\n\n\n  Derived RD1;\n  auto R2 = (Base&)RD1; // OK, upcast to a public base\n}\n\nvoid references_polymorphic() {\n  PolymorphicBase B0;\n  auto RP0 = (PolymorphicDerived&)B0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not use C-style cast to downcast from a base to a derived class; use dynamic_cast instead\n  // CHECK-FIXES: auto RP0 = dynamic_cast<PolymorphicDerived&>(B0);\n\n  PolymorphicBase& RefToPolymorphicBase = B0;\n  auto RP1 = (PolymorphicDerived&)RefToPolymorphicBase;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not use C-style cast to downcast from a base to a derived class; use dynamic_cast instead\n  // CHECK-FIXES: auto RP1 = dynamic_cast<PolymorphicDerived&>(RefToPolymorphicBase);\n\n  const PolymorphicBase& ConstRefToPolymorphicBase = B0;\n  auto RPC2 = (const PolymorphicDerived&)(ConstRefToPolymorphicBase);\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: do not use C-style cast to downcast from a base to a derived class; use dynamic_cast instead\n  // CHECK-FIXES: auto RPC2 = dynamic_cast<const PolymorphicDerived&>(ConstRefToPolymorphicBase);\n\n  PolymorphicDerived d1;\n  auto RP2 = (PolymorphicBase&)d1; // OK, upcast to a public base\n}\n\ntemplate<class B, class D>\nvoid templ() {\n  auto B0 = (B*)new D();\n}\n\nvoid templ_bad_call() {\n  templ<Derived, Base>(); //FIXME: this should trigger a warning\n}\n\nvoid templ_good_call() {\n  templ<Base, Derived>(); // OK, upcast to a public base\n}"
+    }
+  ]
+}

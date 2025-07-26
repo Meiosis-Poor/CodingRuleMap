@@ -1,0 +1,33 @@
+{
+  "name": "SuperClone",
+  "language": "java",
+  "description": "<div>\n Checks that an overriding {@code clone()} method invokes {@code super.clone()}.\n Does not check native methods, as they have no possible java defined implementation.\n </div>\n\n <p>\n Reference:\n <a href=\"https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/lang/Object.html#clone%28%29\">\n Object.clone()</a>.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 9,
+  "branches": 0,
+  "apis": 1,
+  "test": [
+    {
+      "description": "Auto test from InputSuperCloneInnerAndWithArguments.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        32,
+        40,
+        65
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.superclone;\npublic class InputSuperCloneInnerAndWithArguments\n{\n    public InputSuperCloneInnerAndWithArguments() throws CloneNotSupportedException\n    { \n        super.equals(new String());\n        super.clone();\n    }\n    public Object clone() throws CloneNotSupportedException\n    {\n        return super.clone();\n    }\n    public void method() throws CloneNotSupportedException\n    {\n        super.clone();\n    }\n    {\n        super.clone();\n    }\n}\nclass NoSuperClone\n{\n    public Object clone() \n    {\n        return null;\n    }\n}\nclass InnerClone\n{\n    public Object clone() \n    {\n        class Inner\n        {\n            public Object clone() throws CloneNotSupportedException\n            {\n                return super.clone();\n            }\n        }\n        return null;\n    }\n}\nclass CloneWithTypeArguments<T> extends CloneWithTypeArgumentsAndNoSuper<T>\n{\n    public CloneWithTypeArguments<T> clone() throws CloneNotSupportedException\n    {\n        return (CloneWithTypeArguments<T>) super.<T>clone();\n    }\n}\nclass CloneWithTypeArgumentsAndNoSuper<T>\n{\n    public CloneWithTypeArgumentsAndNoSuper<T> clone()\n            throws CloneNotSupportedException\n    {\n        return null;\n    }\n}\nclass MyClassWithGenericSuperMethod\n{\n    void someMethod(java.util.List<? super java.util.Map<Object, Object>> l)\n    {\n    }\n    public static Object clone(Object o) {\n        return null;\n    }\n}\nclass AnotherClass {\n    public <T> T clone(T t) {\n        return null;\n    }\n}\nclass NativeTest {\n    public native Object clone();\n}"
+    },
+    {
+      "description": "Auto test from InputSuperClonePlainAndSubclasses.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        46
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.superclone;\ninterface InputSuperClonePlainAndSubclasses {\n    void clone();\n}\nclass A {\n  public Object clone() { \n      return null;\n  }\n}\nclass B{\n  public Object clone() throws CloneNotSupportedException {\n      super.clone();\n      return null;\n  }\n  void clone(Object asd, Object asd2) {\n  }\n}\nclass C extends B {\n  void method() throws CloneNotSupportedException {\n    Object asd = null;\n    super.clone(asd,asd);\n    super.clone();\n    Runnable a = () -> super.clone(null, null);\n  }\n  void method2() {\n    new Runnable() {\n      @Override\n      public void run() {\n        C.super.clone(null, null);\n      }\n    };\n  }\n}\nclass D extends B {\n  public Object clone() throws CloneNotSupportedException {\n    super.clone(null, null);\n    return null;\n  }\n}"
+    }
+  ]
+}

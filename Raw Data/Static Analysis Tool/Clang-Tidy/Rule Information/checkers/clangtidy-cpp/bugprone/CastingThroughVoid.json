@@ -1,0 +1,41 @@
+{
+  "name": "CastingThroughVoid",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-casting-through-void",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 46,
+  "branches": 1,
+  "apis": 29,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 20,
+      "expected-linenumbers": [
+        13,
+        15,
+        17,
+        24,
+        26,
+        28,
+        35,
+        37,
+        39,
+        44,
+        46,
+        48,
+        56,
+        58,
+        60,
+        69,
+        71,
+        73,
+        85,
+        90
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-casting-through-void %t\n\nusing V = void*;\nusing CV = const void*;\n\nint i = 100;\ndouble d = 100;\nconst int ci = 100;\nconst double cd = 100;\n\nvoid normal_test() {\n  static_cast<int *>(static_cast<void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<int *>(static_cast<V>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: do not cast 'double *' to 'int *' through 'V' (aka 'void *'); use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<int *>(static_cast<void *>(&i));\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: do not cast 'int *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n\n  static_cast<void *>(static_cast<void *>(&i));\n}\n\nvoid const_pointer_test() {\n  static_cast<int *const>(static_cast<void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: do not cast 'double *' to 'int *const' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<int *const>(static_cast<V>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: do not cast 'double *' to 'int *const' through 'V' (aka 'void *'); use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<int *const>(static_cast<void *>(&i));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: do not cast 'int *' to 'int *const' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n\n  static_cast<void *const>(static_cast<void *>(&i));\n}\n\nvoid const_test() {\n  static_cast<const int *>(static_cast<const void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not cast 'double *' to 'const int *' through 'const void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<const int *>(static_cast<const V>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not cast 'double *' to 'const int *' through 'const V' (aka 'void *const'); use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<const int *>(static_cast<const void *>(&i));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not cast 'int *' to 'const int *' through 'const void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n\n  static_cast<const void *>(static_cast<const void *>(&i));\n\n  static_cast<const int *>(static_cast<const void *>(&cd));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not cast 'const double *' to 'const int *' through 'const void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<const int *>(static_cast<const CV>(&cd));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not cast 'const double *' to 'const int *' through 'const CV' (aka 'const void *const'); use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<const int *>(static_cast<const void *>(&ci));\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: do not cast 'const int *' to 'const int *' through 'const void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n\n  static_cast<const void *>(static_cast<const void *>(&ci));\n}\n\n\nvoid reinterpret_cast_test() {\n  static_cast<int *>(reinterpret_cast<void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  reinterpret_cast<int *>(static_cast<void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  reinterpret_cast<int *>(reinterpret_cast<void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n\n  static_cast<void *>(reinterpret_cast<void *>(&i));\n  reinterpret_cast<void *>(reinterpret_cast<void *>(&i));\n  reinterpret_cast<void *>(static_cast<void *>(&i));\n}\n\nvoid c_style_cast_test() {\n  static_cast<int *>((void *)&d);\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  (int *)(void *)&d;\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n  static_cast<int *>((void *)&d);\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n\n  static_cast<void *>((void *)&i);\n}\n\nstruct A {\n   A(void*);\n};\nusing I = int *;\nvoid cxx_functional_cast() {\n  A(static_cast<void*>(&d));\n  I(static_cast<void*>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not cast 'double *' to 'I' (aka 'int *') through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n}\n\nvoid bit_cast() {\n  __builtin_bit_cast(int *, static_cast<void *>(&d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:29: warning: do not cast 'double *' to 'int *' through 'void *'; use reinterpret_cast instead [bugprone-casting-through-void]\n}\n\nnamespace PR87069 {\n  void castconstVoidToVoid() {\n    const void* ptr = nullptr;\n    int* numberPtr = static_cast<int*>(const_cast<void*>(ptr));\n  }\n}"
+    }
+  ]
+}

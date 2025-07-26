@@ -1,0 +1,38 @@
+{
+  "name": "UnavailableFunction",
+  "language": "swift",
+  "description": "\n            Due to Objective-C and Swift interoperability some functions are often required to be implemented but\n            aren't really needed. It is extremely common that the sole implementation of the functions consist of throwing\n            a fatal error. Marking these functions as unavailable prevents them from being executed while still making\n            the compiler happy.\n        ",
+  "example": "required init?(coder _: NSCoder) { // violation, no unavailable attribute added to the function declaration\n    fatalError(\"init(coder:) has not been implemented\")\n}\n\n@available(*, unavailable)         // no violation\nrequired init?(coder _: NSCoder) {\n    fatalError(\"init(coder:) has not been implemented\")",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 94,
+  "branches": 13,
+  "apis": 12,
+  "test": [
+    {
+      "description": "Good example #1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass ViewController: UIViewController {\n    @available(*, unavailable)\n    public required init?(coder aDecoder: NSCoder) {\n        fatalError(\"init(coder:) has not been implemented\")\n    }\n}\n     "
+    },
+    {
+      "description": "Good example #2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nfunc jsonValue(_ jsonString: String) -> NSObject {\n    let data = jsonString.data(using: .utf8)!\n    let result = try! JSONSerialization.jsonObject(with: data, options: [])\n    if let dict = (result as? [String: Any])?.bridge() {\n        return dict\n    } else if let array = (result as? [Any])?.bridge() {\n        return array\n    }\n    fatalError()\n}\n     "
+    },
+    {
+      "description": "Bad example #1",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass ViewController: UIViewController {\n    public required init?(coder aDecoder: NSCoder) {\n        fatalError(\"init(coder:) has not been implemented\")\n    }\n}\n     "
+    },
+    {
+      "description": "Bad example #2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nfunc doSomething() {\n    fatalError(\"doSomething() has not been implemented\")\n}\n     "
+    }
+  ]
+}

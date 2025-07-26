@@ -1,0 +1,74 @@
+{
+  "name": "ConfusingTernary",
+  "language": "java",
+  "description": "\nAvoid negation within an \"if\" expression with an \"else\" clause.  For example, rephrase:\n`if (x != y) diff(); else same();` as: `if (x == y) same(); else diff();`.\n\nMost \"if (x != y)\" cases without an \"else\" are often return cases, so consistent use of this\nrule makes the code easier to read.  Also, this resolves trivial ordering problems, such\nas \"does the error case go first?\" or \"does the common case go first?\".\n        ",
+  "example": "boolean bar(int x, int y) {\n    return (x != y) ? diff : same;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 120,
+  "branches": 23,
+  "apis": 10,
+  "test": [
+    {
+      "description": "!=, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        x = a != b ? c : d;\n    }\n}\n        "
+    },
+    {
+      "description": "==, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        x = a == b ? c : d;\n    }\n}\n        "
+    },
+    {
+      "description": "null check, ok (if) - #278",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String bar2(Object a) {\n        if (a != null)\n            return a.toString();\n        else\n            return null;\n    }\n}\n        "
+    },
+    {
+      "description": "null check, ok (ternary) - #278",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String bar(Object a) {\n        return a != null ? a.toString() : null;\n    }\n}\n        "
+    },
+    {
+      "description": "!= inside if, bad",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        if (true) {\n            x = a != b ? c : d;\n        } else {\n            x = a != b ? c : d;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "match && match, not confusing, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        x = ((x && y) ? y : z);\n    }\n}\n        "
+    },
+    {
+      "description": "A couple of bad and good cases",
+      "expected-problems": 34,
+      "expected-linenumbers": [],
+      "code": "\npublic class BadTernaries {\n    public static void main(String[] args) {\n        int i = 0;\n        int j = 1;\n        int k = 2;\n        boolean x = true;\n        boolean y = false;\n        boolean z = true;\n\n        // flag all of these, lines 11 - 42:\n        if (i != 11) {a();} else {b();}\n        if (i != 12 && j != 0) {a();} else {b();}\n        if (i != 13 || j != 0) {a();} else {b();}\n        if (i != 14 && j != 0 && k != 0) {a();} else {b();}\n        if (i != 15 || j != 0 || k != 0) {a();} else {b();}\n        if (i != 16) {a();} else if (i != j) {b();} else{c();}\n        if (i != 17) {a();} else if (i == j) {b();} else{c();}\n        if (i == 18) {a();} else if (i != j) {b();} else{c();}\n        x = (!y ? x : y);\n        x = (!(x && y) ? y : z);\n        x = (!(x || y) ? y : z);\n        x = ((!x && !y) ? y : z);\n        x = ((!x || !y) ? y : z);\n        if (i != 24 && !x) {a();} else {b();}\n        if (i != 25 || !x) {a();} else {b();}\n        if (i != 26 && j != 0 && !y) {a();} else {b();}\n        if (i != 27 || j != 0 || !y) {a();} else {b();}\n        if (i != 28) {a();} else if (!x) {b();} else{c();}\n        if (i != 29) {a();} else if (x) {b();} else{c();}\n        if (i == 30) {a();} else if (!x) {b();} else{c();}\n        x = !(c() == y) ? y : !z;\n        if (!c()) {a();} else {b();}\n        if (c() != x) {a();} else {b();}\n        if (!c() != x) {a();} else {b();}\n        if (!c() != !x) {a();} else {b();}\n        if ((i != 36) || !(j == 0)) {a();} else {b();}\n        if ((i != 37) || !(x ? y : z)) {a();} else {b();}\n        if ((i != 38)) {a();} else {b();}\n        if (i != 39 || (j != 0 || k != 0)) {a();} else {b();}\n        if (i != 40 && (j != 0 && k != 0)) {a();} else {b();}\n        if (!x && (j != 41 && k != 0)) {a();} else {b();}\n        if (((x != y)) || !(x)) { a(); } else { b(); }\n\n        // don't flag these:\n        if (i != 0) {a();}\n        if (!x) {a();}\n        if (i == 0) {a();} else {b();}\n        if (i == 0 && j != 0) {a();} else {b();}\n        if (i == 0 || j != 0) {a();} else {b();}\n        if (i == 0 && !x) {a();} else {b();}\n        if (x) {a();} else {b();}\n        if (x ? y : !z) {a();} else {b();}\n        if (c() == !x) {a();} else {b();}\n        if (c() ? !x : !c()) {a();} else {b();}\n        if (!x && d() instanceof String) {a();} else {b();}\n        if (!x && (d() instanceof String)) {a();} else {b();}\n    }\n\n      private static void a() { }\n      private static void b() { }\n      private static boolean c() { return true; }\n      private static Object d() { return null; }\n}\n        "
+    },
+    {
+      "description": "#1161 Confusing Ternary should skip else if statements (or have a property to do so) (ignoreElseIf=false)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "#1161 Confusing Ternary should skip else if statements (or have a property to do so) (ignoreElseIf=true)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "#1198 ConfusingTernary does not ignore else if blocks even when property is set",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (noSave) {\n            //continue on\n        } else {\n            if (goBack == \"Step\") {\n                //do logic\n            } else if (currentStateID != -1 && selectedNextState != -2) {\n                //do different logic\n            } else {\n                //more logic\n            }\n        }\n    }\n}\n        "
+    }
+  ]
+}

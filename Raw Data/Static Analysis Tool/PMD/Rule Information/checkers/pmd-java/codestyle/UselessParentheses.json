@@ -1,0 +1,294 @@
+{
+  "name": "UselessParentheses",
+  "language": "java",
+  "description": "\n            Parenthesized expressions are used to override the default operator precedence\n            rules. Parentheses whose removal would not change the relative nesting of operators\n            are unnecessary, because they don't change the semantics of the enclosing expression.\n\n            Some parentheses that strictly speaking are unnecessary, may still be considered useful\n            for readability. This rule allows to ignore violations on two kinds of unnecessary parentheses:\n            - \"Clarifying\" parentheses, which separate operators of difference precedence. While\n            unnecessary, they make precedence rules explicit, which may be useful for rarely used\n            operators. For example:\n            ```java\n                (a + b) & c // is equivalent to `a + b & c`, but probably clearer\n            ```\n            Unset the property `ignoreClarifying` to report them.\n\n            - \"Balancing\" parentheses, which are unnecessary but visually balance out another pair\n            of parentheses around an equality operator. For example, those two expressions are equivalent:\n            ```java\n                (a == null) != (b == null)\n                a == null != (b == null)\n            ```\n            The parentheses on the right are required, and the parentheses on the left are\n            just more visually pleasing. Unset the property `ignoreBalancing` to report them.\n\n        ",
+  "example": "public class Foo {\n    {\n        int n = 0;\n        n = (n);         // here\n        n = (n * 2) * 3; // and here\n        n = n * (2 * 3); // and here\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 283,
+  "branches": 61,
+  "apis": 15,
+  "test": [
+    {
+      "description": "failure case, return statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar() {\n        return (0);\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, assignment",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar(int x) {\n        int y = (x + 5);\n        return y;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, condition 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar(int x) {\n        if ((x % 2 == 0)) {\n            return x;\n        }\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, condition 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar(int x) {\n        if ((x % 2) == 0) {\n            return x;\n        }\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, ignore clarifying",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar(int x) {\n        if ((x % 2) == 0) {\n            return x;\n        }\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "useful parentheses, arithmetic",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar(int x) {\n        return (x + 2) * 5;\n    }\n}\n        "
+    },
+    {
+      "description": "useful parentheses, logic",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int bar(int x) {\n        if ((x % 2 == 0) || (x % 2 == 1)) {\n            return x;\n        } else {\n            // it's the same with this extra parentheses\n            return (x %2 == 0) ? x : -x;\n        }\n        return -x;\n    }\n}\n        "
+    },
+    {
+      "description": "typecast, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n   public String bar(Object o) {\n        return ((Exception) o).getMessage();\n   }\n}\n        "
+    },
+    {
+      "description": "typecast with extra, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String bar(Object o) {\n        return (((Exception) o)).getMessage();\n    }\n}\n        "
+    },
+    {
+      "description": "false negatives",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        8,
+        10,
+        14,
+        19,
+        20,
+        21,
+        22,
+        23
+      ],
+      "code": "\nimport net.sourceforge.pmd.lang.ast.Node;\nimport net.sourceforge.pmd.lang.java.ast.ASTReturnStatement;\nimport static somewhere.Unresolved.unresolved1;\nimport static somewhere.Unresolved.unresolved2;\npublic class Foo {\n    private boolean isSimpleReturn(Node node) {\n        return\n            ( node instanceof ASTReturnStatement ) // rule triggers here\n            &&\n            ( node.getNumChildren() == 0 );     // and here\n    }\n    public String getLocalName(String name) {\n        int colonIndex = name.indexOf(':');\n        return (colonIndex >= 0)                // and here\n                ? name.substring(colonIndex + 1)\n                : name;\n    }\n    public void viewerModelChanged() {\n        int startOffset = (unresolved1 + unresolved2) - 1; // here, the parenthesized expr has unresolved type\n        startOffset = (unresolved1 + 1) - 1; // here, the parenthesized expr has resolved type\n        startOffset = (1 + unresolved1) - 1;\n        startOffset = (1 + 1) - 1;\n        startOffset = 1 + (1 - 1); // necessary if\n    }\n}\n        "
+    },
+    {
+      "description": "Parentheses inside concat may be unnecessary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    {\n        String concat;\n        concat = (1 + 1) + \"\";          // parentheses are unnecessary but clarifying\n        concat = \"\" + (1 + 1);          // parentheses are necessary even if ignoring associativity\n    }\n}\n        "
+    },
+    {
+      "description": "Parentheses inside concat may be unnecessary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    {\n        String concat;\n        concat = (1 + 1) + \"\";          // parentheses are unnecessary but clarifying\n        concat = \"\" + (1 + 1);          // parentheses are necessary even if ignoring associativity\n    }\n}\n        "
+    },
+    {
+      "description": "Parentheses around binary expressions are really necessary",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final boolean isModifier(int mask) {\n        return (modifiers & mask) == mask;\n    }\n}\n        "
+    },
+    {
+      "description": "3526992, false +. In this case the parentheses must stay.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public void testMethod() {\n        String oneDay = \"day\";\n        String moreDays = \"days\";\n        int dayCount = 4;\n        String description = dayCount + \" \" + (dayCount == 1 ? oneDay : moreDays);\n    }\n}\n        "
+    },
+    {
+      "description": "#1012 False positive: Useless parentheses.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    static int NUMBER = 0;\n    static int STRING = 1;\n    class Lookahead { int type; }\n    public void testMethod(Lookahead lookahead, int baseType) {\n        if((lookahead.type == STRING || lookahead.type == NUMBER) && lookahead.type != baseType)\n            throw new RuntimeException(\"\");\n        System.out.println( \"number \" + ( 1 + 2 ) );\n\n        if(lookahead.type != baseType && (lookahead.type == STRING || lookahead.type == NUMBER))\n            throw new RuntimeException(\"\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1111 False positive: Useless parentheses",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public String check(boolean absolute, Integer amount) {\n      return (absolute ? amount.abs() : amount).toString();\n    }\n}\n        "
+    },
+    {
+      "description": "#1102 False positive: shift operator parenthesis",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    int getX() { return 0; }\n    public void foo(Test e) {\n        xCoord = e.getX() - (1 >> 1);\n    }\n}\n        "
+    },
+    {
+      "description": "#1243 Useless Parentheses False Positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static int thisShouldBreak(final int x, final int y, final int z) {\n        return x - (y + z);\n    }\n}\n        "
+    },
+    {
+      "description": "#1282 False Positive with implicit String.valuesOf() (Java)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.mycompany.mavenproject1;\n\nimport java.io.IOException;\n\npublic class NewClass {\n\n    public void falsePositive(Boolean b) throws IOException {\n        System.out.write(( \"\" + b ).getBytes());\n    }\n}\n        "
+    },
+    {
+      "description": "#1366 UselessParentheses false positive on multiple equality operators",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Useless {\n    public boolean test(Object a, Object b) {\n        return (a == null) == (b == null);\n    }\n}\n        "
+    },
+    {
+      "description": "#1407 UselessParentheses \"&\" and \"+\" operator precedence",
+      "expected-problems": 13,
+      "expected-linenumbers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "code": "\nclass ExampleClass {\n    void exampleExpressions() {\n        int eUseless, eGood, a, b, c, d;\n        a = b = c = d = 0;\n        eUseless = (a++) + b;\n        eUseless = (a--) + b;\n        eUseless = (++a) + b;\n        eUseless = (--a) + b;\n        eUseless = (+a) + b;\n        eUseless = (-a) + b;\n        eUseless = (~a) + b;\n        eUseless = (!a) + b;\n        eUseless = (a * b) + c;\n        eUseless = (a / b) + c;\n        eUseless = (a % b) + c;\n        eUseless = (a + b) + c;\n        eUseless = (a - b) + c;\n        eGood = (a << b) + c;\n        eGood = (a >> b) + c;\n        eGood = (a >>> b) + c;\n        eGood = (a < b) + c;\n        eGood = (a > b) + c;\n        eGood = (a <= b) + c;\n        eGood = (a >= b) + c;\n        eGood = (a instanceof String) + c;\n        eGood = (a == b) + c;\n        eGood = (a != b) + c;\n        eGood = (a & b) + c;\n        eGood = (a ^ b) + c;\n        eGood = (a | b) + c;\n        eGood = (a && b) + c;\n        eGood = (a || b) + c;\n        eGood = (a ? b : c) + d;\n    }\n}\n        "
+    },
+    {
+      "description": "http://stackoverflow.com/questions/34911230/pmd-uselessparentheses-violation: false + with & and <<",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Example {\n    private int calculate() {\n        return (bytes[0] & 0xff) + ((bytes[1] & 0xff) << 8);\n    }\n}\n        "
+    },
+    {
+      "description": "Verify #1519 [java] UselessParenthesis: False Positive: \"Prohibits the use of useless parentheses\" when more than one line",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\npublic class Pokemon {\n    public void method(String pokeNick, Pokemon pokemon, Pokemon renameResult) {\n        boolean isSkipped = (pokeNick.equals(getNickname())\n            && 0 == getNumber());\n\n        // now the same in one line\n        boolean isSkipped2 = (pokeNick.equals(pokemon.getNickname()) && renameResult.getNumber() == 0);\n\n        // now without the outer parenthesis - no additional violation.\n        boolean isSkipped3 = pokeNick.equals(pokemon.getNickname()) && renameResult.getNumber() == 9;\n    }\n    String getNickname() {return null;}\n    int getNumber() { return 0; }\n}\n        "
+    },
+    {
+      "description": "#199 UselessParentheses false positive on multiple logical and operators",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Useless {\n    int mNumber;\n    String mName, mTemplateKey, mKey;\n    public boolean test(Useless team) {\n        return (mNumber != null ? mNumber.equals(team.mNumber) : team.mNumber == null)\n            && (mKey != null ? mKey.equals(team.mKey) : team.mKey == null)\n            && (mTemplateKey != null ? mTemplateKey.equals(team.mTemplateKey) : team.mTemplateKey == null)\n            && (mName != null ? mName.equals(team.mName) : team.mName == null);\n    }\n}\n        "
+    },
+    {
+      "description": "#199 UselessParentheses false positive on multiple logical or operators",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Useless {\n    int mNumber;\n    String mName, mTemplateKey, mKey;\n    public boolean test(Useless team) {\n        return (mNumber != null ? mNumber.equals(team.mNumber) : team.mNumber == null)\n            || (mKey != null ? mKey.equals(team.mKey) : team.mKey == null)\n            || (mTemplateKey != null ? mTemplateKey.equals(team.mTemplateKey) : team.mTemplateKey == null)\n            || (mName != null ? mName.equals(team.mName) : team.mName == null);\n    }\n}\n        "
+    },
+    {
+      "description": "#199 UselessParentheses false positive on equals operator",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Useless {\n    int mNumber;\n    String mKey;\n    public boolean test(Useless team) {\n        return (mNumber != null ? mNumber : team.mNumber)\n            == (mKey != null ? mKey : team.mKey);\n    }\n}\n        "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: #537 Trivial case with additive expression",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport my.Utils;\npublic class Foo {\n    private String getData(final String header) {\n        String result = (\"[\" + header + \":\" + Utils.decode(header) + \"]\");\n        return result;\n    }\n}\n         "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: #537 Trivial case with additive expression modified",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.Utils;\npublic class Foo {\n    private String getData(final String header) {\n        String result = (\"[\" + header + \":\" + Utils.decode(header) + \"]\").foo();\n        return result;\n    }\n}\n         "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: Parentheses around cast",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(Object o) {\n        return ((String) \"doo\");\n    }\n}\n        "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: Parentheses around call chain",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo bar(Foo a) {\n        return (a.bar()).foo();\n    }\n    Foo bar() { return this; }\n    Foo foo() { return this; }\n}\n        "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: Unreported call chain",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo bar(Foo a) {\n        return a.bar().foo();\n    }\n    Foo bar() { return this; }\n    Foo foo() { return this; }\n}\n        "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: bad, returning variable in parens",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int bar(int y) {\n        return (y);\n    }\n}\n        "
+    },
+    {
+      "description": "From controversial/UnnecessaryParentheses: Failure case, returning literal",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int bar() {\n        String a = ((String) \"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "FP on binary operator",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private boolean isModifier(int mask) {\n        return (modifiers & mask) == mask;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] False positive for useless parenthesis #1023",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    private String str1;\n\n    public String themeName() {\n        return (Character.toUpperCase(str1.charAt(0))\n                + str1.substring(1)).replace('_', ' ');\n    }\n}\n        "
+    },
+    {
+      "description": "[java] False positive \"UselessParentheses\" for parentheses that contain assignment #1285",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.regex.*;\npublic class Test {\n    public void test() {\n        Pattern p;\n        Matcher m;\n        if ((m = p.matcher(\"hello world\")).matches()) {\n            System.out.println(\"Hello world\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2739 [java] False Positive UselessParenthesis for string concatenation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static boolean isTest(final String alpha, final String bravo) {\n        return \"Charlie\".equals(alpha) || (alpha + bravo).equals(alpha);\n    }\n\n}\n        "
+    },
+    {
+      "description": "[java] false-positive in UselessParentheses #1673",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static boolean isTest(final String discordClient, final String bravo) {\n        throw new IllegalArgumentException(String.format(\n                \"Unsupported client with class '%s' given\",\n                (discordClient == null) ? null : discordClient.getClass()));\n    }\n\n}\n        "
+    },
+    {
+      "description": "[java] false-positive in UselessParentheses #1673 (!ignoreClarifying)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static boolean isTest(final String discordClient, final String bravo) {\n        throw new IllegalArgumentException(String.format(\n                \"Unsupported client with class '%s' given\",\n                (discordClient == null) ? null : discordClient.getClass()));\n    }\n\n}\n        "
+    },
+    {
+      "description": "[Java] UselessParentheses: catch wrong case #1918 (ignoreClarifying)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static boolean isTest() {\n        boolean a,b,c,d;\n        if(a || b || (c & d) || e) {\n            //do sth\n        }\n    }\n\n}\n        "
+    },
+    {
+      "description": "[Java] UselessParentheses: catch wrong case #1918 (!ignoreClarifying)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static boolean isTest() {\n        boolean a,b,c,d;\n        if(a || b || (c & d) || e) {\n            //do sth\n        }\n    }\n\n}\n        "
+    },
+    {
+      "description": "[java] False positive for rule UselessParentheses #2910",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package jls;\n\n            public final class TestStringInterned {\n\n                public static void main(String[] args) {\n                    String hello = \"Hello\";\n                    String lo = \"lo\";\n                    System.out.println(hello == (\"Hel\" + lo).intern());\n                }\n            }\n            "
+    }
+  ]
+}

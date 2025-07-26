@@ -1,0 +1,40 @@
+{
+  "name": "UseToString",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - boost-use-to-string",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 67,
+  "branches": 6,
+  "apis": 46,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        26,
+        30,
+        52,
+        55,
+        58,
+        61,
+        64,
+        67,
+        93,
+        96,
+        99,
+        102,
+        105,
+        108,
+        120,
+        126,
+        140,
+        161,
+        167
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s boost-use-to-string %t\n\nnamespace std {\n\ntemplate <typename T>\nclass basic_string {};\n\nusing string = basic_string<char>;\nusing wstring = basic_string<wchar_t>;\n}\n\nnamespace boost {\ntemplate <typename T, typename V>\nT lexical_cast(const V &) {\n  return T();\n};\n}\n\nstruct my_weird_type {};\n\nstd::string fun(const std::string &) { return {}; }\n\nvoid test_to_string1() {\n\n  auto xa = boost::lexical_cast<std::string>(5);\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: use std::to_string instead of boost::lexical_cast<std::string> [boost-use-to-string]\n  // CHECK-FIXES: auto xa = std::to_string(5);\n\n  auto z = boost::lexical_cast<std::string>(42LL);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: use std::to_string\n  // CHECK-FIXES: auto z = std::to_string(42LL);\n\n  // this should not trigger\n  fun(boost::lexical_cast<std::string>(42.0));\n  auto non = boost::lexical_cast<my_weird_type>(42);\n  boost::lexical_cast<int>(\"12\");\n}\n\nvoid test_to_string2() {\n  int a;\n  long b;\n  long long c;\n  unsigned d;\n  unsigned long e;\n  unsigned long long f;\n  float g;\n  double h;\n  long double i;\n  bool j;\n\n  fun(boost::lexical_cast<std::string>(a));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_string\n  // CHECK-FIXES: fun(std::to_string(a));\n  fun(boost::lexical_cast<std::string>(b));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_string\n  // CHECK-FIXES: fun(std::to_string(b));\n  fun(boost::lexical_cast<std::string>(c));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_string\n  // CHECK-FIXES: fun(std::to_string(c));\n  fun(boost::lexical_cast<std::string>(d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_string\n  // CHECK-FIXES: fun(std::to_string(d));\n  fun(boost::lexical_cast<std::string>(e));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_string\n  // CHECK-FIXES: fun(std::to_string(e));\n  fun(boost::lexical_cast<std::string>(f));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_string\n  // CHECK-FIXES: fun(std::to_string(f));\n\n  // No change for floating numbers.\n  fun(boost::lexical_cast<std::string>(g));\n  fun(boost::lexical_cast<std::string>(h));\n  fun(boost::lexical_cast<std::string>(i));\n  // And bool.\n  fun(boost::lexical_cast<std::string>(j));\n}\n\nstd::string fun(const std::wstring &);\n\nvoid test_to_wstring() {\n  int a;\n  long b;\n  long long c;\n  unsigned d;\n  unsigned long e;\n  unsigned long long f;\n  float g;\n  double h;\n  long double i;\n  bool j;\n\n  fun(boost::lexical_cast<std::wstring>(a));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_wstring instead of boost::lexical_cast<std::wstring> [boost-use-to-string]\n  // CHECK-FIXES: fun(std::to_wstring(a));\n  fun(boost::lexical_cast<std::wstring>(b));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_wstring\n  // CHECK-FIXES: fun(std::to_wstring(b));\n  fun(boost::lexical_cast<std::wstring>(c));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_wstring\n  // CHECK-FIXES: fun(std::to_wstring(c));\n  fun(boost::lexical_cast<std::wstring>(d));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_wstring\n  // CHECK-FIXES: fun(std::to_wstring(d));\n  fun(boost::lexical_cast<std::wstring>(e));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_wstring\n  // CHECK-FIXES: fun(std::to_wstring(e));\n  fun(boost::lexical_cast<std::wstring>(f));\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use std::to_wstring\n  // CHECK-FIXES: fun(std::to_wstring(f));\n\n  // No change for floating numbers\n  fun(boost::lexical_cast<std::wstring>(g));\n  fun(boost::lexical_cast<std::wstring>(h));\n  fun(boost::lexical_cast<std::wstring>(i));\n  // and bool.\n  fun(boost::lexical_cast<std::wstring>(j));\n}\n\nconst auto glob = boost::lexical_cast<std::string>(42);\n// CHECK-MESSAGES: :[[@LINE-1]]:19: warning: use std::to_string\n// CHECK-FIXES: const auto glob = std::to_string(42);\n\ntemplate <typename T>\nvoid string_as_T(T t = T()) {\n  boost::lexical_cast<std::string>(42);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use std::to_string\n  // CHECK-FIXES: std::to_string(42);\n\n  boost::lexical_cast<T>(42);\n  string_as_T(boost::lexical_cast<T>(42));\n  auto p = boost::lexical_cast<T>(42);\n  auto p2 = (T)boost::lexical_cast<T>(42);\n  auto p3 = static_cast<T>(boost::lexical_cast<T>(42));\n}\n\n#define my_to_string boost::lexical_cast<std::string>\n\nvoid no_fixup_inside_macro() {\n  my_to_string(12);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use std::to_string\n}\n\nvoid no_warnings() {\n  fun(boost::lexical_cast<std::string>(\"abc\"));\n  fun(boost::lexical_cast<std::wstring>(\"abc\"));\n  fun(boost::lexical_cast<std::string>(my_weird_type{}));\n  string_as_T<int>();\n  string_as_T<std::string>();\n}\n\nstruct Fields {\n  int integer;\n  float floating;\n  Fields* wierd;\n  const int &getConstInteger() const {return integer;}\n};\n\nvoid testFields() {\n  Fields fields;\n  auto s1 = boost::lexical_cast<std::string>(fields.integer);\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: use std::to_string\n  // CHECK-FIXES: auto s1 = std::to_string(fields.integer);\n\n  auto s2 = boost::lexical_cast<std::string>(fields.floating);\n  auto s3 = boost::lexical_cast<std::string>(fields.wierd);\n  auto s4 = boost::lexical_cast<std::string>(fields.getConstInteger());\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: use std::to_string\n  // CHECK-FIXES: auto s4 = std::to_string(fields.getConstInteger());\n}"
+    }
+  ]
+}

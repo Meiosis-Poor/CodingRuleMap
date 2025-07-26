@@ -1,0 +1,25 @@
+{
+  "name": "CloexecEpollCreate1",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-epoll-create1",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 26,
+  "branches": 1,
+  "apis": 11,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        17,
+        20,
+        26,
+        29
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-epoll-create1 %t\n\n#define __O_CLOEXEC 3\n#define EPOLL_CLOEXEC __O_CLOEXEC\n#define TEMP_FAILURE_RETRY(exp) \\\n  ({                            \\\n    int _rc;                    \\\n    do {                        \\\n      _rc = (exp);              \\\n    } while (_rc == -1);        \\\n  })\n\nextern \"C\" int epoll_create1(int flags);\n\nvoid a() {\n  epoll_create1(0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'epoll_create1' should use EPOLL_CLOEXEC where possible [android-cloexec-epoll-create1]\n  // CHECK-FIXES: epoll_create1(EPOLL_CLOEXEC);\n  TEMP_FAILURE_RETRY(epoll_create1(0));\n  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'epoll_create1'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(epoll_create1(EPOLL_CLOEXEC));\n}\n\nvoid f() {\n  epoll_create1(3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'epoll_create1'\n  // CHECK-FIXES: epoll_create1(EPOLL_CLOEXEC);\n  TEMP_FAILURE_RETRY(epoll_create1(3));\n  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'epoll_create1'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(epoll_create1(EPOLL_CLOEXEC));\n\n  int flag = 0;\n  epoll_create1(EPOLL_CLOEXEC);\n  TEMP_FAILURE_RETRY(epoll_create1(EPOLL_CLOEXEC));\n}\n\nnamespace i {\nint epoll_create1(int flags);\n\nvoid d() {\n  epoll_create1(0);\n  TEMP_FAILURE_RETRY(epoll_create1(0));\n}\n\n} // namespace i\n\nvoid e() {\n  epoll_create1(EPOLL_CLOEXEC);\n  TEMP_FAILURE_RETRY(epoll_create1(EPOLL_CLOEXEC));\n}\n\nclass G {\npublic:\n  int epoll_create1(int flags);\n  void d() {\n    epoll_create1(EPOLL_CLOEXEC);\n    TEMP_FAILURE_RETRY(epoll_create1(EPOLL_CLOEXEC));\n  }\n};"
+    }
+  ]
+}

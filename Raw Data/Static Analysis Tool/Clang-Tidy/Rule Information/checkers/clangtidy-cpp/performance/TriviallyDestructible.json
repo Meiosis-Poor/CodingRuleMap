@@ -1,0 +1,27 @@
+{
+  "name": "TriviallyDestructible",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-trivially-destructible",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 75,
+  "branches": 4,
+  "apis": 48,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        17,
+        23,
+        52,
+        59,
+        66,
+        71
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s performance-trivially-destructible %t\n// RUN: grep -Ev \"// *[A-Z-]+:\" %s > %t.cpp\n// RUN: clang-tidy %t.cpp -checks='-*,performance-trivially-destructible' -fix --\n// RUN: clang-tidy %t.cpp -checks='-*,performance-trivially-destructible' -warnings-as-errors='-*,performance-trivially-destructible' --\n\nstruct TriviallyDestructible1 {\n  int a;\n};\n\nstruct TriviallyDestructible2 : TriviallyDestructible1 {\n  ~TriviallyDestructible2() = default;\n  TriviallyDestructible1 b;\n};\n\nstruct NotTriviallyDestructible1 : TriviallyDestructible2 {\n  ~NotTriviallyDestructible1();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: class 'NotTriviallyDestructible1' can be made trivially destructible by defaulting the destructor on its first declaration [performance-trivially-destructible]\n  // CHECK-FIXES: ~NotTriviallyDestructible1() = default;\n  TriviallyDestructible2 b;\n};\n\nNotTriviallyDestructible1::~NotTriviallyDestructible1() = default; // to-be-removed\n// CHECK-MESSAGES: :[[@LINE-1]]:28: note: destructor definition is here\n// CHECK-FIXES: // to-be-removed\n\n// Don't emit for class template with type-dependent fields.\ntemplate <class T>\nstruct MaybeTriviallyDestructible1 {\n  ~MaybeTriviallyDestructible1() noexcept;\n  T t;\n};\n\ntemplate <class T>\nMaybeTriviallyDestructible1<T>::~MaybeTriviallyDestructible1() noexcept = default;\n\n// Don't emit for specializations.\ntemplate struct MaybeTriviallyDestructible1<int>;\n\n// Don't emit for class template with type-dependent bases.\ntemplate <class T>\nstruct MaybeTriviallyDestructible2 : T {\n  ~MaybeTriviallyDestructible2() noexcept;\n};\n\ntemplate <class T>\nMaybeTriviallyDestructible2<T>::~MaybeTriviallyDestructible2() noexcept = default;\n\n// Emit for templates without dependent bases and fields.\ntemplate <class T>\nstruct MaybeTriviallyDestructible1<T *> {\n  ~MaybeTriviallyDestructible1() noexcept;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: class 'MaybeTriviallyDestructible1<T *>' can be made trivially destructible by defaulting the destructor on its first declaration [performance-trivially-destructible]\n  // CHECK-FIXES: ~MaybeTriviallyDestructible1() noexcept = default;\n  TriviallyDestructible1 t;\n};\n\ntemplate <class T>\nMaybeTriviallyDestructible1<T *>::~MaybeTriviallyDestructible1() noexcept = default; // to-be-removed\n// CHECK-MESSAGES: :[[@LINE-1]]:35: note: destructor definition is here\n// CHECK-FIXES: // to-be-removed\n\n// Emit for explicit specializations.\ntemplate <>\nstruct MaybeTriviallyDestructible1<double>: TriviallyDestructible1 {\n  ~MaybeTriviallyDestructible1() noexcept;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: class 'MaybeTriviallyDestructible1<double>' can be made trivially destructible by defaulting the destructor on its first declaration [performance-trivially-destructible]\n  // CHECK-FIXES: ~MaybeTriviallyDestructible1() noexcept = default;\n};\n\nMaybeTriviallyDestructible1<double>::~MaybeTriviallyDestructible1() noexcept = default; // to-be-removed\n// CHECK-MESSAGES: :[[@LINE-1]]:38: note: destructor definition is here\n// CHECK-FIXES: // to-be-removed\n\nstruct NotTriviallyDestructible2 {\n  virtual ~NotTriviallyDestructible2();\n};\n\nNotTriviallyDestructible2::~NotTriviallyDestructible2() = default;\n\nstruct NotTriviallyDestructible3: NotTriviallyDestructible2 {\n  ~NotTriviallyDestructible3();\n};\n\nNotTriviallyDestructible3::~NotTriviallyDestructible3() = default;"
+    }
+  ]
+}

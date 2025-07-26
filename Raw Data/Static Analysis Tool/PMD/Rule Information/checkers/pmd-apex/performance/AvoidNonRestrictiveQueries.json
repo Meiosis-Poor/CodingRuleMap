@@ -1,0 +1,130 @@
+{
+  "name": "AvoidNonRestrictiveQueries",
+  "language": "apex",
+  "description": "\n            When working with very large amounts of data, unfiltered SOQL or SOSL queries can quickly cause\n            [governor limit](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_gov_limits.htm)\n            exceptions.\n        ",
+  "example": "public class Something {\n    public static void main( String[] as ) {\n        Account[] accs1 = [ select id from account ];  // Bad\n        Account[] accs2 = [ select id from account limit 10 ];  // better\n\n        List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead]; // bad\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 111,
+  "branches": 15,
+  "apis": 12,
+  "test": [
+    {
+      "description": "Query without a where statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static void main( String[] as ) {\n        Account[] accs = [ select id from account ];  //Bad\n    }\n}\n        "
+    },
+    {
+      "description": "Query with where and limit statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static void main( String[] as ) {\n        Account[] accs = [ select id from account where id = 1 limit 1];\n    }\n}\n        "
+    },
+    {
+      "description": "Subquery without limit",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static void main( String[] as ) {\n        Account[] accs = [ select id, (SELECT Id FROM Contact) from account where id = 1]; // That's ok, as long as the main query is restricted\n    }\n}\n        "
+    },
+    {
+      "description": "Multiple non restrictive queries",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Something {\n    public static Account[] main( String[] as ) {\n        Account[] accs = [ select id from account ];\n        Account[] accs2 = [ select id from account ];\n        return [SELECT Id FROM Contact];\n    }\n}\n        "
+    },
+    {
+      "description": "Restrictive queries",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static Account[] main( String[] as ) {\n        Account[] accs = [ select id from account where name='foo' and id < 100 LIMIT 5 ];\n        Account[] accs2 = [ select id from account where id > 1 ];\n        return [SELECT Id FROM Contact limit 1];\n    }\n}\n        "
+    },
+    {
+      "description": "subquery with limit, main query without",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Query {\n    void method() {\n        Account[] accounts = [ select id, (SELECT Id FROM Contact where id = 1 limit 1) from account ];\n    }\n}\n"
+    },
+    {
+      "description": "main query with limit, subquery without is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Query {\n    void method() {\n        Account[] accounts = [ select id, (SELECT Id FROM Contact) from account limit 1 ];\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOQL query - non-restrictive - SeeAllData=true",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n@IsTest(SeeAllData=true)\npublic class TestDataAccessClass {\n    @IsTest\n    static void myTestMethod() {\n        Account[] accounts = [SELECT Id, Name FROM Account];\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOQL query - non-restrictive - SeeAllData=False is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@IsTest(SeeAllData=false)\npublic class TestDataAccessClass {\n    @IsTest\n    static void myTestMethod() {\n        Account[] accounts = [SELECT Id, Name FROM Account];\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOQL query - restrictive is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@IsTest(SeeAllData=true)\npublic class TestDataAccessClass {\n    @IsTest\n    static void myTestMethod() {\n        Account[] accounts = [SELECT Id, Name FROM Account LIMIT 1];\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOQL query - restrictive - SeeAllData=false is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@IsTest(SeeAllData=false)\npublic class TestDataAccessClass {\n    @IsTest\n    static void myTestMethod() {\n        Account[] accounts = [SELECT Id, Name FROM Account LIMIT 1];\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOQL query - non-restrictive - SeeAllData=false on class but true on method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n@IsTest(SeeAllData=false)\npublic class TestDataAccessClass {\n    @IsTest(SeeAllData=true)\n    static void myTestMethod1() {\n        Account[] accounts = [SELECT Id, Name FROM Account];\n    }\n\n    @IsTest\n    static void myTestMethod2() {\n        Account[] accounts = [SELECT Id, Name FROM Account]; // inherits from class annotation SeeAllData=false\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOQL query - non-restrictive - SeeAllData=true on class but false on method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\n@IsTest(SeeAllData=true)\npublic class TestDataAccessClass {\n    @IsTest(SeeAllData=false)\n    static void myTestMethod1() {\n        Account[] accounts = [SELECT Id, Name FROM Account]; // that's ok, since SeeAllData=false\n    }\n\n    @IsTest\n    static void myTestMethod2() {\n        Account[] accounts = [SELECT Id, Name FROM Account]; // not good, inherits SeeAllData=true from class\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOSL query - missing where",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static void main( String[] as ) {\n        List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead]; // bad\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOSL query - with limit is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static void main( String[] as ) {\n        List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead LIMIT 1];\n    }\n}\n"
+    },
+    {
+      "description": "Test case with SOSL query - with where is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    public static void main( String[] as ) {\n        List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name WHERE Name like 'test'), Contact, Opportunity, Lead];\n    }\n}\n"
+    },
+    {
+      "description": "False positives for SOQL queries with WHERE on multiple lines",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Something {\n    private static final String NAMESPACE_PREFIX = 'some_prefix';\n    private static final String PERMISSION_SET = 'some_permission';\n\n    public static Boolean hasPermission(Id userId) {\n        return ![\n            SELECT Id\n            FROM PermissionSetAssignment\n            WHERE\n              AssigneeId = :userId\n              AND PermissionSet.Name = :PERMISSION_SET\n              AND PermissionSet.NamespacePrefix = :NAMESPACE_PREFIX\n          ]\n          .isEmpty();\n  }\n}\n"
+    },
+    {
+      "description": "[apex] AvoidNonRestrictiveQueries when LIMIT is followed by bind expression #5270",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic with sharing class DemoController {\n    public static final Integer LIMIT_ACCOUNTS = 2;\n    @AuraEnabled\n    public static List<Account> getTwoAccounts() {\n        List<Account> result = [\n            SELECT Id, Name FROM Account WITH SECURITY_ENFORCED\n            LIMIT:LIMIT_ACCOUNTS // note: no spaces... - false positive here\n        ];\n        List<Account> result2 = [\n            SELECT Id, Name FROM Account WITH SECURITY_ENFORCED\n            LIMIT :LIMIT_ACCOUNTS\n        ];\n        List<Account> result3 = [\n            SELECT Id, Name FROM Account WITH SECURITY_ENFORCED\n            LIMIT : LIMIT_ACCOUNTS\n        ];\n\n        // sosl:\n        List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead LIMIT:LIMIT_ACCOUNTS];\n\n        return result;\n    }\n}\n"
+    }
+  ]
+}

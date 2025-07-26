@@ -1,0 +1,192 @@
+{
+  "name": "AnnotationLocation",
+  "language": "java",
+  "description": "<div>\n Checks location of annotation on language elements.\n By default, Check enforce to locate annotations immediately after\n documentation block and before target element, annotation should be located\n on separate line from target element. This check also verifies that the annotations\n are on the same indenting level as the annotated element if they are not on the same line.\n </div>\n\n <p>\n Attention: Elements that cannot have JavaDoc comments like local variables are not in the\n scope of this check even though a token type like {@code } would match them.\n </p>\n\n <p>\n Attention: Annotations among modifiers are ignored (looks like false-negative)\n as there might be a problem with annotations for return types:\n </p>\n <pre>\n public @Nullable Long getStartTimeOrNull() { ... }\n </pre>\n\n <p>\n Such annotations are better to keep close to type.\n Due to limitations, Checkstyle can not examine the target of an annotation.\n </p>\n\n <p>\n Example:\n </p>\n <pre>\n &#64;Override\n &#64;Nullable\n public String getNameIfPresent() { ... }\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 130,
+  "branches": 13,
+  "apis": 29,
+  "test": [
+    {
+      "description": "Auto test from InputAnnotationLocationAnnotation.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        17,
+        18,
+        22,
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Repeatable;\nimport java.lang.annotation.Target;\n@AnnotationAnnotation(value = \"foo\")\n  @AnnotationAnnotation \n@AnnotationAnnotation(\"bar\") @interface InputAnnotationLocationAnnotation {\n    @AnnotationAnnotation(value = \"foo\")\n      @AnnotationAnnotation \n    @AnnotationAnnotation(\"bar\") String value(); \n}\n@Repeatable(AnnotationAnnotations.class)\n@Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})\n@interface AnnotationAnnotation  {\n    String value() default \"\";\n}\n@Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})\n@interface AnnotationAnnotations {\n    AnnotationAnnotation[] value();\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationClass.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        17,
+        18,
+        22,
+        23,
+        26,
+        27
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Repeatable;\nimport java.lang.annotation.Target;\n@ClassAnnotation(value = \"foo\")\n  @ClassAnnotation \n@ClassAnnotation(\"bar\") class InputAnnotationLocationClass {\n    @ClassAnnotation(value = \"foo\")\n      @ClassAnnotation \n    @ClassAnnotation(\"bar\") Object field; \n    @ClassAnnotation(value = \"foo\")\n      @ClassAnnotation \n    @ClassAnnotation(\"bar\") InputAnnotationLocationClass() {\n    }\n}\n@Repeatable(ClassAnnotations.class)\n@Target({ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.TYPE})\n@interface ClassAnnotation {\n    String value() default \"\";\n}\n@Target({ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.TYPE})\n@interface ClassAnnotations {\n    ClassAnnotation[] value();\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationEnum.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        17,
+        18,
+        21,
+        22
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Repeatable;\nimport java.lang.annotation.Target;\n@EnumAnnotation(value = \"foo\")\n  @EnumAnnotation \n@EnumAnnotation(\"bar\") enum InputAnnotationLocationEnum { \n    @EnumAnnotation(value = \"foo\")\n      @EnumAnnotation \n    @EnumAnnotation(\"bar\") ENUM_VALUE(); \n    InputAnnotationLocationEnum() {\n    }\n}\n@Repeatable(EnumAnnotations.class)\n@Target({ElementType.FIELD, ElementType.TYPE})\n@interface EnumAnnotation  {\n    String value() default \"\";\n}\n@Target({ElementType.FIELD, ElementType.TYPE})\n@interface EnumAnnotations {\n    EnumAnnotation[] value();\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationIncorrect2One.java",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        24,
+        32,
+        39,
+        43,
+        44,
+        45,
+        55,
+        68,
+        72,
+        77,
+        92,
+        95
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\n@MyAnn_22 @com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation.MyAnn_2\n(value = \"\")\nclass InputAnnotationLocationIncorrect2One\n{\n    @MyAnn_22 @MyAnnotation_12(value = \"\")\n    public int a;\n    @MyAnnotation_12(value = \"\") public int b;\n    @MyAnn_22\n        @MyAnnotation_12 \n(value = \"\")\n    public int c;\n    @MyAnnotation_12(value = \"\")\n    public int d;\n    @MyAnn_22\n        @MyAnnotation_12 \n(value = \"\")\n    public InputAnnotationLocationIncorrect2One() {}\n    @MyAnnotation_12(\"foo\") @MyAnn_22 void foo1() {}\n    @MyAnnotation_12(value = \"\")\n       @MyAnn_22 \n    void foo2() {}\n    @MyAnnotation_12(value = \"\")\n        @MyAnn_22 \n      @MyAnnotation_32 \n          @MyAnnotation_42 \n    class InnerClass\n    {\n        @MyAnn_22 @MyAnnotation_12\n(value = \"\")\n        public int a;\n        @MyAnnotation_12(value = \"\") public int b;\n        @MyAnn_22\n            @MyAnnotation_12 \n(value = \"\")\n        public int c;\n        @MyAnnotation_12(value = \"\")\n        public int d;\n        @MyAnn_22\n        @MyAnnotation_12(value = \"\") public InnerClass()\n        {\n        }\n        @MyAnnotation_12(value = \"\")\n            @MyAnn_22 \n        void foo1() {}\n        @MyAnnotation_12(value = \"\")\n            @MyAnn_22 \n        void foo2() {}\n    }\n    @MyAnnotation_12(value = \"\")\n       @MyAnn_22 \n    InnerClass anon = new InnerClass()\n    {\n        @MyAnn_22 @MyAnnotation_12(value = \"\") public int a;\n        @MyAnnotation_12(value = \"\") public int b;\n        @MyAnn_22\n        @MyAnnotation_12(value = \"\")\n        public int c;\n        @MyAnnotation_12(value = \"\")\n        public int d;\n        @MyAnnotation_12(value = \"\")\n           @MyAnn_22 void foo1() {} \n        @MyAnnotation_12(value = \"\")\n          @MyAnn_22 \n        void foo2() {}\n        @MyAnnotation_12(value = \"\") void foo42() {}\n    };\n}\n@interface MyAnnotation_12 {\n        String value();}\n@interface MyAnn_22 {}\n@interface MyAnnotation_32 {}\n@interface MyAnnotation_42 {}\n@interface MyAnn_2 {\n    String value();}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationIncorrect2Two.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\npublic class InputAnnotationLocationIncorrect2Two {\n   @MyAnnotation_12\n            (value = \"\")\n@MyAnn_22 \n   class Foo2 {\n        public void method1(@MyAnnotation_32 @MyAnn_22 Object param1) {\n            try {\n            }\n            catch (@MyAnnotation_32 @MyAnn_22 Exception e) {\n            }\n        }\n   }\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationIncorrect3One.java",
+      "expected-problems": 21,
+      "expected-linenumbers": [
+        12,
+        18,
+        21,
+        25,
+        33,
+        40,
+        44,
+        45,
+        46,
+        49,
+        52,
+        56,
+        64,
+        69,
+        73,
+        78,
+        81,
+        83,
+        94,
+        97,
+        99
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\n@MyAnn_23 @com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation.MyAnn3\n(value = \"\")\nclass InputAnnotationLocationIncorrect3One\n{\n    @MyAnn_23 @MyAnnotation_13(value = \"\") \n    public int a;\n    @MyAnnotation_13(value = \"\") public int b; \n    @MyAnn_23\n        @MyAnnotation_13 \n(value = \"\")\n    public int c;\n    @MyAnnotation_13(value = \"\")\n    public int d;\n    @MyAnn_23\n        @MyAnnotation_13 \n(value = \"\")\n    public InputAnnotationLocationIncorrect3One() {}\n    @MyAnnotation_13(\"foo\") @MyAnn_23 void foo1() {} \n    @MyAnnotation_13(value = \"\")\n       @MyAnn_23 \n    void foo2() {}\n    @MyAnnotation_13(value = \"\")\n        @MyAnn_23 \n      @MyAnnotation_33 \n          @MyAnnotation_43 \n    class InnerClass3\n    {\n        @MyAnn_23 @MyAnnotation_13 \n(value = \"\")\n        public int a;\n        @MyAnnotation_13(value = \"\") public int b; \n        @MyAnn_23\n            @MyAnnotation_13 \n(value = \"\")\n        public int c;\n        @MyAnnotation_13(value = \"\")\n        public int d;\n        @MyAnn_23\n        @MyAnnotation_13(value = \"\") public InnerClass3() \n        {\n        }\n        @MyAnnotation_13(value = \"\")\n            @MyAnn_23 \n        void foo1() {}\n        @MyAnnotation_13(value = \"\")\n            @MyAnn_23 \n        void foo2() {}\n    }\n    @MyAnnotation_13(value = \"\")\n       @MyAnn_23 \n    InnerClass3 anon = new InnerClass3()\n    {\n        @MyAnn_23 @MyAnnotation_13(value = \"\") public int a;\n        @MyAnnotation_13(value = \"\") public int b; \n        @MyAnn_23\n        @MyAnnotation_13(value = \"\")\n        public int c;\n        @MyAnnotation_13(value = \"\")\n        public int d;\n        @MyAnnotation_13(value = \"\")\n           @MyAnn_23 void foo1() {} \n        @MyAnnotation_13(value = \"\")\n          @MyAnn_23 \n        void foo2() {}\n        @MyAnnotation_13(value = \"\") void foo42() {} \n    };\n}\n@interface MyAnnotation_13 {\n        String value();}\n@interface MyAnn_23 {}\n@interface MyAnnotation_33 {}\n@interface MyAnnotation_43 {}\n@interface MyAnn3 {\n    String value();}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationIncorrect3Two.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\npublic class InputAnnotationLocationIncorrect3Two {\n   @MyAnnotation_13\n            (value = \"\")\n@MyAnn_23 \n   class Foo3 {\n        public void method1(@MyAnnotation_33 @MyAnn_23 Object param1) {\n            try {\n            }\n            catch (@MyAnnotation_33 @MyAnn_23 Exception e) {\n            }\n            return;\n        }\n   }\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationIncorrectOne.java",
+      "expected-problems": 21,
+      "expected-linenumbers": [
+        12,
+        18,
+        21,
+        25,
+        33,
+        40,
+        44,
+        45,
+        46,
+        49,
+        52,
+        56,
+        64,
+        69,
+        73,
+        78,
+        81,
+        82,
+        93,
+        96,
+        98
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\n@MyAnn_21 @com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation.MyAnn\n(value = \"\")\nclass InputAnnotationLocationIncorrectOne\n{\n    @MyAnn_21 @MyAnnotation1(value = \"\") \n    public int a;\n    @MyAnnotation1(value = \"\") public int b; \n    @MyAnn_21\n        @MyAnnotation1 \n(value = \"\")\n    public int c;\n    @MyAnnotation1(value = \"\")\n    public int d;\n    @MyAnn_21\n        @MyAnnotation1 \n(value = \"\")\n    public InputAnnotationLocationIncorrectOne() {}\n    @MyAnnotation1(\"foo\") @MyAnn_21 void foo1() {} \n    @MyAnnotation1(value = \"\")\n       @MyAnn_21 \n    void foo2() {}\n    @MyAnnotation1(value = \"\")\n        @MyAnn_21 \n      @MyAnnotation3 \n          @MyAnnotation4 \n    class InnerClass\n    {\n        @MyAnn_21 @MyAnnotation1 \n(value = \"\")\n        public int a;\n        @MyAnnotation1(value = \"\") public int b; \n        @MyAnn_21\n            @MyAnnotation1 \n(value = \"\")\n        public int c;\n        @MyAnnotation1(value = \"\")\n        public int d;\n        @MyAnn_21\n        @MyAnnotation1(value = \"\") public InnerClass() \n        {\n        }\n        @MyAnnotation1(value = \"\")\n            @MyAnn_21 \n        void foo1() {}\n        @MyAnnotation1(value = \"\")\n            @MyAnn_21 \n        void foo2() {}\n    }\n    @MyAnnotation1(value = \"\")\n       @MyAnn_21 \n    InnerClass anon = new InnerClass()\n    {\n        @MyAnn_21 @MyAnnotation1(value = \"\") public int a; \n        @MyAnnotation1(value = \"\") public int b; \n        @MyAnn_21\n        @MyAnnotation1(value = \"\")\n        public int c;\n        @MyAnnotation1(value = \"\")\n        public int d;\n        @MyAnnotation1(value = \"\")\n           @MyAnn_21 void foo1() {} \n        @MyAnnotation1(value = \"\")\n          @MyAnn_21 \n        void foo2() {}\n        @MyAnnotation1(value = \"\") void foo42() {} \n    };\n}\n@interface MyAnnotation1 {\n        String value();}\n@interface MyAnn_21 {}\n@interface MyAnnotation3 {}\n@interface MyAnnotation4 {}\n@interface MyAnn {\n    String value();}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationIncorrectTwo.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\npublic class InputAnnotationLocationIncorrectTwo {\n   @MyAnnotation1\n            (value = \"\")\n@MyAnn_21 \n   class Foo {\n        public void method1(@MyAnnotation3 @MyAnn_21 Object param1) {\n            try {\n            }\n            catch (@MyAnnotation3 @MyAnn_21 Exception e) {\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationInterface.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        17,
+        18,
+        22,
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Repeatable;\nimport java.lang.annotation.Target;\n@InterfaceAnnotation(value = \"foo\")\n  @InterfaceAnnotation \n@InterfaceAnnotation(\"bar\") interface InputAnnotationLocationInterface {\n    @InterfaceAnnotation(value = \"foo\")\n      @InterfaceAnnotation \n    @InterfaceAnnotation(\"bar\") void method( \n        int param1,\n        @InterfaceAnnotation(value = \"foo\")\n          @InterfaceAnnotation\n        @InterfaceAnnotation(\"bar\") int param2,\n        int param3);\n}\n@Repeatable(InterfaceAnnotations.class)\n@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})\n@interface InterfaceAnnotation  {\n    String value() default \"\";\n}\n@Target({ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE})\n@interface InterfaceAnnotations {\n    InterfaceAnnotation[] value();\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationParameterized.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        16,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\nimport java.lang.annotation.Repeatable;\nclass InputAnnotationLocationParameterized {\n    @Annotation void singleParameterless() {} \n    @Annotation @Annotation void multipleParameterless() {} \n    @Annotation(\"\") void parameterized() {}\n    @Annotation(value = \"\") void namedParameterized() {}\n    @Annotation @Annotation(\"\") @Annotation(value = \"\") void multiple() {} \n    @Annotation(\"\") @Annotation(value = \"\") void multipleParametrized() {}\n    @Repeatable(Annotations.class)\n    @interface Annotation {\n        String value() default \"\";\n    }\n    @interface Annotations {\n        Annotation[] value();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationRecordsAndCompactCtors.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        17,
+        21,
+        25,
+        28,
+        35,
+        47,
+        59
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\npublic class InputAnnotationLocationRecordsAndCompactCtors {\n    @NonNull1 public record MyRecord1() { \n    }\n    @SuppressWarnings(\"deprecation\") public record MyRecord2() {\n    }\n    @SuppressWarnings(\"deprecation\") record MyRecord3() {\n    }\n    @SuppressWarnings(\"deprecation\") public record MyRecord4() {\n        @SuppressWarnings(\"deprecation\")public MyRecord4{}\n    }\n    @SuppressWarnings(\"deprecation\")\n    public record MyRecord5() {\n        record MyInnerRecord(){\n            @SuppressWarnings(\"Annotation\")public MyInnerRecord{}\n        }\n    }\n    @SuppressWarnings(\"deprecation\")\n    public record MyRecord6() {\n        record MyInnerRecord () {\n            @SuppressWarnings(\"Annotation\")public MyInnerRecord {\n            }\n        }\n    }\n    @SuppressWarnings(\"deprecation\")\n    public record MyRecord7() {\n        record MyInnerRecord () {@SuppressWarnings(\"Annotation\")public MyInnerRecord {\n            } \n        }\n    }\n}\n@interface NonNull1{}"
+    },
+    {
+      "description": "Auto test from InputAnnotationLocationSingleParameterless.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        20,
+        23,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.annotationlocation;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Repeatable;\nimport java.lang.annotation.Target;\nclass InputAnnotationLocationSingleParameterless {\n    @Annotation void singleParameterless() {}\n    @Annotation @Annotation void multipleParameterless() {}\n    @Annotation(\"\") void parameterized() {} \n    @Annotation(value = \"\") void namedParameterized() {} \n    @Annotation @Annotation(\"\") @Annotation(value = \"\") void multiple() {} \n    @Annotation(\"\") @Annotation(value = \"\") void multipleParametrized() {} \n    void parameterlessSamelineInForEach() {\n        for (@Annotation Object o : new Object[0]) break;\n        for (@Annotation @Annotation Object o : new Object[0]) break;\n        for (@Annotation Object o;;) break;\n        for (@Annotation @Annotation Object o;;) break;\n    }\n    @Repeatable(Annotations.class)\n    @Target({ElementType.METHOD, ElementType.LOCAL_VARIABLE})\n    @interface Annotation {\n        String value() default \"\";\n    }\n    @Target({ElementType.METHOD, ElementType.LOCAL_VARIABLE})\n    @interface Annotations {\n        Annotation[] value();\n    }\n}"
+    }
+  ]
+}

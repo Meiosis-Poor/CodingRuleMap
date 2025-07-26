@@ -1,0 +1,124 @@
+{
+  "name": "DoNotUseThreads",
+  "language": "java",
+  "description": "\nThe J2EE specification explicitly forbids the use of threads. Threads are resources, that should be managed and monitored by the J2EE server.\nIf the application creates threads on its own or uses own custom thread pools, then these threads are not managed, which could lead to resource exhaustion.\nAlso, EJBs might be moved between machines in a cluster and only managed resources can be moved along.\n        ",
+  "example": "// This is not allowed\npublic class UsingThread extends Thread {\n\n}\n\n// Neither this,\npublic class UsingExecutorService {\n\n    public void methodX() {\n        ExecutorService executorService = Executors.newFixedThreadPool(5);\n    }\n}\n\n// Nor this,\npublic class Example implements ExecutorService {\n\n}\n\n// Nor this,\npublic class Example extends AbstractExecutorService {\n\n}\n\n// Nor this\npublic class UsingExecutors {\n\n    public void methodX() {\n        Executors.newSingleThreadExecutor().submit(() -> System.out.println(\"Hello!\"));\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Having thread in a type name is doubtfull but allowed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UsingThread  {\n}\n        "
+    },
+    {
+      "description": "extending threads is not allowed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n// This is not allowed\npublic class UsingThread extends Thread {\n}\n        "
+    },
+    {
+      "description": "Implementing ExecutorService is not allowed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport java.util.concurrent.ExecutorService;\n\npublic class PMDTestExecutorService implements ExecutorService {}\n        "
+    },
+    {
+      "description": "Extending AbstractExecutorService is not allowed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport java.util.concurrent.*;\n\npublic class PMDTestExecutorService extends AbstractExecutorService {}\n        "
+    },
+    {
+      "description": "Using ExecutorService is not allowed",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        7
+      ],
+      "code": "\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.ExecutorService;\n\npublic class ExecutorServiceUsage {\n    public void executor_service_method_invocation() {\n        ExecutorService executorService = Executors.newSingleThreadExecutor();\n        executorService.submit(new Runnable() {\n             @Override\n             public void run() {\n             }\n        });\n    }\n}\n        "
+    },
+    {
+      "description": "Using Executors directly is not allowed",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        11
+      ],
+      "code": "\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.Callable;\n\npublic class ExecutorsUsage {\n    public void static_usage_of_Executors() {\n         Executors.newSingleThreadExecutor().submit(new Runnable() {\n             @Override\n             public void run() {\n             }\n        });\n        Executors.newFixedThreadPool(1).submit(new Callable<Object>() {\n            @Override\n            public Object call() throws Exception {\n                return null;\n            }\n        });\n    }\n}\n        "
+    },
+    {
+      "description": "Implementing Runnable is not forbidden see https://github.com/pmd/pmd/issues/1627",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class OtherThread implements Runnable {}\n        "
+    },
+    {
+      "description": "Use of Runnable is also not forbidden see https://github.com/pmd/pmd/issues/1627",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Violation {\n    public void methode() {\n            Runnable runnable = new Runnable() {\n                @Override\n                public void run() {\n\n                }\n            };\n    }\n}\n        "
+    },
+    {
+      "description": "getContextClassLoader is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Ok {\n    ClassLoader cl = Thread.currentThread().getContextClassLoader();\n}\n        "
+    },
+    {
+      "description": "[java] DoNotUseThreads report duplicate warnings #4210",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        4
+      ],
+      "code": "\npublic final class Test {\n    public final Thread BAR = new Thread();  // reports two duplicate warnings in this line, but one is enough\n\n    public Thread getBAR() {  // report one warning in this line\n        return this.BAR;\n    }\n}\n"
+    },
+    {
+      "description": "False negatives with field declarations",
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        6,
+        7,
+        8,
+        9,
+        13,
+        14,
+        20,
+        26,
+        30,
+        31,
+        33,
+        34,
+        37,
+        38,
+        42,
+        43,
+        47,
+        48,
+        51
+      ],
+      "code": "\nimport java.util.concurrent.ForkJoinPool;\nimport java.util.concurrent.ScheduledExecutorService;\nimport java.util.concurrent.ThreadFactory;\n\nclass DoNotUseThreadsTest {\n    private Thread background;                           // 6: violation expected\n    private ScheduledExecutorService scheduledExecutor;  // 7: violation expected\n    private ForkJoinPool pool;                           // 8: violation expected\n    private final Thread owner = Thread.currentThread(); // 9: violation expected\n\n    static final ThreadFactory threadFactory1 = new ThreadFactory() {\n        @Override\n        public Thread newThread(final Runnable r) {      // 13: violation expected\n            return new Thread(r);                        // 14: violation expected\n        }\n    };\n\n    static final ThreadFactory threadFactory2 = new ThreadFactory() {\n        @Override\n        public Thread newThread(final Runnable r) {      // 20: violation expected\n            return null;\n        }\n    };\n\n    DoNotUseThreadsTest() {\n        this.background = new Thread();                  // 26: violation expected\n    }\n\n    public void run() {\n        new Thread(() -> System.out.println(\"foo\")).start(); // 30: violation expected\n        Thread t2 = new Thread();                            // 31: one violation expected\n        // report two violations, if on two separate lines\n        Thread t3 =                                          // 33: violation expected\n            new Thread();                                    // 34: violation expected\n    }\n\n    public Thread getThread() {                         // 37: violation expected\n        return new Thread();                            // 38: violation expected\n    }\n\n    @Override\n    public Thread getThread1() {                        // 42: violation expected\n        return new Thread();                            // 43: violation expected\n    }\n\n    @Override\n    public Thread getThread2(final Runnable r) {        // 47: violation expected\n        return new Thread(r);                           // 48: violation expected\n    }\n\n    private static class MyThread extends Thread { }    // 51: violation expected\n}\n"
+    },
+    {
+      "description": "More false negatives",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        8
+      ],
+      "code": "\nimport java.util.HashMap;\nimport java.util.Map;\n\nclass DoNotUseThreadsTest {\n    Map<Thread, String> m = new HashMap<>();\n\n    boolean isThread(Class<?> cl) {\n        return cl == Thread.class;\n    }\n}\n"
+    }
+  ]
+}

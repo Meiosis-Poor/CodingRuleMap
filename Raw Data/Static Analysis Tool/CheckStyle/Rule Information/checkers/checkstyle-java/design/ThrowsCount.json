@@ -1,0 +1,67 @@
+{
+  "name": "ThrowsCount",
+  "language": "java",
+  "description": "<div>\n Restricts throws statements to a specified count.\n Methods with \"Override\" or \"java.lang.Override\" annotation are skipped\n from validation as current class cannot change signature of these methods.\n </div>\n\n <p>\n Rationale:\n Exceptions form part of a method's interface. Declaring\n a method to throw too many differently rooted\n exceptions makes exception handling onerous and leads\n to poor programming practices such as writing code like\n {@code catch(Exception ex)}. 4 is the empirical value which is based\n on reports that we had for the ThrowsCountCheck over big projects\n such as OpenJDK. This check also forces developers to put exceptions\n into a hierarchy such that in the simplest\n case, only one type of exception need be checked for by\n a caller but any subclasses can be caught\n specifically if necessary. For more information on rules\n for the exceptions and their issues, see Effective Java:\n Programming Language Guide Second Edition\n by Joshua Bloch pages 264-273.\n </p>\n\n <p>\n <b>ignorePrivateMethods</b> - allows to skip private methods as they do\n not cause problems for other classes.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 77,
+  "branches": 9,
+  "apis": 25,
+  "test": [
+    {
+      "description": "Auto test from InputThrowsCountCustomMaxCount.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.throwscount;\nimport java.awt.AWTException;\nimport java.io.EOFException;\nimport java.io.FileNotFoundException;\nimport java.sql.SQLException;\npublic class InputThrowsCountCustomMaxCount {\n    void method1() throws Exception\n    {\n    }\n    void method2() throws AWTException\n    {\n    }\n    void method3() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method4() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method5() throws Exception, AWTException, Throwable, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method6() {\n    }\n    private void method7() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException {\n    }\n}\nclass SubClass2 extends InputThrowsCountCustomMaxCount {\n    @Override\n    void method1() {\n    }\n    @Deprecated\n    @Override\n    void method4() throws Exception, AWTException {\n    }\n    @Override\n    void method5() throws Exception, AWTException, Throwable {\n    }\n    @SuppressWarnings(\"deprecation\")\n    final void method2(Object ...objects) throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException{\n    }\n    @Override\n    void method3() throws Exception {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputThrowsCountDefault.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        23,
+        29,
+        35,
+        66
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.throwscount;\nimport java.awt.AWTException;\nimport java.io.EOFException;\nimport java.io.FileNotFoundException;\nimport java.sql.SQLException;\npublic class InputThrowsCountDefault {\n    void method1() throws Exception\n    {\n    }\n    void method2() throws java.awt.AWTException\n    {\n    }\n    void method3() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method4() throws Exception, java.awt.AWTException, java.sql.SQLException,\n            java.io.FileNotFoundException, java.io.EOFException\n    {\n    }\n    void method5() throws Exception, AWTException, Throwable, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method6() {\n    }\n    private void method7() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException {\n    }\n}\nclass SubClass extends InputThrowsCountDefault {\n    @Override\n    void method1() {\n    }\n    @Deprecated\n    @Override\n    void method4() throws Exception, java.awt.AWTException {\n    }\n    @Override\n    void method5() throws Exception, AWTException, Throwable {\n    }\n    @SuppressWarnings(\"deprecation\")\n    final void method2(Object ...objects) throws Exception,\n            AWTException, SQLException, FileNotFoundException, EOFException{\n    }\n    @java.lang.Override\n    void method3() throws Exception {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputThrowsCountMaxAllowZero.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        16,
+        19,
+        25,
+        31,
+        37,
+        46,
+        67
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.throwscount;\nimport java.awt.AWTException;\nimport java.io.EOFException;\nimport java.io.FileNotFoundException;\nimport java.sql.SQLException;\npublic class InputThrowsCountMaxAllowZero {\n    void method1() throws Exception \n    {\n    }\n    void method2() throws java.awt.AWTException \n    {\n    }\n    void method3() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method4() throws Exception, java.awt.AWTException, java.sql.SQLException,\n            java.io.FileNotFoundException, java.io.EOFException\n    {\n    }\n    void method5() throws Exception, AWTException, Throwable, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method6() {\n    }\n    private void method7() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException {\n    }\n}\nclass SubClass4 extends InputThrowsCountMaxAllowZero {\n    @Override\n    void method1() {\n    }\n    @Deprecated\n    @Override\n    void method4() throws Exception, java.awt.AWTException {\n    }\n    @Override\n    void method5() throws Exception, AWTException, Throwable {\n    }\n    @SuppressWarnings(\"deprecation\")\n    final void method2(Object ...objects) throws Exception,\n            AWTException, SQLException, FileNotFoundException, EOFException{\n    }\n    @java.lang.Override\n    void method3() throws Exception {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputThrowsCountMethodWithAnnotation.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.throwscount;\nimport java.awt.AWTException;\nimport java.io.EOFException;\nimport java.io.FileNotFoundException;\nimport java.nio.file.FileAlreadyExistsException;\nimport java.sql.SQLException;\npublic class InputThrowsCountMethodWithAnnotation extends ParentClass {\n    @Override\n    public void method() throws AWTException, SQLException, FileNotFoundException,\n            EOFException, FileAlreadyExistsException {\n        super.method();\n    }\n}\nclass ParentClass {\n    public void method() throws AWTException, SQLException,\n    FileNotFoundException, EOFException, FileAlreadyExistsException {}\n}"
+    },
+    {
+      "description": "Auto test from InputThrowsCountNotIgnorePrivateMethods.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        23,
+        29,
+        35,
+        44,
+        67
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.throwscount;\nimport java.awt.AWTException;\nimport java.io.EOFException;\nimport java.io.FileNotFoundException;\nimport java.sql.SQLException;\npublic class InputThrowsCountNotIgnorePrivateMethods {\n    void method1() throws Exception\n    {\n    }\n    void method2() throws AWTException\n    {\n    }\n    void method3() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method4() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method5() throws Exception, AWTException, Throwable, SQLException,\n            FileNotFoundException, EOFException\n    {\n    }\n    void method6() {\n    }\n    private void method7() throws Exception, AWTException, SQLException,\n            FileNotFoundException, EOFException {\n    }\n}\nclass SubClass3 extends InputThrowsCountNotIgnorePrivateMethods {\n    @Override\n    void method1() {\n    }\n    @Deprecated\n    @Override\n    void method4() throws Exception, AWTException {\n    }\n    @Override\n    void method5() throws Exception, AWTException, Throwable {\n    }\n    @SuppressWarnings(\"deprecation\")\n    final void method2(Object ...objects) throws Exception,\n            AWTException, SQLException, FileNotFoundException, EOFException{\n    }\n    @Override\n    void method3() throws Exception {\n    }\n}"
+    }
+  ]
+}

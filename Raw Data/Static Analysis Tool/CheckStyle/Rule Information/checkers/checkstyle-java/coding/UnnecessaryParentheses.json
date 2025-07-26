@@ -1,0 +1,254 @@
+{
+  "name": "UnnecessaryParentheses",
+  "language": "java",
+  "description": "<div>\n Checks if unnecessary parentheses are used in a statement or expression.\n The check will flag the following with warnings:\n </div>\n <pre>\n return (x);          // parens around identifier\n return (x + 1);      // parens around return value\n int x = (y / 2 + 1); // parens around assignment rhs\n for (int i = (0); i &lt; 10; i++) {  // parens around literal\n t -= (z + 1);                     // parens around assignment rhs\n boolean a = (x &gt; 7 &amp;&amp; y &gt; 5)      // parens around expression\n             || z &lt; 9;\n boolean b = (~a) &gt; -27            // parens around ~a\n             &amp;&amp; (a-- &lt; 30);        // parens around expression\n </pre>\n\n <p>\n The check is not \"type aware\", that is to say, it can't tell if parentheses\n are unnecessary based on the types in an expression. The check is partially aware about\n operator precedence but unaware about operator associativity.\n It won't catch cases such as:\n </p>\n <pre>\n int x = (a + b) + c; // 1st Case\n boolean p = true; // 2nd Case\n int q = 4;\n int r = 3;\n if (p == (q &lt;= r)) {}</pre>\n\n <p>\n In the first case, given that <em>a</em>, <em>b</em>, and <em>c</em> are\n all {@code int} variables, the parentheses around {@code a + b}\n are not needed.\n In the second case, parentheses are required as <em>q</em>, <em>r</em> are\n of type {@code int} and <em>p</em> is of type {@code boolean}\n and removing parentheses will give a compile-time error. Even if <em>q</em>\n and <em>r</em> were {@code boolean} still there will be no violation\n raised as check is not \"type aware\".\n </p>\n\n <p>\n The partial support for operator precedence includes cases of the following type:\n </p>\n <pre>\n boolean a = true, b = true;\n boolean c = false, d = false;\n if ((a &amp;&amp; b) || c) { // violation, unnecessary paren\n }\n if (a &amp;&amp; (b || c)) { // ok\n }\n if ((a == b) &amp;&amp; c) { // violation, unnecessary paren\n }\n String e = &quot;e&quot;;\n if ((e instanceof String) &amp;&amp; a || b) { // violation, unnecessary paren\n }\n int f = 0;\n int g = 0;\n if (!(f &gt;= g) // ok\n         &amp;&amp; (g &gt; f)) { // violation, unnecessary paren\n }\n if ((++f) &gt; g &amp;&amp; a) { // violation, unnecessary paren\n }\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 356,
+  "branches": 29,
+  "apis": 37,
+  "test": [
+    {
+      "description": "Auto test from InputUnnecessaryParentheses15Extensions.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\n@interface MyAnnotation1 {\n    String name();\n    int version();\n}\n@MyAnnotation1(name = \"ABC\", version = 1)\npublic class InputUnnecessaryParentheses15Extensions\n{\n}\n@MyAnnotation1(name = (\"ABC\" + \"DEF\"), version = (1)) \nclass AnnotationWithUnnecessaryParentheses\n{\n}\nenum Enum2\n{\n    A, B, C;\n    Enum2() {}\n    public String toString() {\n        return \"\"; \n    }\n}\ninterface TestRequireThisEnum\n{\n    enum DAY_OF_WEEK\n    {\n        SUNDAY,\n        MONDAY,\n        TUESDAY,\n        WEDNESDAY,\n        THURSDAY,\n        FRIDAY,\n        SATURDAY\n    }\n}\n@MyAnnotation1(name = \"ABC\", version = 1)\nclass ExtraParenAfterAnnotation {\n    boolean flag = (\"abc\" == \"done\"); \n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesCasts1.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        27
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesCasts1 {\n    public void valid1() {\n        int x = 23;\n        int y = 44;\n        float k = 12f;\n        int d = ((int) 100f) + 100 * 2 / ((int) 12.5) + (int) 90f;\n        int p = (int) 110f + 10 * 2 / (int) 10f + (int) 32.2;\n        y = (int) (22.2 * 2) / ((int) 8f + 5);\n        double arg2 = 23.2;\n        int i = (int) arg2;\n        i = ((int) arg2); \n        p = (int) arg2;\n        x = (2 * 2 /((int) k));\n        x = 2 * 2 / (int) k;\n        int par = ((int)2f * 2) / 4;\n        y = ((Integer) x).hashCode();\n        int py = 12;\n        float xy = 40f;\n        int yp = 0;\n        boolean finished = true;\n        boolean result = false;\n        if(py >= ((int)xy) || (yp ==1 | py >=1)) {\n            xy--;\n        }\n        else if(yp >= (int)xy || (py ==1 | py >=1)) {\n            xy++;\n        }\n        if (!((int) xy > yp) && py < 20) {\n            py++;\n        }\n        if (35 + (int)'a' == 100) {\n            py++;\n        }\n        boolean checkone = true;\n        if (!((boolean) checkone)) {\n            checkone = false;\n        }\n        else if ((boolean) checkone) {\n            checkone = !checkone;\n        }\n        double limit = 3.2;\n        for (int j = 0; j >= ((int) limit); j++) {\n            yp +=1;\n        }\n        for (int j =0; j >= (int) limit; j++) {\n            py--;\n            break;\n        }\n        for(int j = 10; !finished && !((boolean) (j > 5)) ; j++){\n            break;\n        }\n        for(int jp = 9; !finished || !(boolean) (jp >5); jp++){\n            checkone = false;\n            break;\n        }\n        long p1 = ((long) ((20 >> 24 ) & 0xFF)) << 24;\n        long p2 = (long) ((20 >> 24 ) & 0xFF) << 24;\n        float f4 = -((float) 42);\n        float f5 = -(float) 90;\n        long shiftedbytwo = ((long)x) << 2;\n        long shiftedbythree = (long)y << 3;\n        short complement = (short) ~((short) 87777);\n        short bcomplement = (short) ~(short) 90122;\n        int numSlices1 = (int) Math.max(Math.ceil(((double) 20) / 10), 1);\n        int numSlices2 = (int) Math.max(Math.ceil((double) 20 / 10), 1);\n    }\n    private long getLong1(int start, int end) {\n        return (((long) start) << 32) | 0xFFFFFFFFL & end;\n    }\n    private long getLong2(int start, int end) {\n        return ((long) start << 32) | 0xFFFFFFFFL & end;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesCasts2.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\nimport static org.junit.Assert.assertEquals;\nimport static java.lang.Math.abs;\nimport java.util.Arrays;\nimport java.util.HashSet;\nimport java.util.function.ToIntFunction;\npublic class InputUnnecessaryParenthesesCasts2 {\n    public void fooConditionals(T element) {\n        int x = 23;\n        int y = 44;\n        float k = 12f;\n        boolean finished = true;\n        boolean result = false;\n        String filevalue = \"FILEVALUE\";\n        if (!finished || !((boolean) filevalue.contains(\"O\"))) {\n            filevalue += \"F\";\n        }\n        else if (finished || !(boolean) filevalue.contains(\"O\")) {\n            filevalue += \"G\";\n        }\n        if (result && finished || ((int) 23.1 + 21) == 32) {\n            y--;\n        }\n        if (!((boolean) filevalue.contains(\"G\")) || finished) {\n            x++;\n        }\n        else if (!(boolean) filevalue.contains(\"P\") || finished) {\n            filevalue += \"p\";\n        }\n        String[] a = {\"s\", \"a\", \"1\", \"2\", \"3\"};\n        String[] abr = {\"18\", \"z\", \"w\", \"30\", \"u\", \"vel\"};\n        Arrays.stream(a)\n                .filter(s -> !((boolean) s.isEmpty()))\n                .toArray(String[]::new);\n        Arrays.stream(abr).filter(s -> !(boolean) s.isEmpty())\n                .toArray(String[]::new);\n        Arrays.stream(a)\n                .filter(s -> ((boolean) s.isEmpty()))\n                .toArray(String[]::new);\n        Arrays.stream(abr)\n                .filter(s -> (boolean) s.isEmpty())\n                .toArray(String[]::new);\n        new HashSet<Integer>().stream()\n                .filter(f -> f > ((int) 1.1 + 200));\n        if (((double) abs(10 - 2)) / 2 <= 0.01) {\n            y += 10;\n        }\n        else if ((double) abs(10 - 2) / 2 >= 0.02) {\n            x += 2;\n        }\n        final ToIntFunction<T> comparison1 = ((Comparable<T>) element)::compareTo; \n        Bean bean = new Bean();\n        assertEquals(1, ((int[]) bean.array)[0]); \n        float rest = ((float) (50 - System.currentTimeMillis())) / 1000;\n        float stop = (float) (50 - System.currentTimeMillis()) / 1000;\n        float pin = false ? ((float) 21) : ((float) 31);\n        Object obj = \"hello\"; \n        String result1 = (obj instanceof String) ? ((String) obj) : \"Default\";\n        String op1 = ((String) obj) + ((Boolean) finished).toString();\n        String op2 = (String) obj + ((Boolean) finished).toString();\n        filevalue = \"'\" + ((char) 32) + \"'\";\n        filevalue = \"'\" + (char) 31 + \"'\"; \n        ck(\"name\", (long) k, (long) ((byte) 0x22));\n        ck(\"check\", (long) k, (long) (byte) 0x24);\n    }\n    public void ck(String byt, long a, long c) {}\n    static class T {}\n    public class Bean {\n        public Object array;\n        public Bean() {\n            array = new int[]{1, 2, 3};\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesCasts3.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\nimport java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\npublic class InputUnnecessaryParenthesesCasts3 {\n    private static final double MDP_MULT = 2.2;\n    public void fooUnnecessaryParentheses(String hexa) {\n        Object b = new Object();\n        int unm = 30;\n        boolean Eval = false;\n        List<Object> siZ = new ArrayList<>();\n        Map<Object, Object> record = new HashMap<>();\n        if (hexa.contains(\"Z\")) {\n            throw new IllegalArgumentException(((char) b) + \" is not a hexadecimal digit\");\n        }\n        if (hexa.contains(\"Y\")) {\n            throw new IllegalArgumentException((char) b + \" is not a hexadecimal digit\");\n        }\n        Attrs le = new Attrs();\n        String fileName = \"log.txt\";\n        setFileLastModified(fileName,\n                ((long) le.getMTime()) * 1000);\n        setFileLastModified(fileName,\n                (long) le.getMTime() * 1000);\n        if (!Eval && unm > 0 && ((int) (12f * unm - 1)) > unm+20) {}\n        if (!Eval && unm > 0 && (int) (12f * unm - 1) > unm+20) {}\n        final long l8 = ((long) record.get(unm)) & 0xffL;\n        final long l9 = (long) record.get(unm) & 0xffL;\n        int maxSize = 21;\n        double used = maxSize == 0 ? 0 : 100 * (((double) unm) / maxSize);\n        double used1 = maxSize == 0 ? 0 : 100 * ((double) unm / maxSize);\n        int dX = 90;\n        int dY = 2;\n        int stepx = (int) (((double)dX) * MDP_MULT) / dY;\n        int stepy = (int) ((double)dX * MDP_MULT) / dY;\n        Object layerOffset;\n        unm += ((int) (Math.sqrt(unm) * 1.5));\n        unm += (int) (Math.sqrt(unm) * 1.5);\n    }\n    public static void setFileLastModified(String fileName, long lastModified) {}\n    public static class Attrs {\n        int getMTime() {\n            return 123;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesCheckSwitchExpression.java",
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        20,
+        23,
+        24,
+        29,
+        31,
+        35,
+        45,
+        47,
+        48,
+        52,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesCheckSwitchExpression {\n  MathOp2 tooManyParens(int k) {\n    return switch (k) {\n      case 1 -> {\n        MathOp2 e = (a, b) -> (a + b); \n        yield e;\n      }\n      case (2) -> { \n        MathOp2 f = (int a, int b) -> (a + b); \n        yield f;\n      }\n      case 3 -> {\n        MathOp2 g = (int a, int b) -> {\n          return (a + b); \n        };\n        yield (g); \n      }\n      default -> {\n        MathOp2 h = (int x, int y) -> {\n          return (x + y); \n        };\n        yield h;\n      }\n    };\n  }\n  MathOp2 tooManyParens2(int k) {\n    switch (k) {\n      case 1 -> {\n        MathOp2 e = (a, b) -> (a + b); \n      }\n      case (2) -> { \n        MathOp2 f = (int a, int b) -> (a + b); \n      }\n      case 3 -> {\n        MathOp2 g = (int a, int b) -> {\n          return (a + b + 2); \n        };\n      }\n      default -> {\n        MathOp2 h = (int x, int y) -> {\n          return (x + y); \n        };\n      }\n    }\n    ;\n    return (a, b) -> 0;\n  }\n  interface MathOp2 {\n    int operation(int a, int b);\n  }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesCheckTextBlocks.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        20,
+        22,
+        24,
+        25,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesCheckTextBlocks {\n  void method() {\n    String string1 = (\"this\") + (\"that\") + (\"other\"); \n    String string2 = (\"\"\"\n        this\"\"\") \n        + (\"\"\"\n        that\"\"\") \n        + (\"\"\"\n        other\"\"\"); \n    String string3 = (\"\"\"\n        this is a test.\"\"\") + (\"\"\"\n        and another line\"\"\"); \n  }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesConditionalExpression.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        24,
+        33
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesConditionalExpression {\n    void method() {\n        int w = 5;\n        int x = (w == 3) ? (3) : (4);\n        int y = !(w>x) ? 3 : 4;\n        int z1 = (!(y >= w)) ? 5 : 6; \n        int z2 = 5 > 3 ? 2 : 1;\n        int z3 = (z2 > 0) ? 5 : (z2 < -10) ? 7 : 3;\n        Object o = \"\";\n        boolean result = (o instanceof String) ?\n                (o instanceof String) : (!(o instanceof String));\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesIdentifier.java",
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        21,
+        30,
+        31,
+        45,
+        55,
+        56,
+        74,
+        75,
+        76,
+        82,
+        100
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\nimport java.io.BufferedReader;\nimport java.io.IOException;\npublic class InputUnnecessaryParenthesesIdentifier {\n    public static boolean is(Class<?> clazz) {\n        return true\n            && (test(clazz)); \n    }\n    public static boolean isOk(Class<?> clazz) {\n        return true\n            && test(clazz);\n    }\n    public int square(int a, int b){\n    int square = (a * b); \n    return (square);      \n    }\n    public int square1(int a, int b){\n    int square = a * b;\n    return square;\n    }\n    public static boolean test(Class<?> clazz) {\n        return true;\n    }\n    public static boolean newTest(Class<?> clazz) {\n        return true\n            && test((clazz)); \n    }\n    public static boolean newTest1(Class<?> clazz) {\n        return true\n            && test(clazz);\n    }\n    public static boolean newTest2(Class<?> clazz) {\n        return true\n            && ((test( \n                    (clazz)))); \n    }\n    public String getMarkerNumber() {\n        String markerNumber = \"someText\";\n        return markerNumber;\n    }\n    public boolean m3() {\n        return true;\n    }\n    public void testIF() {\n        int a = 9;\n        int b = 10;\n        if (a > b) {\n            System.out.println(\"a is greater then b\");\n        }\n        else if ((b < a) && ( \n                (8>9) || \n                        (!m3()))) { \n             System.out.println();\n        }\n    }\n    final double get1(int i) { return (double)(get(i)); }\n    private Object get(int i) {\n        return null;\n    }\n    public String isComment(String str) {\n        return \"str\";\n    }\n    void method() throws IOException {\n        String line = null;\n        System.out.println(\" line: null=\"\n                              + false \n                              + \" empty=\"\n                              + (line.equals(\"\"))\n                              + \" comment=\"\n                              + (isComment(line)));\n        BufferedReader reader = null;\n        line = reader.readLine();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesIfStatement.java",
+      "expected-problems": 23,
+      "expected-linenumbers": [
+        19,
+        32,
+        34,
+        39,
+        44,
+        47,
+        49,
+        52,
+        54,
+        55,
+        59,
+        65,
+        66,
+        69,
+        70,
+        71,
+        77,
+        78,
+        85,
+        102,
+        105,
+        106,
+        109
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesIfStatement {\n    void method(String sectionName) {\n        if (\"Content\".equals(sectionName) || \"Overview\".equals(sectionName)\n                || (!\"A\".equals(sectionName) \n                && !\"AbstractClassName\".equals(sectionName)\n        )) {\n            System.out.println(\"sd\");\n        }\n    }\n    private void method() {\n        int x, y, z;\n        x = 0;\n        y = 0;\n        z = (x < y) ? x : y;\n        if ((x < y)           \n                && (x > z)) { \n            return;\n        }\n        if (((x < y)           \n                && (x > z))) { \n            return;\n        }\n        if (!(x <= y)\n                || (x >= z)) { \n            return;\n        }\n        if ((x == y)           \n                || (x != z)) { \n            return;\n        }\n        if ((                       \n                (x == y)            \n                        || (x != z) \n        )) {\n            return;\n        }\n        if ((Integer.valueOf(x) instanceof Integer) \n                || Integer.valueOf(y) instanceof Integer) {\n            return;\n        }\n        if (x == ((y<z) ? y : z) &&\n            ((x>y && y>z)                  \n                    || (!(x<z) && y>z))) { \n            return;\n        }\n        if ((x >= 0 && y <= 9)            \n                 || (z >= 5 && y <= 5)    \n                 || (z >= 3 && x <= 7)) { \n            return;\n        }\n        if(x>= 0 && (x<=8 || y<=11) && y>=8) {\n            return;\n        }\n        if((y>=11 && x<=5)            \n                || (x<=12 && y>=8)) { \n            return;\n        }\n    }\n    private void check() {\n        String sectionName = \"Some String\";\n        if (\"Some content\".equals(sectionName) || \"Some overview\".equals(sectionName)\n                || (!\"A\".equals(sectionName) \n                && !\"AbstractClassName\".equals(sectionName)\n        )) {\n            return;\n        }\n        if (sectionName instanceof String && \"Other Overview\".equals(sectionName)\n                && (!\"AbbreviationAsWordInName\".equals(sectionName)\n                || !\"AbstractClassName\".equals(sectionName)\n        )) {\n            return;\n        }\n    }\n    private void UnaryAndPostfix() {\n        boolean x = true;\n        boolean y = true;\n        int a = 25;\n        if ((++a) >= 54 && x) { \n            return;\n        }\n        if ((~a) > -27            \n                 && (a-- < 30)) { \n            return;\n        }\n        if ((-a) != -27 \n                 && x) {\n            return;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesIfStatement2.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        27,
+        38,
+        50,
+        55,
+        58,
+        59,
+        60,
+        62,
+        73
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesIfStatement2 {\n    void testShortCircuitOrIfStatement() {\n        boolean a = false;\n        boolean x = false, y = true, z = false;\n        boolean v = true, w = true, u = true;\n        boolean vy = x && y || (x || y || z) && v;\n        if (a && !(v && w || (x || y) && z || u && x)) {\n        }\n        if (a && !(v && w || x || y && z || u && x)) {\n        }\n        if (v ||\n                (u || x || y)) { \n        }\n        if ((v || x) ==\n                (w || y)) {\n        }\n        if ((v || x) &\n                (w || y)) {\n        }\n        if (a && v || (w || z) && u || y) {\n        }\n        if (a && x ||\n                (y || z) \n                || vy && u) {\n        }\n    }\n    public void checkBooleanStatements() {\n        boolean a = true;\n        int b = 42;\n        int c = 42;\n        int d = 32;\n        if ((b == c) == a\n                && (\n                        ( \n                            (b==c)==(d>=b)==a!=(c==d))\n                    || (b<=c)!=a==(c>=d))) {\n            return;\n        }\n        if (( \n                a!=(b==c)\n                        && (a \n                        && (b==c))) \n                || (a \n                || a!=(b<=c))\n                || (a==(b!=d==(c==b) && a!=(b<=c)))) { \n            return;\n        }\n        if (a==(b>=c && a==(c==d && d!=b))\n                && a==(c<=d)) {\n            return;\n        }\n        if (a && a==(b<=c)==(a\n                && (b<=c))) { \n            return;\n        }\n        if (a==(b==c)\n                || a!=(b<=c)) {\n            return;\n        }\n        if ((b==0) == (c==d)\n                && (Integer.valueOf(d) instanceof Integer) == true) {\n            return;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesLambdas.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        16,
+        17,
+        24,
+        27,
+        49,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\nimport java.io.Serializable;\nimport java.util.HashSet;\nimport java.util.Objects;\nimport java.util.function.Function;\npublic class InputUnnecessaryParenthesesLambdas {\n    int foo(int y) {\n        MathOperation case1 = (x) -> x + x; \n        MathOperation case2 = (x) -> { return x + x; }; \n        MathOperation case3 = (int x) -> x + x;\n        MathOperation case4 = x -> x + x;\n        MathOperation2 case5 = (a, b) -> a + b;\n        MathOperation2 case6 = (int a, int b) -> a + b;\n        MathOperation2 case7 = (int a, int b) -> { return a + b; };\n        Objects.requireNonNull(null, () -> \"message\");\n        call((x) -> x + x); \n        new HashSet<Integer>()\n            .stream()\n            .filter((f) -> f > 0); \n        return y;\n    }\n    static <T> CheckedFunction1<T, T> identity() {\n        return t -> t;\n    }\n    public interface CheckedFunction2<T1, T2, R> extends Lambda<R> {\n        R apply(T1 t1, T2 t2) throws Throwable;\n        default CheckedFunction1<T2, R> apply(T1 t1) {\n            return (T2 t2) -> apply(t1, t2);\n        }\n        @Override\n        default Function1<T1, CheckedFunction1<T2, R>> curried() {\n                    return t1 -> t2 -> apply(t1, t2);\n        }\n        default Function1<T1, CheckedFunction1<T2, R>> curried2() {\n            return (t1) -> (t2) -> apply(t1, t2); \n        }\n        default Function1<T1, CheckedFunction1<T2, R>> curried3() {\n            return (t1) -> t2 -> apply(t1, t2); \n        }\n        default Function1<T1, CheckedFunction1<T2, R>> curried4() {\n            return t1 -> (t2) -> apply(t1, t2); \n        }\n    }\n    private void call(MathOperation o) {\n        o.operation(1);\n    }\n    interface MathOperation {\n        int operation(int a);\n    }\n    interface MathOperation2 {\n        int operation(int a, int b);\n    }\n    interface Lambda<R> extends Serializable {\n        Lambda<?> curried();\n    }\n    public interface Function1<T1, R> extends Lambda<R>, Function<T1, R> {\n        @Override\n        default Function1<T1, R> curried() {\n            return this;\n        }\n    }\n    public interface CheckedFunction1<T1, R> extends Lambda<R> {\n        R apply(T1 t1) throws Throwable;\n        @Override\n        default CheckedFunction1<T1, R> curried() {\n            return this;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesOperator.java",
+      "expected-problems": 27,
+      "expected-linenumbers": [
+        19,
+        21,
+        23,
+        25,
+        27,
+        29,
+        31,
+        33,
+        35,
+        37,
+        39,
+        41,
+        46,
+        48,
+        50,
+        52,
+        54,
+        56,
+        58,
+        60,
+        62,
+        64,
+        66,
+        68,
+        85,
+        101,
+        105
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesOperator {\n        boolean a = true;\n        boolean b = false;\n    void method() {\n        if(a || (b ^ a) || b) { \n        }\n        if(a || (b | a) || b) { \n        }\n        if(a || (b & a) || b) { \n        }\n        if(a && (b ^ a) && b) { \n        }\n        if(a && (b | a) && b) { \n        }\n        if(a && (b & a) && b) { \n        }\n        if(a && (b ^ a) || b) { \n        }\n        if(a && (b | a) || b) { \n        }\n        if(a && (b & a) || b) { \n        }\n        if(a || (b ^ a) && b) { \n        }\n        if(a || (b | a) && b) { \n        }\n        if(a || (b & a) && b) { \n        }\n    }\n    void method2() {\n        if(a || (((b ^ a))) || b) { \n        }\n        if(a || ((b | a)) || b) { \n        }\n        if(a || ((b & a)) || b) { \n        }\n        if(a && (b ^ a) && b) { \n        }\n        if(a && ((b | a)) && b) { \n        }\n        if(a && (((b & a))) && b) { \n        }\n        if(a && ((b ^ a)) || b) { \n        }\n        if(a && (((b | a))) || b) { \n        }\n        if(a && ((b & a)) || b) { \n        }\n        if(a || ((b ^ a)) && b) { \n        }\n        if(a || (((b | a))) && b) { \n        }\n        if(a || ((b & a)) && b) { \n        }\n        int x = 10, y = 38;\n        if(x>= 0 != (x<=8 ^ y<=11) && y>=8) {\n            return;\n        }\n        if(x>= 0 != (x<=8 || y<=11) && y>=8) {\n            return;\n        }\n        if(x== 0 != (x<=8 ^ y<=11) && y==8) {\n            return;\n        }\n        boolean v = true, w = false;\n        if ((v & w) !=\n            (w | v)) {\n        }\n        if(x>= 0 | (x<=8 | y<=11) | y>=8) {\n            return; \n        }\n    }\n    void method3() {\n        int code1 = 9;\n        if ((code1 & 1) == 8) {}\n        if ((code1 | 1) == 8) {}\n        if ((code1 ^ 1) == 8) {}\n        if ((code1 & 1) != 8) {}\n        if ((code1 | 1) != 8) {}\n        if ((code1 ^ 1) != 8) {}\n    }\n    void method4() {\n        int a = 2;\n         if ((~a) < -27 \n             && a-- < 30) {\n            return;\n        }\n        if ((~a) <= -27 \n             && a-- < 30) {\n            return;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesOperator2.java",
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        65,
+        66,
+        67,
+        81,
+        82,
+        92,
+        94,
+        98,
+        101,
+        107,
+        110
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesOperator2 {\n    void method() {\n        boolean a = true;\n        boolean b = false;\n        if ((b || a) &\n                (b || a)) {\n        }\n        if ((b && a) &\n                (b && a)) {\n        }\n        if ((b || a) |\n                (b && a)) {\n        }\n        int c = 1;\n        int d = 12;\n        if(a || (c ^ d) >> 1 == 1 || b) {\n        }\n        if ((b || a) &\n                (b || a)) {\n        }\n        if ((b || a) |\n                (b || a)) {\n        }\n        if ((b || a) ^\n                (b || a)) {\n        }\n        if ((b && a) &\n                (b && a)) {\n        }\n        if ((b && a) |\n                (b && a)) {\n        }\n        if ((b && a) ^\n                (b && a)) {\n        }\n        if ((b || a) &\n                (b && a)) {\n        }\n    }\n    public void test2() {\n        int a = 9;\n        int b = 10;\n        if (a > b) {\n            System.out.println(\"a is greater then b\");\n        }\n        else if ((b < a) & ( \n                (8>9) | \n                        (!m3()))) { \n             System.out.println();\n        }\n    }\n    boolean m3() {\n        return true;\n    }\n    void method3() {\n        int x = 10, y = 5, z = 5;\n        if (x == ((y<z) ? y : z) &\n            ((x>y & y>z) \n                | (!(x<z) & y>z))) { \n                return;\n        }\n        if(x>= 0 & (x<=8 | y<=11) & y>=8) {\n            return;\n        }\n        if(x>= 0 ^ (x<=8 | y<=11) ^ y>=8) {\n            return;\n        }\n        if(x>= 0 || (x<=8 & y<=11) && y>=8) {\n            return; \n        }\n        if(x> 0 & (x<=8 & y<=11) & y>=8) { \n            return;\n        }\n        if(x>= 0 ^ (x<=8 & y<=11) ^ y>=8) {\n            return; \n        }\n        if(x>= 0 || (x<=8 & y<=11) && y>=8) {\n            return; \n        }\n        if(x>= 0 & (x<=8 ^ y<=11) & y>=8) {\n            return;\n        }\n        if(x>= 0 ^ (x<=8 ^ y<=11) ^ y>=8) {\n            return; \n        }\n        if(x>= 0 || (x<=8 ^ y<=11) && y>=8) {\n            return; \n        }\n        if(x>= 0 != (x<=8 ^ y<=11) && y>=8) {\n            return;\n        }\n        if(true || (4 | 4) >> 1 == 1 || false) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesOperatorsAndCasts.java",
+      "expected-problems": 20,
+      "expected-linenumbers": [
+        18,
+        20,
+        27,
+        38,
+        42,
+        43,
+        46,
+        47,
+        51,
+        57,
+        58,
+        62,
+        64,
+        66,
+        76,
+        79,
+        85,
+        86,
+        91,
+        94
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\npublic class InputUnnecessaryParenthesesOperatorsAndCasts {\n    int f1() {\n        int x = 0;\n        for (int i = (0+1); ((i) < (6+6)); i += (1+0)) { \n            x += (i + 100); \n            (x) += (i + 100); \n            x = (x + i + 100); \n            (x) = (x + i + 100); \n        }\n        for (int i = (0+1); (i) < ((6+6)); i += (1+0)) { \n            System.identityHashCode(\"hi\");\n        }\n        return (0); \n    }\n    private int f2(int arg1, double arg2) {\n        int x, a, b, c, d;\n        String e, f;\n        x = 0;\n        a = 0;\n        b = 0;\n        c = (a + b); \n        d = c - 1;\n        int i = (int) arg2;\n        i = ((int) arg2); \n        x += (i + 100 + arg1); \n        a = (a + b) * (c + d);\n        b = ((((a + b) * (c + d)))); \n        c = (((a) <= b)) ? 0 : 1; \n        d = (a) + (b) * (600) / (int) (12.5f) + (int) (arg2); \n        e = (\"this\") + (\"that\") + (\"is\" + \"other\"); \n        f = (\"this is a really, really long string that should be truncated.\"); \n        return (x + a + b + d); \n    }\n    private boolean f3() {\n        int x = f2((1), (13.5)); \n        boolean b = (true); \n        return (b); \n    }\n    public static int f4(int z, int a) {\n        int r = (z * a); \n        r = (a > z) ? a : z;\n        r = ((a > z) ? a : z); \n        r = (a > z) ? a : (z + z);\n        return (r * r - 1); \n    }\n    public void f5() {\n        int x, y;\n        x = 0;\n        y = 0;\n        if (x == y) {\n            print(x);\n        }\n        if ((x > y)) { \n            print(y);\n        }\n        while ((x < 10)) { \n            print(x++);\n        }\n        do {\n            print((y+=100)); \n        } while (y < (4000)); \n    }\n    private void f6(TypeA a) {\n        TypeB b = (TypeB) a;\n        TypeC c = ((TypeC) a); \n        int r = 12345;\n        r <<= (3); \n        GenT<String> d = ((GenT<String>) a); \n    }\n    private void print(int arg)\n    {\n        System.identityHashCode(\"arg = \" + arg);\n    }\n    private int f7() {\n        String f;\n        f = (\"12345678901234567890123\"); \n        return 0;\n    }\n    static class GenT<T> {}\n    static class TypeA extends GenT<String> {}\n    static class TypeB extends TypeA {}\n    static class TypeC extends TypeA {}\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryParenthesesReturnValue.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        20,
+        21,
+        24,
+        27,
+        30,
+        35
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessaryparentheses;\nimport java.util.function.Function;\npublic class InputUnnecessaryParenthesesReturnValue {\n    int foo() {\n        Function<Integer, Integer> addOne\n                = x -> { return (x + 1); }; \n        return (1 + 1); \n    }\n    boolean compare() {\n        return (9 <= 3); \n    }\n    boolean bar() {\n        return (true && 7 > 3); \n    }\n    boolean bigger() {\n        return (Integer.parseInt(\"5\") > 7 || \n                Integer.parseInt(\"2\") > 3 ||\n                \"null\" != null);\n    }\n    int ternary() {\n        return (true ? 0 : 1); \n    }\n    boolean ok() {\n        return 5 > 7 ||\n                6 < 4;\n    }\n    int okternary() {\n        return true ? 0 : 1;\n    }\n}"
+    }
+  ]
+}

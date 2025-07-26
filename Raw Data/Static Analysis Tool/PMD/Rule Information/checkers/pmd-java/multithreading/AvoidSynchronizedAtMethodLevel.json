@@ -1,0 +1,38 @@
+{
+  "name": "AvoidSynchronizedAtMethodLevel",
+  "language": "java",
+  "description": "\nMethod-level synchronization will pin virtual threads and can cause performance problems. Additionally, it can cause\nproblems when new code is added to the method.  Block-level ReentrantLock helps to ensure that only the code that\nneeds mutual exclusion will be locked.\n        ",
+  "example": "public class Foo {\n    // Try to avoid this:\n    synchronized void foo() {\n        // code, that doesn't need synchronization\n        // ...\n        // code, that requires synchronization\n        if (!sharedData.has(\"bar\")) {\n            sharedData.add(\"bar\");\n        }\n        // more code, that doesn't need synchronization\n        // ...\n    }\n    // Prefer this:\n    Lock instanceLock = new ReentrantLock();\n\n    void bar() {\n        // code, that doesn't need synchronization\n        // ...\n        try {\n            instanceLock.lock();  // or instanceLock.tryLock(long time, TimeUnit unit)\n            if (!sharedData.has(\"bar\")) {\n                sharedData.add(\"bar\");\n            }\n        } finally {\n            instanceLock.unlock();\n        }\n        // more code, that doesn't need synchronization\n        // ...\n    }\n\n    // Try to avoid this for static methods:\n    static synchronized void fooStatic() {\n    }\n\n    // Prefer this:\n    private static Lock CLASS_LOCK = new ReentrantLock();\n\n    static void barStatic() {\n        // code, that doesn't need synchronization\n        // ...\n        try {\n            CLASS_LOCK.lock();\n            // code, that requires synchronization\n        } finally {\n            CLASS_LOCK.unlock();\n        }\n        // more code, that doesn't need synchronization\n        // ...\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "TEST1",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    synchronized void foo () {}\n}\n        "
+    },
+    {
+      "description": "TEST2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo () {\n        synchronized(mutex) {}\n    }\n}\n        "
+    },
+    {
+      "description": "#991 AvoidSynchronizedAtMethodLevel for static methods - bad case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static synchronized void foo() {\n        // complete method is synchronized on Test.class\n    }\n}\n        "
+    },
+    {
+      "description": "#991 AvoidSynchronizedAtMethodLevel for static methods - good case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static void foo() {\n        synchronized(Test.class) {\n            // only a block is synchronized on Test.class\n        }\n    }\n}\n        "
+    }
+  ]
+}

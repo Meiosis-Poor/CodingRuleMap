@@ -1,0 +1,25 @@
+{
+  "name": "CloexecPipe2",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-pipe2",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 27,
+  "branches": 1,
+  "apis": 15,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        20,
+        23,
+        30,
+        33
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-pipe2 %t\n\n#define O_NONBLOCK 1\n#define __O_CLOEXEC 3\n#define O_CLOEXEC __O_CLOEXEC\n#define TEMP_FAILURE_RETRY(exp) \\\n  ({                            \\\n    int _rc;                    \\\n    do {                        \\\n      _rc = (exp);              \\\n    } while (_rc == -1);        \\\n  })\n#define NULL 0\n\nextern \"C\" int pipe2(int pipefd[2], int flags);\n\nvoid warning() {\n  int pipefd[2];\n  pipe2(pipefd, O_NONBLOCK);\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: 'pipe2'\n  // CHECK-FIXES: pipe2(pipefd, O_NONBLOCK | O_CLOEXEC);\n  TEMP_FAILURE_RETRY(pipe2(pipefd, O_NONBLOCK));\n  // CHECK-MESSAGES: :[[@LINE-1]]:46: warning: 'pipe2'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(pipe2(pipefd, O_NONBLOCK | O_CLOEXEC));\n}\n\nvoid warningInMacroArugment() {\n  int pipefd[2];\n  pipe2(pipefd, 3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'pipe2'\n  // CHECK-FIXES: pipe2(pipefd, 3 | O_CLOEXEC);\n  TEMP_FAILURE_RETRY(pipe2(pipefd, 3));\n  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'pipe2'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(pipe2(pipefd, 3 | O_CLOEXEC));\n\n  int flag = O_NONBLOCK;\n  pipe2(pipefd, flag);\n  TEMP_FAILURE_RETRY(pipe2(pipefd, flag));\n}\n\nnamespace i {\nint pipe2(int pipefd[2], int flags);\n\nvoid noWarning() {\n  int pipefd[2];\n  pipe2(pipefd, O_NONBLOCK);\n  TEMP_FAILURE_RETRY(pipe2(pipefd, O_NONBLOCK));\n}\n\n} // namespace i\n\nvoid noWarning() {\n  int pipefd[2];\n  pipe2(pipefd, O_CLOEXEC);\n  TEMP_FAILURE_RETRY(pipe2(pipefd, O_CLOEXEC));\n  pipe2(pipefd, O_NONBLOCK | O_CLOEXEC);\n  TEMP_FAILURE_RETRY(pipe2(pipefd, O_NONBLOCK | O_CLOEXEC));\n}\n\nclass G {\npublic:\n  int pipe2(int pipefd[2], int flags);\n  void noWarning() {\n    int pipefd[2];\n    pipe2(pipefd, O_NONBLOCK);\n    TEMP_FAILURE_RETRY(pipe2(pipefd, O_NONBLOCK));\n  }\n};"
+    }
+  ]
+}

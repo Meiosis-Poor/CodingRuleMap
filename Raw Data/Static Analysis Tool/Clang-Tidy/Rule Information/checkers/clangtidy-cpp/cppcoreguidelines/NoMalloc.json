@@ -1,0 +1,27 @@
+{
+  "name": "NoMalloc",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-no-malloc",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 63,
+  "branches": 6,
+  "apis": 36,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        12,
+        15,
+        19,
+        23,
+        27,
+        28
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-no-malloc %t\n\nusing size_t = __SIZE_TYPE__;\n\nvoid *malloc(size_t size);\nvoid *calloc(size_t num, size_t size);\nvoid *realloc(void *ptr, size_t size);\nvoid free(void *ptr);\n\nvoid malloced_array() {\n  int *array0 = (int *)malloc(sizeof(int) * 20);\n  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: do not manage memory manually; consider a container or a smart pointer [cppcoreguidelines-no-malloc]\n\n  int *zeroed = (int *)calloc(20, sizeof(int));\n  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: do not manage memory manually; consider a container or a smart pointer [cppcoreguidelines-no-malloc]\n\n  // reallocation memory, std::vector shall be used\n  char *realloced = (char *)realloc(array0, 50 * sizeof(int));\n  // CHECK-MESSAGES: :[[@LINE-1]]:29: warning: do not manage memory manually; consider std::vector or std::string [cppcoreguidelines-no-malloc]\n\n  // freeing memory the bad way\n  free(realloced);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not manage memory manually; use RAII [cppcoreguidelines-no-malloc]\n\n  // check if a call to malloc as function argument is found as well\n  free(malloc(20));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not manage memory manually; use RAII [cppcoreguidelines-no-malloc]\n  // CHECK-MESSAGES: :[[@LINE-2]]:8: warning: do not manage memory manually; consider a container or a smart pointer [cppcoreguidelines-no-malloc]\n}\n\n/// newing an array is still not good, but not relevant to this checker\nvoid newed_array() {\n  int *new_array = new int[10]; // OK(1)\n}\n\nvoid arbitrary_call() {\n  // we dont want every function to raise the warning even if malloc is in the name\n  malloced_array(); // OK(2)\n\n  // completely unrelated function call to malloc\n  newed_array(); // OK(3)\n}"
+    }
+  ]
+}

@@ -1,0 +1,285 @@
+{
+  "name": "UnitTestShouldIncludeAssert",
+  "language": "java",
+  "description": "\n            Unit tests should include at least one assertion. This makes the tests more robust, and using assert\n            with messages provide the developer a clearer idea of what the test does.\n\n            This rule checks for JUnit (3, 4 and 5) and TestNG Tests.\n\n            Note: This rule was named JUnitTestsShouldIncludeAssert before PMD 7.7.0.\n        ",
+  "example": "public class Foo {\n   @Test\n   public void testSomething() {\n      Bar b = findBar();\n      // This is better than having a NullPointerException\n      // assertNotNull(\"bar not found\", b);\n      b.work();\n   }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 66,
+  "branches": 9,
+  "apis": 11,
+  "test": [
+    {
+      "description": "Contains assert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void test1() {\n        assertEquals(\"1 == 1\", 1, 1);\n    }\n}\n        "
+    },
+    {
+      "description": "Missing assert",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void test1() {\n    }\n}\n        "
+    },
+    {
+      "description": "All ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void setUp() {\n    }\n    public void test1() {\n        assertTrue(\"foo\", \"foo\".equals(\"foo\"));\n    }\n    public void test2() {\n        assertEquals(\"foo\", \"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "Two wrong",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void setUp() {\n    }\n    public void test1() {\n        int a;\n        callMethod(a);\n    }\n    public void test2() {\n    }\n}\n        "
+    },
+    {
+      "description": "Contains fail",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void test1() {\n        fail(\"1 == 1\");\n    }\n}\n        "
+    },
+    {
+      "description": "One wrong",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void setUp() {\n    }\n    public void test1() {\n        int a;\n        callMethod(a);\n    }\n    public void test2() {\n        fail();\n    }\n}\n        "
+    },
+    {
+      "description": "Skip interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void setUp() throws Exception;\n}\n        "
+    },
+    {
+      "description": "Skip abstract methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public abstract void setUp() throws Exception;\n}\n        "
+    },
+    {
+      "description": "Another fail() case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic abstract class AbstractAggregateCreatorTest extends TestCase {\n    public abstract int getType();\n    public abstract String create(int status) throws Exception;\n}\n        "
+    },
+    {
+      "description": "BUG 1105633 - False +: JUnit testcases could have fail() instead of assert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void testNPEThrown() {\n        try {\n            methodCall(null);\n            fail(\"Expected NullPointerException to be thrown.\");\n        } catch (NullPointerException npe) {\n            // Caught expected exception\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "BUG 1146116 PMDException with inner interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage at.herold.anthilltest;\nimport junit.framework.TestCase;\npublic class TestJunitRuleExceptionTest extends TestCase {\n    interface I1 {\n        public void meth(); // this is ok\n    }\n    interface I2 {\n        public void meth() throws Exception; // this causes PMDException\n    }\n}\n        "
+    },
+    {
+      "description": "skip static test methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public static void testfoo() {}\n}\n        "
+    },
+    {
+      "description": "exceptions shouldn't block it",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void testfoo() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "Not a JUnit test (exceptions shouldn't block it)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooTest {\n    public void testfoo() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "JUnit 4 test (exceptions shouldn't block it)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class Foo {\n    @Test\n    public void foo() throws Exception {}\n}\n        "
+    },
+    {
+      "description": "Junit 4 static import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static org.junit.Assert.assertFalse;\nimport org.junit.Test;\npublic class AssertTest {\n    @Test public void testFalse() {\n        assertFalse(1 == 2);\n    }\n}\n        "
+    },
+    {
+      "description": "Junit 4 test using Assert.assert...",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Assert;\nimport org.junit.Test;\npublic class AssertTest {\n    @Test public void testTrue() {\n        Assert.assertTrue(1 != 2);\n    }\n}\n        "
+    },
+    {
+      "description": "#968 Issues with JUnit4 @Test annotation with expected exception",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class Foo_Test\n{\n    /** Tests that doSomething throws an exception if arg is negative */\n    @Test(expected = IllegalArgumentException.class)\n    public  void testDoSomethingFail()\n    {\n        new Foo().doSomething(-1);\n        // Note - no assert is needed as we expect an exception (which is basically an assert).\n    }\n    class Foo {}\n}\n        "
+    },
+    {
+      "description": "#285 Issues with @Rule annotation and ExpectedException",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport org.junit.*;\nimport org.junit.rules.*;\npublic class SimpleExpectedExceptionTest {\n    @Rule\n    public ExpectedException thrown = ExpectedException.none();\n\n    @Test\n    public void throwsExceptionWithSpecificType() {\n        throw new NullPointerException(); // No expect! this is a violation\n    }\n\n    @Test\n    public void throwsIllegalArgumentExceptionIfIconIsNull() {\n        thrown.expect(IllegalArgumentException.class);\n        thrown.expectMessage(\"Icon is null, not a file, or doesn't exist.\");\n        new Foo();\n    }\n    class Foo {}\n}\n        "
+    },
+    {
+      "description": "#285 Follow-up for @org.junit.Rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.*;\nimport org.junit.rules.ExpectedException;\npublic class SimpleExpectedExceptionTest {\n     @org.junit.Rule\n     public ExpectedException thrown = ExpectedException.none();\n\n     @Test\n     public void throwsExceptionWithSpecificType() {\n         thrown.expect(NullPointerException.class);\n         throw new NullPointerException();\n     }\n }\n        "
+    },
+    {
+      "description": "#330 Rule treats AllocationExpression correctly",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.*;\nimport my.JFXPanel;\nimport my.UART;\n\npublic class BaseConsoleTest extends UART {\n    @Test\n    public void testInitialize() throws InterruptedException {\n        new JFXPanel(); // AllocationExpression\n    }\n}\n        "
+    },
+    {
+      "description": "#330 NPE accessing local field / method with this.XXX",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class Foo {\n    @Test\n    public void testName() {\n        this.field = null;\n    }\n}\n        "
+    },
+    {
+      "description": "#358 Treat Mockito's verify as assert expressions",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\nimport org.junit.runner.RunWith;\nimport org.mockito.Mock;\nimport org.mockito.runners.MockitoJUnitRunner;\n\nimport static org.mockito.Mockito.times;\nimport static org.mockito.Mockito.verify;\n\n@RunWith(MockitoJUnitRunner.class)\npublic class FooTest {\n\n    @Mock\n    private Bar bar;\n\n    @Test\n    public void testFooCallsBar() {\n        Foo foo = new Foo(bar);\n        foo.doTask();\n\n        verify(bar, times(1)).actuallyDoTask();\n    }\n    class Foo {}\n    class Bar {}\n}\n        "
+    },
+    {
+      "description": "#358 Treat Mockito's Mockito.verify as assert expressions",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\nimport org.junit.runner.RunWith;\nimport org.mockito.Mock;\nimport org.mockito.Mockito;\nimport org.mockito.runners.MockitoJUnitRunner;\n\n@RunWith(MockitoJUnitRunner.class)\npublic class FooTest {\n\n    @Mock\n    private Bar bar;\n\n    @Test\n    public void testFooCallsBar() {\n        Foo foo = new Foo(bar);\n        foo.doTask();\n\n        Mockito.verify(bar, Mockito.times(1)).actuallyDoTask();\n    }\n    class Foo {}\n    class Bar {}\n}\n        "
+    },
+    {
+      "description": "#465 NullPointerException when dealing with @SuppressWarnings",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\n\nimport static org.junit.Assert.assertEquals;\n\npublic class FooTest {\n\n    @SuppressWarnings(\"deprecation\")\n    private static Foo foo = new Foo();\n\n    @Test\n    public void testFoo() {\n        assertEquals(\"doesn't matter\", \"doesn't matter\");\n    }\n}\nclass Foo {}\n        "
+    },
+    {
+      "description": "#1365 detect test classes marked with fully qualified annotation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\n\nclass Style {\n    // This used to trigger the JUnitTestsShouldIncludeWarning rule\n    @org.junit.Test(expected = IllegalArgumentException.class)\n    public void moveOutOfBoundsFrom() {\n        doSomething();\n    }\n}\n        "
+    },
+    {
+      "description": "#1435 Treat AssertJ soft assertions as assert expressions",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.assertj.core.api.SoftAssertions;\nimport org.junit.jupiter.api.Test;\n\nclass FooTest {\n\n    @Test\n    void testFoo() {\n        var softly = new SoftAssertions();\n        softly.assertThat(\"doesn't matter\").isEqualTo(\"doesn't matter\");\n        softly.assertAll();\n    }\n\n    @Test\n    void testBar() {\n        SoftAssertions softly = new SoftAssertions();\n        softly.assertThat(\"doesn't matter\").isEqualTo(\"doesn't matter\");\n        softly.assertAll();\n    }\n}\n        "
+    },
+    {
+      "description": "#1435 Treat AssertJ soft assertions as assert expressions - missing assertAll",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        13
+      ],
+      "code": "\nimport org.assertj.core.api.SoftAssertions;\nimport org.junit.jupiter.api.Test;\n\nclass FooTest {\n\n    @Test\n    void testFoo() {\n        var softly = new SoftAssertions();\n        softly.assertThat(\"doesn't matter\").isEqualTo(\"doesn't matter\");\n    }\n\n    @Test\n    void testBar() {\n        SoftAssertions softly = new SoftAssertions();\n        softly.assertThat(\"doesn't matter\").isEqualTo(\"doesn't matter\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1435 Treat AssertJ soft assertion rule for JUnit 4 as assert expressions",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.assertj.core.api.JUnitSoftAssertions;\nimport org.junit.Test;\nimport org.junit.Rule;\n\npublic class FooTest {\n\n    @Rule\n    public final JUnitSoftAssertions softly = new JUnitSoftAssertions();\n\n    @Test\n    void testFoo() {\n        softly.assertThat(\"doesn't matter\").isEqualTo(\"doesn't matter\");\n    }\n}\n        "
+    },
+    {
+      "description": "#647 JUnitTestsShouldIncludeAssertRule should support `this.exception` as well as just `exception`",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.*;\nimport org.junit.rules.ExpectedException;\npublic class DigitalAssetManagerTest {\n    @Rule\n    public final ExpectedException exception = ExpectedException.none();\n\n    @Test\n    public void throwsIllegalArgumentExceptionIfIconIsNull() {\n        this.exception.expect(IllegalArgumentException.class);\n        this.exception.expectMessage(\"Icon is null, not a file, or doesn't exist.\");\n        new Foo();\n    }\n}\nclass Foo {}\n        "
+    },
+    {
+      "description": "#2288 JUnitTestsShouldIncludeAssertRule should support `Matchers.assertThat`",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.hamcrest.MatcherAssert;\nimport org.hamcrest.Matchers;\nimport static org.hamcrest.MatcherAssert.*;\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    public void test1() {\n        MatcherAssert.assertThat(\"doesn't matter\", null, Matchers.nullValue());\n    }\n    public void test2() {\n        assertThat(\"doesn't matter\", null, Matchers.nullValue());\n    }\n}\n        "
+    },
+    {
+      "description": "[java] JUnitTestsShouldIncludeAssert - false positives with lambdas and static methods #2147",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.hamcrest.MatcherAssert;\nimport org.hamcrest.Matchers;\nimport org.junit.Test;\nimport static org.hamcrest.MatcherAssert.*;\nimport junit.framework.TestCase;\nimport static org.junit.Assert.assertEquals;\nimport static org.junit.Assert.assertTrue;\nimport com.fasterxml.jackson.databind.JsonNode;\n\npublic class FooTest extends TestCase {\n\n    @Test\n    public void testDemo() {\n        JsonNode jsonNode = assertSuccessResponse();\n        final int totalFieldsCount = jsonNode.get(\"count\").asInt();\n        jsonNode.get(\"data\").forEach(item -> assertTrue(item.size() <= totalFieldsCount));\n    }\n\n    public static JsonNode assertSuccessResponse() {\n        JsonNode jsonNode = doStuffToBuildTheJsonNode();\n        assertTrue(jsonNode.hasNonNull(\"count\"));\n        assertTrue(jsonNode.hasNonNull(\"data\"));\n        assertTrue(jsonNode.get(\"count\").asInt() > 0);\n        assertEquals(jsonNode.get(\"count\").asInt(), jsonNode.get(\"data\").size());\n        return jsonNode;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] JUnitTestsShouldIncludeAssert false positive with inherited @Rule field #1422",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import org.junit.Rule;\n            import org.junit.Test;\n            import org.junit.rules.ExpectedException;\n\n            abstract class Shape {\n                double size;\n\n                Shape(double size) {\n                    if (size < 0) {\n                        throw new IllegalArgumentException(\"negative size\");\n                    }\n                    this.size = size;\n                }\n\n                public abstract double area();\n            }\n\n            class Square extends Shape {\n                Square(double size) {\n                    super(size);\n                }\n\n                public double area() {\n                    return size * size;\n                }\n            }\n\n            class Weird extends Shape {\n                Weird(double size) {\n                    super(size);\n                }\n\n                public double area() {\n                    throw new RuntimeException(\"just 'cause\");\n                }\n            }\n\n            public abstract class ShapeTester {\n                protected abstract Shape factory(double size);\n\n                @Rule\n                public ExpectedException e = ExpectedException.none();\n\n                @Test\n                public void notAProblem() {\n                    e.expect(IllegalArgumentException.class);\n                    factory(-5);\n                }\n\n                public static final class SquareTester extends ShapeTester {\n                    protected Shape factory(double size) {\n                        return new Square(size);\n                    }\n                }\n\n                public static final class WeirdTester extends ShapeTester {\n                    protected Shape factory(double size) {\n                        return new Weird(size);\n                    }\n\n                    @Test\n                    public void thisOneTriggersRule() {\n                        e.expect(RuntimeException.class);\n                        e.expectMessage(\"just 'cause\");\n                        factory(42).area();\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "AssertJ and JUnit5 #3339",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.assertj.core.api.Assertions;\nimport org.junit.jupiter.api.Test;\n\nclass JUnit5AssertJTest {\n\n  @Test\n  void check() {\n    Assertions.assertThat(\"FOO\").isNotNull();\n  }\n}\n        "
+    },
+    {
+      "description": "JUnit5 #3339",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Assertions;\nimport org.junit.jupiter.api.Test;\n\nclass JUnit5Test {\n\n  @Test\n  void check() {\n    Assertions.assertNotNull(\"FOO\");\n  }\n}\n        "
+    },
+    {
+      "description": "nested test classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\n\npublic class BigTest {\n    @Nested\n    class InnerTestCases {\n        @Test\n        void check() {\n            // empty, missing assert\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] JUnitTestsShouldIncludeAssert: false negative with TestNG #4503",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport org.testng.annotations.Test;\nimport org.testng.annotations.AfterClass;\npublic class A {\n  @AfterClass\n  @Test\n  void test() {}\n}\n        "
+    },
+    {
+      "description": "[java] JUnitTestsShouldIncludeAssert: False positives for assert methods named \"check\" and \"verify\" #1455",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\n\nimport java.time.LocalTime;\nimport static org.junit.Assert.assertEquals;\nimport static org.junit.Assert.assertNotNull;\n\npublic class CustomAssertTests {\n    private LocalTime localTime = LocalTime.of(5, 11, 33, 811*1_000_000);\n    private int hour = 1;\n\n    @Test\n    public void test1() { // false positive\n        check(localTime, hour);\n    }\n\n    @Test\n    public void test2() { // false positive\n        checkMore(localTime, hour);\n    }\n\n    @Test\n    public void test3() { // false positive\n        verify(localTime, hour);\n    }\n\n    @Test\n    public void test4() { // false positive\n        verifyOtherStuff(localTime, hour);\n    }\n\n    private void check(LocalTime localTime2, int hour) {\n        assertEquals(localTime2.getHour(), hour);\n    }\n\n    private void checkMore(LocalTime localTime2, int hour) {\n        assertEquals(localTime2.getHour(), hour);\n    }\n\n    private void verify(LocalTime localTime2, int hour) {\n        assertEquals(localTime2.getHour(), hour);\n    }\n\n    private void verifyOtherStuff(LocalTime localTime2, int hour) {\n        assertEquals(localTime2.getHour(), hour);\n    }\n}\n"
+    },
+    {
+      "description": "Extra properties",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import org.junit.jupiter.api.Test;\n            public class A {\n                @Test\n                void test() {\n                    customAssertion(\"aueoau\");\n                }\n            }\n            "
+    },
+    {
+      "description": "#4114 FN @ParameterizedTest are tests too",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\n\nclass ShouldIncludeAssertTest {\n  @ParameterizedTest\n  @ValueSource(strings = { \"racecar\", \"radar\", \"Foobar\" })\n  void falseNegative(String candidate) {\n     // Nothing!\n  }\n}\n\n"
+    },
+    {
+      "description": "#4765 [java] JUnitTestsShouldIncludeAssert does not detect assertThat() when saving in variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static org.assertj.core.api.Assertions.assertThat;\nimport org.junit.jupiter.api.Test;\nimport jakarta.xml.bind.JAXBElement;\n\npublic class Foo {\n    @Test\n    public void myTestMethod() {\n        JAXBElement<?> jaxb = null;\n        final var dataArea = assertThat(jaxb).isNotNull()\n                .extracting(JAXBElement::getValue)\n                .isNotNull();\n    }\n}\n"
+    },
+    {
+      "description": "#4113 [java] JUnitTestsShouldIncludeAssert - false positive with SoftAssertionsExtension",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        19
+      ],
+      "code": "\nimport org.assertj.core.api.SoftAssertions;\nimport org.assertj.core.api.junit.jupiter.InjectSoftAssertions;\nimport org.assertj.core.api.junit.jupiter.SoftAssertionsExtension;\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.extension.ExtendWith;\nimport org.junit.jupiter.api.Assertions;\n\n@ExtendWith({SoftAssertionsExtension.class})\nclass ShouldIncludeAssertTest {\n  @InjectSoftAssertions private SoftAssertions softly;\n\n  @Test\n  void falsePositive1() {\n    softly.assertThat(false).isTrue();\n    softly.assertThat(true).isFalse();\n  }\n\n  @Test\n  void falseNegative() { // line 19\n    // no assertion at all\n  }\n\n  @Test\n  void otherTestNotUsingSoftAssertions() {\n    Assertions.assertTrue(true);\n  }\n}\n"
+    },
+    {
+      "description": "#4113 [java] JUnitTestsShouldIncludeAssert - false positive with assertSoftly",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        17
+      ],
+      "code": "\nimport org.assertj.core.api.SoftAssertions;\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.Assertions;\n\nclass ShouldIncludeAssertTest {\n\n  @Test\n  void falsePositive2() {\n    SoftAssertions.assertSoftly(\n        softly2 -> {\n          softly2.assertThat(false).isTrue();\n          softly2.assertThat(true).isFalse();\n        });\n  }\n\n  @Test\n  void falseNegative() { // line 17\n    // no assertion at all\n  }\n\n  @Test\n  void otherTestNotUsingSoftAssertions() {\n    Assertions.assertTrue(true);\n  }\n}\n"
+    }
+  ]
+}

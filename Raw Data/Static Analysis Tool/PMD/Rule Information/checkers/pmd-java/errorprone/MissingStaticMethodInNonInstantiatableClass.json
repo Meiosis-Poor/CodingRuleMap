@@ -1,0 +1,238 @@
+{
+  "name": "MissingStaticMethodInNonInstantiatableClass",
+  "language": "java",
+  "description": "\nA class that has private constructors and does not have any static methods or fields cannot be used.\n\nWhen one of the private constructors is annotated with one of the annotations, then the class is not considered\nnon-instantiatable anymore and no violation will be reported.\nSee the property `annotations`.\n        ",
+  "example": "// This class is unusable, since it cannot be\n// instantiated (private constructor),\n// and no static method can be called.\n\npublic class Foo {\n  private Foo() {}\n  void foo() {}\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n}\n        "
+    },
+    {
+      "description": "ok, default constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "simple failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Foo {\n    private Foo() {}\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "failure with multiple constructors",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Foo {\n    private Foo(){}\n    private Foo(Object o){}\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "protected constructor is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo(){}\n    protected Foo(Object o){}\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "package constructor is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    /* default */ Foo(){}\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "ok, one static method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo(){}\n    private Foo(Object o){}\n    public static void bar() {}\n}\n        "
+    },
+    {
+      "description": "nested class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static class Bar {\n        private Bar() {}\n    }\n}\n        "
+    },
+    {
+      "description": "ok, public static field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static int BUZ = 2;\n    private Foo() {}\n}\n        "
+    },
+    {
+      "description": "not ok, non-public static field",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Foo {\n    private static int BUZ = 2;\n    private Foo() {}\n}\n        "
+    },
+    {
+      "description": "ok, protected static field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    protected static Foo INSTANCE = new Foo();\n    private Foo() {}\n}\n        "
+    },
+    {
+      "description": "ok, package private static field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static Foo INSTANCE = new Foo();\n    private Foo() {}\n}\n        "
+    },
+    {
+      "description": "ok, checking for bug 1432595",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Suit {\n    private final String name;\n        private Suit(String name) {\n        this.name = name;\n    }\n    public String toString() {\n        return name;\n    }\n    public static final Suit CLUBS = new Suit(\"Clubs\");\n    public static final Suit DIAMONDS = new Suit(\"Diamonds\");\n    public static final Suit HEARTS = new Suit(\"Hearts\");\n    public static final Suit SPADES = new Suit(\"Spades\");\n}\n        "
+    },
+    {
+      "description": "#1125 Missing Static Method In Non Instantiatable Class / Factory",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.awt.Frame;\nimport java.awt.event.ActionListener;\n\npublic class AccountSelectionSubForm extends Frame implements ActionListener\n{\n    public static class Factory\n    {\n        public Factory()\n        {\n            // do\n        }\n        // factory method which creates the outer class\n        public AccountSelectionSubForm create( Frame parent, boolean supportAllAccountsSelection )\n        {\n            return new AccountSelectionSubForm();\n        }\n    }\n\n    private AccountSelectionSubForm()\n    {\n        super( parent, null );\n    }\n}\n        "
+    },
+    {
+      "description": "Check Builder pattern",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class BacklogElementParameters {\n    private final Long backlogId;\n    private final String name;\n\n    private BacklogElementParameters(final BacklogElementParameters.Builder builder) {\n        this.backlogId = builder.backlogId;\n        this.name = builder.name;\n    }\n\n    public static class Builder {\n        public Builder backlogId(final Long backlogId) {\n            this.backlogId = backlogId;\n            return this;\n        }\n\n        public Builder name(final String name) {\n            this.name = name;\n            return this;\n        }\n\n        public BacklogElementParameters build() {\n            return new BacklogElementParameters(this);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#590 Check Builder pattern alternative",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class BacklogElementParameters {\n    private final Long backlogId;\n    private final String name;\n\n    private BacklogElementParameters(Long backlogId, String name) {\n        this.backlogId = backlogId;\n        this.name = name;\n    }\n\n    public static class Builder {\n        public Builder backlogId(final Long backlogId) {\n            this.backlogId = backlogId;\n            return this;\n        }\n\n        public Builder name(final String name) {\n            this.name = name;\n            return this;\n        }\n\n        public BacklogElementParameters build() {\n            return new BacklogElementParameters(backlogId, name);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1832 Check constructor injection with @Autowired or @Inject",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.inject.Inject;\nimport org.springframework.beans.factory.annotation.Autowired;\n\npublic class Foo {\n\n    private String arg;\n\n    @Autowired\n    private Foo() {}\n\n    @Inject\n    private Foo(String arg) {\n        this.arg = arg;\n    }\n\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "#1832 fine with a least one constructor annotated with \"Autowired",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.springframework.beans.factory.annotation.Autowired;\nimport org.springframework.data.annotation.PersistenceConstructor;\n\npublic class Foo {\n\n    private String arg;\n\n    @PersistenceConstructor\n    private Foo() {}\n\n    @Autowired\n    private Foo(String arg) {\n        this.arg = arg;\n    }\n\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "#1832 but fail with both private constructors annotated with @PersistenceConstructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport org.springframework.data.annotation.PersistenceConstructor;\n\npublic class Foo {\n\n    private String arg;\n\n    @PersistenceConstructor\n    private Foo() {}\n\n    @PersistenceConstructor\n    private Foo(String arg) {\n        this.arg = arg;\n    }\n\n    public void bar() {}\n}\n        "
+    },
+    {
+      "description": "#2102 [java] False positive MissingStaticMethodInNonInstantiatableClass when inheritors are instantiable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Function;\n\npublic abstract class MyADT {\n    private MyADT() {\n    }\n\n    public abstract <R> R map(\n            Function<String, ? extends R> onString,\n            Function<Integer, ? extends R> onInt\n    );\n\n    public static final class StringHolder extends MyADT {\n        private final String string;\n\n        public StringHolder(String string) {\n            this.string = string;\n        }\n\n        @Override\n        public <R> R map(Function<String, ? extends R> onString, Function<Integer, ? extends R> onInt) {\n            return onString.apply(string);\n        }\n    }\n\n    public static final class IntHolder extends MyADT {\n        private final Integer integer;\n\n        public IntHolder(Integer integer) {\n            this.integer = integer;\n        }\n\n        @Override\n        public <R> R map(Function<String, ? extends R> onString, Function<Integer, ? extends R> onInt) {\n            return onInt.apply(integer);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3701 - false positive with method inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Scratch {\n\n    public static void main(String[] args) {\n        Scratch scratch = new Scratch();\n\n        scratch.callMethod();\n    }\n\n    void callMethod() {\n\n        class InnerClass {\n            private InnerClass() {\n            }\n\n            void display() {\n                System.out.println(\"Works OK!\");\n            }\n        }\n\n        InnerClass innerClass = new InnerClass();\n        innerClass.display();\n    }\n}\n        "
+    },
+    {
+      "description": "#4224 [java] MissingStaticMethodInNonInstantiatableClass should considers lombok's UtilityClass",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n   private int x;\n}\n        "
+    },
+    {
+      "description": "#4224 [java] MissingStaticMethodInNonInstantiatableClass should considers lombok's UtilityClass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n    public int test(){\n        return 0;\n    }\n   private int x;\n}\n        "
+    },
+    {
+      "description": "#4224 [java] MissingStaticMethodInNonInstantiatableClass should consider lombok's UtilityClass",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n    private int test(){\n        return 0;\n    }\n   private int x;\n}\n        "
+    },
+    {
+      "description": "#4224 [java] MissingStaticMethodInNonInstantiatableClass should consider lombok's UtilityClass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n    private int test(){\n        return 0;\n    }\n    public int test0(){\n        return 0;\n    }\n   private int x;\n}\n        "
+    },
+    {
+      "description": "#4393 [java] MissingStaticMethodInNonInstantiatableClass should consider lombok's UtilityClass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n   int x;\n}\n        "
+    },
+    {
+      "description": "#4393 [java] MissingStaticMethodInNonInstantiatableClass should consider lombok's UtilityClass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n   public static final String CONSTANT = \"Constant\";\n}\n        "
+    },
+    {
+      "description": "#4393 [java] MissingStaticMethodInNonInstantiatableClass should consider lombok's UtilityClass",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic final class Test {\n   private static final String CONSTANT = \"Constant\";\n}\n        "
+    },
+    {
+      "description": "#4225 [java] MissingStaticMethodInNonInstantiatableClass should consider Lombok's @NoArgsConstructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.NoArgsConstructor;\n\n@NoArgsConstructor\npublic class Test {\n    private int a;\n}\n        "
+    },
+    {
+      "description": "#4225 [java] MissingStaticMethodInNonInstantiatableClass should consider Lombok's @RequiredArgsConstructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.RequiredArgsConstructor;\n\n@RequiredArgsConstructor\npublic class Test {\n    private int a;\n    private final int b;\n}\n        "
+    },
+    {
+      "description": "#4225 [java] MissingStaticMethodInNonInstantiatableClass should consider Lombok's @AllArgsConstructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.AllArgsConstructor;\n\n@AllArgsConstructor\npublic class Test {\n    private int a;\n    private final int b;\n}\n        "
+    },
+    {
+      "description": "[java] MissingStaticMethodInNonInstantiatableClass does not consider nested builder class #4174",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class TestPrivateClassWithFactory implements GenericTest {\n  private final boolean shouldFail;\n\n  private TestPrivateClassWithFactory(TestStep step) {\n    this.shouldFail = step.shouldFail;\n  }\n\n  public void run() {\n    if (shouldFail) {\n      throw new AssertionError(\"fail\");\n    }\n  }\n\n  public static final class TestStep {\n    private boolean shouldFail = false;\n\n    public TestStep shouldFail() {\n      this.shouldFail = true;\n      return this;\n    }\n\n    public GenericTest newTest() {\n      return new TestPrivateClassWithFactory(this);\n    }\n  }\n}\n"
+    },
+    {
+      "description": "#4493:[java]false-positive about MissingStaticMethodInNonInstantiatableClass and @Inject ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport com.google.inject.Inject;\npublic class Foo {  \n   @Inject\n   private Foo() {}\n}\n\npublic class Bar extends Foo {\n   public Bar() {}\n}\n"
+    },
+    {
+      "description": "#1488:[java]false-positive about MissingStaticMethodInNonInstantiatableClass and @lombok.Builder on constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Builder;\npublic class Foo {\n   @Builder\n   private Foo() {}\n}\n"
+    },
+    {
+      "description": "#1488:[java]false-positive about MissingStaticMethodInNonInstantiatableClass and @lombok.Builder on class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Builder;\n@Builder\npublic class Foo {\n   private Foo() {}\n}\n"
+    },
+    {
+      "description": "#5068:[java] fp when using builder with private constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n\n    private MyClass() {\n    }\n\n    public static class Builder {\n\n        private Builder() {}\n\n        public static Builder builder() {\n            return new Builder();\n        }\n\n        public MyClass build() {\n            return new MyClass();\n        }\n    }\n}\n"
+    }
+  ]
+}

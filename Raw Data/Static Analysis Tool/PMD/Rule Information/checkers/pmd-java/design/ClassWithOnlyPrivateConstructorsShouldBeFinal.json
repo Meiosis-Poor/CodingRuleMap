@@ -1,0 +1,168 @@
+{
+  "name": "ClassWithOnlyPrivateConstructorsShouldBeFinal",
+  "language": "java",
+  "description": "\nReports classes that may be made final because they cannot be extended from outside\ntheir compilation unit anyway. This is because all their constructors are private,\nso a subclass could not call the super constructor.\n        ",
+  "example": "public class Foo {  //Should be final\n    private Foo() { }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 17,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Simple violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Foo {\n    private Foo() { }\n}\n        "
+    },
+    {
+      "description": "violation for abstract class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Foo {\n    private Foo() { }\n}\n        "
+    },
+    {
+      "description": "ok, class is final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Foo {\n    private Foo() { }\n}\n        "
+    },
+    {
+      "description": "One public constructor, not required to be final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo() { }\n    public Foo(String param) { }\n}\n        "
+    },
+    {
+      "description": "abstract class, one public constructor, not required to be final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    private Foo() { }\n    public Foo(String param) { }\n}\n        "
+    },
+    {
+      "description": "Ok, subclass using the private constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo() { }\n\n    public static class Bar extends Foo {\n        public Bar() { }\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, subclass using the private constructor of another subclass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n\n    public static class Bar {\n        private Bar() { }\n    }\n\n    public static class Barbie extends Bar {\n        public Barbie() { }\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, two classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo() { }\n}\nclass Bar extends Foo {\n    public Bar() { }\n}\n        "
+    },
+    {
+      "description": "One protected constructor, not required to be final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass ClassWithOnlyPrivateConstructorsShouldBeFinal {\n    private String string;\n\n    protected ClassWithOnlyPrivateConstructorsShouldBeFinal(final Object object) {\n        this(object.toString());\n    }\n\n    private ClassWithOnlyPrivateConstructorsShouldBeFinal(final String string) {\n        super();\n\n        setString(string);\n    }\n\n    public final void setString(final String string) {\n        this.string = string;\n    }\n\n    public String getString() {\n        return string;\n    }\n}\n        "
+    },
+    {
+      "description": "One package private constructor, not required to be final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass ClassWithOnlyPrivateConstructorsShouldBeFinal {\n    private String string;\n\n    ClassWithOnlyPrivateConstructorsShouldBeFinal(final Object object) {\n        this(object.toString());\n    }\n\n    private ClassWithOnlyPrivateConstructorsShouldBeFinal(final String string) {\n        super();\n\n        setString(string);\n    }\n\n    public final void setString(final String string) {\n        this.string = string;\n    }\n\n    public String getString() {\n        return string;\n    }\n}\n        "
+    },
+    {
+      "description": "#2536 [java] ClassWithOnlyPrivateConstructorsShouldBeFinal can't detect inner class with only private constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Main209 {\n    private static class InputBits {\n        private InputBits(int number) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Inner class with only private constructor extended within compilation unit (#2536)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Main209 {\n    private static class InputBits {\n        private InputBits(int number) { }\n    }\n    public static final class Sub extends InputBits {\n        private Sub() {\n            super(1);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Private inner class with no ctor and no usage",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Main209 {\n    private static class InputBits {\n        // default ctor is implicitly private\n    }\n}\n        "
+    },
+    {
+      "description": "Private inner class with no ctor and usage",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Main209 {\n    private static class InputBits {\n        // default ctor is implicitly private\n    }\n    public static final class Sub extends InputBits {}\n}\n        "
+    },
+    {
+      "description": "Private abstract classes with abstract methods should be ignored #3668",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Outer {\n    private abstract class Base {\n        abstract void run();\n    }\n    public void someMethod() {\n        Base b = new Base() {\n            void run() {}\n        };\n        b.run();\n    }\n}\n        "
+    },
+    {
+      "description": "Private abstract generic classes with abstract methods should be ignored #3668",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Comparator;\npublic class Outer {\n    private abstract class Base<E> {\n        abstract void run();\n        abstract void sort(Comparator<E> comparator);\n    }\n    public void someMethod() {\n        Base b = new Base<Object>() {\n            void run() {}\n            void sort(Comparator<Object> comparator) {}\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Private abstract classes without abstract methods but with subclasses should be ignored #3668",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Outer {\n    private abstract class Base {\n        private void run() {}\n    }\n    private final class Sub extends Base {}\n}\n        "
+    },
+    {
+      "description": "Private abstract classes without abstract methods and subclasses #3668",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Outer {\n    private abstract class Base {\n        private void run() {}\n    }\n}\n        "
+    },
+    {
+      "description": "Abstract outer classes should be flagged #3668",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic abstract class FooUtils {\n    private FooUtils() {\n        // private constructor can't be called from sub classes,\n        // so this class can't be extended\n    }\n    // note: this \"abstract\" class does not contain abstract methods\n    // it was only declared as abstract to prevent instantiation\n}\n        "
+    },
+    {
+      "description": "[java] ClassWithOnlyPrivateConstructorsShouldBeFinal - false negative when a compilation unit contains two class declarations #3851",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class Example { // false-negative here\n    private Example() {\n    }\n}\n\nclass Another {\n}\n        "
+    },
+    {
+      "description": "[java] ClassWithOnlyPrivateConstructorsShouldBeFinal should consider lombok's @Value #4200",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Value;\n\n@Value\npublic class Test {\n    private Test(int a, int b) {}\n}\n        "
+    },
+    {
+      "description": "[java] ClassWithOnlyPrivateConstructorsShouldBeFinal false positive with Lombok's @NoArgsConstructor #4188",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        10,
+        19,
+        29,
+        38,
+        47,
+        56,
+        61
+      ],
+      "code": "\nimport lombok.AccessLevel;\nimport lombok.AllArgsConstructor;\nimport lombok.NoArgsConstructor;\nimport lombok.RequiredArgsConstructor;\n\n@NoArgsConstructor\nclass NoArgs1 { private NoArgs1(String a) {} } // no violation\n\n@NoArgsConstructor(access = AccessLevel.PRIVATE)\nclass NoArgs2 { private NoArgs2(String a) {} } // violation: only private ctors\n\n@NoArgsConstructor(access = AccessLevel.PUBLIC)\nclass NoArgs3 { private NoArgs3(String a) {} } // no violation\n\n@lombok.NoArgsConstructor\nclass NoArgs4 { private NoArgs4(String a) {} } // no violation\n\n@lombok.NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)\nclass NoArgs5 { private NoArgs5(String a) {} } // violation: only private ctors\n\n@lombok.NoArgsConstructor(access = lombok.AccessLevel.PUBLIC)\nclass NoArgs6 { private NoArgs6(String a) {} } // no violation\n\n\n@RequiredArgsConstructor\nclass RequiredArgs1 { private RequiredArgs1(String a) {} } // no violation\n\n@RequiredArgsConstructor(access = AccessLevel.PRIVATE)\nclass RequiredArgs2 { private RequiredArgs2(String a) {} } // violation: only private ctors\n\n@RequiredArgsConstructor(access = AccessLevel.PUBLIC)\nclass RequiredArgs3 { private RequiredArgs3(String a) {} } // no violation\n\n@lombok.RequiredArgsConstructor\nclass RequiredArgs4 { private RequiredArgs4(String a) {} } // no violation\n\n@lombok.RequiredArgsConstructor(access = lombok.AccessLevel.PRIVATE)\nclass RequiredArgs5 { private RequiredArgs5(String a) {} } // violation: only private ctors\n\n@lombok.RequiredArgsConstructor(access = lombok.AccessLevel.PUBLIC)\nclass RequiredArgs6 { private RequiredArgs6(String a) {} } // no violation\n\n@AllArgsConstructor\nclass AllArgs1 { private AllArgs1(String a) {} } // no violation\n\n@AllArgsConstructor(access = AccessLevel.PRIVATE)\nclass AllArgs2 { private AllArgs2(String a) {} } // violation: only private ctors\n\n@AllArgsConstructor(access = AccessLevel.PUBLIC)\nclass AllArgs3 { private AllArgs3(String a) {} } // no violation\n\n@lombok.AllArgsConstructor\nclass AllArgs4 { private AllArgs4(String a) {} } // no violation\n\n@lombok.AllArgsConstructor(access = lombok.AccessLevel.PRIVATE)\nclass AllArgs5 { private AllArgs5(String a) {} } // violation: only private ctors\n\n@lombok.AllArgsConstructor(access = lombok.AccessLevel.PUBLIC)\nclass AllArgs6 { private AllArgs6(String a) {} } // no violation\n\nclass OtherClass { private OtherClass(String a) {} } // violation: only private ctors\n"
+    }
+  ]
+}

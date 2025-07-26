@@ -1,0 +1,160 @@
+{
+  "name": "ForLoopCanBeForeach",
+  "language": "java",
+  "description": "\nReports loops that can be safely replaced with the foreach syntax. The rule considers loops over\nlists, arrays and iterators. A loop is safe to replace if it only uses the index variable to\naccess an element of the list or array, only has one update statement, and loops through *every*\nelement of the list or array left to right.\n        ",
+  "example": "public class MyClass {\n  void loop(List<String> l) {\n    for (int i = 0; i < l.size(); i++) { // pre Java 1.5\n      System.out.println(l.get(i));\n    }\n\n    for (String s : l) {        // post Java 1.5\n      System.out.println(s);\n    }\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 290,
+  "branches": 64,
+  "apis": 25,
+  "test": [
+    {
+      "description": "Positive with list",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class MyClass {\n    void loop(List<String> l) {\n        for (int i = 0; i < l.size(); i++) {\n            System.out.println(l.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Positive with lower or equal",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    void loop(List<String> lo) {\n        for (int i = 0; i <= lo.size() - 1; i++) {\n            System.out.println(lo.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Usage of index var outside get",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class MyClass {\n    void loop(List<String> l) {\n        for (int i = 0; i < l.size(); i++) {\n            System.out.println(i + \": \" + l.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Subclass of List",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class MyClass {\n    void loop(ArrayList<String> l) {\n        for (int i = 0; i < l.size(); i++) {\n            System.out.println(l.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Get called on another list",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class MyClass {\n    void loop(List<String> l) {\n        List<String> l2 = new ArrayList<>(l);\n        for (int i = 0; i < l.size(); i++) {\n            System.out.println(l2.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Backwards iteration",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class MyClass {\n    void loop(List<String> l) {\n        for (int i = l.size() - 1; i > 0; i-= 1) {\n            System.out.println(i + \": \" + l.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Index var initialized outside for init",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class MyClass {\n    void loop(List<String> l) {\n        int i = 0;\n        for (; i < l.size(); i++) {\n            System.out.println(l.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Array positives",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    protected static final char[] filter(char[] chars, char removeChar) {\n        int count = 0;\n        for (int i = 0; i < chars.length; i++) {\n            if (chars[i] == removeChar) {\n                count++;\n            }\n        }\n\n        char[] results = new char[chars.length - count];\n\n        int index = 0;\n        for (int i = 0; i < chars.length; i++) {\n            if (chars[i] != removeChar) {\n                results[index++] = chars[i];\n            }\n        }\n        return results;\n    }\n}\n        "
+    },
+    {
+      "description": "Consider iterators",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nclass DataFlowNode {\n    void loop() {\n        Iterable<DataFlowNode> path = null;\n        for (Iterator<DataFlowNode> i = path.iterator(); i.hasNext();) {\n            DataFlowNode inode = i.next();\n            if (inode == null) {\n                continue;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Index var starts after zero",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class MyClass {\n    void loop(List<String> filters, StringBuilder builder) {\n        for (int i = 1; i < filters.size(); i++) {\n            builder.append(' ');\n            builder.append(filters.get(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Prefix increment should work",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Node {\n    Node[] children;\n\n    public Object childrenAccept(Object data) {\n        if (children != null) {\n            for (int i = 0; i < children.length; ++i) {\n                Node apexNode = (Node) children[i];\n                System.out.println(apexNode);\n            }\n        }\n        return data;\n    }\n}\n        "
+    },
+    {
+      "description": "Index inside arithmetic expression should whitelist the loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass BenchMarker {\n    private static String findOptionalStringValue(String[] args, String name, String defaultValue) {\n        for (int i = 0; i < args.length; i++) {\n            if (args[i].equals(name)) {\n                return args[i + 1];\n            }\n        }\n        return defaultValue;\n    }\n}\n        "
+    },
+    {
+      "description": "Array assignment whitelists the loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass StringPropertyTest {\n    private String newString() {\n        int strLength = randomInt(1, MAX_STRING_LENGTH);\n\n        char[] chars = new char[strLength];\n        for (int i = 0; i < chars.length; i++) {\n            chars[i] = randomCharIn(CHARSET);\n        }\n        return new String(chars);\n    }\n}\n        "
+    },
+    {
+      "description": "Consider iterators even if collection modified",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nclass DataFlowNode {\n    void loop() {\n        Iterable<DataFlowNode> path = null;\n\n        for (Iterator<DataFlowNode> i = path.iterator(); i.hasNext();) {\n            // throws ConcurrentModificationException if it were a foreach\n            // actually would throw ConcurrentModificationException anyway with fail-fast iterators\n            DataFlowNode inode = i.next();\n            path.remove(inode);\n            if (inode == null) {\n                continue;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Do not report iterator loop if we can't find iterator decl",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nimport my.SuperWithInheritedField;\nclass DataFlowNode extends SuperWithInheritedField {\n    void loop() {\n        for (Iterator<DataFlowNode> i = path.iterator(); i.hasNext();) {\n            DataFlowNode inode = i.next();\n            if (inode == null) {\n                continue;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Do not report iterator loop if we don't know type of iterable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nclass DataFlowNode {\n    void loop(List<DataFlowNode> path) { // not java.util.List\n        for (Iterator<DataFlowNode> i = path.iterator(); i.hasNext();) {\n            DataFlowNode inode = i.next();\n            if (inode == null) {\n                continue;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Iterating on this object NPE, refs #800",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\n\nclass Foo<T> implements Iterable<T> {\n\n    @Override\n    public Iterator<T> iterator() {\n        return null;\n    }\n\n    private void fofo() {\n        for (Iterator<T> it = this.iterator(); it.hasNext();) {\n            T item = it.next();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Iterating on multiple iterators should whitelist the loop, refs #784",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nclass Foo {\n    <E> void loop() {\n        Iterable<E> it;\n        Iterable<E> other;\n        for (Iterator<E> iterator = it.iterator(), otherIterator = other.iterator(); iterator.hasNext();) {\n            E item = iterator.next();\n            E otherItem = otherIterator.next();\n            doStuff();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "NPE when for init is there, but not a local var declaration, refs #884",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ASTTryStatement {\n\n    public Object visit(ASTTryStatement parent, Object data) {\n        for (parent = parent.getFirstParentOfType(ASTTryStatement.class); parent != null; parent = parent\n                .getFirstParentOfType(ASTTryStatement.class)) {\n\n            List<ASTTryStatement> list = parent.findDescendantsOfType(ASTTryStatement.class);\n            // ...\n        }\n        return data;\n    }\n}\n        "
+    },
+    {
+      "description": "NPE when using instance fields with this",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class Test {\n    private int[] hashes;\n    public void foo() {\n        List<String> stringList;\n\n        this.hashes = new int[stringList.size()];\n        for (int i = 0; i < stringList.size(); i++) {\n            this.hashes[i] = stringList.get(i).hashCode();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Loop on same field of different objects",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class Test {\n\n    final int hashes[] = new int[6];\n\n    public void foo(Test other) {\n        for (int i = 0; i < hashes.length; i++) {\n            if (this.hashes[i] == other.hashes[i])\n                throw new IllegalStateException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Loop on this object #833",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Iterator;\n            class Foo<T> implements Iterable<T> {\n\n                @Override\n                public Iterator<T> iterator() {\n                    return null;\n                }\n\n                private void fofo() {\n                    for (Iterator<T> it = iterator(); it.hasNext();) {\n                        T item = it.next();\n                    }\n                    for (Iterator<T> it = this.iterator(); it.hasNext();) {\n                        T item = it.next();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#1563 FP with ForLoopCanBeForeach",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.List;\n            class X {\n                private void fofo(List<Foo> mList) {\n                    for (int i = 0; i < mList.size(); i++) {\n                        mList.get(i).setIndex(i);\n                    }\n                }\n                interface Foo {\n                    void setIndex(int i);\n                }\n            }\n            "
+    },
+    {
+      "description": "#4569 non-unit stride",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\n            import java.util.*;\n\n            public class Test {\n                public static void main(String[] args) {\n                    List<Integer> list = List.of(1, 2, 3, 4, 5, 6);\n\n                    for (int i = 0; i < list.size(); i += 2) { // Ok\n                        System.out.println(list.get(i));\n                    }\n\n                    for (int i = 0; i < list.size(); i += 1) { // Not Ok\n                        System.out.println(list.get(i));\n                    }\n\n                    for (int i = 0; i < list.size(); i += 3) { // Ok\n                        System.out.println(list.get(i));\n                    }\n                }\n            }\n            "
+    }
+  ]
+}

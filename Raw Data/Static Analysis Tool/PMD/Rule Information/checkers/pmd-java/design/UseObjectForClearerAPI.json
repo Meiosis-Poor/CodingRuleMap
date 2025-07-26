@@ -1,0 +1,40 @@
+{
+  "name": "UseObjectForClearerAPI",
+  "language": "java",
+  "description": "\nWhen you write a public method, you should be thinking in terms of an API. If your method is public, it means other class\nwill use it, therefore, you want (or need) to offer a comprehensive and evolutive API. If you pass a lot of information\nas a simple series of Strings, you may think of using an Object to represent all those information. You'll get a simpler\nAPI (such as doWork(Workload workload), rather than a tedious series of Strings) and more importantly, if you need at some\npoint to pass extra data, you'll be able to do so by simply modifying or extending Workload without any modification to\nyour API.\n        ",
+  "example": "public class MyClass {\n    public void connect(String username,\n        String pssd,\n        String databaseName,\n        String databaseAdress)\n        // Instead of those parameters object\n        // would ensure a cleaner API and permit\n        // to add extra data transparently (no code change):\n        // void connect(UserData data);\n    {\n\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "No issues here",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport other.exceptions.SecurityException;\nimport yet.an.other.one.NoSuchMethodException;\n\npublic class MyClass {\n\n    public void method() {\n      // no args, no violation\n    }\n\n    public void otherMethod(String arg1, String arg2) {\n      // less than 2, should be ok\n    }\n\n    public void otherMethod(String arg1, String arg2, int arg3) {\n      // less than 2 Strings, should be ok\n    }\n\n    public void yetAnOtherOneWithException(String arg1,int arg2) throws SecurityException, NoSuchMethodException {\n      System.loadLibrary(\"nativelib\");\n    }\n}\n        "
+    },
+    {
+      "description": "Public method with 4 String parameters",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class MyClass {\n    public void connect(String username,\n        String pssd,\n        String databaseName,\n        String databaseAdress)\n        // Instead of those parameters object\n        // would ensure a cleaner API and permit\n        // to add extra data transparently (no code change):\n        // void connect(UserData data);\n        {\n        }\n}\n        "
+    },
+    {
+      "description": "non-public methods should not have findings",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n    protected void connectProtected(String username,\n        String pssd,\n        String databaseName,\n        String databaseAdress)\n    {\n    }\n    void connectPackagePrivate(String username,\n        String pssd,\n        String databaseName,\n        String databaseAdress)\n    {\n    }\n    private void connectPrivate(String username,\n        String pssd,\n        String databaseName,\n        String databaseAdress)\n    {\n    }\n}\n        "
+    },
+    {
+      "description": "String[] should not be treated as String",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n    public void connectProtected(String username,\n        String[] pssd,\n        String databaseName,\n        String databaseAdress)\n    {\n    }\n}\n        "
+    }
+  ]
+}

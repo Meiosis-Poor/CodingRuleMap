@@ -1,0 +1,68 @@
+{
+  "name": "AvoidThrowingNullPointerException",
+  "language": "java",
+  "description": "\n\nAvoid throwing NullPointerExceptions manually. These are confusing because most people will assume that the\nvirtual machine threw it.  To avoid a method being called with a null parameter, you may consider\nusing an IllegalArgumentException instead, making it clearly seen as a programmer-initiated exception.\nHowever, there are better ways to handle this:\n\n>*Effective Java, 3rd Edition, Item 72: Favor the use of standard exceptions*\n>\n>Arguably, every erroneous method invocation boils down to an illegal argument or state,\nbut other exceptions are standardly used for certain kinds of illegal arguments and states.\nIf a caller passes null in some parameter for which null values are prohibited, convention dictates that\nNullPointerException be thrown rather than IllegalArgumentException.\n\nTo implement that, you are encouraged to use `java.util.Objects.requireNonNull()`\n(introduced in Java 1.7). This method is designed primarily for doing parameter\nvalidation in methods and constructors with multiple parameters.\n\nYour parameter validation could thus look like the following:\n```\npublic class Foo {\n    private String exampleValue;\n\n    void setExampleValue(String exampleValue) {\n      // check, throw and assignment in a single standard call\n      this.exampleValue = Objects.requireNonNull(exampleValue, \"exampleValue must not be null!\");\n    }\n  }\n```\n\n        ",
+  "example": "public class Foo {\n    void bar() {\n        throw new NullPointerException();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 10,
+  "apis": 11,
+  "test": [
+    {
+      "description": "throwing various types",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        throw new NullPointerException();\n    }\n}\n        "
+    },
+    {
+      "description": "no problems if NullPointerException is only instantiated but not thrown",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        Exception e = new NullPointerException(\"Test message\");\n        String msg = e.getMessage();\n    }\n}\n        "
+    },
+    {
+      "description": "problem should be detected even if NullPointerException is stored in some intermediate variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        Exception e = new NullPointerException();\n        throw e;\n    }\n}\n        "
+    },
+    {
+      "description": "variables with same name false positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        Exception e = new NullPointerException();\n        e.printStackTrace();\n    }\n\n    void bar() {\n        Exception e = new RuntimeException();\n        throw e;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, variable has been reassigned to RuntimeException before thrown",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        Exception e = new NullPointerException();\n        e = new RuntimeException();\n        throw e;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, variable is reassigned with NullPointerException after thrown",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(String s) {\n        Exception e = new RuntimeException();\n        if (s.equals(\"throw\")) {\n            throw e;\n        }\n        e = new NullPointerException();\n    }\n}\n        "
+    },
+    {
+      "description": "bad, variable had been reassigned with NullPointerException before thrown",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        Exception e = new RuntimeException();\n        e = new NullPointerException();\n        throw e;\n    }\n}\n        "
+    },
+    {
+      "description": "variable is not necessarily an NPE",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        Exception e = new RuntimeException();\n        if (e.toString().isEmpty())\n            e = new NullPointerException();\n        throw e;\n    }\n}\n        "
+    },
+    {
+      "description": "variable is not necessarily an NPE 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(Exception e) {\n        if (e.toString().isEmpty())\n            e = new NullPointerException();\n        throw e;\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "name": "TestClassWithoutTestCases",
+  "language": "java",
+  "description": "\nTest classes typically end with the suffix \"Test\", \"Tests\" or \"TestCase\". Having a non-test class with that name\nis not a good practice, since most people will assume it is a test case. Test classes have test methods\nnamed \"testXXX\" (JUnit3) or use annotations (e.g. `@Test`).\n\nThe suffix can be configured using the property `testClassPattern`. To disable the detection of possible test classes\nby name, set this property to an empty string.\n        ",
+  "example": "//Consider changing the name of the class if it is not a test\n//Consider adding test methods if it is a test\npublic class CarTest {\n   public static void main(String[] args) {\n    // do something\n   }\n   // code\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 64,
+  "branches": 12,
+  "apis": 7,
+  "test": [
+    {
+      "description": "JUnit3: failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n}\n        "
+    },
+    {
+      "description": "JUnit3: test method should be public",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    void testX(){}\n}\n        "
+    },
+    {
+      "description": "JUnit3: inner class should get checked",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class FooTest extends TestCase {\n    class Bar { void testX(){} }\n}\n        "
+    },
+    {
+      "description": "JUnit3: test method in inner class not valid",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    class BarTest { void testX(){} }\n}\n        "
+    },
+    {
+      "description": "JUnit3: abstract classes are ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic abstract class FooTest extends TestCase {\n}\n        "
+    },
+    {
+      "description": "ditto interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface FooTest {\n}\n        "
+    },
+    {
+      "description": "ditto enum",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum FooTest {\n    ONE, TWO;\n}\n        "
+    },
+    {
+      "description": "ditto annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface FooTest {\n}\n        "
+    },
+    {
+      "description": "failure case does not extend TestCase and testClassPattern is not used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooTest {\n}\n        "
+    },
+    {
+      "description": "failure case does not extend TestCase and default testClassPattern",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\npublic class FooTest {\n}\n        "
+    },
+    {
+      "description": "JUnit4: #1453 False positive when the test class extends an other.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static org.junit.Assert.*;\nimport org.junit.Test;\n\nabstract class YourTest {}\npublic class MyTest extends YourTest {\n\n    @Test\n    public void falseMethod() {\n        assertFalse(0 == 1);\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit5: #428 [java] PMD requires public modifier on JUnit 5 test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\nclass JUnit5Test {\n    @Test\n    void myTest() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit4: false positive with anonymous class inside test class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Assert;\nimport org.junit.Test;\n\npublic class MyTest {\n    @Test\n    public void testSomething() {\n        Object check = new Object() { // false positive\n            @Override\n            public boolean equals(Object o) { return false; }\n        };\n        Assert.assertTrue(check.equals(null));\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit4: [java] TestClassWithoutTestCases reports wrong classes in a file #3624",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\n\npublic class MyTest {\n    @Test\n    public void myTest() {\n    }\n\n    class NestedHelper { }\n}\n\nclass Helper { }\n        "
+    },
+    {
+      "description": "JUnit5: [java] TestClassWithoutTestCases false positive with JUnit5 parameterized test #2636",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Assertions;\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\n\nfinal class SampleTest extends Object {\n    @ParameterizedTest\n    @ValueSource(ints = {1})\n    void doesTest(final int num) {\n        Assertions.assertTrue(num > 0);\n    }\n}\n"
+    },
+    {
+      "description": "JUnit5: [java] TestClassWithoutTestCases false positive with JUnit5 normal test #2636",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\nfinal class SampleTest {\n    @Test\n    void doesTest() {\n    }\n}\n"
+    },
+    {
+      "description": "empty package-private test class identified by default testClassPattern",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nclass SampleTest { }\n"
+    },
+    {
+      "description": "empty test class identified by special testClassPattern",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npackage my.pkg;\nclass MyEmptyCase { }\n"
+    },
+    {
+      "description": "empty test class identified by special testClassPattern with nested classes",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\npackage my.pkg;\nclass MyEmptyCase {\n    class MyNestedCase { }\n    class OtherNestedClass { }\n}\n"
+    },
+    {
+      "description": "empty test class identified by special testClassPattern - other package",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage my.other.pkg;\nclass MyEmptyCase { }\n"
+    },
+    {
+      "description": "TestNG based test class without import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SampleTest {\n    @org.testng.annotations.Test\n    public void runAssertions() {}\n}\n"
+    },
+    {
+      "description": "TestNG based test class with import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.Test;\npublic class SampleTest {\n    @Test\n    public void runAssertions() {}\n}\n"
+    },
+    {
+      "description": "JUnit5 @Nested tests with tests",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\nimport static org.junit.jupiter.api.Assertions.assertTrue;\n\nclass DemoNestedTests {\n    @Nested\n    class SomeTest {\n        @Test\n        void isCorrect() {\n            assertTrue(42 == 42);\n        }\n    }\n}\n"
+    },
+    {
+      "description": "JUnit5 @Nested tests without tests",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        11
+      ],
+      "code": "\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.api.Test;\n\nclass DemoNestedTests {\n    @Nested\n    class SomeTest {\n        // missing tests\n    }\n\n    @Nested\n    class Other {\n        // missing tests\n    }\n}\n"
+    },
+    {
+      "description": "Ignore other nested classes that are not test classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\nclass SampleTest {\n    @Test\n    void usesNestedHelperClass() { }\n\n    private static class TestHelper {} // matches the default testClassPattern\n\n    private static class Other {}\n}\n"
+    },
+    {
+      "description": "Default pattern shouldn't match inner classes that are not named test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        9
+      ],
+      "code": "\npackage org.example;\npublic final class TestInputConfiguration {\n    public static final class Builder {\n        public TestInputConfiguration build() {\n            return new TestInputConfiguration();\n        }\n    }\n\n    public static final class InnerTest {\n    }\n}\n"
+    },
+    {
+      "description": "Don't consider nested classes (JUnit4)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class MyTests {\n    @Test\n    public void myCheck() {}\n\n    static class Config {}\n}\n"
+    },
+    {
+      "description": "Don't consider nested classes (TestNG)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.Test;\npublic class MyTests {\n    @Test\n    public void myCheck() {}\n\n    static class Config {}\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "SimplifySubscriptExpr",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-simplify-subscript-expr",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 68,
+  "branches": 3,
+  "apis": 53,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        67,
+        72,
+        77,
+        82,
+        86,
+        90,
+        94,
+        98,
+        102
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-simplify-subscript-expr %t \\\n// RUN: -config=\"{CheckOptions: \\\n// RUN: {readability-simplify-subscript-expr.Types: \\\n// RUN:    '::std::basic_string;::std::basic_string_view;MyVector'}}\" --\n\nnamespace std {\n\ntemplate <class T>\nclass basic_string {\n public:\n   using size_type = unsigned;\n   using value_type = T;\n   using reference = value_type&;\n   using const_reference = const value_type&;\n\n   reference operator[](size_type);\n   const_reference operator[](size_type) const;\n   T* data();\n   const T* data() const;\n};\n\nusing string = basic_string<char>;\n\ntemplate <class T>\nclass basic_string_view {\n public:\n  using size_type = unsigned;\n  using const_reference = const T&;\n  using const_pointer = const T*;\n\n  constexpr const_reference operator[](size_type) const;\n  constexpr const_pointer data() const noexcept;\n};\n\nusing string_view = basic_string_view<char>;\n\n}\n\ntemplate <class T>\nclass MyVector {\n public:\n  using size_type = unsigned;\n  using const_reference = const T&;\n  using const_pointer = const T*;\n\n  const_reference operator[](size_type) const;\n  const T* data() const noexcept;\n};\n\n#define DO(x) do { x; } while (false)\n#define ACCESS(x) (x)\n#define GET(x, i) (x).data()[i]\n\ntemplate <class T>\nclass Foo {\n public:\n  char bar(int i) {\n    return x.data()[i];\n  }\n private:\n  T x;\n};\n\nvoid f(int i) {\n  MyVector<int> v;\n  int x = v.data()[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: accessing an element of the container does not require a call to 'data()'; did you mean to use 'operator[]'? [readability-simplify-subscript-expr]\n  // CHECK-FIXES: int x = v[i];\n\n  std::string s;\n  char c1 = s.data()[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: accessing an element\n  // CHECK-FIXES: char c1 = s[i];\n\n  std::string_view sv;\n  char c2 = sv.data()[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: accessing an element\n  // CHECK-FIXES: char c2 = sv[i];\n\n  std::string* ps = &s;\n  char c3 = ps->data()[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: accessing an element\n  // CHECK-FIXES: char c3 = (*ps)[i];\n\n  char c4 = (*ps).data()[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: accessing an element\n  // CHECK-FIXES: char c4 = (*ps)[i];\n\n  DO(char c5 = s.data()[i]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: accessing an element\n  // CHECK-FIXES: DO(char c5 = s[i]);\n\n  char c6 = ACCESS(s).data()[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: accessing an element\n  // CHECK-FIXES: char c6 = ACCESS(s)[i];\n\n  char c7 = ACCESS(s.data())[i];\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: accessing an element\n  // CHECK-FIXES: char c7 = ACCESS(s)[i];\n\n  char c8 = ACCESS(s.data()[i]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: accessing an element\n  // CHECK-FIXES: char c8 = ACCESS(s[i]);\n\n  char c9 = GET(s, i);\n\n  char c10 = Foo<std::string>{}.bar(i);\n}"
+    }
+  ]
+}

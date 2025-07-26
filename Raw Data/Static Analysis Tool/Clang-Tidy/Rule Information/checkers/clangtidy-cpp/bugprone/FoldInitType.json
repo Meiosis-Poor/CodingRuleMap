@@ -1,0 +1,36 @@
+{
+  "name": "FoldInitType",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-fold-init-type",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 150,
+  "branches": 12,
+  "apis": 104,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 15,
+      "expected-linenumbers": [
+        73,
+        79,
+        85,
+        91,
+        97,
+        103,
+        109,
+        115,
+        121,
+        127,
+        133,
+        139,
+        145,
+        152,
+        159
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-fold-init-type -std=c++17 %t\n\nnamespace std {\ntemplate <class InputIt, class T>\nT accumulate(InputIt first, InputIt last, T init) {\n  // When `InputIt::operator*` returns a deduced `auto` type that refers to a\n  // dependent type, the return type is deduced only if `InputIt::operator*`\n  // is instantiated. In practice this happens somewhere in the implementation\n  // of `accumulate`. For tests, do it here.\n  (void)*first;\n  return init;\n}\n\ntemplate <class InputIt, class T>\nT reduce(InputIt first, InputIt last, T init) { (void)*first; return init; }\ntemplate <class ExecutionPolicy, class InputIt, class T>\nT reduce(ExecutionPolicy &&policy,\n         InputIt first, InputIt last, T init) { (void)*first; return init; }\n\nstruct parallel_execution_policy {};\nconstexpr parallel_execution_policy par{};\n\ntemplate <class InputIt1, class InputIt2, class T>\nT inner_product(InputIt1 first1, InputIt1 last1,\n                InputIt2 first2, T value) { (void)*first1; (void)*first2; return value;  }\n\ntemplate <class ExecutionPolicy, class InputIt1, class InputIt2, class T>\nT inner_product(ExecutionPolicy &&policy, InputIt1 first1, InputIt1 last1,\n                InputIt2 first2, T value) { (void)*first1; (void)*first2; return value; }\n\n} // namespace std\n\nstruct FloatIterator {\n  const float &operator*() const;\n};\n\nstruct DerivedFloatIterator : public FloatIterator {\n};\n\ntemplate <typename ValueType> struct ByValueTemplateIterator {\n  ValueType operator*() const;\n};\n\ntemplate <typename ValueType> struct ByRefTemplateIterator {\n  ValueType &operator*();\n};\n\ntemplate <typename ValueType> struct ByRefTemplateIteratorWithAlias {\n  using reference = const ValueType&;\n  reference operator*();\n};\n\ntemplate <typename ValueType> struct AutoByValueTemplateIterator {\n  auto operator*() const { return ValueType{}; }\n};\n\ntemplate <typename ValueType> struct AutoByRefTemplateIterator {\n  decltype(auto) operator*() const { return value_; }\n  ValueType value_;\n};\n\ntemplate <typename ValueType>\nstruct InheritingByConstRefTemplateIterator\n    : public ByRefTemplateIterator<const ValueType> {};\n\nusing TypedeffedIterator = FloatIterator;\n\n// Positives.\n\nint accumulatePositive1() {\n  float a[1] = {0.5f};\n  return std::accumulate(a, a + 1, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint accumulatePositive2() {\n  FloatIterator it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint accumulatePositive3() {\n  DerivedFloatIterator it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint accumulatePositive4() {\n  double a[1] = {0.0};\n  return std::accumulate(a, a + 1, 0.0f);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'double' into type 'float'\n}\n\nint accumulatePositive5() {\n  ByValueTemplateIterator<unsigned> it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'unsigned int' into type 'int'\n}\n\nint accumulatePositive6() {\n  ByRefTemplateIterator<unsigned> it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'unsigned int' into type 'int'\n}\n\nint accumulatePositive7() {\n  AutoByValueTemplateIterator<unsigned> it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'unsigned int' into type 'int'\n}\n\nint accumulatePositive8() {\n  TypedeffedIterator it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint accumulatePositive9() {\n  InheritingByConstRefTemplateIterator<unsigned> it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'unsigned int' into type 'int'\n}\n\nint accumulatePositive10() {\n  AutoByRefTemplateIterator<unsigned> it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'unsigned int' into type 'int'\n}\n\nint accumulatePositive11() {\n  ByRefTemplateIteratorWithAlias<unsigned> it;\n  return std::accumulate(it, it, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'unsigned int' into type 'int'\n}\n\nint reducePositive1() {\n  float a[1] = {0.5f};\n  return std::reduce(a, a + 1, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint reducePositive2() {\n  float a[1] = {0.5f};\n  return std::reduce(std::par, a, a + 1, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint innerProductPositive1() {\n  float a[1] = {0.5f};\n  int b[1] = {1};\n  return std::inner_product(std::par, a, a + 1, b, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\nint innerProductPositive2() {\n  float a[1] = {0.5f};\n  int b[1] = {1};\n  return std::inner_product(std::par, a, a + 1, b, 0);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: folding type 'float' into type 'int'\n}\n\n// Negatives.\n\nint negative1() {\n  float a[1] = {0.5f};\n  // This is OK because types match.\n  return std::accumulate(a, a + 1, 0.0);\n}\n\nint negative2() {\n  float a[1] = {0.5f};\n  // This is OK because double is bigger than float.\n  return std::accumulate(a, a + 1, 0.0);\n}\n\nint negative3() {\n  float a[1] = {0.5f};\n  // This is OK because the user explicitly specified T.\n  return std::accumulate<float *, float>(a, a + 1, 0);\n}\n\nint negative4() {\n  ByValueTemplateIterator<unsigned> it;\n  // For now this is OK.\n  return std::accumulate(it, it, 0.0);\n}\n\nint negative5() {\n  float a[1] = {0.5f};\n  float b[1] = {1.0f};\n  return std::inner_product(std::par, a, a + 1, b, 0.0f);\n}\n\nnamespace blah {\nnamespace std {\ntemplate <class InputIt, class T>\nT accumulate(InputIt, InputIt, T); // We should not care about this one.\n}\n\nint negative5() {\n  float a[1] = {0.5f};\n  // Note that this is using blah::std::accumulate.\n  return std::accumulate(a, a + 1, 0);\n}\n}"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "SuspiciousEqualsMethodName",
+  "language": "java",
+  "description": "\nThe method name and parameter number are suspiciously close to `Object.equals`, which can denote an\nintention to override it. However, the method does not override `Object.equals`, but overloads it instead.\nOverloading `Object.equals` method is confusing for other programmers, error-prone and hard to maintain,\nespecially when using inheritance, because `@Override` annotations used in subclasses can provide a false\nsense of security. For more information on `Object.equals` method, see Effective Java, 3rd Edition,\nItem 10: Obey the general contract when overriding equals.\n        ",
+  "example": "public class Foo {\n   public int equals(Object o) {\n     // oops, this probably was supposed to be boolean equals\n   }\n   public boolean equals(String s) {\n     // oops, this probably was supposed to be equals(Object)\n   }\n   public boolean equals(Object o1, Object o2) {\n     // oops, this probably was supposed to be equals(Object)\n   }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "bad, equals(Foo foo)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean equals(Foo foo) {return true;}\n}\n        "
+    },
+    {
+      "description": "ok, equals(Object foo)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean equals(Object foo) {return true;}\n}\n        "
+    },
+    {
+      "description": "bad, equal(Object foo)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean equal(Object foo) {return true;}\n}\n        "
+    },
+    {
+      "description": "#1431 SuspiciousEqualsMethodName false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Demo implements org.hibernate.usertype.UserType {\n    @Override\n    public boolean equals(Object x, Object y) throws HibernateException {\n        return x == null ? y == null : x.equals(y);\n    }\n}\n        "
+    }
+  ]
+}

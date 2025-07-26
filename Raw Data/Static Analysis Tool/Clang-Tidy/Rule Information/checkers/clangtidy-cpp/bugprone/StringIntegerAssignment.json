@@ -1,0 +1,31 @@
+{
+  "name": "StringIntegerAssignment",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-string-integer-assignment",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 178,
+  "branches": 26,
+  "apis": 123,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        35,
+        38,
+        41,
+        48,
+        51,
+        54,
+        81,
+        85,
+        96,
+        106
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-string-integer-assignment %t -- -- -fno-delayed-template-parsing\n\nnamespace std {\ntemplate<typename T>\nstruct basic_string {\n  basic_string& operator=(T);\n  basic_string& operator=(basic_string);\n  basic_string& operator+=(T);\n  basic_string& operator+=(basic_string);\n  const T &operator[](int i) const;\n  T &operator[](int i);\n};\n\ntypedef basic_string<char> string;\ntypedef basic_string<wchar_t> wstring;\n\nint tolower(int i);\nint toupper(int i);\n}\n\nint tolower(int i);\nint toupper(int i);\n\ntypedef int MyArcaneChar;\n\nconstexpr char kCharConstant = 'a';\n\nint main() {\n  std::string s;\n  std::wstring ws;\n  int x = 5;\n  const char c = 'c';\n\n  s = 6;\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: an integer is interpreted as a character code when assigning {{.*}} [bugprone-string-integer-assignment]\n// CHECK-FIXES: {{^}}  s = '6';{{$}}\n  s = 66;\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: an integer is interpreted as a chara\n// CHECK-FIXES: {{^}}  s = \"66\";{{$}}\n  s = x;\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: an integer is interpreted as a chara\n// CHECK-FIXES: {{^}}  s = std::to_string(x);{{$}}\n  s = 'c';\n  s = static_cast<char>(6);\n\n// +=\n  ws += 6;\n// CHECK-MESSAGES: :[[@LINE-1]]:9: warning: an integer is interpreted as a chara\n// CHECK-FIXES: {{^}}  ws += L'6';{{$}}\n  ws += 66;\n// CHECK-MESSAGES: :[[@LINE-1]]:9: warning: an integer is interpreted as a chara\n// CHECK-FIXES: {{^}}  ws += L\"66\";{{$}}\n  ws += x;\n// CHECK-MESSAGES: :[[@LINE-1]]:9: warning: an integer is interpreted as a chara\n// CHECK-FIXES: {{^}}  ws += std::to_wstring(x);{{$}}\n  ws += L'c';\n  ws += (wchar_t)6;\n\n  std::basic_string<MyArcaneChar> as;\n  as = 6;\n  as = static_cast<MyArcaneChar>(6);\n  as = 'a';\n\n  s += toupper(x);\n  s += tolower(x);\n  s += (std::tolower(x));\n\n  s += c & s[1];\n  s += c ^ s[1];\n  s += c | s[1];\n\n  s[x] += 1;\n  s += s[x];\n  as += as[x];\n\n  // Likely character expressions.\n  s += x & 0xff;\n  s += 0xff & x;\n  s += x % 26;\n  s += 26 % x;\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: an integer is interpreted as a chara\n  // CHECK-FIXES: {{^}}  s += std::to_string(26 % x);{{$}}\n  s += c | 0x80;\n  s += c | 0x8000;\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: an integer is interpreted as a chara\n  // CHECK-FIXES: {{^}}  s += std::to_string(c | 0x8000);{{$}}\n  as += c | 0x8000;\n\n  s += 'a' + (x % 26);\n  s += kCharConstant + (x % 26);\n  s += 'a' + (s[x] & 0xf);\n  s += (x % 10) + 'b';\n\n  s += x > 255 ? c : x;\n  s += x > 255 ? 12 : x;\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: an integer is interpreted as a chara\n  // CHECK-FIXES: {{^}}  s += std::to_string(x > 255 ? 12 : x);{{$}}\n}\n\nnamespace instantiation_dependent_exprs {\ntemplate<typename T>\nstruct S {\n  static constexpr T t = 0x8000;\n  std::string s;\n  void f(char c) { s += c | static_cast<int>(t); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: an integer is interpreted as a chara\n  // CHECK-FIXES: {{^}}  void f(char c) { s += std::to_string(c | static_cast<int>(t)); } \n};\n\ntemplate struct S<int>;\n}"
+    }
+  ]
+}

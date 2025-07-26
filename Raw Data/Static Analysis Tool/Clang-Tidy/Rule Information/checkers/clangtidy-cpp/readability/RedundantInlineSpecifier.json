@@ -1,0 +1,40 @@
+{
+  "name": "RedundantInlineSpecifier",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-redundant-inline-specifier",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 137,
+  "branches": 17,
+  "apis": 86,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        5,
+        12,
+        21,
+        28,
+        32,
+        36,
+        40,
+        44,
+        48,
+        52,
+        59,
+        66,
+        73,
+        82,
+        89,
+        96,
+        108,
+        127,
+        148
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++17 %s readability-redundant-inline-specifier %t\n// RUN: %check_clang_tidy -std=c++17 -check-suffixes=,STRICT %s readability-redundant-inline-specifier %t -- -config=\"{CheckOptions: {readability-redundant-inline-specifier.StrictMode: 'true'}}\"\n\ntemplate <typename T> inline T f()\n// CHECK-MESSAGES-STRICT: :[[@LINE-1]]:23: warning: function 'f' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES-STRICT: template <typename T> T f()\n{\n    return T{};\n}\n\ntemplate <> inline double f<double>() = delete;\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: function 'f<double>' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES: template <> double f<double>() = delete;\n\ninline int g(float a)\n{\n    return static_cast<int>(a - 5.F);\n}\n\ninline int g(double) = delete;\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: function 'g' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES: int g(double) = delete;\n\nclass C\n{\n  public:\n    inline C& operator=(const C&) = delete;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: function 'operator=' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: C& operator=(const C&) = delete;\n\n    inline C(const C&) = default;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: function 'C' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: C(const C&) = default;\n\n    constexpr inline C& operator=(int a);\n    // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: function 'operator=' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: constexpr C& operator=(int a);\n\n    inline C() {}\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: function 'C' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: C() {}\n\n    constexpr inline C(int);\n    // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: function 'C' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: constexpr C(int);\n\n    inline int Get42() const { return 42; }\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: function 'Get42' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: int Get42() const { return 42; }\n\n    static inline constexpr int C_STATIC = 42;\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'C_STATIC' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: static constexpr int C_STATIC = 42;\n\n    static constexpr int C_STATIC_2 = 42;\n};\n\nconstexpr inline int Get42() { return 42; }\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: function 'Get42' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES: constexpr int Get42() { return 42; }\n\n\nstatic constexpr inline int NAMESPACE_STATIC = 42;\n\ninline static int fn0(int i)\n// CHECK-MESSAGES-STRICT: :[[@LINE-1]]:1: warning: function 'fn0' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES-STRICT: static int fn0(int i)\n{\n    return i - 1;\n}\n\nstatic constexpr inline int fn1(int i)\n// CHECK-MESSAGES: :[[@LINE-1]]:18: warning: function 'fn1' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES: static constexpr int fn1(int i)\n{\n    return i - 1;\n}\n\nnamespace\n{\n    inline int fn2(int i)\n    // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:5: warning: function 'fn2' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES-STRICT: int fn2(int i)\n    {\n        return i - 1;\n    }\n\n    inline constexpr int fn3(int i)\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: function 'fn3' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: constexpr int fn3(int i)\n    {\n        return i - 1;\n    }\n\n    inline constexpr int MY_CONSTEXPR_VAR = 42;\n    // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:5: warning: variable 'MY_CONSTEXPR_VAR' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES-STRICT: constexpr int MY_CONSTEXPR_VAR = 42;\n}\n\nnamespace ns\n{\n    inline int fn4(int i)\n    {\n        return i - 1;\n    }\n\n    inline constexpr int fn5(int i)\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: function 'fn5' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n    // CHECK-FIXES: constexpr int fn5(int i)\n    {\n        return i - 1;\n    }\n}\n\nauto fn6 = [](){};\n\ntemplate <typename T> inline T fn7();\n\ntemplate <typename T> T fn7()\n{\n    return T{};\n}\n\ntemplate <typename T>  T fn8();\n\ntemplate <typename T> inline T fn8()\n// CHECK-MESSAGES-STRICT: :[[@LINE-1]]:23: warning: function 'fn8' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n// CHECK-FIXES-STRICT: template <typename T> T fn8()\n{\n    return T{};\n}\n\n#define INLINE_MACRO() inline void fn9() { }\nINLINE_MACRO()\n\n#define INLINE_KW inline\nINLINE_KW void fn10() { }\n\nnamespace {\nclass A\n{\npublic:\n  static inline float test = 3.0F;\n  static inline double test2 = 3.0;\n  static inline int test3 = 3;\n\n  static inline float test4;\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:10: warning: variable 'test4' has inline specifier but is implicitly inlined [readability-redundant-inline-specifier]\n  // CHECK-FIXES-STRICT: static float test4;\n};\n}\n\nnamespace ns {\nclass B\n{\npublic:\n  ~B();\n};\n\ninline B::~B() = default;\n}"
+    }
+  ]
+}

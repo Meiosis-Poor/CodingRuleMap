@@ -1,0 +1,86 @@
+{
+  "name": "FieldNamingConventions",
+  "language": "java",
+  "description": "\n            Configurable naming conventions for field declarations. This rule reports variable declarations\n            which do not match the regex that applies to their specific kind ---e.g. constants (static final),\n            enum constant, final field. Each regex can be configured through properties.\n\n            By default this rule uses the standard Java naming convention (Camel case), and uses the ALL_UPPER\n            convention for constants and enum constants.\n        ",
+  "example": "class Foo {\n                int myField = 1; // This is in camel case, so it's ok\n                int my_Field = 1; // This contains an underscore, it's not ok by default\n                                  // but you may allow it, or even require the \"my_\" prefix\n\n                final int FinalField = 1; // you may configure a different convention for final fields,\n                                          // e.g. here PascalCase: [A-Z][a-zA-Z0-9]*\n\n                interface Interface {\n                    double PI = 3.14; // interface \"fields\" use the constantPattern property\n                }\n\n                enum AnEnum {\n                    ORG, NET, COM; // These use a separate property but are set to ALL_UPPER by default\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 130,
+  "branches": 20,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Test property defaults",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int BOLGaaa_FIELD;\n}\n        "
+    },
+    {
+      "description": "Test default field property",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int BOLG_FIELD;\n\n}\n        "
+    },
+    {
+      "description": "Test final field property",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int BOLG_FIELD;\n}\n        "
+    },
+    {
+      "description": "Test static field property",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int BOLG_FIELD;\n}\n        "
+    },
+    {
+      "description": "Test constant field property",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int BOLG_FIELD;\n}\n        "
+    },
+    {
+      "description": "Test enum constant property",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    enum AnEnum {\n        ORG, NET, cons_COM;\n    }\n\n}\n        "
+    },
+    {
+      "description": "Test public constant property",
+      "expected-problems": 5,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int cons_BOLG_FIELD;\n    public static final int DDD;\n}\n        "
+    },
+    {
+      "description": "Interface fields should be treated like public constants",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Bar {\n\n    int Foo;\n    final int Hoo;\n    static int Bar;\n    static final int BOLG_FIELD;\n}\n        "
+    },
+    {
+      "description": "Exclude serialVersionUID by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyException extends RuntimeException {\n\n    private static final long serialVersionUID = -8134636876462178354L;\n\n\n    public MyException(String message, Throwable cause) {\n        super(message, cause);\n    }\n\n\n    public MyException(String message) {\n        super(message);\n    }\n\n}\n        "
+    },
+    {
+      "description": "Exclude serialPersistentFields by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\nimport java.util.*;\npublic class Foo implements Serializable {\n\n    List next;\n\n    private static final ObjectStreamField[] serialPersistentFields = {new ObjectStreamField(\"next\", List.class)};\n\n}\n        "
+    },
+    {
+      "description": "More exclusions can be configured",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyException {\n    private static final long serialVersionUID = -8134636876462178354L;\n    private static final long m$mangled = -8134636876462178354L;\n\n}\n        "
+    },
+    {
+      "description": "[java] FieldNamingConventions: false positive with lombok's @UtilityClass #4455",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\npublic  class Foo {\n    @UtilityClass\n    public class Test1 {\n        private final String FINAL_F = \"final_field\";  // should not report a warning\n    }\n    public class Test2 {\n        private static final String FINAL_F = \"final_field\";  // report no warning\n    }\n}\n        "
+    }
+  ]
+}

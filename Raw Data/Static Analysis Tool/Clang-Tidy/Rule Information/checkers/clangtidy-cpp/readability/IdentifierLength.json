@@ -1,0 +1,26 @@
+{
+  "name": "IdentifierLength",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-identifier-length",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 150,
+  "branches": 17,
+  "apis": 100,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        17,
+        20,
+        23,
+        26,
+        34
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-identifier-length %t \\\n// RUN: -config='{CheckOptions: \\\n// RUN:  {readability-identifier-length.IgnoredVariableNames: \"^[xy]$\"}}' \\\n// RUN: -- -fexceptions\n\nstruct myexcept {\n  int val;\n};\n\nstruct simpleexcept {\n  int other;\n};\n\nvoid doIt();\n\nvoid tooShortVariableNames(int z)\n// CHECK-MESSAGES: :[[@LINE-1]]:32: warning: parameter name 'z' is too short, expected at least 3 characters [readability-identifier-length]\n{\n  int i = 5;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: variable name 'i' is too short, expected at least 3 characters [readability-identifier-length]\n\n  int jj = z;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: variable name 'jj' is too short, expected at least 3 characters [readability-identifier-length]\n\n  for (int m = 0; m < 5; ++m)\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: loop variable name 'm' is too short, expected at least 2 characters [readability-identifier-length]\n  {\n    doIt();\n  }\n\n  try {\n    doIt();\n  } catch (const myexcept &x)\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: exception variable name 'x' is too short, expected at least 2 characters [readability-identifier-length]\n  {\n    doIt();\n  }\n}\n\nvoid longEnoughVariableNames(int n) // argument 'n' ignored by default configuration\n{\n  int var = 5;\n\n  for (int i = 0; i < 42; ++i) // 'i' is default allowed, for historical reasons\n  {\n    doIt();\n  }\n\n  for (int kk = 0; kk < 42; ++kk) {\n    doIt();\n  }\n\n  try {\n    doIt();\n  } catch (const simpleexcept &e) // ignored by default configuration\n  {\n    doIt();\n  } catch (const myexcept &ex) {\n    doIt();\n  }\n\n  int x = 5; // ignored by configuration\n}"
+    }
+  ]
+}

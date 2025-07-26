@@ -1,0 +1,74 @@
+{
+  "name": "MissingOverride",
+  "language": "java",
+  "description": "<div>\n Verifies that the {@code @Override} annotation is present\n when the {@code @inheritDoc} javadoc tag is present.\n </div>\n\n <p>\n Rationale: The &#64;Override annotation helps\n compiler tools ensure that an override is actually occurring.  It is\n quite easy to accidentally overload a method or hide a static method\n and using the &#64;Override annotation points out these problems.\n </p>\n\n <p>\n This check will log a violation if using the &#64;inheritDoc tag on a method that\n is not valid (ex: private, or static method).\n </p>\n\n <p>\n There is a slight difference between the &#64;Override annotation in Java 5 versus\n Java 6 and above. In Java 5, any method overridden from an interface cannot\n be annotated with &#64;Override. In Java 6 this behavior is allowed.\n </p>\n\n <p>\n As a result of the aforementioned difference between Java 5 and Java 6, a\n property called {@code javaFiveCompatibility} is available. This\n property will only check classes, interfaces, etc. that do not contain the\n extends or implements keyword or are not anonymous classes. This means it\n only checks methods overridden from {@code java.lang.Object}.\n <b>Java 5 Compatibility mode severely limits this check. It is recommended to\n only use it on Java 5 source.</b>\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 88,
+  "branches": 7,
+  "apis": 29,
+  "test": [
+    {
+      "description": "Auto test from InputMissingOverrideBadAnnotation.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        12,
+        18,
+        31,
+        37
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingoverride;\npublic class InputMissingOverrideBadAnnotation\n{\n  Runnable r = new Runnable() {\n    public void run() {\n      Throwable t = new Throwable() {\n        public String toString() {\n          return \"junk\";\n        }\n      };\n    }\n  };\n  void doFoo(Runnable r) {\n    doFoo(new Runnable() {\n      public void run() {\n        Throwable t = new Throwable() {\n          public String toString() {\n            return \"junk\";\n          }\n        };\n      }\n    });\n  }\n}"
+    },
+    {
+      "description": "Auto test from InputMissingOverrideBadOverrideFromObject.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        11,
+        31,
+        41,
+        46,
+        74
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingoverride;\npublic class InputMissingOverrideBadOverrideFromObject\n{\n    public boolean \n    equals(Object obj) {\n        return false;\n    }\n    public int hashCode() {\n        return 1;\n    }\n    class Junk {\n        protected void \n        finalize() throws Throwable {}\n    }\n}\ninterface HashEq2 {\n    public int hashCode(); \n    @Deprecated \n    public String toString();\n    @SuppressWarnings(\"\")\n    @Deprecated\n    public boolean equals(Object a); \n    @SuppressWarnings(\"\")\n    public HashEq2 clone(Object a); \n}\nenum enum3 {\n    B;\n    public String toString(){\n        return \"B\";\n    }\n    private static void test() {}\n}"
+    },
+    {
+      "description": "Auto test from InputMissingOverrideBadOverrideFromObjectJava5.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        11,
+        31,
+        41,
+        55
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingoverride;\npublic class InputMissingOverrideBadOverrideFromObjectJava5\n{\n    public boolean \n    equals(Object obj) {\n        return false;\n    }\n    public int hashCode() {\n        return 1;\n    }\n    class Junk {\n        protected void \n        finalize() throws Throwable {}\n    }\n}\ninterface HashEq2Java5 {\n    public int hashCode(); \n}\nenum enum3Java5 {\n    B;\n    public String toString(){\n        return \"B\";\n    }\n    private static void test() {}\n}"
+    },
+    {
+      "description": "Auto test from InputMissingOverrideBadOverrideFromOther.java",
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        13,
+        28,
+        36,
+        41,
+        48,
+        53,
+        63,
+        68,
+        73,
+        79
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingoverride;\nimport java.io.Serializable;\npublic class InputMissingOverrideBadOverrideFromOther implements IFoo2\n{\n  public void doFoo() {} \n  public void doFoo2() {}\n}\ninterface IFoo2 {\n  void doFoo();\n}\ninterface IBar2 extends IFoo2 {\n  public void doFoo(); \n}\nclass MoreJunk2 extends InputMissingOverrideBadOverrideFromOther {\n  public void doFoo() {} \n  public void doFoo2() {} \n  class EvenMoreJunk extends MoreJunk2 implements Serializable {\n    public void doFoo() {} \n    public void doFoo2() {} \n  }\n}\nenum Football2 implements IFoo2, IBar2 {\n  Detroit_Lions;\n  public void doFoo() {} \n  void some() {} \n  void above(int a) {} \n  void below() {} \n  void doubled() {} \n}"
+    },
+    {
+      "description": "Auto test from InputMissingOverrideNotOverride.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingoverride;\npublic class InputMissingOverrideNotOverride\n{\n  private void bleh() {} \n  public static void eh() {} \n  public String junk = \"\";\n  void dodoo() {}\n}"
+    }
+  ]
+}

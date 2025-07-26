@@ -1,0 +1,24 @@
+{
+  "name": "PreferRegisterOverUnsigned",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - llvm-prefer-register-over-unsigned",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 60,
+  "branches": 6,
+  "apis": 45,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        25,
+        36,
+        45
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s llvm-prefer-register-over-unsigned %t\n\nnamespace llvm {\nclass Register {\npublic:\n  operator unsigned();\n\n  unsigned Reg;\n};\n\n// This class shouldn't trigger it despite the similarity.\nclass RegisterLike {\npublic:\n  operator unsigned();\n\n  unsigned Reg;\n};\n} // end namespace llvm\n\nllvm::Register getReg();\nllvm::RegisterLike getRegLike();\n\nvoid apply_1() {\n  unsigned Reg1 = getReg();\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'Reg1' declared as 'unsigned int'; use 'llvm::Register' instead [llvm-prefer-register-over-unsigned]\n  // CHECK-FIXES: apply_1()\n  // CHECK-FIXES-NEXT: llvm::Register Reg1 = getReg();\n}\n\nvoid apply_2() {\n  using namespace llvm;\n  unsigned Reg2 = getReg();\n  // FIXME: Function-scoped UsingDirectiveDecl's don't appear to be in the\n  //        DeclContext for the function so we can't elide the llvm:: in this\n  //        case. Fortunately, it doesn't actually occur in the LLVM code base.\n  // CHECK-MESSAGES: :[[@LINE-4]]:12: warning: variable 'Reg2' declared as 'unsigned int'; use 'llvm::Register' instead [llvm-prefer-register-over-unsigned]\n  // CHECK-FIXES: apply_2()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: llvm::Register Reg2 = getReg();\n}\n\nnamespace llvm {\nvoid apply_3() {\n  unsigned Reg3 = getReg();\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'Reg3' declared as 'unsigned int'; use 'Register' instead [llvm-prefer-register-over-unsigned]\n  // CHECK-FIXES: apply_3()\n  // CHECK-FIXES-NEXT: Register Reg3 = getReg();\n}\n} // end namespace llvm\n\nvoid done_1() {\n  llvm::Register Reg1 = getReg();\n  // CHECK-FIXES: done_1()\n  // CHECK-FIXES-NEXT: llvm::Register Reg1 = getReg();\n}\n\nvoid done_2() {\n  using namespace llvm;\n  Register Reg2 = getReg();\n  // CHECK-FIXES: done_2()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: Register Reg2 = getReg();\n}\n\nnamespace llvm {\nvoid done_3() {\n  Register Reg3 = getReg();\n  // CHECK-FIXES: done_3()\n  // CHECK-FIXES-NEXT: Register Reg3 = getReg();\n}\n} // end namespace llvm\n\nvoid do_nothing_1() {\n  unsigned Reg1 = getRegLike();\n  // CHECK-FIXES: do_nothing_1()\n  // CHECK-FIXES-NEXT: unsigned Reg1 = getRegLike();\n}\n\nvoid do_nothing_2() {\n  using namespace llvm;\n  unsigned Reg2 = getRegLike();\n  // CHECK-FIXES: do_nothing_2()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: unsigned Reg2 = getRegLike();\n}\n\nnamespace llvm {\nvoid do_nothing_3() {\n  unsigned Reg3 = getRegLike();\n  // CHECK-FIXES: do_nothing_3()\n  // CHECK-FIXES-NEXT: unsigned Reg3 = getRegLike();\n}\n} // end namespace llvm\n\nvoid fn1(llvm::Register R);\nvoid do_nothing_4() {\n  fn1(getReg());\n  // CHECK-FIXES: do_nothing_4()\n  // CHECK-FIXES-NEXT: fn1(getReg());\n}\n\nvoid fn2(unsigned R);\nvoid do_nothing_5() {\n  fn2(getReg());\n  // CHECK-FIXES: do_nothing_5()\n  // CHECK-FIXES-NEXT: fn2(getReg());\n}\n\nvoid do_nothing_6() {\n  using namespace llvm;\n  Register Reg6{getReg()};\n  // CHECK-FIXES: do_nothing_6()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: Register Reg6{getReg()};\n}\n\nvoid do_nothing_7() {\n  using namespace llvm;\n  Register Reg7;\n  Reg7.Reg = getReg();\n  // CHECK-FIXES: do_nothing_7()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: Register Reg7;\n  // CHECK-FIXES-NEXT: Reg7.Reg = getReg();\n}\n\nvoid do_nothing_8() {\n  using namespace llvm;\n  RegisterLike Reg8{getReg()};\n  // CHECK-FIXES: do_nothing_8()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: RegisterLike Reg8{getReg()};\n}\n\nvoid do_nothing_9() {\n  using namespace llvm;\n  RegisterLike Reg9;\n  Reg9.Reg = getReg();\n  // CHECK-FIXES: do_nothing_9()\n  // CHECK-FIXES-NEXT: using namespace llvm;\n  // CHECK-FIXES-NEXT: RegisterLike Reg9;\n  // CHECK-FIXES-NEXT: Reg9.Reg = getReg();\n}"
+    }
+  ]
+}

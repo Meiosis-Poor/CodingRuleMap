@@ -1,0 +1,208 @@
+{
+  "name": "UseCollectionIsEmpty",
+  "language": "java",
+  "description": "\nThe isEmpty() method on java.util.Collection is provided to determine if a collection has any elements.\nComparing the value of size() to 0 does not convey intent as well as the isEmpty() method.\n        ",
+  "example": "public class Foo {\n    void good() {\n        List foo = getList();\n        if (foo.isEmpty()) {\n            // blah\n        }\n    }\n\n    void bad() {\n        List foo = getList();\n        if (foo.size() == 0) {\n            // blah\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 43,
+  "branches": 8,
+  "apis": 4,
+  "test": [
+    {
+      "description": "fail, == 0",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst) {\n        if(lst.size() == 0){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, isEmpty",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst) {\n        if(lst.isEmpty()){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "fail, != 0",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst) {\n        if(lst.size() != 0){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, !isEmpty",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst) {\n        if(!lst.isEmpty()){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "fail, != 0",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst, boolean b) {\n        if(lst.size() == 0 && b){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, !isEmpty",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst, boolean b) {\n        if(lst.isEmpty() && b){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "fail, 0 ==",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst) {\n        if(0 == lst.size()){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "fail, > 0",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static boolean bar(List lst) {\n        if(lst.size() > 0){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, in expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    public static int modulo = 2;\n    public static boolean bar(List lst) {\n        if(lst.size() % modulo == 0){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, in expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\n\npublic class Foo {\n    final Map map;\n    public boolean bar(Foo other) {\n        if (this.map.size() != other.map.size()){\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "#1214 UseCollectionIsEmpty misses some usage",
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        8,
+        11,
+        14,
+        17,
+        20,
+        23,
+        26,
+        29,
+        32,
+        35
+      ],
+      "code": "\nimport java.util.*;\n\npublic class TestIsEmpty {\n    public static void main(String args[]) {\n        ArrayList<String> testObject = new ArrayList<String>();\n\n        // These should be flagged\n        if (testObject.size() == 0) {\n            System.out.println(\"List is empty\");\n        }\n        if (testObject.size() != 0) {\n            System.out.println(\"List is empty\");\n        }\n        if (0 == testObject.size()) {\n            System.out.println(\"List is empty\");\n        }\n        if (0 != testObject.size()) {\n            System.out.println(\"List is empty\");\n        }\n        if (testObject.size() > 0) {\n            System.out.println(\"List is empty\");\n        }\n        if (testObject.size() < 1) {\n            System.out.println(\"List is empty\");\n        }\n        if (0 < testObject.size()) {\n            System.out.println(\"List is empty\");\n        }\n        if (1 > testObject.size()) {\n            System.out.println(\"List is empty\");\n        }\n        if (new ArrayList().size() == 0) {\n            System.out.println(\"New list starts empty\");\n        }\n        if (GetArrayList().size() == 0) {\n            System.out.println(\"List returned from function is empty\");\n        }\n\n        // These should not be flagged\n        if (GetBar().size() == 0) {\n            System.out.println(\"This should not be flagged as it is not a list\");\n        }\n    }\n    public static ArrayList<String> GetArrayList() {\n        return new ArrayList<String>();\n    }\n    public static SomeOtherObjectWithSizeMethod GetBar() {\n        return new SomeOtherObjectWithSizeMethod();\n    }\n    class SomeOtherObjectWithSizeMethod {\n        int size() {}\n    }\n}\n        "
+    },
+    {
+      "description": "#1230 UseCollectionIsEmpty gets false positives",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        8,
+        11,
+        24,
+        27
+      ],
+      "code": "\nimport java.util.ArrayList;\n\npublic class IsEmptyTest {\n    public static void main(String args[]) {\n        ArrayList<String> testObject = new ArrayList<String>();\n\n        // These should be flagged\n        if (testObject.size() < 1) { // line 8\n            System.out.println(\"List is empty\");\n        }\n        if (1 > testObject.size()) { // line 11\n            System.out.println(\"List is empty\");\n        }\n\n        // These should not be flagged\n        if (testObject.size() <= 1) { // line 16\n            System.out.println(\"List may or may not be empty\");\n        }\n        if (1 >= testObject.size()) { // line 19\n            System.out.println(\"List may or may not be empty\");\n        }\n\n        // These should be flagged (as they are equivalent to != 0) and are not\n        if (testObject.size() >= 1) { // line 24\n            System.out.println(\"List is not empty\");\n        }\n        if (1 <= testObject.size()) { // line 27\n            System.out.println(\"List is not empty\");\n        }\n\n        // These should not be flagged\n        if (testObject.size() > 1) { // line 32\n            System.out.println(\"List is not empty, but not all non-empty lists will trigger this\");\n        }\n        if (1 < testObject.size()) { // line 35\n            System.out.println(\"List is not empty, but not all non-empty lists will trigger this\");\n        }\n        if (testObject.size() != 1) { // line 38\n            System.out.println(\"List may or may not be empty\");\n        }\n        if (1 != testObject.size()) { // line 41\n            System.out.println(\"List may or may not be empty\");\n        }\n        if (testObject.size() == 1) { // line 44\n            System.out.println(\"List is not empty, but not all non-empty lists will trigger this\");\n        }\n        if (1 == testObject.size()) { // line 47\n            System.out.println(\"List is not empty, but not all non-empty lists will trigger this\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1304 UseCollectionIsEmpty false positive comparing to 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class PMDIsEmptyFalsePositive {\n    public void falsePositive() {\n        Collection<String> c = new ArrayList<String>();\n\n        if (c.size() <= 1) // false positive\n        {\n            // do something\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1345 UseCollectionIsEmpty throws NullPointerException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage org.oikarinen.pmdbugbait;\nimport java.util.List;\n\npublic class PmdBugBait {\n    public int getSize() {\n        return 0;\n    }\n\n    /**\n     * \"this.\" before the method call triggers the bug\n     */\n    public void compareSizeToThisPointMethod(List<String> list) {\n        if (list.size() < this.getSize()) {\n            throw new IllegalArgumentException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2543 false negative on this.collection.size",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Foo {\n\n    private List<String> list = new ArrayList<>();\n    private Bar notACollection = new Bar();\n\n    public void bar() {\n        if (this.list.size() == 0) {\n            throw new RuntimeException(\"Empty list\");\n        }\n        if (notACollection.size() == 0) { }\n        if (this.notACollection.size() == 0) { }\n    }\n\n    public int size() {\n        return 0;\n    }\n    class Bar { int size() { return 0; } }\n}\n        "
+    },
+    {
+      "description": "#2542 UseCollectionIsEmpty can not detect the case foo.bar().size()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.ArrayList;\n\npublic class Foo {\n\n    private List<String> list = new ArrayList<>();\n\n    Foo foo() { return this; }\n    Foo bar() { return this; }\n    List<String> list() { return list; }\n\n    public void bar() {\n        if (foo().bar().foo().list().size() == 0) {\n            throw new RuntimeException(\"Empty list\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2833 NPE in UseCollectionIsEmptyRule with enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum ComponentSize {\n\n    S(\"s\");\n\n    private String size;\n\n    ComponentSize(String size) {\n        this.size = size;\n    }\n\n    @Override\n    public String toString() {\n        return size;\n    }\n\n}\n        "
+    },
+    {
+      "description": "#2833 NPE in UseCollectionIsEmptyRule with enums (sanity check)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\nimport java.util.List;\n\npublic enum ComponentSize {\n\n    S(\"s\");\n\n    private List<String> list;\n    private String size;\n\n    ComponentSize(String size) {\n        if (list.size() == 0) {\n            this.size = size;\n        }\n    }\n\n    @Override\n    public String toString() {\n        return size;\n    }\n\n}\n        "
+    },
+    {
+      "description": "#2833 test with records",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.List;\n\npublic record CollectionRecord(List<String> theList) {\n    public CollectionRecord {\n        if (theList.size() == 0) throw new IllegalArgumentException(\"empty list\");\n        if (theList.isEmpty()) throw new IllegalArgumentException(\"empty list\");\n    }\n}\n        "
+    },
+    {
+      "description": "#2833 test local var",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.util.ArrayList;\n\npublic class Foo {\n    public static void main(String[] args) {\n        var theList = new ArrayList<String>();\n        if (theList.size() == 0) throw new IllegalArgumentException(\"empty list\");\n        if (theList.isEmpty()) throw new IllegalArgumentException(\"empty list\");\n    }\n}\n        "
+    },
+    {
+      "description": "With nested classes",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        7,
+        15,
+        21
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Foo {\n    void myMethod() {\n        Object anonymous = new Object() {\n            public boolean check(List lst) {\n                if (lst.size() == 0) {\n                    return true;\n                }\n                return false;\n            }\n        };\n        class Local {\n            public boolean check2(List lst) {\n                return lst.size() == 0;\n            }\n        }\n    }\n    class Inner {\n        public static boolean bar(List lst) {\n            if(lst.size() == 0){\n                return true;\n            }\n            return false;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "With records",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Set;\n\npublic record Record(Set<String> stringSet) {\n\n    public boolean hasMoreThanOneItem() {\n        return this.stringSet.size() > 1;\n    }\n}        "
+    },
+    {
+      "description": "With records and size check",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.util.Set;\n\npublic record Record(Set<String> stringSet) {\n\n    public boolean hasMoreThanOneItem() {\n        return this.stringSet.size() == 0;\n    }\n}        "
+    },
+    {
+      "description": "[java] UseCollectionIsEmpty should infer local variable type from method invocation #3858",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Example {\n\n    public void func() {\n        var list = getList();\n        if (list.size()>0) { // point 1:  false negative\n            System.out.println(\"!list.isEmpty() is better!\");\n            // ...\n        }\n    }\n\n    private List<String> getList() { // mock\n        return new ArrayList<>();\n    }\n}\n"
+    },
+    {
+      "description": "#3685 [java] Make UseCollectionIsEmpty can detect collection of other class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\nclass Class1 {\n    public static List<Integer> list1 = new ArrayList<>();\n}\nclass Class2 {\n    public void foo() {\n        if(Class1.list1.size() == 0) {}  // should report a warning here, but no warning\n    }\n}\n"
+    }
+  ]
+}

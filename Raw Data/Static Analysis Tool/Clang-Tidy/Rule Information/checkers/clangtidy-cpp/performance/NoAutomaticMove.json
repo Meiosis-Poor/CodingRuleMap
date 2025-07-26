@@ -1,0 +1,26 @@
+{
+  "name": "NoAutomaticMove",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-no-automatic-move",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 83,
+  "branches": 3,
+  "apis": 74,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        30,
+        37,
+        44,
+        53,
+        56
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11-or-later %s performance-no-automatic-move %t\n\nstruct Obj {\n  Obj();\n  Obj(const Obj &);\n  Obj(Obj &&);\n  virtual ~Obj();\n};\n\nstruct NonTemplate {\n  NonTemplate(const Obj &);\n  NonTemplate(Obj &&);\n};\n\ntemplate <typename T> struct TemplateCtorPair {\n  TemplateCtorPair(const T &);\n  TemplateCtorPair(T &&value);\n};\n\ntemplate <typename T> struct UrefCtor {\n  template <class U = T> UrefCtor(U &&value);\n};\n\ntemplate <typename T>\nT Make();\n\nNonTemplate PositiveNonTemplate() {\n  const Obj obj = Make<Obj>();\n  return obj; // selects `NonTemplate(const Obj&)`\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: constness of 'obj' prevents\n  // automatic move [performance-no-automatic-move]\n}\n\nTemplateCtorPair<Obj> PositiveTemplateCtorPair() {\n  const Obj obj = Make<Obj>();\n  return obj; // selects `TemplateCtorPair(const T&)`\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: constness of 'obj' prevents\n  // automatic move [performance-no-automatic-move]\n}\n\nUrefCtor<Obj> PositiveUrefCtor() {\n  const Obj obj = Make<Obj>();\n  return obj; // selects `UrefCtor(const T&&)`\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: constness of 'obj' prevents\n  // automatic move [performance-no-automatic-move]\n}\n\nObj PositiveCantNrvo(bool b) {\n  const Obj obj1;\n  const Obj obj2;\n  if (b) {\n    return obj1;\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: constness of 'obj1' prevents automatic move [performance-no-automatic-move]\n  }\n  return obj2;\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: constness of 'obj2' prevents automatic move [performance-no-automatic-move]\n}\n\n// FIXME: Ideally we would warn here too.\nNonTemplate PositiveNonTemplateLifetimeExtension() {\n  const Obj &obj = Make<Obj>();\n  return obj;\n}\n\n// FIXME: Ideally we would warn here too.\nUrefCtor<Obj> PositiveUrefCtorLifetimeExtension() {\n  const Obj &obj = Make<Obj>();\n  return obj;\n}\n\n// Negatives.\n\nUrefCtor<Obj> Temporary() { return Make<Obj>(); }\n\nUrefCtor<Obj> ConstTemporary() { return Make<const Obj>(); }\n\nUrefCtor<Obj> ConvertingMoveConstructor() {\n  Obj obj = Make<Obj>();\n  return obj;\n}\n\nObj ConstNrvo() {\n  const Obj obj = Make<Obj>();\n  return obj;\n}\n\nObj NotNrvo(bool b) {\n  Obj obj1;\n  Obj obj2;\n  if (b) {\n    return obj1;\n  }\n  return obj2;\n}\n\nUrefCtor<Obj> Ref() {\n  Obj &obj = Make<Obj &>();\n  return obj;\n}\n\nUrefCtor<Obj> ConstRef() {\n  const Obj &obj = Make<Obj &>();\n  return obj;\n}\n\nconst Obj global;\n\nUrefCtor<Obj> Global() { return global; }\n\nstruct FromConstRefOnly {\n  FromConstRefOnly(const Obj &);\n};\n\nFromConstRefOnly FromConstRefOnly() {\n  const Obj obj = Make<Obj>();\n  return obj;\n}"
+    }
+  ]
+}

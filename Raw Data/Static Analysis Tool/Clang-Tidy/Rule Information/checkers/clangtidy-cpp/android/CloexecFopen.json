@@ -1,0 +1,33 @@
+{
+  "name": "CloexecFopen",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-fopen",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 28,
+  "branches": 1,
+  "apis": 15,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        12,
+        16,
+        20,
+        22,
+        24,
+        26,
+        30,
+        33,
+        36,
+        39,
+        46,
+        55
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-fopen %t\n\n#define FILE_OPEN_RO \"r\"\n\ntypedef int FILE;\n\nextern \"C\" FILE *fopen(const char *filename, const char *mode, ...);\nextern \"C\" FILE *open(const char *filename, const char *mode, ...);\n\nvoid f() {\n  fopen(\"filename\", \"r\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: use 'fopen' mode 'e' to set O_CLOEXEC [android-cloexec-fopen]\n  // CHECK-FIXES: fopen(\"filename\", \"re\");\n\n  fopen(\"filename\", FILE_OPEN_RO);\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: use 'fopen' mode 'e'\n  // CHECK-FIXES: fopen(\"filename\", FILE_OPEN_RO \"e\");\n\n  fopen(\"filename\", \"er\");\n  // CHECK-MESSAGES-NOT: warning:\n  fopen(\"filename\", \"re\");\n  // CHECK-MESSAGES-NOT: warning:\n  fopen(\"filename\", \"e\");\n  // CHECK-MESSAGES-NOT: warning:\n  open(\"filename\", \"e\");\n  // CHECK-MESSAGES-NOT: warning:\n\n  char *str = \"r\";\n  fopen(\"filename\", str);\n  // CHECK-MESSAGES-NOT: warning:\n  str = \"re\";\n  fopen(\"filename\", str);\n  // CHECK-MESSAGES-NOT: warning:\n  char arr[2] = \"r\";\n  fopen(\"filename\", arr);\n  // CHECK-MESSAGES-NOT: warning:\n  char arr2[3] = \"re\";\n  fopen(\"filename\", arr2);\n  // CHECK-MESSAGES-NOT: warning:\n}\n\nnamespace i {\nint *fopen(const char *filename, const char *mode, ...);\nvoid g() {\n  fopen(\"filename\", \"e\");\n  // CHECK-MESSAGES-NOT: warning:\n}\n} // namespace i\n\nclass C {\npublic:\n  int *fopen(const char *filename, const char *mode, ...);\n  void h() {\n    fopen(\"filename\", \"e\");\n    // CHECK-MESSAGES-NOT: warning:\n  }\n};"
+    }
+  ]
+}

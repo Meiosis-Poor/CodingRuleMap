@@ -1,0 +1,128 @@
+{
+  "name": "OverrideBothEqualsAndHashcode",
+  "language": "java",
+  "description": "\nOverride both public boolean Object.equals(Object other), and public int Object.hashCode(), or override neither.  Even if you are inheriting a hashCode() from a parent class, consider implementing hashCode and explicitly delegating to your superclass.\n        ",
+  "example": "public class Bar {        // poor, missing a hashcode() method\n    public boolean equals(Object o) {\n      // do some comparison\n    }\n}\n\npublic class Baz {        // poor, missing an equals() method\n    public int hashCode() {\n      // return some hash value\n    }\n}\n\npublic class Foo {        // perfect, both methods provided\n    public boolean equals(Object other) {\n      // do some comparison\n    }\n    public int hashCode() {\n      // return some hash value\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 72,
+  "branches": 14,
+  "apis": 8,
+  "test": [
+    {
+      "description": "hash code only",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    public int hashCode() {}\n}\n        "
+    },
+    {
+      "description": "equals only",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    public boolean equals(Object other) {}\n}\n        "
+    },
+    {
+      "description": "overrides both",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean equals(Object other) {}\n    public int hashCode() {}\n}\n        "
+    },
+    {
+      "description": "overrides neither",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {}\n        "
+    },
+    {
+      "description": "equals sig uses String, not Object",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public boolean equals(String o) {\n        return true;\n    }\n    public int hashCode() {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public boolean equals(Object o);\n}\n        "
+    },
+    {
+      "description": "java.lang.Object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean equals(java.lang.Object o) {\n        return true;\n    }\n    public int hashCode() {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "skip Comparable implementations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements Comparable {\n    public boolean equals(Object other) { return false; }\n    public int compareTo(Object other) { return 42; }\n}\n        "
+    },
+    {
+      "description": "implements equals but with 2 args",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean equals(java.lang.Object o1, java.lang.Object o2) {\n        return true;\n    }\n    public int hashCode(java.lang.Object o) {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "overloaded hashCode",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo  {\n    public int hashCode(Object o1) { return false; }\n}\n        "
+    },
+    {
+      "description": "overloaded both",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo  {\n    public boolean equals(Object o1, Object o2) { return false; }\n    public int hashCode(Object o1) { return false; }\n}\n        "
+    },
+    {
+      "description": "overloaded hashCode, should fail on equals",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo  {\n    public boolean equals(Object o1) { return false; }\n    public int hashCode(Object o1) { return false; }\n}\n        "
+    },
+    {
+      "description": "implements hashCode but with args",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int hashCode(double a[]) {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "implements interface other than Comparable, not resolvable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo implements C {\n    public boolean equals(Object other) { return false; }\n    public int compareTo(Object other) { return 42; }\n}\n        "
+    },
+    {
+      "description": "implements interface other than Comparable, resolvable (#1303 OverrideBothEqualsAndHashcodeRule does not work on class implements resolvable interfaces)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo implements Runnable {\n    public boolean equals(Object other) { return false; }\n    public int compareTo(Object other) { return 42; }\n}\n        "
+    },
+    {
+      "description": "[java] OverrideBothEqualsAndHashcode: false negative with anonymous classes #4457",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n  public class B {\n      Object o = new Object() {\n          public boolean equals(Object other) {   // report no warning\n              return false;\n          }\n      };\n      public int hashCode() {\n          return 1;\n      }\n  }\n}\n        "
+    },
+    {
+      "description": "[java] OverrideBothEqualsAndHashCode ignores records #4546",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public record Foo(int x) {\n                    public int hashCode() {\n                        return 1;\n                    }\n            }\n            "
+    }
+  ]
+}

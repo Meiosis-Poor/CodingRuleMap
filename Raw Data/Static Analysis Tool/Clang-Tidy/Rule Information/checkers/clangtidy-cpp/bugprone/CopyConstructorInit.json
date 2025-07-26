@@ -1,0 +1,35 @@
+{
+  "name": "CopyConstructorInit",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-copy-constructor-init",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 113,
+  "branches": 20,
+  "apis": 70,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        82,
+        88,
+        94,
+        100,
+        106,
+        112,
+        118,
+        128,
+        134,
+        140,
+        146,
+        163,
+        167,
+        181
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-copy-constructor-init %t\n\nclass NonCopyable {\npublic:\n  NonCopyable() = default;\n  NonCopyable(const NonCopyable &) = delete;\n\nprivate:\n  int a;\n};\n\nclass NonCopyable2 {\npublic:\n  NonCopyable2() = default;\n\nprivate:\n  NonCopyable2(const NonCopyable2 &);\n  int a;\n};\n\nclass Copyable {\npublic:\n  Copyable() = default;\n  Copyable(const Copyable &) = default;\n\nprivate:\n  int a;\n};\n\nclass Copyable2 {\npublic:\n  Copyable2() = default;\n  Copyable2(const Copyable2 &) = default;\n\nprivate:\n  int a;\n};\n\nclass Copyable3 : public Copyable {\npublic:\n  Copyable3() = default;\n  Copyable3(const Copyable3 &) = default;\n};\n\ntemplate <class C>\nclass Copyable4 {\npublic:\n  Copyable4() = default;\n  Copyable4(const Copyable4 &) = default;\n\nprivate:\n  int a;\n};\n\ntemplate <class T, class S>\nclass Copyable5 {\npublic:\n  Copyable5() = default;\n  Copyable5(const Copyable5 &) = default;\n\nprivate:\n  int a;\n};\n\nclass EmptyCopyable {\npublic:\n  EmptyCopyable() = default;\n  EmptyCopyable(const EmptyCopyable &) = default;\n};\n\ntemplate <typename T>\nusing CopyableAlias = Copyable5<T, int>;\n\ntypedef Copyable5<int, int> CopyableAlias2;\n\nclass X : public Copyable, public EmptyCopyable {\n  X(const X &other) : Copyable(other) {}\n};\n\nclass X2 : public Copyable2 {\n  X2(const X2 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor other than the copy constructor [bugprone-copy-constructor-init]\n  // CHECK-FIXES: X2(const X2 &other)  : Copyable2(other) {}\n};\n\nclass X2_A : public Copyable2 {\n  X2_A(const X2_A &) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X2_A(const X2_A &) {}\n};\n\nclass X3 : public Copyable, public Copyable2 {\n  X3(const X3 &other) : Copyable(other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X3(const X3 &other) : Copyable(other) {}\n};\n\nclass X4 : public Copyable {\n  X4(const X4 &other) : Copyable() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X4(const X4 &other) : Copyable(other) {}\n};\n\nclass X5 : public Copyable3 {\n  X5(const X5 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X5(const X5 &other)  : Copyable3(other) {}\n};\n\nclass X6 : public Copyable2, public Copyable3 {\n  X6(const X6 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X6(const X6 &other)  : Copyable2(other), Copyable3(other) {}\n};\n\nclass X7 : public Copyable, public Copyable2 {\n  X7(const X7 &other) : Copyable() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X7(const X7 &other) : Copyable(other) {}\n};\n\nclass X8 : public Copyable4<int> {\n  X8(const X8 &other) : Copyable4(other) {}\n};\n\nclass X9 : public Copyable4<int> {\n  X9(const X9 &other) : Copyable4() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X9(const X9 &other) : Copyable4(other) {}\n};\n\nclass X10 : public Copyable4<int> {\n  X10(const X10 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X10(const X10 &other)  : Copyable4(other) {}\n};\n\nclass X11 : public Copyable5<int, float> {\n  X11(const X11 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X11(const X11 &other)  : Copyable5(other) {}\n};\n\nclass X12 : public CopyableAlias<float> {\n  X12(const X12 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n};\n\ntemplate <typename T>\nclass X13 : T {\n  X13(const X13 &other) {}\n};\n\ntemplate class X13<EmptyCopyable>;\ntemplate class X13<Copyable>;\n\n#define FROMMACRO                \\\n  class X14 : public Copyable2 { \\\n    X14(const X14 &other) {}     \\\n  };\n\nFROMMACRO\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: calling a base constructor\n\nclass X15 : public CopyableAlias2 {\n  X15(const X15 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X15(const X15 &other)  : Copyable5(other) {}\n};\n\nclass X16 : public NonCopyable {\n  X16(const X16 &other) {}\n};\n\nclass X17 : public NonCopyable2 {\n  X17(const X17 &other) {}\n};\n\nclass X18 : private Copyable {\n  X18(const X18 &other) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: calling a base constructor\n  // CHECK-FIXES: X18(const X18 &other)  : Copyable(other) {}\n};\n\nclass X19 : private Copyable {\n  X19(const X19 &other) : Copyable(other) {}\n};"
+    }
+  ]
+}

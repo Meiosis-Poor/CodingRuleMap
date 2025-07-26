@@ -1,0 +1,64 @@
+{
+  "name": "ClassCastExceptionWithToArray",
+  "language": "java",
+  "description": "\nWhen deriving an array of a specific class from your Collection, one should provide an array of\nthe same class as the parameter of the `toArray()` method. Doing otherwise will result\nin a `ClassCastException`.\n        ",
+  "example": "Collection c = new ArrayList();\nInteger obj = new Integer(1);\nc.add(obj);\n\n    // this would trigger the rule (and throw a ClassCastException if executed)\nInteger[] a = (Integer [])c.toArray();\n\n   // this is fine and will not trigger the rule\nInteger[] b = (Integer [])c.toArray(new Integer[0]);",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "bad, toArray() with cast",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Collection;\n\npublic class Foo {\n    void bar() {\n        Collection c = new ArrayList();\n        c.add(new Integer(1));\n        Integer[] a=(Integer [])c.toArray();\n    }\n}\n        "
+    },
+    {
+      "description": "ok, no cast",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Collection;\n\npublic class Foo {\n    void bar() {\n        Collection c = new ArrayList();\n        c.add(new Integer(1));\n        Integer[] a = (Integer [])c.toArray(new Integer[c.size()]);;\n    }\n}\n        "
+    },
+    {
+      "description": "Ensuring we don't have a few specific false positives, see bug 1697397",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Vector;\n\npublic class Foo {\n    String bar(Vector vec) {\n        return (String)vec.toArray().toString();\n    }\n    String foo(Vector vec) {\n        return (String)vec.toArray()[0];\n    }\n}\n        "
+    },
+    {
+      "description": "#975 false positive in ClassCastExceptionWithToArray",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.dbutils.*;\nimport org.apache.commons.dbutils.handlers.*;\nimport java.util.List;\n\npublic class Test {\n    public void foo() {\n        QueryRunner qr = getQueryRunner();\n        List<?> parms = new java.util.ArrayList();\n        // public <T> T QueryRunner.query(String sql, ResultSetHandler<T> rsh, Object... params)\n        String result = (String) qr.query( sql, new ScalarHandler(), parms.toArray() );\n    }\n}\n        "
+    },
+    {
+      "description": "#998 False positive ClassCastExceptionWithToArray with generics",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.util.Collection;\n\npublic class Test<E> {\n    public static E[] toArrayWrapped(Collection c) {\n        // although you won't get a classcastexception here on the following line\n        E[] retVal = (E[]) c.toArray();\n        // you'll get it later on, when you try to use the return value.\n        // Depending on the Collection implementation, this method\n        // still returns an Object[] array type, and not E[].\n        return retVal;\n    }\n}\n        "
+    },
+    {
+      "description": "#2534 FN with toArray() called on a method call chain",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.Map;\n\npublic class Test {\n    public String[] extractKey(Map<String, String> data) {\n        return (String[]) data.keySet().toArray();\n    }\n}\n        "
+    },
+    {
+      "description": "[java] ClassCastExceptionWithToArray can't detect the case that call toArray() in this.foo.toArray() #2535",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.util.List;\n\npublic class Test {\n    private List<String> labels;\n    public String[] extractKey() {\n        return (String[]) this.labels.toArray();\n    }\n}\n"
+    }
+  ]
+}

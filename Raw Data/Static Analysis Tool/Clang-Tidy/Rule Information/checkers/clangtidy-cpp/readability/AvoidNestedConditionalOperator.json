@@ -1,0 +1,31 @@
+{
+  "name": "AvoidNestedConditionalOperator",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-avoid-nested-conditional-operator",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 52,
+  "branches": 2,
+  "apis": 29,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        4,
+        5,
+        8,
+        9,
+        12,
+        13,
+        15,
+        16,
+        19,
+        20
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-avoid-nested-conditional-operator %t\n\nint NestInConditional = (true ? true : false) ? 1 : 2;\n// CHECK-MESSAGES: :[[@LINE-1]]:26: warning: conditional operator is used as sub-expression of parent conditional operator, refrain from using nested conditional operators\n// CHECK-MESSAGES: :[[@LINE-2]]:25: note: parent conditional operator here\n\nint NestInTrue = true ? (true ? 1 : 2) : 2;\n// CHECK-MESSAGES: :[[@LINE-1]]:26: warning: conditional operator is used as sub-expression of parent conditional operator, refrain from using nested conditional operators\n// CHECK-MESSAGES: :[[@LINE-2]]:18: note: parent conditional operator here\n\nint NestInFalse = true ? 1 : true ? 1 : 2;\n// CHECK-MESSAGES: :[[@LINE-1]]:30: warning: conditional operator is used as sub-expression of parent conditional operator, refrain from using nested conditional operators\n// CHECK-MESSAGES: :[[@LINE-2]]:19: note: parent conditional operator here\nint NestInFalse2 = true ? 1 : (true ? 1 : 2);\n// CHECK-MESSAGES: :[[@LINE-1]]:32: warning: conditional operator is used as sub-expression of parent conditional operator, refrain from using nested conditional operators\n// CHECK-MESSAGES: :[[@LINE-2]]:20: note: parent conditional operator here\n\nint NestWithParensis = true ? 1 : ((((true ? 1 : 2))));\n// CHECK-MESSAGES: :[[@LINE-1]]:39: warning: conditional operator is used as sub-expression of parent conditional operator, refrain from using nested conditional operators\n// CHECK-MESSAGES: :[[@LINE-2]]:24: note: parent conditional operator here\n\n#define CONDITIONAL_EXPR (true ? 1 : 2)\n// not diag for macro since it will not reduce readability\nint NestWithMacro = true ? CONDITIONAL_EXPR : 2;"
+    }
+  ]
+}

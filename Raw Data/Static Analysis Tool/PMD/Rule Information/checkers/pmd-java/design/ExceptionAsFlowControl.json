@@ -1,0 +1,60 @@
+{
+  "name": "ExceptionAsFlowControl",
+  "language": "java",
+  "description": "\nThis rule reports exceptions thrown and caught in an enclosing try statement.\nThis use of exceptions as a form of `goto` statement is discouraged, as that may\nhide actual exceptions, and obscures control flow, especially when debugging.\nTo fix a violation, add the necessary validation or use an alternate control structure.\n        ",
+  "example": "public void bar() {\n    try {\n        try {\n        } catch (Exception e) {\n            throw new WrapperException(e);\n            // this is essentially a GOTO to the WrapperException catch block\n        }\n    } catch (WrapperException e) {\n        // do some more stuff\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 60,
+  "branches": 8,
+  "apis": 8,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n            try {\n            } catch (Exception e) {\n                throw new WrapperException(e);\n                // this is essentially a GOTO to the WrapperException catch block\n            }\n        } catch (WrapperException e) {\n            // do some more stuff\n        }\n    }\n}\nclass WrapperException extends Exception {}\n        "
+    },
+    {
+      "description": "normal throw catch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {} catch (Exception e) {}\n    }\n}\n        "
+    },
+    {
+      "description": "BUG 996007",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\npublic class Foo {\n    void bar(Foo foo) {\n        try {\n        } catch (IOException e) {\n            if (foo!=null)\n                throw new IOException(foo.toString());\n            else\n                throw e;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "NPE",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        switch(foo) {\n        default:\n            throw new IllegalArgumentException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Catch block for subtype",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\npublic class Foo {{\n\n    try {\n        throw new TopE();\n    } catch (SubE e) { // no violation\n\n    }\n\n    try {\n        throw new SubE();\n    } catch (TopE e) { // warn\n\n    }\n}}\nclass TopE extends Exception { }\nclass SubE extends TopE { }\n\n        "
+    },
+    {
+      "description": "#4434 simple propagation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            public class Foo {\n\n                public Map<K, V> getAll(Iterable<? extends K> keys) throws ExecutionException {\n                    try {\n                        Map<K, V> result = cache.getAll(keys);\n                        if (something()) {\n                            throw new InvalidCacheLoadException(\"null key or value\");\n                        }\n                        return result;\n                    } catch (NullPointerException | InvalidCacheLoadException e) {\n                        throw e;\n                    } catch (CacheLoaderException e) {\n                        throw new ExecutionException(e.getCause());\n                    } catch (Exception e) {\n                        throw new UncheckedExecutionException(e);\n                    }\n                }\n            }\n\n            class ExecutionException extends Exception {\n                public ExecutionException(Throwable o) { super(o);}\n            }\n            class UncheckedExecutionException extends RuntimeException {\n                public UncheckedExecutionException(Throwable o) { super(o);}\n            }\n            class InvalidCacheLoadException extends RuntimeException {\n                public InvalidCacheLoadException(String msg) { super(msg);}\n            }\n\n            "
+    },
+    {
+      "description": "#4434 simple propagation, 2nd case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            public class Foo {\n\n                public Map<K, V> getAll(Iterable<? extends K> keys) {\n                    try {\n                        Map<K, V> result = cache.getAll(keys);\n                        if (something()) {\n                            throw new InvalidCacheLoadException(\"null key or value\");\n                        }\n                        return result;\n\n                    } catch (NullPointerException | InvalidCacheLoadException e) {\n                        // Note that technically this is still an code smell as\n                        // the exception is rethrown directly, but this should be\n                        // the purpose of another rule.\n                        throw e;\n                    }\n                }\n            }\n\n            class InvalidCacheLoadException extends RuntimeException {\n                public InvalidCacheLoadException(String msg) { super(msg);}\n            }\n\n            "
+    }
+  ]
+}

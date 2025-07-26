@@ -1,0 +1,240 @@
+{
+  "name": "EmptyControlStatement",
+  "language": "java",
+  "description": "\n            Reports control statements whose body is empty, as well as empty initializers.\n\n            The checked code constructs are the following:\n            - bodies of `try` statements\n            - `finally` clauses of `try` statements\n            - `switch` statements\n            - `synchronized` statements\n            - `if` statements\n            - loop statements: `while`, `for`, `do .. while`\n            - initializers\n            - blocks used as statements (for scoping)\n\n            This rule replaces the rules EmptyFinallyBlock, \n            EmptyIfStmt, EmptyInitializer, EmptyStatementBlock, \n            EmptySwitchStatements, EmptySynchronizedBlock, EmptyTryBlock, and EmptyWhileStmt.\n\n            Notice that {% rule java/errorprone/EmptyCatchBlock %} is still an independent rule.\n\n            EmptyStatementNotInLoop is replaced by {% rule java/codestyle/UnnecessarySemicolon %}.\n        ",
+  "example": "class Foo {\n    {\n        if (true); // empty if statement\n        if (true) { // empty as well\n        }\n    }\n\n    {} // empty initializer\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 199,
+  "branches": 44,
+  "apis": 27,
+  "test": [
+    {
+      "description": "pos, empty try block",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class EmptyTryBlock1 {\n                public void foo() {\n                    try {\n                    } catch (Exception e) {\n                        e.printStackTrace();\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty try block",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class EmptyTryBlock2 {\n                public void foo() {\n                    try {\n                    } finally {\n                        int x = 5;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty finally block",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            public class EmptyTryBlock2 {\n                public void foo() {\n                    try {\n                        int x = 0;\n                    } finally { // warn\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty finally block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class EmptyTryBlock3 {\n                public void foo() {\n                    try {\n                        int f =2;\n                    } finally {\n                        int x = 5;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty try and finally block",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            public class EmptyTryBlock3 {\n                public void foo() {\n                    try {\n                    } finally {\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#432 empty try-with-resource - not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class X {\n                void method() {\n                    try (ClientResponse response = execute(() -> target.request(mediaTypes).delete(), DELETE, new ExpectedResponse(status, required))) {\n                        // was false positive\n                        // EmptyTryBlock was fixed to ignore empty try-with-resources.\n                        // This new rule will by default report also empty try-with-resource blocks,\n                        // if the resource name is not \"ignored\", see next test case.\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#432 empty try-with-resource - ok with unused var name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class X {\n                void method() {\n                    try (ClientResponse ignored = execute(() -> target.request(mediaTypes).delete(), DELETE, new ExpectedResponse(status, required))) {\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "empty concise try-with-resource - not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            import java.io.InputStream;\n            class X {\n                void method(InputStream in) {\n                    try (in) {\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Try with resources with several vars, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.InputStream;\n            class X {\n                void method(InputStream in) {\n                    try (final var something = executeSomething(in);\n                        something.field) {\n                        // this is ok because writing the corresponding sequence of var decls\n                        // and close statements would be noisy\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty synchronized stmt",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                void foo() {\n                    synchronized (this) {}\n                }\n            }\n            "
+    },
+    {
+      "description": "neg, nonempty synchronized stmt",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                void foo() {\n                    synchronized (this) {int x = 2;}\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty switch stmt",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class EmptySwitchStmt1 {\n                public void bar() {\n                    int x = 2;\n                    switch (x) {}\n                }\n            }\n            "
+    },
+    {
+      "description": "neg, nonempty switch stmt",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class EmptySwitchStmt2 {\n                public void bar() {\n                    int x = 2;\n                    switch (x) {\n                    case 2: int y=4;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty block",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    {}\n                }\n            }\n            "
+    },
+    {
+      "description": "statement block not empty",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    { return; }\n                }\n            }\n            "
+    },
+    {
+      "description": "empty initializer failure case (non static)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                {}\n            }\n            "
+    },
+    {
+      "description": "empty initializer failure case (static)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                static {}\n            }\n            "
+    },
+    {
+      "description": "not an initializer - empty statement block",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    { }\n                }\n            }\n            "
+    },
+    {
+      "description": "initializer not empty",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                {\n                    System.out.print(\"something interesting\");\n                }\n            }\n            "
+    },
+    {
+      "description": "static initializer not empty",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                static {\n                    x++;\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty for",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    for (int i = 0; i < 2; i++) {\n                    }\n                    for (int i = 0; i < 2; i++);\n                    for (int i = 0; i < 2; i++) { // neg, nonempty\n                        System.out.println(i);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty do..while",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        6
+      ],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    int i = 0;\n                    do {\n                    } while (i < 3);\n                    do; while (i < 3);\n                    do { // neg, nonempty\n                        System.out.println(i);\n                    } while (i < 3);\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty foreach",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        8
+      ],
+      "code": "\n            import java.util.List;\n\n            public class Foo {\n\n                public void bar(List<Integer> list) {\n                    for (int i : list) {\n                    }\n                    for (int i : list) ;\n                    for (int i : list)  { // neg, nonempty\n                        System.out.println(i);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "neg, empty foreach with unused var name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.List;\n\n            public class Foo {\n\n                public void bar(List<Integer> list) {\n                    for (int ignored : list) {\n                    }\n                    for (int ignored2 : list) ;\n                    for (int i : list) { // neg, nonempty\n                        System.out.println(i);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "pos, empty while",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    while (true == true) {\n                    }\n                    while (true == true) {\n                        String x = \"\";\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "while(true);",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void bar() {\n                    while (true);\n                }\n            }\n            "
+    },
+    {
+      "description": "one empty if statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x > 2) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "empty if with else statement",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x > 2) {\n        } else {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "empty if with else and else if statement",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x > 2) {\n        } else if (x > 3) {\n        } else {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "one not empty if statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x > 2) {\n            x = 1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "empty if statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x > 2);\n    }\n}\n        "
+    },
+    {
+      "description": "empty if statement with comment, disallow commented block",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x == 0) {\n            // empty!\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "empty if statement with comment, allow commented block (#4754)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int x) {\n        if (x == 0) {\n            // empty!\n        }\n    }\n}\n        "
+    }
+  ]
+}

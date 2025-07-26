@@ -1,0 +1,112 @@
+{
+  "name": "FieldDeclarationsShouldBeAtStart",
+  "language": "apex",
+  "description": "\n            Field declarations should appear before method declarations within a class.\n        ",
+  "example": "class Foo {\n    public Integer someField; // good\n\n    public void someMethod() {\n    }\n\n    public Integer anotherField; // bad\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 73,
+  "branches": 6,
+  "apis": 9,
+  "test": [
+    {
+      "description": "Does not warn if there are no methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    public Integer thisIsOkay;\n}\n        "
+    },
+    {
+      "description": "Does warn if a field is after a method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass Foo {\n    public void someMethod() {}\n\n    public Integer thisIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Warns if field is after constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Foo {\n    public Foo(Integer someValue) {\n        someField = someValue;\n    }\n\n    private Integer someField;\n}\n        "
+    },
+    {
+      "description": "Warns only for fields after the first method declaration",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nclass Foo {\n    private Integer thisFieldIsOkay;\n\n    public Foo(Integer someValue) {\n        someField = someValue;\n    }\n\n    private Integer thisFieldIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Warns for fields defined on the same line after a method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nclass Foo {\n    public Foo(Integer someValue) { someField = someValue; } private Integer thisFieldIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Does not warn for fields defined on the same line before a method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    private Integer thisFieldIsOkay; public Foo(Integer someValue) { someField = someValue; }\n}\n        "
+    },
+    {
+      "description": "Allows nested classes to have fields",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    void bar() { }\n\n    private class InnerFoo {\n        public Integer thisIsOkay;\n    }\n}\n        "
+    },
+    {
+      "description": "Allows nested classes to have fields",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nclass Foo {\n    void bar() { }\n\n    private class InnerFoo {\n        public Integer thisIsOkay;\n\n        public void bar() {}\n\n        public Integer thisIsNotOkay;\n    }\n}\n        "
+    },
+    {
+      "description": "Fields should go before inner classes too",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass Foo {\n    private class InnerFoo {}\n\n    public Integer thisIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Fields should go before properties too",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass Foo {\n    public Integer someProperty { get; }\n\n    public Integer thisIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Fields should go before block statements",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Foo {\n    {\n        System.debug('Hello');\n    }\n\n    public Integer thisIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Fields should go before static block statements",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Foo {\n    static {\n        System.debug('Hello');\n    }\n\n    public Integer thisIsNotOkay;\n}\n        "
+    },
+    {
+      "description": "Report field declaration instead of initializer",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass Foo {\n    public void someMethod() {}\n\n    public Integer thisIsNotOkay =  // <--- this line should be reported\n        1;  // and not that\n}\n"
+    }
+  ]
+}

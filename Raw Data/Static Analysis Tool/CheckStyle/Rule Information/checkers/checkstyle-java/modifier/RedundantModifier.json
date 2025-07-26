@@ -1,0 +1,244 @@
+{
+  "name": "RedundantModifier",
+  "language": "java",
+  "description": "<div>\n Checks for redundant modifiers.\n </div>\n\n <p>\n Rationale: The Java Language Specification strongly discourages the usage\n of {@code public} and {@code abstract} for method declarations in interface\n definitions as a matter of style.\n </p>\n\n <p>The check validates:</p>\n <ol>\n <li>\n Interface and annotation definitions.\n </li>\n <li>\n Final modifier on methods of final and anonymous classes.\n </li>\n <li>\n Type declarations nested under interfaces that are declared as {@code public} or {@code static}.\n </li>\n <li>\n Class constructors.\n </li>\n <li>\n Nested {@code enum} definitions that are declared as {@code static}.\n </li>\n <li>\n {@code record} definitions that are declared as {@code final} and nested\n {@code record} definitions that are declared as {@code static}.\n </li>\n <li>\n {@code strictfp} modifier when using JDK 17 or later. See reason at\n <a href=\"https://openjdk.org/jeps/306\">JEP 306</a>\n </li>\n <li>\n {@code final} modifier on unnamed variables when using JDK 22 or later.\n </li>\n </ol>\n\n <p>\n interfaces by definition are abstract so the {@code abstract} modifier is redundant on them.\n </p>\n\n <p>Type declarations nested under interfaces by definition are public and static,\n so the {@code public} and {@code static} modifiers on nested type declarations are redundant.\n On the other hand, classes inside of interfaces can be abstract or non abstract.\n So, {@code abstract} modifier is allowed.\n </p>\n\n <p>Fields in interfaces and annotations are automatically\n public, static and final, so these modifiers are redundant as\n well.</p>\n\n <p>As annotations are a form of interface, their fields are also\n automatically public, static and final just as their\n annotation fields are automatically public and abstract.</p>\n\n <p>A record class is implicitly final and cannot be abstract, these restrictions emphasize\n that the API of a record class is defined solely by its state description, and\n cannot be enhanced later by another class. Nested records are implicitly static. This avoids an\n immediately enclosing instance which would silently add state to the record class.\n See <a href=\"https://openjdk.org/jeps/395\">JEP 395</a> for more info.</p>\n\n <p>Enums by definition are static implicit subclasses of java.lang.Enum&#60;E&#62;.\n So, the {@code static} modifier on the enums is redundant. In addition,\n if enum is inside of interface, {@code public} modifier is also redundant.</p>\n\n <p>Enums can also contain abstract methods and methods which can be overridden by the declared\n enumeration fields.\n See the following example:</p>\n <pre>\n public enum EnumClass {\n   FIELD_1,\n   FIELD_2 {\n     &#64;Override\n     public final void method1() {} // violation expected\n   };\n\n   public void method1() {}\n   public final void method2() {} // no violation expected\n }\n </pre>\n\n <p>Since these methods can be overridden in these situations, the final methods are not\n marked as redundant even though they can't be extended by other classes/enums.</p>\n\n <p>\n Nested {@code enum} types are always static by default.\n </p>\n\n <p>Final classes by definition cannot be extended so the {@code final}\n modifier on the method of a final class is redundant.\n </p>\n\n <p>Public modifier for constructors in non-public non-protected classes\n is always obsolete: </p>\n\n <pre>\n public class PublicClass {\n   public PublicClass() {} // OK\n }\n\n class PackagePrivateClass {\n   public PackagePrivateClass() {} // violation expected\n }\n </pre>\n\n <p>There is no violation in the following example,\n because removing public modifier from ProtectedInnerClass\n constructor will make this code not compiling: </p>\n\n <pre>\n package a;\n public class ClassExample {\n   protected class ProtectedInnerClass {\n     public ProtectedInnerClass () {}\n   }\n }\n\n package b;\n import a.ClassExample;\n public class ClassExtending extends ClassExample {\n   ProtectedInnerClass pc = new ProtectedInnerClass();\n }\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 268,
+  "branches": 85,
+  "apis": 46,
+  "test": [
+    {
+      "description": "Auto test from InputRedundantModifierAnnotationOnEnumConstructor.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        21
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic enum InputRedundantModifierAnnotationOnEnumConstructor {\n    ;\n    @SuppressWarnings(\"checkstyle:name\")\n    InputRedundantModifierAnnotationOnEnumConstructor() {\n    }\n}\nenum InputRedundantModifierAnnotationOnEnumConstructor2 {\n    ;\n    @SuppressWarnings(\"checkstyle:name\")\n    private InputRedundantModifierAnnotationOnEnumConstructor2() { \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierClassesInsideOfInterfaces.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        16,
+        23,
+        25,
+        32
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic interface InputRedundantModifierClassesInsideOfInterfaces {\n    abstract class A {}\n    class B {}\n    static class C { \n        public static boolean verifyState( A a ) {\n            return true;\n        }\n    }\n    public class E {} \n    public enum Role1 { \n        ADMIN,\n        EDITOR,\n        VANILLA;\n    }\n    static enum Role2 { \n        ADMIN,\n        EDITOR,\n        VANILLA;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierConstructorModifier.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic enum InputRedundantModifierConstructorModifier {\n    VAL1, VAL2;\n    private InputRedundantModifierConstructorModifier() { } \n    InputRedundantModifierConstructorModifier(int i) { }\n    InputRedundantModifierConstructorModifier(char c) { }\n}\nclass ProperPrivateConstructor {\n    private ProperPrivateConstructor() { }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierFinalInAbstractMethods.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        11,
+        14,
+        18,
+        23,
+        31
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic abstract class InputRedundantModifierFinalInAbstractMethods {\n    public abstract void method(final String param); \n    public abstract void method2(String param);\n    public abstract void method3(String param1, final String param2); \n}\ninterface IWhatever {\n    void method(final String param); \n    void method2(String param);\n}\nclass CWhatever {\n    native void method(final String param); \n    native void method2(String param);\n}\nenum EWhatever {\n    TEST() {\n        public void method(String s) {};\n    };\n    public abstract void method(final String s); \n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierFinalInAnonymousClass.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        21
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierFinalInAnonymousClass {\n    public static abstract class Example {\n        public abstract void innerTest();\n        public final void test() {\n        }\n    }\n    public static void test() {\n        new Example() {\n            @Override\n            public final void innerTest() { \n            }\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierFinalInEnumMethods.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        14,
+        29
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic enum InputRedundantModifierFinalInEnumMethods {\n    E1,\n    E2 {\n        @Override\n        public final void v() { \n        }\n    };\n    public void v() {\n    }\n    public final void v2() {\n    }\n}\nenum InputRedundantModifierFinalInEnumMethods2 {\n    E1 {\n        @Override\n        public final void v() { \n        }\n    },\n    E2 {\n        @Override\n        public void v() {\n        }\n    };\n    public abstract void v();\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierFinalInEnumStaticMethods.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        19
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierFinalInEnumStaticMethods {\n    public enum TestEnum {\n        VALUE {\n           @Override public void someMethodToOverride() {\n            }\n         };\n        public void someMethodToOverride() { }\n        public static final void someStaticMethod() { }    \n        public static void someMethod() { }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierFinalInInterface.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic interface InputRedundantModifierFinalInInterface {\n        final int k = 5; \n    default int defaultMethod(final int x) {\n            if (k == 5) {\n                    final int t = 24;  \n                    for (; ;) {\n                            final String s = \"some\";  \n                    }\n            }\n        final int square = x * x;  \n        return square;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierFinalInTryWithResource.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        36,
+        41,
+        43
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\nimport java.io.BufferedReader;\nimport java.io.FileReader;\nimport java.io.IOException;\nimport java.io.InputStreamReader;\nimport java.io.UnsupportedEncodingException;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\npublic class InputRedundantModifierFinalInTryWithResource {\n    private static InputStreamReader streamm;\n    public InputRedundantModifierFinalInTryWithResource() throws UnsupportedEncodingException {\n        streamm = new InputStreamReader(null, \"utf\");\n    }\n    public static void test() {\n        try {\n        }\n        catch (RuntimeException e) {\n        }\n        try (@NotNull BufferedReader br =\n                     new BufferedReader(streamm)) {\n        }\n        catch (IOException e) {\n        }\n        try (final BufferedReader br =  new BufferedReader(streamm)) { \n        }\n        catch (IOException e) {\n        }\n        try (final BufferedReader br =  new BufferedReader(streamm); \n                final BufferedReader br2 = new BufferedReader(streamm)) { \n        }\n        catch (IOException e) {\n        }\n    }\n}\n@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})\n@interface NotNull {\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierItOne.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        54,
+        58,
+        63,
+        66,
+        69,
+        79,
+        89,
+        99
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\nstrictfp final class InputRedundantModifierItOne \n{\n    static private boolean sModifierOrderVar = false;\n    strictfp private void doStuff()\n    {\n    }\n    @MyAnnotation2 void someMethod()\n    {\n    }\n    private @MyAnnotation2 void someMethod2()\n    {\n    }\n    private @MyAnnotation2 strictfp void someMethod3()\n    {\n    }\n    @MyAnnotation2 private strictfp void someMethod4()\n    {\n    }\n    @MyAnnotation2 private static @MyAnnotation4 strictfp void someMethod5()\n    {\n    }\n    public static interface InputRedundantPublicModifier \n    {\n        public void a(); \n        void b();\n        abstract void c(); \n        public float PI_PUBLIC = (float) 3.14; \n        final float PI_FINAL = (float) 3.14; \n        float PI_OK = (float) 3.14;\n    }\n    private final void method() \n    {\n    }\n}\nfinal class RedundantFinalClass\n{\n    public final void finalMethod() \n    {\n    }\n    public void method()\n    {\n    }\n}\nabstract interface InnerImplementation \n{\n    InnerImplementation inner =\n            new InnerImplementation()\n            {\n                public void method()\n                {\n                }\n            };\n    void method();\n}\n@interface MyAnnotation2 {\n}\n@interface MyAnnotation4 {\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierItTwo.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        21,
+        22,
+        23,
+        25,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\nstrictfp final class InputRedundantModifierItTwo {\n}\n@interface Annotation\n{\n    public String s1 = \"\"; \n    final String s2 = \"\"; \n    static String s3 = \"\"; \n    String s4 = \"\";\n    public String blah(); \n    abstract String blah2(); \n}\nclass SafeVarargsUsage {\n    @Deprecated\n    @SafeVarargs\n    private final void foo(int... k) {}\n    @Deprecated\n    @SafeVarargs\n    @SuppressWarnings(\"\")\n    private final void foo1(Object... obj) {}\n}\nenum TestEnum {\n    ;\n    public void method() {\n    }\n}\ninterface InputDefaultPublicModifier\n{\n    default strictfp void a()\n    {\n    }\n    strictfp default void b()\n    {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierNestedClassInInt.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        21,
+        23,
+        25,
+        36,
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic interface InputRedundantModifierNestedClassInInt {\n    interface PublicInnerInterface {\n        interface PublicInnerInnerInterface {\n            class PublicInnerClassInNestedPublicInterfaces {\n                public PublicInnerClassInNestedPublicInterfaces() { } \n            }\n        }\n    }\n    class PublicClassInsideInt {\n        private interface PrivateNestedInt {\n            class ClassInPrivateNestedInt {\n                public ClassInPrivateNestedInt() { } \n            }\n            public interface PrivateNestedIntWithPublicModifier { \n                class ClassInPrivateNestedInt {\n                    public ClassInPrivateNestedInt() { } \n                }\n            }\n        }\n        public interface PublicInnerInnerPublicInterface {\n            class PublicInnerClassInNestedPublicInterfaces {\n                public PublicInnerClassInNestedPublicInterfaces() { } \n            }\n        }\n        protected interface PublicInnerInnerProtectedInterface {\n          class PublicInnerClassInNestedProtectedInt {\n           public PublicInnerClassInNestedProtectedInt() { } \n          }\n        }\n    }\n    class PublicNestedClassInInterfaceWithPublicConst {\n        public PublicNestedClassInInterfaceWithPublicConst() { } \n        private class PrivateClassInPublicNestedClass {\n            public class PublicInPrivateClass {\n                public PublicInPrivateClass() { } \n            }\n        }\n    }\n    final class FinalNestedClassInInterface {\n        interface InnerInterface {\n            final class FinalNestedClassInNestedInterface {}\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierNestedDef.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        9,
+        10,
+        15,
+        24
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic interface InputRedundantModifierNestedDef {\n    public enum MyInnerEnum1 {} \n    static enum MyInnerEnum2 {} \n    public static enum MyInnerEnum3 {} \n    static public enum MyInnerEnum4 {} \n    interface MyInnerInterface {\n        public strictfp class MyInnerClass {} \n    }\n    public static class testClass { \n    }\n    public abstract static @interface testAnnotatedInterface { \n    }\n}\nabstract @interface testAnnotatedInterface { \n    public static enum testEnum { \n    }\n    interface testInterface {\n        public static interface nestedInterface { \n            public static class nestedClass { \n            }\n            public static @interface nestedAnnInterface { \n            }\n            public static enum nestedEnum { \n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierPrivateMethodInPrivateClass.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierPrivateMethodInPrivateClass {\n    private class Inner {\n        private final void example() {} \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierPublicModifierInNotPublicClass.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        21
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierPublicModifierInNotPublicClass {\n    public InputRedundantModifierPublicModifierInNotPublicClass() { }\n    protected class ProtectedClass {\n        public ProtectedClass() {}\n    }\n    public class PublicInnerClass {\n        public PublicInnerClass() { } \n    }\n}\nclass PackagePrivateClass {\n    public PackagePrivateClass() {} \n}\nclass PackagePrivateClassWithNotRedundantConstructor {\n    PackagePrivateClassWithNotRedundantConstructor() {}\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierRecords.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        10,
+        20,
+        31,
+        36,
+        38,
+        41
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierRecords {\n    static record testRecord(int a) { \n    }\n    interface foo {\n        final static record testRecords(int a) { \n        }\n    }\n    class b {\n        static record testRecord(int a) { \n        }\n    }\n    enum testEnum {\n        ONE;\n        final static record testRecord() { \n        }\n        class b {\n            static record testRecord() { \n            }\n        }\n    }\n}\nfinal record testRecord(int a) { \n    final record anotherRecord(int b) { \n    }\n    static record anotherTestRecord(int c) { \n    }\n    @interface hoo {\n        final static record someRecord() { \n        }\n    }\n}\nrecord anotherRecord(int b) {\n    record nestedRecord(int a, int p) {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierStaticInInnerTypeOfInterface.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        14
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic interface InputRedundantModifierStaticInInnerTypeOfInterface {\n    static class MyInnerClass { } \n    class MyInnerClass2 { }\n    static enum MyInnerEnum { } \n    enum MyInnerEnum2 { }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierStaticModifierInNestedEnum.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        11,
+        15,
+        19
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierStaticModifierInNestedEnum {\n    static enum NestedEnumWithRedundantStatic {} \n    enum CorrectNestedEnum {\n        VAL;\n        static enum NestedEnumWithRedundantStatic {} \n    }\n    interface NestedInterface {\n        static enum NestedEnumWithRedundantStatic {} \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierStrictfpWithDefaultVersion.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        14,
+        17,
+        20,
+        23,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierStrictfpWithDefaultVersion {\n    public static strictfp class Test { }\n    strictfp interface MyInterface { }\n    strictfp enum MyEnum {}\n    strictfp record MyRecord(int x) {}\n    abstract strictfp class MyAbstractClass { }\n    abstract strictfp interface MyStrictFPInterface {\n        public static strictfp enum MyInnerEnum { }\n    }\n    final class OtherClass {\n        final strictfp void m1() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierStrictfpWithJava17.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        15,
+        18,
+        21,
+        24,
+        27
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierStrictfpWithJava17 {\n    public static strictfp class Test { }\n    strictfp interface MyInterface { }\n    strictfp enum MyEnum {}\n    strictfp record MyRecord(int x) {}\n    abstract strictfp class MyAbstractClass { }\n    abstract strictfp interface MyStrictFPInterface {\n        public static strictfp enum MyInnerEnum { }\n    }\n    final class OtherClass {\n        final strictfp void m1() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierStrictfpWithOldVersion.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        25,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierStrictfpWithOldVersion {\n    public static strictfp class Test { }\n    strictfp interface MyInterface { }\n    strictfp enum MyEnum {}\n    strictfp record MyRecord(int x) {}\n    abstract strictfp class MyAbstractClass { }\n    abstract strictfp interface MyStrictFPInterface {\n        public static strictfp enum MyInnerEnum { }\n    }\n    final class OtherClass {\n        final strictfp void m1() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierStrictfpWithVersionBeforeJava9.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        25,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\npublic class InputRedundantModifierStrictfpWithVersionBeforeJava9 {\n    public static strictfp class Test { }\n    strictfp interface MyInterface { }\n    strictfp enum MyEnum {}\n    strictfp record MyRecord(int x) {}\n    abstract strictfp class MyAbstractClass { }\n    abstract strictfp interface MyStrictFPInterface {\n        public static strictfp enum MyInnerEnum { }\n    }\n    final class OtherClass {\n        final strictfp void m1() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRedundantModifierTryWithResources.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        17
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.redundantmodifier;\nimport java.io.IOException;\nimport java.io.OutputStreamWriter;\npublic class InputRedundantModifierTryWithResources {\n    public static void main(String[] args) {\n        OutputStreamWriter out = null;\n        try (out; final OutputStreamWriter out2 = null;) { \n            out.write(1);\n        } catch (IOException ex) {\n            System.err.println(ex);\n        }\n    }\n}"
+    }
+  ]
+}

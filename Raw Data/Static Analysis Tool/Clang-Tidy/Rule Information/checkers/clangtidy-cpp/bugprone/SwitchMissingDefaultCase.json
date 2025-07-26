@@ -1,0 +1,24 @@
+{
+  "name": "SwitchMissingDefaultCase",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-switch-missing-default-case",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 46,
+  "branches": 6,
+  "apis": 25,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        9,
+        16,
+        23
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-switch-missing-default-case %t -- -- -fno-delayed-template-parsing\n\ntypedef int MyInt;\nenum EnumType { eE2 };\ntypedef EnumType MyEnum;\n\nvoid positive() {\n  int I1 = 0;\n  // CHECK-MESSAGES: [[@LINE+1]]:3: warning: switching on non-enum value without default case may not cover all cases [bugprone-switch-missing-default-case]\n  switch (I1) {\n  case 0:\n    break;\n  }\n\n  MyInt I2 = 0;\n  // CHECK-MESSAGES: [[@LINE+1]]:3: warning: switching on non-enum value without default case may not cover all cases [bugprone-switch-missing-default-case]\n  switch (I2) {\n  case 0:\n    break;\n  }\n\n  int getValue(void);\n  // CHECK-MESSAGES: [[@LINE+1]]:3: warning: switching on non-enum value without default case may not cover all cases [bugprone-switch-missing-default-case]\n  switch (getValue()) {\n  case 0:\n    break;\n  }\n}\n\nvoid negative() {\n  enum E { eE1 };\n  E E1 = eE1;\n  switch (E1) { // no-warning\n  case eE1:\n    break;\n  }\n\n  MyEnum E2 = eE2;\n  switch (E2) { // no-warning\n  case eE2:\n    break;\n  }\n\n  int I1 = 0;\n  switch (I1) { // no-warning\n  case 0:\n    break;\n  default:\n    break;\n  }\n\n  MyInt I2 = 0;\n  switch (I2) { // no-warning\n  case 0:\n    break;\n  default:\n    break;\n  }\n\n  int getValue(void);\n  switch (getValue()) { // no-warning\n  case 0:\n    break;\n    default:\n    break;\n  }\n}\n\ntemplate<typename T>\nvoid testTemplate(T Value) {\n  switch (Value) {\n    case 0:\n      break;\n  }\n}\n\nvoid exampleUsage() {\n  testTemplate(5);\n  testTemplate(EnumType::eE2);\n}"
+    }
+  ]
+}

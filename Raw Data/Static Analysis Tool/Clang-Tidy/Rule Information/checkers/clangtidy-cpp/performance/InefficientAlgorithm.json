@@ -1,0 +1,37 @@
+{
+  "name": "InefficientAlgorithm",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-inefficient-algorithm",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 149,
+  "branches": 18,
+  "apis": 108,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        71,
+        81,
+        84,
+        89,
+        96,
+        101,
+        106,
+        110,
+        113,
+        122,
+        127,
+        132,
+        137,
+        142,
+        147,
+        164
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s performance-inefficient-algorithm %t\n\nnamespace std {\ntemplate <typename T> struct less {\n  bool operator()(const T &lhs, const T &rhs) { return lhs < rhs; }\n};\n\ntemplate <typename T> struct greater {\n  bool operator()(const T &lhs, const T &rhs) { return lhs > rhs; }\n};\n\nstruct iterator_type {};\n\ntemplate <typename K, typename Cmp = less<K>> struct set {\n  typedef iterator_type iterator;\n  iterator find(const K &k);\n  unsigned count(const K &k);\n\n  iterator begin();\n  iterator end();\n  iterator begin() const;\n  iterator end() const;\n};\n\nstruct other_iterator_type {};\n\ntemplate <typename K, typename V, typename Cmp = less<K>> struct map {\n  typedef other_iterator_type iterator;\n  iterator find(const K &k);\n  unsigned count(const K &k);\n\n  iterator begin();\n  iterator end();\n  iterator begin() const;\n  iterator end() const;\n};\n\ntemplate <typename K, typename V> struct multimap : map<K, V> {};\ntemplate <typename K> struct unordered_set : set<K> {};\ntemplate <typename K, typename V> struct unordered_map : map<K, V> {};\ntemplate <typename K> struct unordered_multiset : set<K> {};\ntemplate <typename K, typename V> struct unordered_multimap : map<K, V> {};\n\ntemplate <typename K, typename Cmp = less<K>> struct multiset : set<K, Cmp> {};\n\ntemplate <typename FwIt, typename K>\nFwIt find(FwIt, FwIt end, const K &) { return end; }\n\ntemplate <typename FwIt, typename K, typename Cmp>\nFwIt find(FwIt, FwIt end, const K &, Cmp) { return end; }\n\ntemplate <typename FwIt, typename Pred>\nFwIt find_if(FwIt, FwIt end, Pred) { return end; }\n\ntemplate <typename FwIt, typename K>\nunsigned count(FwIt, FwIt, const K &) { return 0; }\n\ntemplate <typename FwIt, typename K>\nFwIt lower_bound(FwIt, FwIt end, const K &) { return end; }\n\ntemplate <typename FwIt, typename K, typename Ord>\nFwIt lower_bound(FwIt, FwIt end, const K &, Ord) { return end; }\n}\n\n#define FIND_IN_SET(x) find(x.begin(), x.end(), 10)\n// CHECK-FIXES: #define FIND_IN_SET(x) find(x.begin(), x.end(), 10)\n\ntemplate <typename T> void f(const T &t) {\n  std::set<int> s;\n  find(s.begin(), s.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: s.find(46);\n\n  find(t.begin(), t.end(), 46);\n  // CHECK-FIXES: find(t.begin(), t.end(), 46);\n}\n\nint main() {\n  std::set<int> s;\n  auto it = std::find(s.begin(), s.end(), 43);\n  // CHECK-MESSAGES: :[[@LINE-1]]:13: warning: this STL algorithm call should be replaced with a container method [performance-inefficient-algorithm]\n  // CHECK-FIXES: auto it = s.find(43);\n  auto c = count(s.begin(), s.end(), 43);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: this STL algorithm call should be\n  // CHECK-FIXES: auto c = s.count(43);\n\n#define SECOND(x, y, z) y\n  SECOND(q,std::count(s.begin(), s.end(), 22),w);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: this STL algorithm call should be\n  // CHECK-FIXES: SECOND(q,s.count(22),w);\n\n  it = find_if(s.begin(), s.end(), [](int) { return false; });\n\n  std::multiset<int> ms;\n  find(ms.begin(), ms.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: ms.find(46);\n\n  const std::multiset<int> &msref = ms;\n  find(msref.begin(), msref.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: msref.find(46);\n\n  std::multiset<int> *msptr = &ms;\n  find(msptr->begin(), msptr->end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: msptr->find(46);\n\n  it = std::find(s.begin(), s.end(), 43, std::greater<int>());\n  // CHECK-MESSAGES: :[[@LINE-1]]:42: warning: different comparers used in the algorithm and the container [performance-inefficient-algorithm]\n\n  FIND_IN_SET(s);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: FIND_IN_SET(s);\n\n  f(s);\n\n  std::unordered_set<int> us;\n  lower_bound(us.begin(), us.end(), 10);\n  // CHECK-FIXES: lower_bound(us.begin(), us.end(), 10);\n  find(us.begin(), us.end(), 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: us.find(10);\n\n  std::unordered_multiset<int> ums;\n  find(ums.begin(), ums.end(), 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: ums.find(10);\n\n  std::map<int, int> intmap;\n  find(intmap.begin(), intmap.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: find(intmap.begin(), intmap.end(), 46);\n\n  std::multimap<int, int> intmmap;\n  find(intmmap.begin(), intmmap.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: find(intmmap.begin(), intmmap.end(), 46);\n\n  std::unordered_map<int, int> umap;\n  find(umap.begin(), umap.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: find(umap.begin(), umap.end(), 46);\n\n  std::unordered_multimap<int, int> ummap;\n  find(ummap.begin(), ummap.end(), 46);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: find(ummap.begin(), ummap.end(), 46);\n}\n\nstruct Value {\n  int value;\n};\n\nstruct Ordering {\n  bool operator()(const Value &lhs, const Value &rhs) const {\n    return lhs.value < rhs.value;\n  }\n  bool operator()(int lhs, const Value &rhs) const { return lhs < rhs.value; }\n};\n\nvoid g(std::set<Value, Ordering> container, int value) {\n  lower_bound(container.begin(), container.end(), value, Ordering());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: this STL algorithm call should be\n  // CHECK-FIXES: lower_bound(container.begin(), container.end(), value, Ordering());\n}"
+    }
+  ]
+}

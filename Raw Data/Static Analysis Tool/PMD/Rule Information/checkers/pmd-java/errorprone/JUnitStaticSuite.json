@@ -1,0 +1,56 @@
+{
+  "name": "JUnitStaticSuite",
+  "language": "java",
+  "description": "\nThe suite() method in a JUnit test needs to be both public and static.\n        ",
+  "example": "import junit.framework.*;\n\npublic class Foo extends TestCase {\n    public void suite() {}         // oops, should be static\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 35,
+  "branches": 7,
+  "apis": 4,
+  "test": [
+    {
+      "description": "non-static is bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport junit.framework.TestSuite;\n\npublic class Foo extends TestCase {\n    public TestSuite suite() {} // oops, should be static\n}\n        "
+    },
+    {
+      "description": "public static with no params is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport junit.framework.TestSuite;\n\npublic class Foo extends TestCase {\n    public static TestSuite suite() {}\n}\n        "
+    },
+    {
+      "description": "private suite() is bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport junit.framework.TestSuite;\npublic class Foo extends TestCase {\n    private static TestSuite suite() {} // oops, should be public\n}\n        "
+    },
+    {
+      "description": "if there are params, just skip it",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport junit.framework.Test;\npublic class Foo extends TestCase {\n    protected static Test suite(Foo foo) {}\n}\n        "
+    },
+    {
+      "description": "Not a JUnit test (nonstatic is bad)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestSuite;\npublic class Foo {\n    public TestSuite suite() {}\n}\n        "
+    },
+    {
+      "description": "should be static - void suite()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\n\npublic class Foo extends TestCase {\n    public void suite() {}         // oops, should be static\n}\n"
+    },
+    {
+      "description": "should be public - void suite()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.*;\n\npublic class Foo extends TestCase {\n    private static void suite() {} // oops, should be public\n}\n"
+    }
+  ]
+}

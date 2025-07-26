@@ -1,0 +1,32 @@
+{
+  "name": "StaticAssert",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-static-assert",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 171,
+  "branches": 16,
+  "apis": 161,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        42,
+        50,
+        58,
+        82,
+        94,
+        98,
+        121,
+        149,
+        160,
+        173,
+        184
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11 -check-suffixes=,CXX11 %s misc-static-assert %t\n// RUN: %check_clang_tidy -std=c++17-or-later -check-suffixes=,CXX17 %s misc-static-assert %t\n\nvoid abort() {}\n#ifdef NDEBUG\n#define assert(x) 1\n#else\n#define assert(x)                                                              \\\n  if (!(x))                                                                    \\\n  abort()\n#endif\n\nvoid print(...);\n\n#define ZERO_MACRO 0\n\n#define False false\n#define FALSE 0\n\n#define my_macro() assert(0 == 1)\n// CHECK-FIXES: #define my_macro() assert(0 == 1)\n\nnamespace PR24066 {\n\nvoid referenceMember() {\n  struct {\n    int A;\n    int B;\n  } S;\n  assert(&S.B - &S.A == 1);\n}\n\nconst int X = 1;\nvoid referenceVariable() {\n  assert(X > 0);\n}\n\n\nconstexpr int Y = 1;\nvoid referenceConstexprVariable() {\n  assert(Y > 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be replaced by static_assert() [misc-static-assert]\n  // CHECK-FIXES-CXX11: static_assert(Y > 0, \"\");\n  // CHECK-FIXES-CXX17: static_assert(Y > 0);\n}\n\nvoid useInSizeOf() {\n  char a = 0;\n  assert(sizeof(a) == 1U);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be replaced by static_assert() [misc-static-assert]\n  // CHECK-FIXES-CXX11: static_assert(sizeof(a) == 1U, \"\");\n  // CHECK-FIXES-CXX17: static_assert(sizeof(a) == 1U);\n}\n\nvoid useInDecltype() {\n  char a = 0;\n  assert(static_cast<decltype(a)>(256) == 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be replaced by static_assert() [misc-static-assert]\n  // CHECK-FIXES-CXX11: static_assert(static_cast<decltype(a)>(256) == 0, \"\");\n  // CHECK-FIXES-CXX17: static_assert(static_cast<decltype(a)>(256) == 0);\n}\n\n}\n\nconstexpr bool myfunc(int a, int b) { return a * b == 0; }\n\ntypedef __SIZE_TYPE__ size_t;\nextern \"C\" size_t strlen(const char *s);\n\nclass A {\npublic:\n  bool method() { return true; }\n};\n\nclass B {\npublic:\n  constexpr bool method() { return true; }\n};\n\ntemplate <class T> void doSomething(T t) {\n  assert(myfunc(1, 2));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be replaced by static_assert() [misc-static-assert]\n  // CHECK-FIXES-CXX11: static_assert(myfunc(1, 2), \"\");\n  // CHECK-FIXES-CXX17: static_assert(myfunc(1, 2));\n\n  assert(t.method());\n  // CHECK-FIXES: assert(t.method());\n\n  assert(sizeof(T) == 123);\n}\n\nint main() {\n  my_macro();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES: my_macro();\n\n  assert(myfunc(1, 2) && (3 == 4));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES-CXX11: static_assert(myfunc(1, 2) && (3 == 4), \"\");\n  // CHECK-FIXES-CXX17: static_assert(myfunc(1, 2) && (3 == 4));\n\n  int x = 1;\n  assert(x == 0);\n  // CHECK-FIXES: assert(x == 0);\n\n  A a;\n  B b;\n\n  doSomething<A>(a);\n  doSomething<B>(b);\n\n  assert(false);\n  // CHECK-FIXES: assert(false);\n\n  assert(False);\n  // CHECK-FIXES: assert(False);\n  assert(FALSE);\n  // CHECK-FIXES: assert(FALSE);\n\n  assert(ZERO_MACRO);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES-CXX11: static_assert(ZERO_MACRO, \"\");\n  // CHECK-FIXES-CXX17: static_assert(ZERO_MACRO);\n\n  assert(!\"Don't report me!\");\n  // CHECK-FIXES: assert(!\"Don't report me!\");\n\n  assert(0 && \"Don't report me!\");\n  // CHECK-FIXES: assert(0 && \"Don't report me!\");\n\n  assert(false && \"Don't report me!\");\n  // CHECK-FIXES: assert(false && \"Don't report me!\");\n\n#define NULL ((void*)0)\n  assert(NULL && \"Don't report me!\");\n  // CHECK-FIXES: assert(NULL && \"Don't report me!\");\n\n  assert(NULL == \"Don't report me!\");\n  // CHECK-FIXES: assert(NULL == \"Don't report me!\");\n\n  assert(\"Don't report me!\" == NULL);\n  // CHECK-FIXES: assert(\"Don't report me!\" == NULL);\n\n  assert(0 == \"Don't report me!\");\n  // CHECK-FIXES: assert(0 == \"Don't report me!\");\n\n#define NULL ((unsigned int)0)\n  assert(NULL && \"Report me!\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES: static_assert(NULL , \"Report me!\");\n\n#define NULL __null\n  assert(__null == \"Don't report me!\");\n  // CHECK-FIXES: assert(__null == \"Don't report me!\");\n  assert(NULL == \"Don't report me!\");\n  // CHECK-FIXES: assert(NULL == \"Don't report me!\");\n#undef NULL\n\n  assert(ZERO_MACRO && \"Report me!\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES: static_assert(ZERO_MACRO , \"Report me!\");\n\n  assert(0);\n\n#define false false\n  assert(false);\n\n#define false 0\n  assert(false);\n#undef false\n\n  assert(10==5 && \"Report me!\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES: static_assert(10==5 , \"Report me!\");\n\n  assert(strlen(\"12345\") == 5);\n  // CHECK-FIXES: assert(strlen(\"12345\") == 5);\n\n#define assert(e) (__builtin_expect(!(e), 0) ? print (#e, __FILE__, __LINE__) : (void)0)\n  assert(false);\n  // CHECK-FIXES: assert(false);\n\n  assert(10 == 5 + 5);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: found assert() that could be\n  // CHECK-FIXES-CXX11: static_assert(10 == 5 + 5, \"\");\n  // CHECK-FIXES-CXX17: static_assert(10 == 5 + 5);\n#undef assert\n\n  return 0;\n}"
+    }
+  ]
+}

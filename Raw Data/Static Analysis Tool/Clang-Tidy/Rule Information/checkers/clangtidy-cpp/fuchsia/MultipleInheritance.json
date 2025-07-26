@@ -1,0 +1,27 @@
+{
+  "name": "MultipleInheritance",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-multiple-inheritance",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 132,
+  "branches": 27,
+  "apis": 76,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        48,
+        52,
+        57,
+        86,
+        103,
+        121
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s fuchsia-multiple-inheritance %t\n\nclass Base_A {\npublic:\n  virtual int foo() { return 0; }\n};\n\nclass Base_B {\npublic:\n  virtual int bar() { return 0; }\n};\n\nclass Base_A_child : public Base_A {\npublic:\n  virtual int baz() { return 0; }\n};\n\nclass Interface_A {\npublic:\n  virtual int foo() = 0;\n};\n\nclass Interface_B {\npublic:\n  virtual int bar() = 0;\n};\n\nclass Interface_C {\npublic:\n  virtual int blat() = 0;\n};\n\nclass Interface_A_with_member {\npublic:\n  virtual int foo() = 0;\n  int val = 0;\n};\n\nclass Interface_with_A_Parent : public Base_A {\npublic:\n  virtual int baz() = 0;\n};\n\n// Shouldn't warn on forward declarations.\nclass Bad_Child1;\n\n// Inherits from multiple concrete classes.\n// CHECK-MESSAGES: [[@LINE+2]]:1: warning: inheriting multiple classes that aren't pure virtual is discouraged [fuchsia-multiple-inheritance]\n// CHECK-NEXT: class Bad_Child1 : public Base_A, Base_B {};\nclass Bad_Child1 : public Base_A, Base_B {};\n\n// CHECK-MESSAGES: [[@LINE+1]]:1: warning: inheriting multiple classes that aren't pure virtual is discouraged [fuchsia-multiple-inheritance]\nclass Bad_Child2 : public Base_A, Interface_A_with_member {\n  virtual int foo() override { return 0; }\n};\n\n// CHECK-MESSAGES: [[@LINE+2]]:1: warning: inheriting multiple classes that aren't pure virtual is discouraged [fuchsia-multiple-inheritance]\n// CHECK-NEXT: class Bad_Child3 : public Interface_with_A_Parent, Base_B {\nclass Bad_Child3 : public Interface_with_A_Parent, Base_B {\n  virtual int baz() override { return 0; }\n};\n\n// Easy cases of single inheritance\nclass Simple_Child1 : public Base_A {};\nclass Simple_Child2 : public Interface_A {\n  virtual int foo() override { return 0; }\n};\n\n// Valid uses of multiple inheritance\nclass Good_Child1 : public Interface_A, Interface_B {\n  virtual int foo() override { return 0; }\n  virtual int bar() override { return 0; }\n};\n\nclass Good_Child2 : public Base_A, Interface_B {\n  virtual int bar() override { return 0; }\n};\n\nclass Good_Child3 : public Base_A_child, Interface_C, Interface_B {\n  virtual int bar() override { return 0; }\n  virtual int blat() override { return 0; }\n};\n\nstruct B1 { int x; };\nstruct B2 { int x;};\n// CHECK-MESSAGES: [[@LINE+2]]:1: warning: inheriting multiple classes that aren't pure virtual is discouraged [fuchsia-multiple-inheritance]\n// CHECK-NEXT: struct D : B1, B2 {};\nstruct D1 : B1, B2 {};\n\nstruct Base1 { virtual void foo() = 0; };\nstruct V1 : virtual Base1 {};\nstruct V2 : virtual Base1 {};\nstruct D2 : V1, V2 {};\n\nstruct Base2 { virtual void foo(); };\nstruct V3 : virtual Base2 {};\nstruct V4 : virtual Base2 {};\nstruct D3 : V3, V4 {};\n\nstruct Base3 {};\nstruct V5 : virtual Base3 { virtual void f(); };\nstruct V6 : virtual Base3 { virtual void g(); };\n// CHECK-MESSAGES: [[@LINE+2]]:1: warning: inheriting multiple classes that aren't pure virtual is discouraged [fuchsia-multiple-inheritance]\n// CHECK-NEXT: struct D4 : V5, V6 {};\nstruct D4 : V5, V6 {};\n\nstruct Base4 {};\nstruct V7 : virtual Base4 { virtual void f() = 0; };\nstruct V8 : virtual Base4 { virtual void g() = 0; };\nstruct D5 : V7, V8 {};\n\nstruct Base5 { virtual void f() = 0; };\nstruct V9 : virtual Base5 { virtual void f(); };\nstruct V10 : virtual Base5 { virtual void g() = 0; };\nstruct D6 : V9, V10 {};\n\nstruct Base6 { virtual void f(); };\nstruct Base7 { virtual void g(); };\nstruct V15 : virtual Base6 { virtual void f() = 0; };\nstruct V16 : virtual Base7 { virtual void g() = 0; };\n// CHECK-MESSAGES: [[@LINE+2]]:1: warning: inheriting multiple classes that aren't pure virtual is discouraged [fuchsia-multiple-inheritance]\n// CHECK-NEXT: struct D9 : V15, V16 {};\nstruct D9 : V15, V16 {};\n\nstruct Static_Base { static void foo(); };\nstruct V11 : virtual Static_Base {};\nstruct V12 : virtual Static_Base {};\nstruct D7 : V11, V12 {};\n\nstruct Static_Base_2 {};\nstruct V13 : virtual Static_Base_2 { static void f(); };\nstruct V14 : virtual Static_Base_2 { static void g(); };\nstruct D8 : V13, V14 {};\n\ntemplate<typename T> struct A : T {};\ntemplate<typename T> struct B : virtual T {};\n\ntemplate<typename> struct C {};\ntemplate<typename T> struct D : C<T> {};\n\n// Check clang_tidy does not crash on this code.\ntemplate <class T>\nstruct WithTemplBase : T {\n  WithTemplBase();\n};\n\nvoid test_no_crash() {\n  auto foo = []() {};\n  WithTemplBase<decltype(foo)>();\n}"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "name": "InvalidJavaBean",
+  "language": "java",
+  "description": "\nIdentifies beans, that don't follow the [JavaBeans API specification](https://download.oracle.com/otndocs/jcp/7224-javabeans-1.01-fr-spec-oth-JSpec/).\n\nEach non-static field should have both a getter and a setter method. If the field is just used internally and is not\na bean property, then the field should be marked as `transient`.\n\nThe rule verifies that the type of the field is the same as the result type of the getter. And that this type matches\nthe type used in the setter.\n\nThe rule also checks, that there is a no-arg or default constructor available.\n\nOptionally the rule also verifies, that the bean implements `java.io.Serializable`. While this is a requirement for the\noriginal JavaBeans specification, frameworks nowadays don't strictly require this anymore.\n\nIn order to avoid many false positives in classes that are not beans, the rule needs to be explicitly\nenabled by configuring the property `packages`.\n        ",
+  "example": "package org.example.beans;\npublic class MyBean {        // <-- bean is not serializable, missing \"implements Serializable\"\n    private String label;    // <-- missing setter for property \"label\"\n\n    public String getLabel() {\n        return label;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 386,
+  "branches": 113,
+  "apis": 19,
+  "test": [
+    {
+      "description": "Example code",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\npackage org.example.beans;\npublic class MyBean {        // <-- bean is not serializable, missing \"implements Serializable\"\n    private String label;    // <-- missing setter for property \"label\"\n\n    public String getLabel() {\n        return label;\n    }\n}\n        "
+    },
+    {
+      "description": "Valid Bean with all getters and setters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.example.beans;\nimport java.io.Serializable;\npublic final class Button implements Serializable {\n    private String label;\n    private boolean active;\n    private Boolean enabled;\n    private transient String notImportant;\n    private final String constant = \"Foo\";\n\n    public String getLabel() { return label; }\n    public void setLabel(String label) { this.label = label; }\n\n    public boolean isActive() { return active; }\n    public void setActive(boolean active) { this.active = active; }\n\n    public Boolean isEnabled() { return enabled; }\n    public void setEnabled(Boolean enabled) { this.enabled = enabled; }\n\n    public String getConstant() { return constant; }\n}\n"
+    },
+    {
+      "description": "Bean with missing getters and setters",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        4,
+        5,
+        7
+      ],
+      "code": "\npackage net.sourceforge.pmd.example.beans;\nimport java.io.Serializable;\npublic final class Button implements Serializable {\n    private String label;\n    private boolean active;\n    private transient String notImportant;\n    private final String constant = \"Foo\";\n\n    public String getLabel() { return label; }\n}\n"
+    },
+    {
+      "description": "Bean with missing default ctor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npackage net.sourceforge.pmd.example.beans;\nimport java.io.Serializable;\npublic final class Button implements Serializable {\n    private String label;\n    private final String constant;\n\n    public Button(String constant) {\n        this.constant = constant;\n    }\n\n    public String getConstant() { return constant; }\n    public String getLabel() { return label; }\n    public void setLabel(String label) { this.label = label; }\n}\n"
+    },
+    {
+      "description": "Bean with different type for property in getter and setter",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npackage net.sourceforge.pmd.example.beans;\nimport java.io.Serializable;\npublic final class Button implements Serializable {\n    private String label;\n\n    public int getLabel() { return 42; }\n    public void setLabel(String label) { this.label = label; }\n}\n"
+    },
+    {
+      "description": "Bean with wrong getter name for boolean property",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npackage net.sourceforge.pmd.example.beans;\nimport java.io.Serializable;\npublic final class Button implements Serializable {\n    private boolean active;\n\n    public boolean getActive() { return active; }\n    public void setActive(boolean active) { this.active = active; }\n}\n"
+    },
+    {
+      "description": "#881 private final without setter is flagged",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final String bar = \"BAR\";\n    public String getBar() { return bar; }\n\n    private String baz;\n    public void setBaz(String b) { baz = b; }\n    public String getBaz() { return baz; }\n}\n        "
+    },
+    {
+      "description": "#780 [java] BeanMembersShouldSerializeRule does not recognize lombok accessors - 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Data;\n\n@Data\npublic class Buzz {\n    private String foo;\n\n    public Buzz() {}\n\n    public Buzz(String s) {\n        foo = s;\n    }\n}\n        "
+    },
+    {
+      "description": "#780 [java] BeanMembersShouldSerializeRule does not recognize lombok accessors - 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@lombok.Data\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#780 [java] BeanMembersShouldSerializeRule does not recognize lombok accessors - 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.*;\n@Data\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#780 [java] BeanMembersShouldSerializeRule does not recognize lombok accessors - 4",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\nimport lombok.Setter;\n@Getter\n@Setter\npublic class Foo {\n    private String bar;\n}\n        "
+    },
+    {
+      "description": "#780 [java] BeanMembersShouldSerializeRule does not recognize lombok accessors - 5",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\nimport lombok.Setter;\npublic class Foo {\n    @Getter @Setter private String bar;\n}\n        "
+    },
+    {
+      "description": "#780 [java] BeanMembersShouldSerializeRule does not recognize lombok accessors - 6",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\npublic class Foo {\n    @Getter(lazy=true) private final String cached = expensive();\n\n    private String expensive() { return \"expensive calculation that should be cached.\"; }\n}\n        "
+    },
+    {
+      "description": "#1796 BeanMembersShouldSerialize should still report with @Delegate",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport lombok.experimental.Delegate;\n\npublic class Foo {\n    @Delegate\n    private String bar;\n\n    public String toString() {\n        return \"Foo: \" + bar;\n    }\n}\n        "
+    },
+    {
+      "description": "Consider properties not backed by a field (computed values)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic final class Button {\n    public String getLabel() { return \"foo\"; }\n    public void setLabel(String label) { /* ignored */ }\n\n    public String getSize() { return \"1\"; }\n    public void setSize(int size) { /* ignored */ }\n\n    public String getName() { return \"bar\"; } // read-only property\n}\n"
+    },
+    {
+      "description": "Consider indexed properties",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        11,
+        12
+      ],
+      "code": "\npublic final class Button {\n    private String[] labels;\n    public String getLabels() { return labels[0]; }\n    public void setLabels(String[] labels) { this.labels = labels; }\n    public String getLabels(int i) { return labels[i]; }\n    public void setLabels(int i, String label) { this.labels[i] = label; }\n\n    private String[] names;\n    public String[] getNames() { return names; }\n    public void setNames(String[] names) { this.names = names; }\n    public int getNames(int i) { return i; } // wrong result type\n    public void setNames(int i, int name) { /* ... */ } // wrong type\n}\n"
+    }
+  ]
+}

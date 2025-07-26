@@ -1,0 +1,48 @@
+{
+  "name": "ProTypeConstCast",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-pro-type-const-cast",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 73,
+  "branches": 5,
+  "apis": 38,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 27,
+      "expected-linenumbers": [
+        10,
+        11,
+        14,
+        17,
+        18,
+        21,
+        24,
+        25,
+        28,
+        38,
+        39,
+        42,
+        45,
+        46,
+        49,
+        52,
+        53,
+        56,
+        66,
+        67,
+        70,
+        73,
+        74,
+        77,
+        80,
+        81,
+        84
+      ],
+      "code": "\n// RUN: %check_clang_tidy -check-suffix=STRICT  %s cppcoreguidelines-pro-type-const-cast %t -- -config=\"{CheckOptions: {cppcoreguidelines-pro-type-const-cast.StrictMode: true}}\"\n// RUN: %check_clang_tidy -check-suffix=NSTRICT %s cppcoreguidelines-pro-type-const-cast %t\n\nnamespace Const {\nconst int *i;\nint *j;\n\nvoid f() {\n  j = const_cast<int *>(i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:7: warning: do not use const_cast to remove const qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:7: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = const_cast<const int*>(j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:7: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  j = *const_cast<int **>(&i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:8: warning: do not use const_cast to remove const qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = *const_cast<const int**>(&j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  j = &const_cast<int&>(*i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:8: warning: do not use const_cast to remove const qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = &const_cast<const int&>(*j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n}\n}\n\nnamespace Volatile {\nvolatile int *i;\nint *j;\n\nvoid f() {\n  j = const_cast<int *>(i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:7: warning: do not use const_cast to remove volatile qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:7: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = const_cast<volatile int*>(j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:7: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  j = *const_cast<int **>(&i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:8: warning: do not use const_cast to remove volatile qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = *const_cast<volatile int**>(&j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  j = &const_cast<int&>(*i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:8: warning: do not use const_cast to remove volatile qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = &const_cast<volatile int&>(*j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n}\n}\n\nnamespace ConstAndVolatile {\nconst volatile int *i;\nint *j;\n\nvoid f() {\n  j = const_cast<int *>(i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:7: warning: do not use const_cast to remove const and volatile qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:7: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = const_cast<const volatile int*>(j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:7: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  j = *const_cast<int **>(&i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:8: warning: do not use const_cast to remove const and volatile qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = *const_cast<const volatile int**>(&j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  j = &const_cast<int&>(*i);\n  // CHECK-MESSAGES-NSTRICT: :[[@LINE-1]]:8: warning: do not use const_cast to remove const and volatile qualifier [cppcoreguidelines-pro-type-const-cast]\n  // CHECK-MESSAGES-STRICT:  :[[@LINE-2]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n\n  i = &const_cast<const volatile int&>(*j);\n  // CHECK-MESSAGES-STRICT: :[[@LINE-1]]:8: warning: do not use const_cast [cppcoreguidelines-pro-type-const-cast]\n}\n}"
+    }
+  ]
+}

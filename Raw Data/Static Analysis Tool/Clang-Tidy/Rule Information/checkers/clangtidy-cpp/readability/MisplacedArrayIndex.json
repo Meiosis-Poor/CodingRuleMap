@@ -1,0 +1,26 @@
+{
+  "name": "MisplacedArrayIndex",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-misplaced-array-index",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 53,
+  "branches": 2,
+  "apis": 29,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        11,
+        15,
+        19,
+        23,
+        27
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-misplaced-array-index %t\n\n#define ABC  \"abc\"\n\nstruct XY { int *X; int *Y; };\n\nvoid dostuff(int);\n\nvoid unusualSyntax(int *P1, struct XY *P2) {\n  10[P1] = 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: confusing array subscript expression, usually the index is inside the []\n  // CHECK-FIXES: P1[10] = 0;\n\n  10[P2->X] = 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: confusing array subscript expression\n  // CHECK-FIXES: P2->X[10] = 0;\n\n  dostuff(1[\"abc\"]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: confusing array subscript expression\n  // CHECK-FIXES:  dostuff(\"abc\"[1]);\n\n  dostuff(1[ABC]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: confusing array subscript expression\n  // CHECK-FIXES:  dostuff(ABC[1]);\n\n  dostuff(0[0 + ABC]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: confusing array subscript expression\n  // CHECK-FIXES:  dostuff(0[0 + ABC]);\n  // No fixit. Probably the code should be ABC[0]\n}\n\nvoid normalSyntax(int *X) {\n  X[10] = 0;\n}"
+    }
+  ]
+}

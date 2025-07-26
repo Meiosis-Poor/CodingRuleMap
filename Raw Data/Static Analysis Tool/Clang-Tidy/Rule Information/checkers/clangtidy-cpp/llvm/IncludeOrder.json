@@ -1,0 +1,24 @@
+{
+  "name": "IncludeOrder",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - llvm-include-order",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 185,
+  "branches": 26,
+  "apis": 68,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        36,
+        43
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s llvm-include-order %t -- -- -isystem %clang_tidy_headers\n\n// CHECK-MESSAGES: [[@LINE+2]]:1: warning: #includes are not sorted properly\n#include \"j.h\"\n#include \"gtest/foo.h\"\n#include \"gmock/foo.h\"\n#include \"i.h\"\n#include <s.h>\n#include <a.h>\n#include \"llvm/a.h\"\n#include \"clang/b.h\"\n#include \"clang-c/c.h\" // hi\n#include \"llvm-c/d.h\" // -c\n\n// CHECK-FIXES: #include \"j.h\"\n// CHECK-FIXES-NEXT: #include \"i.h\"\n// CHECK-FIXES-NEXT: #include \"clang-c/c.h\" // hi\n// CHECK-FIXES-NEXT: #include \"clang/b.h\"\n// CHECK-FIXES-NEXT: #include \"llvm-c/d.h\" // -c\n// CHECK-FIXES-NEXT: #include \"llvm/a.h\"\n// CHECK-FIXES-NEXT: #include \"gmock/foo.h\"\n// CHECK-FIXES-NEXT: #include \"gtest/foo.h\"\n// CHECK-FIXES-NEXT: #include <a.h>\n// CHECK-FIXES-NEXT: #include <s.h>\n\n#include \"b.h\"\n#ifdef FOO\n#include \"a.h\"\n#endif\n\n// CHECK-FIXES: #include \"b.h\"\n// CHECK-FIXES-NEXT: #ifdef FOO\n// CHECK-FIXES-NEXT: #include \"a.h\"\n// CHECK-FIXES-NEXT: #endif\n\n// CHECK-MESSAGES: [[@LINE+1]]:1: warning: #includes are not sorted properly\n#include \"b.h\"\n#include \"a.h\"\n\n// CHECK-FIXES: #include \"a.h\"\n// CHECK-FIXES-NEXT: #include \"b.h\"\n\n// CHECK-MESSAGES-NOT: [[@LINE+1]]:1: warning: #includes are not sorted properly\n#include \"cross-file-c.h\"\n// This line number should correspond to the position of the #include in cross-file-c.h\n#include \"cross-file-a.h\""
+    }
+  ]
+}

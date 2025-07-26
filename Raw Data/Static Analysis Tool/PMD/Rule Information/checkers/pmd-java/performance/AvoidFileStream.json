@@ -1,0 +1,62 @@
+{
+  "name": "AvoidFileStream",
+  "language": "java",
+  "description": "\nThe FileInputStream and FileOutputStream classes contains a finalizer method which will cause garbage\ncollection pauses.\nSee [JDK-8080225](https://bugs.openjdk.org/browse/JDK-8080225) for details.\n\nThe FileReader and FileWriter constructors instantiate FileInputStream and FileOutputStream,\nagain causing garbage collection issues while finalizer methods are called.\n\n* Use `Files.newInputStream(Paths.get(fileName))` instead of `new FileInputStream(fileName)`.\n* Use `Files.newOutputStream(Paths.get(fileName))` instead of `new FileOutputStream(fileName)`.\n* Use `Files.newBufferedReader(Paths.get(fileName))` instead of `new FileReader(fileName)`.\n* Use `Files.newBufferedWriter(Paths.get(fileName))` instead of `new FileWriter(fileName)`.\n\nPlease note, that the `java.nio` API does not throw a `FileNotFoundException` anymore, instead\nit throws a `NoSuchFileException`. If your code dealt explicitly with a `FileNotFoundException`,\nthen this needs to be adjusted. Both exceptions are subclasses of `IOException`, so catching\nthat one covers both.\n        ",
+  "example": "// these instantiations cause garbage collection pauses, even if properly closed\n\n    FileInputStream fis = new FileInputStream(fileName);\n    FileOutputStream fos = new FileOutputStream(fileName);\n    FileReader fr = new FileReader(fileName);\n    FileWriter fw = new FileWriter(fileName);\n\n    // the following instantiations help prevent Garbage Collection pauses, no finalization\n\n    try(InputStream is = Files.newInputStream(Paths.get(fileName))) {\n    }\n    try(OutputStream os = Files.newOutputStream(Paths.get(fileName))) {\n    }\n    try(BufferedReader br = Files.newBufferedReader(Paths.get(fileName), StandardCharsets.UTF_8)) {\n    }\n    try(BufferedWriter wr = Files.newBufferedWriter(Paths.get(fileName), StandardCharsets.UTF_8)) {\n    }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "instantiating FileInputStream",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\npublic class Foo {\n    public void bar() {\n        FileInputStream is = new FileInputStream(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating java.io.FileInputStream",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        java.io.FileInputStream is = new java.io.FileInputStream(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating FileOutputStream",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileOutputStream;\npublic class Foo {\n    public void bar() {\n        FileOutputStream os = new FileOutputStream(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating java.io.FileOutputStream",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        java.io.FileOutputStream os = new java.io.FileOutputStream(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating FileReader",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileReader;\npublic class Foo {\n    public void bar() {\n        FileReader rd = new FileReader(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating java.io.FileReader",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        java.io.FileReader rd = new java.io.FileReader(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating FileWriter",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileWriter;\npublic class Foo {\n    public void bar() {\n        FileWriter wr = new FileWriter(fileName);\n    }\n}\n        "
+    },
+    {
+      "description": "instantiating java.io.FileWriter",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        java.io.FileWriter wr = new java.io.FileWriter(fileName);\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "name": "BigIntegerInstantiation",
+  "language": "java",
+  "description": "\nDon't create instances of already existing BigInteger (`BigInteger.ZERO`, `BigInteger.ONE`),\nfor Java 1.5 onwards, BigInteger.TEN and BigDecimal (`BigDecimal.ZERO`, `BigDecimal.ONE`, `BigDecimal.TEN`) and\nfor Java 9 onwards `BigInteger.TWO`.\n        ",
+  "example": "BigInteger bi1 = new BigInteger(\"1\");    // reference BigInteger.ONE instead\nBigInteger bi2 = new BigInteger(\"0\");    // reference BigInteger.ZERO instead\nBigInteger bi3;\nbi3 = new BigInteger(\"0\");               // reference BigInteger.ZERO instead\n\nBigDecimal bd1 = new BigDecimal(0);      // reference BigDecimal.ZERO instead\nBigDecimal bd2 = new BigDecimal(\"0.\") ;  // reference BigDecimal.ZERO instead\nBigDecimal bd3 = new BigDecimal(10);     // reference BigDecimal.TEN instead",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 78,
+  "branches": 15,
+  "apis": 6,
+  "test": [
+    {
+      "description": "Fail, BigInteger(1)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.math.BigInteger;\n\npublic class Foo {\n    BigInteger b = new BigInteger(\"1\");\n}\n        "
+    },
+    {
+      "description": "Pass, BigInteger(10)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigInteger;\n\npublic class Foo {\n    BigInteger b = new BigInteger(\"10\");\n}\n        "
+    },
+    {
+      "description": "Fail, BigInteger(0)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.math.BigInteger;\n\npublic class Foo {\n    BigInteger b = new BigInteger(\"0\");\n}\n        "
+    },
+    {
+      "description": "Pass, BigDecimal(i - 1)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\n\npublic class Foo {\n    int i = 42;\n    BigDecimal b = new BigDecimal(i - 1);\n}\n        "
+    },
+    {
+      "description": "Pass, BigInteger(\"10\") and BigDecimal in 1.4 mode",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigInteger;\nimport java.math.BigDecimal;\n\npublic class Foo {\n    void test14() {\n        BigInteger b = new BigInteger(\"10\");\n        BigDecimal d;\n        d = new BigDecimal(0);\n        d = new BigDecimal(1);\n        d = new BigDecimal(10);\n        d = new BigDecimal(\"0\");\n        d = new BigDecimal(\"1\");\n        d = new BigDecimal(\"10\");\n    }\n}\n        "
+    },
+    {
+      "description": "Fail, BigInteger(10) 1.5 mode",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.math.BigInteger;\n\npublic class Foo {\n    BigInteger b = new BigInteger(\"10\");\n}\n        "
+    },
+    {
+      "description": "Fail, BigDecimal(1)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\nimport java.math.BigDecimal;\n\npublic class Foo {\n    BigDecimal b1 = new BigDecimal(1);\n    BigDecimal b2 = new BigDecimal(\"1\");\n}\n        "
+    },
+    {
+      "description": "Fail, BigDecimal(10)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\nimport java.math.BigDecimal;\n\npublic class Foo {\n    BigDecimal b1 = new BigDecimal(10);\n    BigDecimal b2 = new BigDecimal(\"10\");\n}\n        "
+    },
+    {
+      "description": "Fail, BigDecimal(0)",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        4,
+        5,
+        6
+      ],
+      "code": "\nimport java.math.BigDecimal;\n\npublic class Foo {\n    BigDecimal b1 = new BigDecimal(0);\n    BigDecimal b2 = new BigDecimal(\"0\");\n    BigDecimal b3 = new BigDecimal(\"0.\");\n    BigDecimal b4 = new BigDecimal(\"0.0\"); // that's not ZERO - ZERO has no decimals, this has 1 decimal (scale)\n}\n        "
+    },
+    {
+      "description": "Fail, BigInteger(2) with Java9",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.math.BigInteger;\n\npublic class Foo {\n    BigInteger b = new BigInteger(\"2\"); // Use BigInteger.TWO instead\n}\n        "
+    },
+    {
+      "description": "False negative with indirect const string",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.math.BigInteger;\n\nclass Foo {\n    static final String Z = \"0\";\n    static { new BigInteger(Z); }\n\n    public void test(String a) {\n        new BigInteger(a); // not a const value\n    }\n}\n        "
+    },
+    {
+      "description": "[java] BigIntegerInstantiation: False Positive with Java 17 and BigDecimal.TWO #4886",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\n\nclass Foo {\n    static {\n        new BigDecimal(\"2\");\n    }\n}\n"
+    },
+    {
+      "description": "[java] BigIntegerInstantiation: BigDecimal.TWO with Java 19 #4886",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\n\nclass Foo {\n    static {\n        new BigDecimal(\"2\");\n    }\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "name": "OptimizableToArrayCall",
+  "language": "java",
+  "description": "\nCalls to a collection's `toArray(E[])` method should specify a target array of zero size. This allows the JVM\nto optimize the memory allocation and copying as much as possible.\n\nPrevious versions of this rule (pre PMD 6.0.0) suggested the opposite, but current JVM implementations\nperform always better, when they have full control over the target array. And allocation an array via\nreflection is nowadays as fast as the direct allocation.\n\nSee also [Arrays of Wisdom of the Ancients](https://shipilev.net/blog/2016/arrays-wisdom-ancients/)\n\nNote: If you don't need an array of the correct type, then the simple `toArray()` method without an array\nis faster, but returns only an array of type `Object[]`.\n        ",
+  "example": "List<Foo> foos = getFoos();\n\n// much better; this one allows the jvm to allocate an array of the correct size and effectively skip\n// the zeroing, since each array element will be overridden anyways\nFoo[] fooArray = foos.toArray(new Foo[0]);\n\n// inefficient, the array needs to be zeroed out by the jvm before it is handed over to the toArray method\nFoo[] fooArray = foos.toArray(new Foo[foos.size()]);",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Preferred usage (sf #1454)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    {\n        List<Foo> x;\n        x.toArray(new Foo[0]);\n    }\n}\n        "
+    },
+    {
+      "description": "Array dimensioner uses method call, performance issue",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    {\n        List<Foo> x;\n        x.toArray(new Foo[x.size()]);\n    }\n}\n        "
+    },
+    {
+      "description": "Array dimensioner uses variable, performance issue",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    {\n        List<Foo> x;\n        int y = 1;\n        x.toArray(new Foo[y]);\n    }\n}\n        "
+    },
+    {
+      "description": "#937 OptimizableToArrayCall does not catch multilevel method chains",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Test {\n    private Test x;\n    private List<Test> y;\n    public void foo() {\n        x.y.toArray(new Test[0]);\n    }\n}\n        "
+    },
+    {
+      "description": "Array with a literal dimension, zero still better",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void foo() {\n        List<Foo> x;\n        x.toArray(new Foo[10]);\n    }\n}\n        "
+    },
+    {
+      "description": "toArray call without an array should not be flagged",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    public void foo() {\n        List<Foo> x;\n        x.toArray();\n    }\n}\n        "
+    }
+  ]
+}

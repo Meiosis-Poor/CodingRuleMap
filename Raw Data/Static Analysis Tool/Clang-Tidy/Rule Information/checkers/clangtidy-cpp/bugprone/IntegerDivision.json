@@ -1,0 +1,46 @@
+{
+  "name": "IntegerDivision",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-integer-division",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 49,
+  "branches": 1,
+  "apis": 34,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 25,
+      "expected-linenumbers": [
+        13,
+        18,
+        45,
+        60,
+        65,
+        67,
+        70,
+        72,
+        74,
+        84,
+        87,
+        89,
+        91,
+        94,
+        96,
+        98,
+        100,
+        102,
+        104,
+        107,
+        109,
+        111,
+        121,
+        123,
+        125
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-integer-division %t\n\n// Functions expecting a floating-point parameter.\nvoid floatArg(float x) {}\nvoid doubleArg(double x) {}\nvoid longDoubleArg(long double x) {}\n\n// Functions expected to return a floating-point value.\nfloat singleDiv() {\n  int x = -5;\n  int y = 2;\n  return x/y;\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: result of integer division used in\n}\n\ndouble wrongOrder(int x, int y) {\n  return x/y/0.1;\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: result of integer division used in\n}\n\nlong double rightOrder(int x, int y) {\n  return 0.1/x/y; // OK\n}\n\n// Typical mathematical functions.\nfloat sin(float);\ndouble acos(double);\nlong double tanh(long double);\n\nnamespace std {\n  using ::sin;\n}\n\ntemplate <typename T>\nvoid intDivSin(T x) {\n  sin(x);\n}\n\nint intFunc(int);\n\nstruct X {\n  int n;\n  void m() {\n    sin(n / 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:9: warning: result of integer division used in\n  }\n};\n\nvoid integerDivision() {\n  char a = 2;\n  short b = -5;\n  int c = 9784;\n  enum third { x, y, z=2 };\n  third d = z;\n  char e[] = {'a', 'b', 'c'};\n  char f = *(e + 1 / a);\n  bool g = 1;\n\n  sin(1 + c / (2 + 2));\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: result of integer division used in\n  sin(c / (1 + .5));\n  sin((c + .5) / 3);\n\n  sin(intFunc(3) / 5);\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: result of integer division used in\n  acos(2 / intFunc(7));\n// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: result of integer division used in\n\n  floatArg(1 + 2 / 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: result of integer division used in\n  sin(1 + 2 / 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: result of integer division used in\n  intFunc(sin(1 + 2 / 3));\n// CHECK-MESSAGES: :[[@LINE-1]]:19: warning: result of integer division used in\n\n  floatArg(1 + intFunc(1 + 2 / 3));\n  floatArg(1 + 3 * intFunc(a / b));\n\n  1 << (2 / 3);\n  1 << intFunc(2 / 3);\n\n#define M_SIN sin(a / b);\n  M_SIN\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: result of integer division used in\n\n  intDivSin<float>(a / b);\n// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: result of integer division used in\n  intDivSin<double>(c / d);\n// CHECK-MESSAGES: :[[@LINE-1]]:21: warning: result of integer division used in\n  intDivSin<long double>(f / g);\n// CHECK-MESSAGES: :[[@LINE-1]]:26: warning: result of integer division used in\n\n  floatArg(1 / 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: result of integer division used in\n  doubleArg(a / b);\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: result of integer division used in\n  longDoubleArg(3 / d);\n// CHECK-MESSAGES: :[[@LINE-1]]:17: warning: result of integer division used in\n  floatArg(a / b / 0.1);\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: result of integer division used in\n  doubleArg(1 / 3 / 0.1);\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: result of integer division used in\n  longDoubleArg(2 / 3 / 5);\n// CHECK-MESSAGES: :[[@LINE-1]]:17: warning: result of integer division used in\n\n  std::sin(2 / 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: result of integer division used in\n  ::acos(7 / d);\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: result of integer division used in\n  tanh(f / g);\n// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: result of integer division used in\n\n  floatArg(0.1 / a / b);\n  doubleArg(0.1 / 3 / 1);\n\n  singleDiv();\n  wrongOrder(a,b);\n  rightOrder(a,b);\n\n  sin(a / b);\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: result of integer division used in\n  acos(f / d);\n// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: result of integer division used in\n  tanh(c / g);\n// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: result of integer division used in\n\n  sin(3.0 / a);\n  acos(b / 3.14);\n  tanh(3.14 / f / g);\n}"
+    }
+  ]
+}

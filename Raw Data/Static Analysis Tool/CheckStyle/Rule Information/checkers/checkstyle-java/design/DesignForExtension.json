@@ -1,0 +1,97 @@
+{
+  "name": "DesignForExtension",
+  "language": "java",
+  "description": "<div>\n Checks that classes are designed for extension (subclass creation).\n </div>\n\n <p>\n Nothing wrong could be with founded classes.\n This check makes sense only for library projects (not application projects)\n which care of ideal OOP-design to make sure that class works in all cases even misusage.\n Even in library projects this check most likely will find classes that are designed for extension\n by somebody. User needs to use suppressions extensively to got a benefit from this check,\n and keep in suppressions all confirmed/known classes that are deigned for inheritance\n intentionally to let the check catch only new classes, and bring this to team/user attention.\n </p>\n\n <p>\n ATTENTION: Only user can decide whether a class is designed for extension or not.\n The check just shows all classes which are possibly designed for extension.\n If smth inappropriate is found please use suppression.\n </p>\n\n <p>\n ATTENTION: If the method which can be overridden in a subclass has a javadoc comment\n (a good practice is to explain its self-use of overridable methods) the check will not\n rise a violation. The violation can also be skipped if the method which can be overridden\n in a subclass has one or more annotations that are specified in ignoredAnnotations\n option. Note, that by default @Override annotation is not included in the\n ignoredAnnotations set as in a subclass the method which has the annotation can also be\n overridden in its subclass.\n </p>\n\n <p>\n Problem is described at \"Effective Java, 2nd Edition by Joshua Bloch\" book, chapter\n \"Item 17: Design and document for inheritance or else prohibit it\".\n </p>\n\n <p>\n Some quotes from book:\n </p>\n <blockquote>The class must document its self-use of overridable methods.\n By convention, a method that invokes overridable methods contains a description\n of these invocations at the end of its documentation comment. The description\n begins with the phrase “This implementation.”\n </blockquote>\n <blockquote>\n The best solution to this problem is to prohibit subclassing in classes that\n are not designed and documented to be safely subclassed.\n </blockquote>\n <blockquote>\n If a concrete class does not implement a standard interface, then you may\n inconvenience some programmers by prohibiting inheritance. If you feel that you\n must allow inheritance from such a class, one reasonable approach is to ensure\n that the class never invokes any of its overridable methods and to document this\n fact. In other words, eliminate the class’s self-use of overridable methods entirely.\n In doing so, you’ll create a class that is reasonably safe to subclass. Overriding a\n method will never affect the behavior of any other method.\n </blockquote>\n\n <p>\n The check finds classes that have overridable methods (public or protected methods\n that are non-static, not-final, non-abstract) and have non-empty implementation.\n </p>\n\n <p>\n Rationale: This library design style protects superclasses against being broken\n by subclasses. The downside is that subclasses are limited in their flexibility,\n in particular they cannot prevent execution of code in the superclass, but that\n also means that subclasses cannot corrupt the state of the superclass by forgetting\n to call the superclass's method.\n </p>\n\n <p>\n More specifically, it enforces a programming style where superclasses provide\n empty \"hooks\" that can be implemented by subclasses.\n </p>\n\n <p>\n Example of code that cause violation as it is designed for extension:\n </p>\n <pre>\n public abstract class Plant {\n   private String roots;\n   private String trunk;\n\n   protected void validate() {\n     if (roots == null) throw new IllegalArgumentException(\"No roots!\");\n     if (trunk == null) throw new IllegalArgumentException(\"No trunk!\");\n   }\n\n   public abstract void grow();\n }\n\n public class Tree extends Plant {\n   private List leaves;\n\n   &#64;Overrides\n   protected void validate() {\n     super.validate();\n     if (leaves == null) throw new IllegalArgumentException(\"No leaves!\");\n   }\n\n   public void grow() {\n     validate();\n   }\n }\n </pre>\n\n <p>\n Example of code without violation:\n </p>\n <pre>\n public abstract class Plant {\n   private String roots;\n   private String trunk;\n\n   private void validate() {\n     if (roots == null) throw new IllegalArgumentException(\"No roots!\");\n     if (trunk == null) throw new IllegalArgumentException(\"No trunk!\");\n     validateEx();\n   }\n\n   protected void validateEx() { }\n\n   public abstract void grow();\n }\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 174,
+  "branches": 24,
+  "apis": 46,
+  "test": [
+    {
+      "description": "Auto test from InputDesignForExtension.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        46,
+        103
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic abstract class InputDesignForExtension\n{\n    public interface InterfaceOK\n    {\n        void implicitlyAbstract();\n    }\n    final class ClassOK\n    {\n        protected void finalThroughClassDef()\n        {\n            System.identityHashCode(\"no way to override\");\n        }\n    }\n    protected void nonFinalButEmpty()\n    {\n    }\n    public void nonFinalButEmpty2()\n    {\n    }\n    private void aPrivateMethod()\n    {\n        System.identityHashCode(\"no way to override\");\n    }\n    protected abstract void nonFinalButAbstract();\n    protected void doh() \n    {\n        System.identityHashCode(\"nonempty and overriding possible\");\n    }\n    public final void aFinalMethod()\n    {\n    System.identityHashCode(\"no way to override\");\n    }\n    public static void aStaticMethod()\n    {\n    System.identityHashCode(\"no way to override\");\n    }\n    private class MyComparator implements java.util.Comparator\n    {\n        public int compare(Object o1, Object o2)\n        {\n            if (o1.hashCode() > o2.hashCode()) {\n                return -1;\n            }\n            else {\n                return 1;\n            }\n        }\n    }\n    public final class aFinalClass\n    {\n        public void someMethod()\n        {\n        System.identityHashCode(\"nonempty and overriding is possible\");\n        }\n    }\n    public class nonFinalClass\n    {\n    private nonFinalClass(){}\n        public void someMethod()\n        {\n        System.identityHashCode(\"nonempty and overriding is possible\");\n        }\n    }\n    public class anotherNonFinalClass\n    {\n    public anotherNonFinalClass(){}\n        public void someMethod() \n        {\n        System.identityHashCode(\"nonempty and overriding is possible\");\n        }\n    }\n    public enum TEnum\n    {\n        FIRST,\n        SECOND;\n        public int value()\n        {\n            return 3;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputDesignForExtensionIgnoredAnnotations.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        37,
+        147,
+        152,
+        167,
+        171
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic class InputDesignForExtensionIgnoredAnnotations {\n    @Override\n    public int hashCode() {\n        return super.hashCode();\n    }\n    @Override\n    public boolean equals(Object obj) {\n        return super.equals(obj);\n    }\n    @Deprecated\n    public void testFoo() throws Exception {\n        final int a = 5;\n        final int b = 6;\n    }\n    @Deprecated\n    public String toString() {\n        return super.toString();\n    }\n    public int foo1() {return  1;} \n    public int foo2() {return 2;}\n    public void foo3() {}\n    public class C extends B {\n        @Deprecated\n        @Override\n        public void testFoo() {\n            super.testFoo();\n        }\n    }\n    public class B {\n        public void testFoo() {\n            final int a = 6;\n        }\n    }\n    @Deprecated\n    public void foo4() {return;}\n    @Deprecated\n    public void foo5() {return;}\n    @java.lang.Deprecated\n    public void foo6() {return;}\n    @Deprecated\n    public void foo7() {\n        return;\n    }\n    @Deprecated\n    public void foo8() {\n        return;\n    }\n    @Deprecated\n    public void foo9() {\n        return;\n    }\n    @Deprecated\n    public void foo10() {\n        return;\n    }\n    @Deprecated\n    public int foo11() {\n        return 1;\n    }\n    @Deprecated\n    public int foo12() {\n        return 1;\n    }\n    @Deprecated\n    public void foo13() { }\n    @Deprecated\n    public void foo14() { }\n    @Deprecated\n    public void foo15() {  }\n    @Deprecated\n    public void foo16() { }\n    @Deprecated\n    @InputDesignForExtensionsLocalAnnotations.ClassRule\n    public void foo17() { return; }\n    @Deprecated\n    @InputDesignForExtensionsLocalAnnotations.ClassRule\n    public void foo18() { return; }\n    @Deprecated\n    @InputDesignForExtensionsLocalAnnotations.ClassRule\n    public void foo19() { return; }\n    @Deprecated\n    @InputDesignForExtensionsLocalAnnotations.ClassRule\n    public void foo20() { return; }\n    @InputDesignForExtensionsLocalAnnotations.ClassRule \n    public void foo21() { return; }\n    private int age;\n    @Inject \n    public void setAge(int age) {\n        this.age = age;\n    }\n    public @interface Inject { }\n    public @MyAnnotation void foo22() {\n        foo1();\n    }\n    @MyAnnotation public void foo23() {\n        foo1();\n    }\n    public void foo24(@MyAnnotation int a) { \n        foo1();\n    }\n    <T> T dontUse4() { \n        return null;\n    }\n    public @interface MyAnnotation { }\n}\nclass InputDesignForExtensionsLocalAnnotations {\n    @interface Rule {}\n    @interface ClassRule {}\n}"
+    },
+    {
+      "description": "Auto test from InputDesignForExtensionInterfaceMemberScopeIsPublic.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic interface InputDesignForExtensionInterfaceMemberScopeIsPublic {\n    class Inner {\n        public String getProperty() { \n            return null;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputDesignForExtensionNativeMethods.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        27
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic class InputDesignForExtensionNativeMethods {\n    public native void foo1(); \n    public static native void foo2();\n    protected static native void foo3();\n    protected static final native void foo4();\n    public native void foo5();\n    public native void foo6(); \n    @Deprecated\n    public native void foo7();\n}"
+    },
+    {
+      "description": "Auto test from InputDesignForExtensionOverridableMethods.java",
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        13,
+        36,
+        41,
+        48,
+        55,
+        60,
+        67,
+        74,
+        95,
+        100,
+        110,
+        115,
+        121,
+        134,
+        156,
+        168,
+        174,
+        196,
+        203
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic class InputDesignForExtensionOverridableMethods {\n    public class A {\n        public int foo1(int a, int b) {return a + b;} \n        public void foo2() { }\n        public void foo3(int a, int b) { }\n        private int foo4(int a, int b) {return a + b;}\n        public void foo5() {\n        }\n        public void foo6() {\n        }\n        public void foo7() {\n        }\n        public int foo8(int a, int b) { \n            return a + b;\n        }\n        public int foo9(int a, int b) { \n            return a + b;\n        }\n        public int foo10(int a, int b) { \n            return a + b;\n        }\n        public int foo11(int a, int b) { \n            return a + b;\n        }\n        public int foo12(int a, int b) { \n            return a + b;\n        }\n        public int foo13(int a, int b) { \n            return a + b;\n        }\n        protected int foo14(int a) {return a -1;} \n        public final int foo15(int a) {return a - 2;}\n        protected final int foo16(int a) {return a - 2;}\n        protected int foo17(int a) {return a -1;}\n        public void foo18() { }\n        public int foo19() {return 1;}\n        public final int foo20(int a) {return a - 2;}\n        protected final int foo21(int a) {return a - 2;}\n        public void foo22() { \n            return;\n        }\n        public void foo23() { \n            return;\n        }\n        public void foo24() {}\n        public void foo25() { \n            return;\n        }\n        @Deprecated \n        public void foo26() {\n            return;\n        }\n        @Deprecated \n        public void foo27() {\n            return;\n        }\n        @Deprecated\n        public void foo28() {\n            return;\n        }\n        @Deprecated \n        public void foo29() {\n            return;\n        }\n        public int max(int a, int b) {\n            return Math.max(a, b);\n        }\n        public int foo30() {\n            return 1;\n        }\n        public int foo31() { \n            return 1;\n        }\n        public int foo32() {\n            return 1;\n        }\n        @Deprecated \n        public int foo33() {\n            return 1;\n        }\n        @Deprecated \n        public int foo34() {\n            return 1;\n        }\n        @Deprecated\n        public void foo35() { }\n        @Deprecated\n        public void foo36() { }\n        @Deprecated\n        public void foo37() {  }\n        @Deprecated\n        public void foo38() { }\n        @Deprecated  \n        public void foo39() {return; }\n        void foo40() { \n        }\n        void foo41() { \n            return;\n        }\n        void foo42() { \n        }\n        void foo43() {\n            return;\n        }\n        void foo44() {\n            return;\n        }\n        void foo45() {\n            return;\n        }\n        public boolean isGreaterThan(int indent) {\n            return indent == 2;\n        }\n        public void setProcessJavadoc(boolean value) {\n            value = true;\n        }\n    }\n    public final class B {\n        public int foo1(int a, int b) {return a + b;}\n        protected int foo2(int a, int b) {return a + b;}\n        public final int foo3(int a, int b) {return a + b;}\n        protected final int foo4(int a, int b) {return a + b;}\n    }\n    public abstract class C {\n        public abstract void foo1(int a);\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputDesignForExtensionRequiredJavadocPhrase.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        38,
+        45,
+        48,
+        64
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic class InputDesignForExtensionRequiredJavadocPhrase {\n    public int foo1(int a, int b) {return a + b;}  \n    public int foo2(int a, int b) {return a + b;}  \n    public int foo3(int a, int b) {return a + b;}  \n    public int foo4(int a, int b) {return a + b;}  \n    public int foo5(int a, int b) {return a + b;} \n    public final int foo6(int a) {return a - 2;} \n    protected final int foo7(int a) {return a - 2;} \n    public int foo8(int a) {return a - 2;} \n    public int foo9(int a, int b) {return a + b;} \n    @Deprecated\n    protected final int foo10(int a) {return a - 2;} \n    public int foo11(int a, int b) {return a + b;} \n    public int foo12(int a, int b) {  \n        return a + b;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputDesignForExtensionRequiredJavadocPhraseMultiLine.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        18
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.designforextension;\npublic class InputDesignForExtensionRequiredJavadocPhraseMultiLine {\n    public int foo1(int a, int b) {\n        return a * b;\n    }\n    public int foo2(int a, int b) {  \n        return a + b;\n    }\n}"
+    }
+  ]
+}

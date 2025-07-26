@@ -1,0 +1,26 @@
+{
+  "name": "DuplicateInclude",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-duplicate-include",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 117,
+  "branches": 9,
+  "apis": 46,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        8,
+        19,
+        30,
+        43,
+        52
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-duplicate-include %t -- -- -isystem %S/Inputs/duplicate-include/system -I %S/Inputs/duplicate-include\n\nint a;\n#include <string.h>\nint b;\n#include <string.h>\nint c;\n// CHECK-MESSAGES: :[[@LINE-2]]:1: warning: duplicate include [readability-duplicate-include]\n// CHECK-FIXES:      {{^int a;$}}\n// CHECK-FIXES-NEXT: {{^#include <string.h>$}}\n// CHECK-FIXES-NEXT: {{^int b;$}}\n// CHECK-FIXES-NEXT: {{^int c;$}}\n\nint d;\n#include <iostream>\nint e;\n#include <iostream> // extra stuff that will also be removed\nint f;\n// CHECK-MESSAGES: :[[@LINE-2]]:1: warning: duplicate include\n// CHECK-FIXES:      {{^int d;$}}\n// CHECK-FIXES-NEXT: {{^#include <iostream>$}}\n// CHECK-FIXES-NEXT: {{^int e;$}}\n// CHECK-FIXES-NEXT: {{^int f;$}}\n\nint g;\n#include \"duplicate-include.h\"\nint h;\n#include \"duplicate-include.h\"\nint i;\n// CHECK-MESSAGES: :[[@LINE-2]]:1: warning: duplicate include\n// CHECK-FIXES:      {{^int g;$}}\n// CHECK-FIXES-NEXT: {{^#include \"duplicate-include.h\"$}}\n// CHECK-FIXES-NEXT: {{^int h;$}}\n// CHECK-FIXES-NEXT: {{^int i;$}}\n\n#include <types.h>\n\nint j;\n#include <sys/types.h>\nint k;\n#include <sys/types.h>\nint l;\n// CHECK-MESSAGES: :[[@LINE-2]]:1: warning: duplicate include\n// CHECK-FIXES:      {{^int j;$}}\n// CHECK-FIXES-NEXT: {{^#include <sys/types.h>$}}\n// CHECK-FIXES-NEXT: {{^int k;$}}\n// CHECK-FIXES-NEXT: {{^int l;$}}\n\nint m;\n        #          include             <string.h>  // lots of space\nint n;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: duplicate include\n// CHECK-FIXES:      {{^int m;$}}\n// CHECK-FIXES-NEXT: {{^int n;$}}\n\n// defining a macro in the main file resets the included file cache\n#define ARBITRARY_MACRO\nint o;\n#include <sys/types.h>\nint p;\n// CHECK-FIXES:      {{^int o;$}}\n// CHECK-FIXES-NEXT: {{^#include <sys/types.h>$}}\n// CHECK-FIXES-NEXT: {{^int p;$}}\n\n// undefining a macro resets the cache\n#undef ARBITRARY_MACRO\nint q;\n#include <sys/types.h>\nint r;\n// CHECK-FIXES:      {{^int q;$}}\n// CHECK-FIXES-NEXT: {{^#include <sys/types.h>$}}\n// CHECK-FIXES-NEXT: {{^int r;$}}\n\nnamespace Issue_87303 {\n#define RESET_INCLUDE_CACHE\n// Expect no warnings\n\n#define MACRO_FILENAME \"duplicate-include.h\"\n#include MACRO_FILENAME\n#include \"duplicate-include.h\"\n\n#define MACRO_FILENAME_2 <duplicate-include2.h>\n#include <duplicate-include2.h>\n#include MACRO_FILENAME_2\n\n#undef RESET_INCLUDE_CACHE\n} // Issue_87303"
+    }
+  ]
+}

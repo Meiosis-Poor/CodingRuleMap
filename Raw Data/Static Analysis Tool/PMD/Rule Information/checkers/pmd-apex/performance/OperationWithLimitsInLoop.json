@@ -1,0 +1,214 @@
+{
+  "name": "OperationWithLimitsInLoop",
+  "language": "apex",
+  "description": "\n            Database class methods, DML operations, SOQL queries, SOSL queries, Approval class methods, Email sending, async scheduling or queueing within loops can cause governor limit exceptions. Instead, try to batch up the data into a list and invoke the operation once on that list of data outside the loop.\n        ",
+  "example": "public class Something {\n    public void databaseMethodInsideOfLoop(List<Account> accounts) {\n        for (Account a : accounts) {\n            Database.insert(a);\n        }\n    }\n\n    public void dmlInsideOfLoop() {\n        for (Integer i = 0; i < 151; i++) {\n            Account account;\n            // ...\n            insert account;\n        }\n    }\n\n    public void soqlInsideOfLoop() {\n        for (Integer i = 0; i < 10; i++) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n    }\n\n    public void soslInsideOfLoop() {\n        for (Integer i = 0; i < 10; i++) {\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n        }\n    }\n\n    public void messageInsideOfLoop() {\n        for (Integer i = 0; i < 10; i++) {\n            Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();\n            Messaging.sendEmail(new Messaging.SingleEmailMessage[]{email});\n        }\n    }\n\n    public void approvalInsideOfLoop(Account[] accs) {\n        for (Integer i = 0; i < 10; i++) {\n            Account acc = accs[i];\n            Approval.ProcessSubmitRequest req = new Approval.ProcessSubmitRequest();\n            req.setObjectId(acc.Id);\n            Approval.process(req);\n            Approval.lock(acc);\n            Approval.unlock(acc);\n        }\n    }\n\n    public void asyncInsideOfLoop() {\n        for (Integer i = 0; i < 10; i++) {\n            System.enqueueJob(new MyQueueable());\n            System.schedule('x', '0 0 0 1 1 ?', new MySchedule());\n            System.scheduleBatch(new MyBatch(), 'x', 1);\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 133,
+  "branches": 18,
+  "apis": 12,
+  "test": [
+    {
+      "description": "Problematic Dml Statement in for each",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        for(Integer i : new List<Integer>{1,2}) {\n            Account account = new Account();\n            insert account;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Dml Statement in for loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        for(;;) {\n            Account account = new Account();\n            insert account;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Dml Statement in While loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        while(true) {\n            Account account = new Account();\n            insert account;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Dml Statement in do loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        do {\n            Account account = new Account();\n            insert account;\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Best Practice: Batch up data into a list and invoke your DML once on that list of data.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        List<Account> accounts = new List<Account>();\n\n        while(true) {\n            Account account = new Account();\n            accounts.add(account);\n        }\n\n        insert accounts;\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Database Statement in for each",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        for(Integer i : new List<Integer>{1,2}) {\n            Account account = new Account();\n            Database.insert(new Account[]{account}, true);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Database Statement in for loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        for(;;) {\n            Account account = new Account();\n            Database.insert(new Account[]{account}, true);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Database Statement in While loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        while(true) {\n            Account account = new Account();\n            Database.insert(new Account[]{account}, true);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Database Statement in do loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        do {\n            Account account = new Account();\n            Database.insert(new Account[]{account}, true);\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Best Practice: Batch up data into a list and invoke your Database method once on that list of data.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        List<Account> accounts = new List<Account>();\n\n        while(true) {\n            Account account = new Account();\n            accounts.add(account);\n        }\n\n        Database.insert(accounts, true);\n    }\n}\n        "
+    },
+    {
+      "description": "Return database method call is even ok in loop.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Database.SaveResult[] foo() {\n        List<Account> accounts = new List<Account>();\n\n        while(true) {\n            Account account = new Account();\n            return Database.insert(accounts, true);\n        }\n\n    }\n}\n        "
+    },
+    {
+      "description": "Database statement as foreach iterator is allowed.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        for (SObject sobject : Database.query('SELECT Id, Name FROM Account')) {\n            System.debug(sobject.id);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Soql in for each",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(Integer i : new List<Integer>{1,2}) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Soql in for loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(;;) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Soql in While loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        while(true) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Soql in do loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        do {\n            List<Account> accounts = [SELECT Id FROM Account];\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Multiple problematic Soql expressions",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        do {\n            List<Account> accounts = [SELECT Id FROM Account];\n            List<Contact> accounts = [SELECT Id FROM Contact];\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Return Soql is even ok in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public List<Account> test1() {\n        for(;;) {\n            return [SELECT Id FROM Account];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#29 SOQL For Loops should not throw an Avoid Soql queries inside loops issue",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(Account a : [SELECT Id FROM Account]) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[apex] AvoidSoqlInLoops false positive for SOQL with in For-Loop #2598",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for(NAMESPACE__CustomObject__c customObject : DatabaseUtility.query([Select Id FROM NAMESPACE__CustomObject__c where id IN :setIds])) // <-- violation is reported here\n        {\n            // …\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Sosl in for each",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(Integer i : new List<Integer>{1,2}) {\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Sosl in for loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(;;) {\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Sosl in While loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        while(true) {\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic Sosl in do loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        do {\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Multiple problematic Sosl expressions",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        do {\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n            List<List<SObject>> searchList = [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name)];\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Return Sosl is even ok in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public List<Account> test1() {\n        for(;;) {\n            return [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity, Lead];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#29 SOSL For Loops should not throw an Avoid Sosl queries inside loops issue",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        for(List<sObject> a : [FIND 'map*' IN ALL FIELDS RETURNING Account (Id, Name), Contact, Opportunity]) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic approval actions in loop",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        Account a = new Account();\n        Approval.ProcessSubmitRequest req = new Approval.ProcessSubmitRequest();\n        req.setObjectId(a.id);\n        do {\n            Approval.process(req);\n            Approval.unlock(a);\n            Approval.lock(a);\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Best Practice: Batch up data into a list and invoke your Approval actions once on that list of data.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        List<Account> accounts = new List<Account>();\n        List<Approval.ProcessSubmitRequest> reqs = new List<Approval.ProcessSubmitRequest>();\n        while(true) {\n            Account account = new Account();\n            accounts.add(account);\n\n            Approval.ProcessSubmitRequest req = new Approval.ProcessSubmitRequest();\n            req.setObjectId(account.id);\n            reqs.add(req);\n        }\n\n        Approval.process(reqs, true);\n        Approval.unlock(accounts);\n        Approval.lock(accounts);\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic messaging actions in loop",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        \n        Contact cont = new Contact();\n        Account acc = new Account();\n\n        do {\n            Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();\n            List<Messaging.RenderEmailTemplateBodyResult> renderedRes = Messaging.renderEmailTemplate(cont.Id, acc.Id, new List<String>());\n            Messaging.SingleEmailMessage renderedMail = Messaging.renderStoredEmailTemplate(null, cont.Id, acc.Id);\n\n            Messaging.sendEmail(new Messaging.SingleEmailMessage[]{email});\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic system actions in loop",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n\n        do {\n            System.enqueueJob(new MyQueueable());\n            System.schedule('x', '0 0 0 1 1 ?', new MySchedule());\n            System.scheduleBatch(new MyBatch(), 'x', 1);\n            System.debug(LoggingLevel.INFO, 'X');\n            System.assertEquals(1, 1);\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Problematic system.runAs action in loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n\n        do {\n            System.runAs(new User()) {\n                System.debug(LoggingLevel.INFO, 'X');\n                System.assertEquals(1, 1);\n            }\n\n        } while(true);\n    }\n}\n        "
+    },
+    {
+      "description": "SOQL inside loop in trigger (#5138)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n// from https://github.com/certinia/orizuru-sample-app/blob/master/src/apex/force-app/main/default/triggers/DataGeneratorStepTrigger.trigger\ntrigger DataGeneratorStepTrigger on DataGeneratorStep__e (after insert) {\n\n    List<GenerateDataTask__c> tasks = new List<GenerateDataTask__c>();\n    for (DataGeneratorStep__e event : Trigger.New) {\n        GenerateDataTask__c task = [SELECT Id, TaskStatus__c FROM GenerateDataTask__c WHERE Id=:event.SObjectId__c LIMIT 1];\n\n        if (task.TaskStatus__c != 'CREATED_ORDERS') {\n            task.TaskStatus__c = event.Status__c;\n            tasks.add(task);\n        }\n    }\n\n    update tasks;\n}\n"
+    }
+  ]
+}

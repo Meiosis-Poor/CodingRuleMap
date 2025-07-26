@@ -1,0 +1,47 @@
+{
+  "name": "ApexUnitTestClassShouldHaveRunAs",
+  "language": "apex",
+  "description": "\nApex unit tests should include at least one runAs method.  This makes the tests more robust, and independent from the \nuser running it.\n        ",
+  "example": "@isTest\nprivate class TestRunAs {\n   public static testMethod void testRunAs() {\n        // Setup test data\n        // Create a unique UserName\n        String uniqueUserName = 'standarduser' + DateTime.now().getTime() + '@testorg.com';\n        // This code runs as the system user\n        Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];\n        User u = new User(Alias = 'standt', Email='standarduser@testorg.com',\n        EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US',\n        LocaleSidKey='en_US', ProfileId = p.Id,\n        TimeZoneSidKey='America/Los_Angeles',\n         UserName=uniqueUserName);\n\n        System.runAs(u) {\n              // The following code runs as user 'u'\n              System.debug('Current User: ' + UserInfo.getUserName());\n              System.debug('Current Profile: ' + UserInfo.getProfileId());\n          }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 38,
+  "branches": 4,
+  "apis": 3,
+  "test": [
+    {
+      "description": "Problematic apex unit test - no runAs calls",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n         \n@isTest\nprivate class TestRunAs {\n\n   public static testMethod void testNoRunAs() {\n\n      Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];\n      User u2 = new User(Alias = 'newUser', Email='newuser@testorg.com',\n         EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US',\n         LocaleSidKey='en_US', ProfileId = p.Id,\n         TimeZoneSidKey='America/Los_Angeles', UserName='newuser@testorg.com');\n      System.debug('Current User: ' + UserInfo.getUserName());\n   }\n}\n        \n      "
+    },
+    {
+      "description": "ApexUnitTestClassShouldHaveRunAs assumes APEX is case sensitive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n         \n@isTest\nprivate class TestRunAs {\n\n   @isTest\n   static void testIgnoreCase() {\n\n      Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];\n      User usr = new User(Alias = 'newUser', Email='newuser@testorg.com',\n         EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US',\n         LocaleSidKey='en_US', ProfileId = p.Id,\n         TimeZoneSidKey='America/Los_Angeles', UserName='newuser@testorg.com');\n\n      SYSTEM.runAs(usr) {\n         System.debug('Current User: ' + UserInfo.getUserName());\n      }\n   }\n}\n     \n      "
+    },
+    {
+      "description": "ApexUnitTestClassShouldHaveRunAs normal test case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n         \n@isTest\nprivate class TestRunAs {\n\n   public static testMethod void testIgnoreCase() {\n\n      Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];\n      User usr = new User(Alias = 'newUser', Email='newuser@testorg.com',\n         EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US',\n         LocaleSidKey='en_US', ProfileId = p.Id,\n         TimeZoneSidKey='America/Los_Angeles', UserName='newuser@testorg.com');\n\n      System.runAs(usr) {\n         System.debug('Current User: ' + UserInfo.getUserName());\n      }\n   }\n}\n        \n      "
+    },
+    {
+      "description": "ApexUnitTestClassShouldHaveRunAs: Verify use of custom class, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        7
+      ],
+      "code": "\n         \n@isTest\npublic class RunAs {\n   public static testMethod void testRunAs() {\n      MyRunAs.runAs(someUser);\n   }\n\n   public static testMethod void testLocalVerify() {\n      verifyState();\n   }\n\n   private static void verifyState() {\n   }\n}\n        \n      "
+    },
+    {
+      "description": "ApexUnitTestClassShouldHaveRunAs  - no runAs calls outside a test class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n         \n\nprivate class RunAs {\n\n public static void noRunAs() {\n\n    Profile p = [SELECT Id FROM Profile WHERE Name='Standard User'];\n    User u2 = new User(Alias = 'newUser', Email='newuser@testorg.com',\n       EmailEncodingKey='UTF-8', LastName='Testing', LanguageLocaleKey='en_US',\n       LocaleSidKey='en_US', ProfileId = p.Id,\n       TimeZoneSidKey='America/Los_Angeles', UserName='newuser@testorg.com');\n    System.debug('Current User: ' + UserInfo.getUserName());\n }\n}\n      \n      "
+    }
+  ]
+}

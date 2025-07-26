@@ -1,0 +1,28 @@
+{
+  "name": "SpecialMemberFunctions",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-special-member-functions",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 251,
+  "branches": 27,
+  "apis": 141,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        6,
+        11,
+        16,
+        21,
+        26,
+        31,
+        98
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-special-member-functions %t\n\nclass DefinesDestructor {\n  ~DefinesDestructor();\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'DefinesDestructor' defines a destructor but does not define a copy constructor, a copy assignment operator, a move constructor or a move assignment operator [cppcoreguidelines-special-member-functions]\n\nclass DefinesDefaultedDestructor {\n  ~DefinesDefaultedDestructor() = default;\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'DefinesDefaultedDestructor' defines a default destructor but does not define a copy constructor, a copy assignment operator, a move constructor or a move assignment operator [cppcoreguidelines-special-member-functions]\n\nclass DefinesCopyConstructor {\n  DefinesCopyConstructor(const DefinesCopyConstructor &);\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'DefinesCopyConstructor' defines a copy constructor but does not define a destructor, a copy assignment operator, a move constructor or a move assignment operator [cppcoreguidelines-special-member-functions]\n\nclass DefinesCopyAssignment {\n  DefinesCopyAssignment &operator=(const DefinesCopyAssignment &);\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'DefinesCopyAssignment' defines a copy assignment operator but does not define a destructor, a copy constructor, a move constructor or a move assignment operator [cppcoreguidelines-special-member-functions]\n\nclass DefinesMoveConstructor {\n  DefinesMoveConstructor(DefinesMoveConstructor &&);\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'DefinesMoveConstructor' defines a move constructor but does not define a destructor, a copy constructor, a copy assignment operator or a move assignment operator [cppcoreguidelines-special-member-functions]\n\nclass DefinesMoveAssignment {\n  DefinesMoveAssignment &operator=(DefinesMoveAssignment &&);\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'DefinesMoveAssignment' defines a move assignment operator but does not define a destructor, a copy constructor, a copy assignment operator or a move constructor [cppcoreguidelines-special-member-functions]\nclass DefinesNothing {\n};\n\nclass DefinesEverything {\n  DefinesEverything(const DefinesEverything &);\n  DefinesEverything &operator=(const DefinesEverything &);\n  DefinesEverything(DefinesEverything &&);\n  DefinesEverything &operator=(DefinesEverything &&);\n  ~DefinesEverything();\n};\n\nclass DeletesEverything {\n  DeletesEverything(const DeletesEverything &) = delete;\n  DeletesEverything &operator=(const DeletesEverything &) = delete;\n  DeletesEverything(DeletesEverything &&) = delete;\n  DeletesEverything &operator=(DeletesEverything &&) = delete;\n  ~DeletesEverything() = delete;\n};\n\nclass DeletesCopyDefaultsMove {\n  DeletesCopyDefaultsMove(const DeletesCopyDefaultsMove &) = delete;\n  DeletesCopyDefaultsMove &operator=(const DeletesCopyDefaultsMove &) = delete;\n  DeletesCopyDefaultsMove(DeletesCopyDefaultsMove &&) = default;\n  DeletesCopyDefaultsMove &operator=(DeletesCopyDefaultsMove &&) = default;\n  ~DeletesCopyDefaultsMove() = default;\n};\n\ntemplate <typename T>\nstruct TemplateClass {\n  TemplateClass() = default;\n  TemplateClass(const TemplateClass &);\n  TemplateClass &operator=(const TemplateClass &);\n  TemplateClass(TemplateClass &&);\n  TemplateClass &operator=(TemplateClass &&);\n  ~TemplateClass();\n};\n\n// Multiple instantiations of a class template will trigger multiple matches for defined special members.\n// This should not cause problems.\nTemplateClass<int> InstantiationWithInt;\nTemplateClass<double> InstantiationWithDouble;\n\n#define DEFINE_DESTRUCTOR_ONLY(ClassName) \\\n  class ClassName { \\\n    ~ClassName(); \\\n  };\n\n#define DEFINE_COPY_CTOR_ONLY(ClassName) \\\n  class ClassName { \\\n    ClassName(const ClassName &); \\\n  };\n\n#define DEFINE_CLASS_WITH_DTOR(ClassName) \\\n  class ClassName { \\\n    ~ClassName(); \\\n  };\n\nDEFINE_DESTRUCTOR_ONLY(MacroDefinedClass1)\nDEFINE_COPY_CTOR_ONLY(MacroDefinedClass2)\nDEFINE_CLASS_WITH_DTOR(MacroDefinedClass3)\n\n// Test partial macro expansion\n#define CLASS_NAME MacroNamedClass\nclass CLASS_NAME {\n  ~MacroNamedClass();\n};\n// CHECK-MESSAGES: [[@LINE-3]]:7: warning: class 'MacroNamedClass' defines a destructor but does not define a copy constructor, a copy assignment operator, a move constructor or a move assignment operator"
+    }
+  ]
+}

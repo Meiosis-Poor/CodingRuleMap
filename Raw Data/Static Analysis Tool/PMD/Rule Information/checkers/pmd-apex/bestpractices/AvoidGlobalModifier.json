@@ -1,0 +1,60 @@
+{
+  "name": "AvoidGlobalModifier",
+  "language": "apex",
+  "description": "\nGlobal classes should be avoided (especially in managed packages) as they can never be deleted or changed in signature. Always check twice if something needs to be global.\nMany interfaces (e.g. Batch) required global modifiers in the past but don't require this anymore. Don't lock yourself in.\n        ",
+  "example": "global class Unchangeable {\n    global UndeletableType unchangable(UndeletableType param) {\n        // ...\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 68,
+  "branches": 16,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Global class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nglobal class Foo {\n\n}\n        "
+    },
+    {
+      "description": "Global interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nglobal interface Foo {\n\n}\n        "
+    },
+    {
+      "description": "Global method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nglobal class Foo {\n    global Integer bar() {\n       // Note, the rule reports the whole class, since that's enough:\n       // if a member is global, that class has to be global as well to be valid apex.\n       // See also https://github.com/pmd/pmd/issues/2298\n    }\n}\n        "
+    },
+    {
+      "description": "Global inner interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nglobal class Foo {\n    global interface Bar {\n       // Note, the rule reports the whole class, since that's enough:\n       // if a member is global, that class has to be global as well to be valid apex.\n       // See also https://github.com/pmd/pmd/issues/2298\n    }\n}\n        "
+    },
+    {
+      "description": "#1348 [apex] AvoidGlobalModifierRule gives warning even when it's a REST webservice - false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@RestResource(urlMapping = '/partners/submit/*')\nglobal class Generic_LoanCreation {\n    @HttpPost\n    global static void createLoanApplication() {\n    }\n}\n        "
+    },
+    {
+      "description": "#1348 [apex] AvoidGlobalModifierRule gives warning even when it's a SOAP webservice - false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nglobal class Generic_LoanCreation {\n    webservice static void createLoanApplication() {\n    }\n}\n        "
+    },
+    {
+      "description": "Simple public and non-global class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class myOuterClass {\n   // Additional myOuterClass code here\n   class myInnerClass {\n     // myInnerClass code here\n   }\n\n   void myMethod() {\n   }\n}\n        "
+    }
+  ]
+}

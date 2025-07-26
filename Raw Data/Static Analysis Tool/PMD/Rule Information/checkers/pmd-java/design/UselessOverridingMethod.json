@@ -1,0 +1,251 @@
+{
+  "name": "UselessOverridingMethod",
+  "language": "java",
+  "description": "\nThe overriding method merely calls the same method defined in a superclass.\n        ",
+  "example": "public void foo(String bar) {\n    super.foo(bar);      // why bother overriding?\n}\n\npublic String foo() {\n    return super.foo();  // why bother overriding?\n}\n\n@Id\npublic Long getId() {\n    return super.getId();  // OK if 'ignoreAnnotations' is false, which is the default behavior\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 122,
+  "branches": 27,
+  "apis": 17,
+  "test": [
+    {
+      "description": "call super",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Bar {\n    public void foo() { }\n}\n\npublic class Foo extends Bar {\n    public void foo() {\n        super.foo();\n    }\n}\n        "
+    },
+    {
+      "description": "call super with same argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Bar {\n    public void foo(String bar) { }\n}\n\npublic class Foo extends Bar {\n    public void foo(String bar) {\n        super.foo(bar);\n    }\n}\n        "
+    },
+    {
+      "description": "call super with different argument",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public void foo(String bar) { }\n}\n\npublic class Foo extends Bar {\n    String text = \"text\";\n    public void foo(String bar) {\n        super.foo(text);\n    }\n}\n        "
+    },
+    {
+      "description": "call super with different argument 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public void foo(String bar) { }\n}\n\npublic class Foo extends Bar {\n    public void foo(String bar) {\n        super.foo(boe(bar));\n    }\n    private String boe(String b) { return b; }\n}\n        "
+    },
+    {
+      "description": "call super with different argument 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public void foo(String bar) { }\n}\n\npublic class Foo extends Bar {\n    public String foo(String bar) {\n        super.foo(\"\" + bar);\n    }\n}\n        "
+    },
+    {
+      "description": "call super with inverted arguments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public void foo(String bar, String stool) { }\n}\n\npublic class Foo extends Bar {\n    public void foo(String bar, String stool) {\n        super.foo(stool, bar);\n    }\n}\n        "
+    },
+    {
+      "description": "return value of super",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Bar {\n    public String foo() { return null; }\n}\n\npublic class Foo extends Bar {\n    public String foo() {\n        return super.foo();\n    }\n}\n        "
+    },
+    {
+      "description": "return value of super with argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Bar {\n    public String foo(String bar) { return null; }\n}\n\npublic class Foo extends Bar {\n    public String foo(String bar) {\n        return super.foo(bar);\n    }\n}\n        "
+    },
+    {
+      "description": "return value of super after adding a string",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public String foo(String bar) { return null; }\n}\n\npublic class Foo extends Bar {\n    public String foo(String bar) {\n        return super.foo(bar) + \"is foo\";\n    }\n}\n        "
+    },
+    {
+      "description": "do not crash on abstract methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n}\n\npublic class Foo extends Bar {\n    public abstract String foo();\n}\n        "
+    },
+    {
+      "description": "do not crash on interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ninterface Bar {\n}\n\npublic interface Foo extends Bar {\n    public String foo();\n}\n        "
+    },
+    {
+      "description": "do not crash on empty returns",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String bar) {\n        return;\n    }\n}\n        "
+    },
+    {
+      "description": "do not crash on super",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final boolean NO_MODULES = true;\n    public void init(String[] args) {\n        super.init( args, NO_MODULES );\n    }\n}\n        "
+    },
+    {
+      "description": "call super with different argument 4",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public String foo(Object bar) { return \"\"; }\n}\n\npublic class Buz extends Bar {\n    public String foo(Object bar) {\n        return super.foo(this);\n    }\n}\n        "
+    },
+    {
+      "description": "adding final is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public String foo() { return \"\"; }\n}\n\npublic class Foo extends Bar {\n    public final String foo() {\n        return super.foo();\n    }\n}\n        "
+    },
+    {
+      "description": "adding synchronized is OK, see sf-bug #423",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public String foo() { return \"\"; }\n}\n\npublic class Foo extends Bar {\n    public synchronized String foo() {\n        return super.foo();\n    }\n}\n        "
+    },
+    {
+      "description": "Constructors are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public Bar(String bar) { }\n}\n\npublic class Foo extends Bar {\n    public Foo(String bar) {\n        super(bar);\n    }\n}\n        "
+    },
+    {
+      "description": "Should ignore clone implementation ( see bug 1522517)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n}\n\npublic class Foo extends Bar {\n    public Object clone() throws CloneNotSupportedException {\n        return super.clone();\n    }\n}\n        "
+    },
+    {
+      "description": "clone method with arguments should not be ignored",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Bar {\n    public Object clone(Object o) throws CloneNotSupportedException { return null; }\n}\n\npublic class Foo extends Bar {\n    public Object clone(Object o) throws CloneNotSupportedException {\n        return super.clone(o);\n    }\n}\n        "
+    },
+    {
+      "description": "False +: Overriding method merely calls super - see bug 1415525",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\nimport java.io.IOException;\nimport java.io.OutputStream;\nimport java.io.UnsupportedEncodingException;\n\nimport org.w3c.dom.Node;\n\nclass ExposingSerializer extends Serializer {\n\n    ExposingSerializer(OutputStream out, String encoding) throws UnsupportedEncodingException {\n        super(out, encoding);\n    }\n\n    /**\n     * Overriding in order to change the access modifier from protected to public - so: not only merely calling super.\n     *\n     * <p>Method signature in super class: protected void writeChild(nu.xom.Node arg0) throws java.io.IOException;\n     *\n     * <p>See: https://sourceforge.net/tracker/?func=detail&aid=1415525&group_id=56262&atid=479921\n     */\n    public void writeChild(Node node) throws IOException {\n        super.writeChild(node);\n    }\n}\n        "
+    },
+    {
+      "description": "[ 1977230 ] false positive: UselessOverridingMethod",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\nimport java.util.Date;\n\npublic class Foo extends Bar {\n    public BigDecimal getBalance(Date date) {\n        return super.getBalance(date).negate();\n    }\n}\n\nclass Bar {\n    public BigDecimal getBalance(Date date) { return null; }\n}\n        "
+    },
+    {
+      "description": "[ 2142986 ] UselessOverridingMethod doesn't consider annotations, ignoreAnnotations property set to true",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\nclass PersistentObject {\n    public Long getId() { return 1L; }\n}\n\npublic class Example extends PersistentObject {\n    @Override\n    @Id\n    @GeneratedValue(strategy = GenerationType.AUTO)\n    public Long getId() { return super.getId(); }\n}\n        "
+    },
+    {
+      "description": "[ 2142986 ] UselessOverridingMethod doesn't consider annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\nclass PersistentObject {\n    public Long getId() { return 1L; }\n}\n\npublic class Example extends PersistentObject {\n    @Override\n    @Id\n    @GeneratedValue(strategy = GenerationType.AUTO)\n    public Long getId() { return super.getId(); }\n}\n        "
+    },
+    {
+      "description": "[ 2142986 ] UselessOverridingMethod doesn't consider annotations, @Override only",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nclass PersistentObject {\n    public Long getId() { return 1L; }\n}\n\npublic class Example extends PersistentObject {\n    @Override\n    public Long getId() { return super.getId(); }\n}\n        "
+    },
+    {
+      "description": "ClassCastException in statement cast",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Comparator;\nimport javax.annotation.Nonnull;\n\npublic class AnonymousClassConstructor {\n\n    public void method() {\n        @SuppressWarnings(\"unused\")\n        final Comparator<Long> comparator = new Comparator<Long>() {\n\n            @Override\n            public int compare(@Nonnull Long o1, @Nonnull Long o2) {\n                return 0;\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UselessOverridingMethod false positive when elevating access modifier #911 - direct",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class DirectSubclass extends BaseClass {\n\n    // overrides to make the methods public\n\n    @Override\n    public void doBase() {\n        super.doBase();\n    }\n\n    @Override\n    public void doBaseWithArg(String foo) {\n        super.doBaseWithArg(foo);\n    }\n\n    @Override\n    public void doBaseWithArgs(String foo, int bar) {\n        super.doBaseWithArgs(foo, bar);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UselessOverridingMethod false positive when elevating access modifier #911 - direct but changing arguments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class DirectSubclass extends BaseClass {\n\n    @Override\n    public void doBaseWithArg(String foo) {\n        super.doBaseWithArg(foo.toString());\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UselessOverridingMethod false positive when elevating access modifier #911 - direct different package, same visibility",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod.other;\n\nimport net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod.BaseClass;\n\npublic class DirectSubclassInOtherPackage extends BaseClass {\n\n    // overrides to make the method available in this package\n\n    @Override\n    protected void doBase() {\n        super.doBase();\n    }\n\n    @Override\n    protected void doBaseWithArg(String foo) {\n        super.doBaseWithArg(foo);\n    }\n\n    @Override\n    protected void doBaseWithArgs(String foo, int bar) {\n        super.doBaseWithArgs(foo, bar);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UselessOverridingMethod false positive when elevating access modifier #911 - transitive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class TransitiveSubclass extends OtherSubclass {\n\n    // overrides to make the methods public\n\n    @Override\n    public void doBase() {\n        super.doBase();\n    }\n\n    @Override\n    public void doBaseWithArg(String foo) {\n        super.doBaseWithArg(foo);\n    }\n\n    @Override\n    public void doBaseWithArgs(String foo, int bar) {\n        super.doBaseWithArgs(foo, bar);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UselessOverridingMethod false positive when elevating access modifier #911 - direct2",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        11,
+        16
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class DirectSubclass2 extends DirectSubclass {\n    // useless overrides - it's already public\n    @Override\n    public void doBase() {\n        super.doBase();\n    }\n\n    @Override\n    public void doBaseWithArg(String foo) {\n        super.doBaseWithArg(foo);\n    }\n\n    @Override\n    public void doBaseWithArgs(String foo, int bar) {\n        super.doBaseWithArgs(foo, bar);\n    }\n}\n        "
+    },
+    {
+      "description": "Make sure, overriding to add synchronized is Ok, see sf-bug #423",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class DirectSynchronizingSubclass extends BaseClass {\n\n    @Override\n    protected synchronized void doBase() {\n        // overriding for synchronized\n        super.doBase();\n    }\n}\n        "
+    },
+    {
+      "description": "Useless override with different packages already public (false negative)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        10
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class UselessOverridingMethodHashCode {\n    @Override\n    public int hashCode() {\n        return super.hashCode();\n    }\n\n    @Override\n    public boolean equals(Object obj) {\n        return super.equals(obj);\n    }\n}\n        "
+    },
+    {
+      "description": "Not overriding but overloading",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.design.uselessoverridingmethod;\n\npublic class OtherSubclass extends BaseClass {\n\n    // note: argument type overloaded from CharSequence to String\n    protected void methodWithInterface(String arg) {\n        super.methodWithInterface(arg);\n    }\n\n    // that's actual overwriting\n    protected void doBase() {\n        super.doBase();\n    }\n}\n        "
+    },
+    {
+      "description": "Overriding with call to super interface default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            interface Foo {\n                default void foo() {\n\n                }\n            }\n\n            public class AClass implements Foo {\n\n                public void foo() {\n                    // technically useless, but this form might be required\n                    // by the compiler if there are several unrelated default\n                    // methods that are inherited.\n                    Foo.super.foo();\n                }\n            }\n            "
+    },
+    {
+      "description": "Overriding with call to super interface default, required by compiler",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            interface Foo {\n                default void foo() {\n\n                }\n            }\n\n            interface Bar {\n                default void foo() {\n\n                }\n            }\n\n            public class AClass implements Foo, Bar {\n\n                public void foo() {\n                    Foo.super.foo();\n                }\n            }\n            "
+    },
+    {
+      "description": "Overriding with call to superclass, useless",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            interface Foo {\n                default void foo() {\n\n                }\n            }\n\n            interface Bar {\n                default void foo() {\n\n                }\n            }\n\n            class Sup {\n                public void foo() {}\n            }\n\n            public class AClass extends Sup implements Foo, Bar {\n                public void foo() {\n                    super.foo(); // useless\n                }\n            }\n            "
+    }
+  ]
+}

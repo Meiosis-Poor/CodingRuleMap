@@ -1,0 +1,29 @@
+{
+  "name": "InterfacesGlobalInit",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-interfaces-global-init",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 54,
+  "branches": 3,
+  "apis": 35,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        9,
+        11,
+        13,
+        15,
+        28,
+        40,
+        43,
+        65
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-interfaces-global-init %t\n\nconstexpr int makesInt() { return 3; }\nconstexpr int takesInt(int i) { return i + 1; }\nconstexpr int takesIntPtr(int *i) { return *i; }\n\nextern int ExternGlobal;\nstatic int GlobalScopeBadInit1 = ExternGlobal;\n// CHECK-MESSAGES: [[@LINE-1]]:12: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ExternGlobal'\nstatic int GlobalScopeBadInit2 = takesInt(ExternGlobal);\n// CHECK-MESSAGES: [[@LINE-1]]:12: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ExternGlobal'\nstatic int GlobalScopeBadInit3 = takesIntPtr(&ExternGlobal);\n// CHECK-MESSAGES: [[@LINE-1]]:12: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ExternGlobal'\nstatic int GlobalScopeBadInit4 = 3 * (ExternGlobal + 2);\n// CHECK-MESSAGES: [[@LINE-1]]:12: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ExternGlobal'\n\n#if __cplusplus >= 202002L\nextern constinit int ExternConstinitGlobal;\nstatic int GlobalScopeConstinit1 = ExternConstinitGlobal;\nstatic int GlobalScopeConstinit2 = takesInt(ExternConstinitGlobal);\nstatic int GlobalScopeConstinit3 = takesIntPtr(&ExternConstinitGlobal);\nstatic int GlobalScopeConstinit4 = 3 * (ExternConstinitGlobal + 2);\n#endif\n\nnamespace ns {\nstatic int NamespaceScope = makesInt();\nstatic int NamespaceScopeBadInit = takesInt(ExternGlobal);\n// CHECK-MESSAGES: [[@LINE-1]]:12: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ExternGlobal'\n\n#if __cplusplus >= 202002L\nstatic int NamespaceScopeConstinit = takesInt(ExternConstinitGlobal);\n#endif\n\nstruct A {\n  static int ClassScope;\n  static int ClassScopeBadInit;\n};\n\nint A::ClassScopeBadInit = takesInt(ExternGlobal);\n// CHECK-MESSAGES: [[@LINE-1]]:8: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ExternGlobal'\n\nstatic int FromClassBadInit = takesInt(A::ClassScope);\n// CHECK-MESSAGES: [[@LINE-1]]:12: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'ClassScope'\n\n#if __cplusplus >= 202002L\nstruct B {\n  static constinit int ClassScopeConstinit;\n  static int ClassScopeFromConstinit;\n};\n\nint B::ClassScopeFromConstinit = takesInt(ExternConstinitGlobal);\nstatic int FromClassScopeConstinit = takesInt(B::ClassScopeConstinit);\n#endif\n\n} // namespace ns\n\n// \"const int B::I;\" is fine, it just ODR-defines B::I. See [9.4.3] Static\n// members [class.static]. However the ODR-definitions are not in the right\n// order (C::I after C::J, see [3.6.2.3]).\nclass B1 {\n  static const int I = 0;\n  static const int J = I;\n};\nconst int B1::J;\n// CHECK-MESSAGES: [[@LINE-1]]:15: warning: initializing non-local variable with non-const expression depending on uninitialized non-local variable 'I'\nconst int B1::I;\n\n#if __cplusplus >= 202002L\nclass D {\n  static const constinit int I = 0;\n  static const int J = I;\n};\n\nconst int D::J;\nconst int D::I;\n#endif\n\nvoid f() {\n  // This is fine, it's executed after dynamic initialization occurs.\n  static int G = takesInt(ExternGlobal);\n}\n\n// Declaration then definition then usage is fine.\nextern int ExternGlobal2;\nextern int ExternGlobal2;\nint ExternGlobal2 = 123;\nstatic int GlobalScopeGoodInit1 = ExternGlobal2;\n\n\n// Defined global variables are fine:\nstatic int GlobalScope = makesInt();\nstatic int GlobalScopeGoodInit2 = takesInt(GlobalScope);\nstatic int GlobalScope2 = takesInt(ns::NamespaceScope);\n// Enums are fine.\nenum Enum { kEnumValue = 1 };\nstatic int GlobalScopeFromEnum = takesInt(kEnumValue);\n\n// Leave constexprs alone.\nextern constexpr int GlobalScopeConstexpr = makesInt();\nstatic constexpr int GlobalScopeConstexprOk =\n    takesInt(GlobalScopeConstexpr);\n\n// This is a pretty common instance: People are usually not using constexpr, but\n// this is what they should write:\nstatic constexpr const char kValue[] = \"value\";\nconstexpr int Fingerprint(const char *value) { return 0; }\nstatic int kFingerprint = Fingerprint(kValue);\n\n// This is fine because the ODR-definitions are in the right order (C::J after\n// C::I).\nclass B2 {\n  static const int I = 0;\n  static const int J = I;\n};\nconst int B2::I;\nconst int B2::J;"
+    }
+  ]
+}

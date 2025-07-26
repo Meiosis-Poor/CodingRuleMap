@@ -1,0 +1,26 @@
+{
+  "name": "OverloadedOperator",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-overloaded-operator",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 42,
+  "branches": 5,
+  "apis": 20,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        6,
+        12,
+        14,
+        18,
+        21
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s fuchsia-overloaded-operator %t\n\nclass A {\npublic:\n  int operator+(int);\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: overloading 'operator+' is disallowed\n};\n\nclass B {\npublic:\n  B &operator=(const B &Other);\n  // CHECK-MESSAGES-NOT: [[@LINE-1]]:3: warning: overloading 'operator=' is disallowed\n  B &operator=(B &&Other);\n  // CHECK-MESSAGES-NOT: [[@LINE-1]]:3: warning: overloading 'operator=' is disallowed\n};\n\nA operator-(const A &A1, const A &A2);\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: overloading 'operator-' is disallowed\n\nvoid operator delete(void*, void*) throw();\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: overloading 'operator delete' is disallowed\n\nauto x = []{};"
+    }
+  ]
+}

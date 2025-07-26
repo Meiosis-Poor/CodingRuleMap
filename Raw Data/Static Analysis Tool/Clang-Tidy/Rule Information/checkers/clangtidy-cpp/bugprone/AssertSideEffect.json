@@ -1,0 +1,37 @@
+{
+  "name": "AssertSideEffect",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-assert-side-effect",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 149,
+  "branches": 17,
+  "apis": 81,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        37,
+        39,
+        41,
+        45,
+        51,
+        56,
+        60,
+        63,
+        68,
+        74,
+        77,
+        80,
+        85,
+        102,
+        104,
+        127
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-assert-side-effect %t -- -config=\"{CheckOptions: {bugprone-assert-side-effect.CheckFunctionCalls: true, bugprone-assert-side-effect.AssertMacros: 'assert,assert2,my_assert,convoluted_assert,msvc_assert', bugprone-assert-side-effect.IgnoredFunctions: 'MyClass::badButIgnoredFunc'}}\" -- -fexceptions -I %S/Inputs/assert-side-effect\n#include <assert.h>\n\nbool badButIgnoredFunc(int a, int b) { return a * b > 0; }\n\nclass MyClass {\npublic:\n  bool badFunc(int a, int b) { return a * b > 0; }\n  bool badButIgnoredFunc(int a, int b) { return a * b > 0; }\n  bool goodFunc(int a, int b) const { return a * b > 0; }\n\n  MyClass &operator=(const MyClass &rhs) { return *this; }\n\n  int operator-() { return 1; }\n\n  operator bool() const { return true; }\n\n  void operator delete(void *p) {}\n};\n\nclass SomeoneElseClass {\npublic:\n  bool badButIgnoredFunc(int a, int b) { return a * b > 0; }\n};\n\nbool freeFunction() {\n  return true;\n}\n\nint main() {\n\n  int X = 0;\n  bool B = false;\n  assert(X == 1);\n\n  assert(X = 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds [bugprone-assert-side-effect]\n  my_assert(X = 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in my_assert() condition discarded in release builds\n  convoluted_assert(X = 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in convoluted_assert() condition discarded in release builds\n  not_my_assert(X = 1);\n\n  assert(++X);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n  assert(!B);\n\n  assert(B || true);\n\n  assert(freeFunction());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n\n  MyClass mc;\n  SomeoneElseClass sec;\n  assert(mc.badFunc(0, 1));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n  assert(mc.badButIgnoredFunc(0, 1));\n  // badButIgnoredFunc is not ignored as only class members are ignored by the config\n  assert(badButIgnoredFunc(0, 1));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n  // sec.badButIgnoredFunc is not ignored as only MyClass members are ignored by the config\n  assert(sec.badButIgnoredFunc(0, 1));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n  assert(mc.goodFunc(0, 1));\n\n  MyClass mc2;\n  assert(mc2 = mc);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n\n  assert(-mc > 0);\n\n  MyClass *mcp;\n  assert(mcp = new MyClass);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n\n  assert((delete mcp, false));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n\n  assert((throw 1, false));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n\n  assert2(1 == 2 - 1);\n\n  msvc_assert(mc2 = mc);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in msvc_assert() condition discarded in release builds\n\n  struct OperatorTest {\n    int operator<<(int i) const { return i; }\n    int operator<<(int i) { return i; }\n    int operator+=(int i) const { return i; }\n    int operator+=(int i) { return i; }\n  };\n\n  const OperatorTest const_instance;\n  assert(const_instance << 1);\n  assert(const_instance += 1);\n\n  OperatorTest non_const_instance;\n  assert(static_cast<const OperatorTest>(non_const_instance) << 1);\n  assert(static_cast<const OperatorTest>(non_const_instance) += 1);\n  assert(non_const_instance << 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n  assert(non_const_instance += 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n\n  assert(5<<1);\n  assert(5>>1);\n\n  return 0;\n}\n\nnamespace parameter_anaylysis {\n\nstruct S {\n  bool value(int) const;\n  bool leftValueRef(int &) const;\n  bool constRef(int const &) const;\n  bool rightValueRef(int &&) const;\n};\n\nvoid foo() {\n  S s{};\n  int i = 0;\n  assert(s.value(0));\n  assert(s.value(i));\n  assert(s.leftValueRef(i));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: side effect in assert() condition discarded in release builds\n  assert(s.constRef(0));\n  assert(s.constRef(i));\n  assert(s.rightValueRef(0));\n  assert(s.rightValueRef(static_cast<int &&>(i)));\n}\n\n} // namespace parameter_anaylysis"
+    }
+  ]
+}

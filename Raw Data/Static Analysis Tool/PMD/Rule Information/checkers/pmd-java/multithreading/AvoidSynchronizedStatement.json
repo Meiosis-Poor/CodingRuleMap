@@ -1,0 +1,32 @@
+{
+  "name": "AvoidSynchronizedStatement",
+  "language": "java",
+  "description": "\n      Synchronization will pin virtual threads and can cause performance problems.\n    ",
+  "example": "public class Foo {\n    // Try to avoid this:\n    void foo() {\n        // code that doesn't need mutual exclusion\n        synchronized(this) {\n            // code that requires mutual exclusion\n        }\n        // more code that doesn't need mutual exclusion\n    }\n    // Prefer this:\n    Lock instanceLock = new ReentrantLock();\n\n    void foo() {\n        // code that doesn't need mutual exclusion\n        try {\n            instanceLock.lock();  // or instanceLock.tryLock(long time, TimeUnit unit)\n            // code that requires mutual exclusion\n        } finally {\n            instanceLock.unlock();\n        }\n        // more code that doesn't need mutual exclusion\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Synchronized block in instance method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo () {\n        synchronized(mutex) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Synchronized block in static methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static void foo() {\n        synchronized(Test.class) {\n            // only a block is synchronized on Test.class\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "synchronized methods are not flagged - we have a separate rule AvoidSynchronizedAtMethodLevel for that",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public synchronized void foo() {}\n    public static synchronized void fooStatic() {}\n}\n        "
+    }
+  ]
+}

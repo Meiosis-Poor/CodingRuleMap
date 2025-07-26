@@ -1,0 +1,46 @@
+{
+  "name": "TaggedUnionMemberCount",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-tagged-union-member-count",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 199,
+  "branches": 20,
+  "apis": 114,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 25,
+      "expected-linenumbers": [
+        71,
+        77,
+        91,
+        101,
+        119,
+        126,
+        134,
+        140,
+        146,
+        152,
+        158,
+        164,
+        175,
+        201,
+        207,
+        215,
+        221,
+        227,
+        236,
+        245,
+        255,
+        265,
+        273,
+        287,
+        296
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++98-or-later %s bugprone-tagged-union-member-count %t\n// Test check with C++ features\n\ntypedef enum Tags3 {\n  tags3_1,\n  tags3_2,\n  tags3_3,\n} Tags3;\n\ntypedef enum Tags4 {\n  tags4_1,\n  tags4_2,\n  tags4_3,\n  tags4_4,\n} Tags4;\n\nenum class Classtags3 {\n  classtags3_1,\n  classtags3_2,\n  classtags3_3,\n};\n\nenum class Typedtags3 : unsigned int {\n  typedtags3_1,\n  typedtags3_2,\n  typedtags3_3,\n};\n\ntypedef union Union3 {\n  short *Shorts;\n  int *Ints;\n  float *Floats;\n} Union3;\n\ntypedef union Union4 {\n  short *Shorts;\n  double *Doubles;\n  int *Ints;\n  float *Floats;\n} Union4;\n\n// It is not obvious which enum is the tag for the union.\nclass MaybeTaggedUnion1 { // No warnings expected.\n  enum Tags3 TagA;\n  enum Tags4 TagB;\n  union Union4 Data;\n};\n\n// It is not obvious which union does the tag belong to.\nclass MaybeTaggedUnion2 { // No warnings expected.\n  enum Tags3 Tag;\n  union Union3 DataB;\n  union Union3 DataA;\n};\n\n// It is not obvious which union does the tag belong to.\nclass MaybeTaggedUnion3 { // No warnings expected.\n  enum Tags3 Tag;\n  union {\n    int I1;\n    int I2;\n    int I3;\n  };\n  union {\n    float F1;\n    float F2;\n    float F3;\n  };\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassPredefinedTagAndPredefinedUnion {\n  enum Tags3 Tag;\n  union Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassPredefinedTagAndInlineUnion {\n  enum Tags3 Tag;\n    union {\n    int *Ints;\n    char Characters[13];\n    class {\n      double Re;\n      double Im;\n    } Complex;\n    long L;\n    } Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassInlineTagAndPredefinedUnion { \n  enum {\n    tag1,\n    tag2,\n    tag3,\n  } Tag;\n  union Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassInlineTagAndInlineUnion { \n  enum {\n    tag1,\n    tag2,\n    tag3,\n  } Tag;\n  union {\n    int *Ints;\n    char Characters[13];\n    class {\n      double Re;\n      double Im;\n    } Complex;\n    long L;\n  } Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassWithNestedTaggedUnionClass { \n  enum Tags3 Tag;\n  union {\n    float F;\n    int I;\n    long L;\n    // CHECK-MESSAGES: :[[@LINE+1]]:11: warning: tagged union has more data members (4) than tags (3)\n    class Innerdecl { \n      enum Tags3 Tag;\n      union Union4 Data;\n    } Inner; \n  } Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassWithTypedefedTag { \n  Tags3 Tag;\n  Union4 Data;\n}; \n\n// CHECK-MESSAGES: :[[@LINE+1]]:8: warning: tagged union has more data members (4) than tags (3)\nstruct TaggedUnionStructWithEnumClass { \n  enum Classtags3 Tag;\n  Union4 Data;\n}; \n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClasswithEnumClass { \n  enum Classtags3 Tag;\n  Union4 Data;\n}; \n\n// CHECK-MESSAGES: :[[@LINE+1]]:8: warning: tagged union has more data members (4) than tags (3)\nstruct TaggedUnionStructWithTypedEnum {\n  Typedtags3 Tag;\n  Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassWithTypedEnum {\n  Typedtags3 Tag;\n  Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:8: warning: tagged union has more data members (4) than tags (3)\nstruct AnonymousTaggedUnionStruct {\n  Tags3 Tag;\n  union {\n    char A;\n    short B;\n    int C;\n    long D;\n  };\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassWithAnonymousUnion {\n  Tags3 Tag;\n  union {\n    char A;\n    short B;\n    int C;\n    long D;\n  };\n};\n\nnamespace testnamespace {\n\nenum Tags3 {\n  tags3_1,\n  tags3_2,\n  tags3_3,\n};\n\nunion Union4 {\n  short *Shorts;\n  double *Doubles;\n  int *Ints;\n  float *Floats;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:8: warning: tagged union has more data members (4) than tags (3)\nstruct TaggedUnionStructInNamespace {\n  Tags3 Tags;\n  Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassInNamespace {\n  Tags3 Tags;\n  Union4 Data;\n};\n\n} // namespace testnamespace\n\n// CHECK-MESSAGES: :[[@LINE+1]]:8: warning: tagged union has more data members (4) than tags (3)\nstruct TaggedUnionStructWithNamespacedTagAndUnion {\n  testnamespace::Tags3 Tags;\n  testnamespace::Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+1]]:7: warning: tagged union has more data members (4) than tags (3)\nclass TaggedUnionClassWithNamespacedTagAndUnion {\n  testnamespace::Tags3 Tags;\n  testnamespace::Union4 Data;\n};\n\n// CHECK-MESSAGES: :[[@LINE+2]]:8: warning: tagged union has more data members (4) than tags (3)\ntemplate <typename Tag, typename Union>\nstruct TemplatedStructWithNamespacedTagAndUnion {\n  Tag Kind;\n  Union Data;\n};\n\nTemplatedStructWithNamespacedTagAndUnion<testnamespace::Union4, testnamespace::Tags3> TemplatedStruct3;\n\n// CHECK-MESSAGES: :[[@LINE+2]]:7: warning: tagged union has more data members (4) than tags (3)\ntemplate <typename Tag, typename Union>\nclass TemplatedClassWithNamespacedTagAndUnion {\n  Tag Kind;\n  Union Data;\n};\n\nTemplatedClassWithNamespacedTagAndUnion<testnamespace::Union4, testnamespace::Tags3> TemplatedClass3;\n\n// CHECK-MESSAGES: :[[@LINE+2]]:8: warning: tagged union has more data members (4) than tags (3)\ntemplate <typename Tag, typename Union>\nstruct TemplatedStruct {\n  Tag Kind;\n  Union Data;\n};\n\nTemplatedStruct<Tags3, Union3> TemplatedStruct1; // No warning expected\nTemplatedStruct<Tags3, Union4> TemplatedStruct2;\n\n// CHECK-MESSAGES: :[[@LINE+2]]:7: warning: tagged union has more data members (4) than tags (3)\ntemplate <typename Tag, typename Union>\nclass TemplatedClass {\n  Tag Kind;\n  Union Data;\n};\n\nTemplatedClass<Tags3, Union3> TemplatedClass1; // No warning expected\nTemplatedClass<Tags3, Union4> TemplatedClass2;\n\n// CHECK-MESSAGES: :[[@LINE+2]]:8: warning: tagged union has more data members (4) than tags (3)\ntemplate <typename T>\nstruct TemplatedStructButTaggedUnionPartIsNotTemplated {\n  Tags3 Kind;\n  Union4 Data;\n  T SomethingElse;\n};\n\n// CHECK-MESSAGES: :[[@LINE+2]]:7: warning: tagged union has more data members (4) than tags (3)\ntemplate <typename T>\nclass TemplatedClassButTaggedUnionPartIsNotTemplated {\n  Tags3 Kind;\n  Union4 Data;\n  T SomethingElse;\n};\n\n#define DECLARE_TAGGED_UNION_STRUCT(Tag, Union, Name)\\\nstruct Name {\\\n  Tag Kind;\\\n  Union Data;\\\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:44: warning: tagged union has more data members (4) than tags (3)\nDECLARE_TAGGED_UNION_STRUCT(Tags3, Union4, TaggedUnionStructFromMacro);\n\n#define DECLARE_TAGGED_UNION_CLASS(Tag, Union, Name)\\\nclass Name {\\\n  Tag Kind;\\\n  Union Data;\\\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:43: warning: tagged union has more data members (4) than tags (3)\nDECLARE_TAGGED_UNION_CLASS(Tags3, Union4, TaggedUnionClassFromMacro);\n\n// Lambdas implicitly compile down to an unnamed CXXRecordDecl and if they have captures,\n// then those become unnamed fields.\nvoid DoNotMatchLambdas() {\n    enum {\n\t\tA\n\t} e;\n    union {\n\t\tlong A;\n\t\tchar B;\n\t} u;\n    auto L = [e, u] () {};\n}"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "UseEqualsToCompareStrings",
+  "language": "java",
+  "description": "\nUsing '==' or '!=' to compare strings is only reliable if the interned string (`String#intern()`)\nis used on both sides.\n\nUse the `equals()` method instead.\n        ",
+  "example": "public boolean test(String s) {\n    if (s == \"one\") return true;        // unreliable\n    if (\"two\".equals(s)) return true;   // better\n    return false;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "failure case using ==",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class UseEqualsToCompareStringsSample {\n    void bar(String x) {\n        if (x == \"hello\") {}\n        if (x == new String(\"hello\")) {}\n    }\n}\n        "
+    },
+    {
+      "description": "failure case using !=",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class UseEqualsToCompareStringsSample {\n    void bar(String x) {\n        if (x != \"hello\") {}\n    }\n}\n        "
+    },
+    {
+      "description": "using equals, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class UseEqualsToCompareStringsSample {\n    void bar(String x) {\n        if (\"hello\".equals(x)) {}\n    }\n}\n        "
+    },
+    {
+      "description": "using compareTo, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class UseEqualsToCompareStringsSample {\n    void bar(String x) {\n        if ( \"yes\".compareTo( x ) == 0 ) {}\n    }\n}\n        "
+    },
+    {
+      "description": "using length, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class UseEqualsToCompareStringsSample {\n    void bar(String x) {\n        if (x.length() == \"DOCTYPE\".length()) {}\n    }\n}\n        "
+    },
+    {
+      "description": "#2934 false negatives with fields",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        8,
+        9,
+        10,
+        11,
+        13,
+        14,
+        15,
+        16
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class ClassWithStringFields {\n    private String string1 = \"a\";\n    private String string2 = \"a\";\n\n    public void bar() {\n        if (string1 == string2) { }  // violation\n        if (string1 == this.string2) { } // violation\n        if (this.string1 == string2) { } // violation\n        if (this.string1 == this.string2) { } // violation\n\n        if (string1 != string2) { } // violation\n        if (string1 != this.string2) { } // violation\n        if (this.string1 != string2) { } // violation\n        if (this.string1 != this.string2) { } // violation\n\n        if (string1.equals(string2)) { } // ok\n        if (this.string1.equals(string2)) { } // ok\n        if (string1.equals(this.string2)) { } // ok\n        if (this.string1.equals(this.string2)) { } // ok\n    }\n}\n        "
+    },
+    {
+      "description": "#2934 comparison with null is valid",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone.useequalstocomparestrings;\n\npublic class ClassWithStringFields {\n    private String string1 = \"a\";\n    private String string2 = \"a\";\n\n    public void bar() {\n        if (string1 == null) { } // ok\n        if (this.string1 == null) { } // ok\n    }\n\n    public void bar(String param) {\n        if (param != null) { } // ok\n    }\n}\n        "
+    },
+    {
+      "description": "#3004 UseEqualsToCompareStrings false positive with PMD 6.30.0",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class O {\n    boolean f(String s) {\n        return s.charAt(0) == s.charAt(1);\n    }\n}\n        "
+    },
+    {
+      "description": "#2979 UseEqualsToCompareStrings: FP with \"var\" variables",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.regex.Matcher;\n\npublic class O {\n    boolean f(String s) {\n        final Matcher matcher = null;\n        if (matcher.matches()) {\n\n            final var firstString = matcher.group(\"a\");\n            final var secondString = matcher.group(\"b\");\n\n            if (firstString.isEmpty() != secondString.isEmpty()) { // <- violation\n                // ...\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2979 UseEqualsToCompareStrings: FP with \"var\" variables (control, types are explicit)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.regex.Matcher;\n\npublic class O {\n    boolean f(String s) {\n        final Matcher matcher = null;\n        if (matcher.matches()) {\n\n            final String firstString = matcher.group(\"a\");\n            final String secondString = matcher.group(\"b\");\n\n            if (firstString.isEmpty() != secondString.isEmpty()) { // <- violation\n                // ...\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with string concatentation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {{\n    String a = \"b\" + \"c\";\n}}\n        "
+    },
+    {
+      "description": "[java] UseEqualsToCompareStrings should consider return type #3843",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    String getLiteral() {\n        return \"hello\";\n    }\n    void useEqualsToCompareStrings(String x) {\n        if (x == getLiteral()) {} // a false negative should report\n    }\n}\n"
+    }
+  ]
+}

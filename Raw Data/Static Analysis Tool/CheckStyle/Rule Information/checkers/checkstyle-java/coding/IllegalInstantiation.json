@@ -1,0 +1,35 @@
+{
+  "name": "IllegalInstantiation",
+  "language": "java",
+  "description": "<div>\n Checks for illegal instantiations where a factory method is preferred.\n </div>\n\n <p>\n Rationale: Depending on the project, for some classes it might be\n preferable to create instances through factory methods rather than\n calling the constructor.\n </p>\n\n <p>\n A simple example is the {@code java.lang.Boolean} class.\n For performance reasons, it is preferable to use the predefined constants\n {@code } and {@code }.\n Constructor invocations should be replaced by calls to {@code Boolean.valueOf()}.\n </p>\n\n <p>\n Some extremely performance sensitive projects may require the use of factory\n methods for other classes as well, to enforce the usage of number caches or\n object pools.\n </p>\n\n <p>\n There is a limitation that it is currently not possible to specify array classes.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 168,
+  "branches": 20,
+  "apis": 45,
+  "test": [
+    {
+      "description": "Auto test from InputIllegalInstantiationNoPackage.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "public class InputIllegalInstantiationNoPackage {\n    Boolean obj1 = new Boolean(true); \n    String obj2 = new String();\n    BadExample obj3 = new BadExample();\n    private static class BadExample {}\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalInstantiationSemantic2.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        23,
+        28,
+        35,
+        42,
+        45,
+        48
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegalinstantiation;\nimport java.io.*; \nimport java.awt.Dimension; \nimport java.awt.Color;\nimport java.util.*;\nclass InputIllegalInstantiationSemantic2\n{\n    static {\n        Boolean x = new Boolean(true); \n    }\n    {\n        Boolean x = new Boolean(true); \n        Boolean[] y = new Boolean[]{Boolean.TRUE, Boolean.FALSE};\n    }\n    Boolean getBoolean()\n    {\n        return new java.lang.Boolean(true); \n    }\n    void otherInstantiations()\n    {\n        Object o1 = new InputBraces();\n        Object o2 = new InputModifier(); \n        ByteArrayOutputStream s = new ByteArrayOutputStream();\n        File f = new File(\"/tmp\"); \n        Dimension dim = new Dimension();\n        Color col = new Color(0, 0, 0); \n    }\n    public class EqualsVsHashCode1\n    {\n        public boolean equals(int a) \n        {\n            return a == 1;\n        }\n    }\n    public class EqualsVsHashCode2\n    {\n        public boolean equals(String a) \n        {\n            return true;\n        }\n    }\n    public class EqualsVsHashCode3\n    {\n        public boolean equals(Object a) \n        {\n            return true;\n        }\n        public int hashCode()\n        {\n            return 0;\n        }\n    }\n    public class EqualsVsHashCode4\n    {\n        ByteArrayOutputStream bos1 = new ByteArrayOutputStream()\n        {\n            public boolean equals(Object a) \n            {\n                return true;\n            }\n            public int hashCode()\n            {\n                return 0;\n            }\n        };\n        ByteArrayOutputStream bos2 = new ByteArrayOutputStream()\n        {\n            public boolean equals(Object a) \n            {\n                return true;\n            }\n        };\n    }\n    public void triggerEmptyBlockWithoutBlock()\n    {\n        if (true)\n            return;\n    }\n    {\n    }\n    public class EqualsVsHashCode5\n    {\n        public <A> boolean equals(int a) \n        {\n            return a == 1;\n        }\n    }\n    public class EqualsVsHashCode6\n    {\n        public <A> boolean equals(Comparable<A> a) \n        {\n            return true;\n        }\n    }\n    private class InputBraces {\n    }\n    private class InputModifier {\n    }\n    private void method() {\n        Boolean[] array = new Boolean[3];\n        Object object = new @Interned Object();\n        Map<Class<?>, Boolean> x = new HashMap<Class<?>, Boolean>();\n    }\n    @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE)\n    @interface Interned {\n    }\n}"
+    }
+  ]
+}

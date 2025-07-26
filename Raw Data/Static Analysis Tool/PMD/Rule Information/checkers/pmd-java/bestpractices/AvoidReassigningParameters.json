@@ -1,0 +1,148 @@
+{
+  "name": "AvoidReassigningParameters",
+  "language": "java",
+  "description": "\nReassigning values to incoming parameters of a method or constructor is not recommended, as this can\nmake the code more difficult to understand. The code is often read with the assumption that parameter values\ndon't change and an assignment violates therefore the principle of least astonishment. This is especially a\nproblem if the parameter is documented e.g. in the method's javadoc and the new content differs from the original\ndocumented content.\n\nUse temporary local variables instead. This allows you to assign a new name, which makes the code better\nunderstandable.\n\nNote that this rule considers both methods and constructors. If there are multiple assignments for a formal\nparameter, then only the first assignment is reported.\n        ",
+  "example": "public class Hello {\n  private void greet(String name) {\n    name = name.trim();\n    System.out.println(\"Hello \" + name);\n\n    // preferred\n    String trimmedName = name.trim();\n    System.out.println(\"Hello \" + trimmedName);\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 49,
+  "branches": 7,
+  "apis": 8,
+  "test": [
+    {
+      "description": "example",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Hello {\n  private void greet(String name) {\n    name = name.trim();\n    System.out.println(\"Hello \" + name);\n\n    // preferred\n    String trimmedName = name.trim();\n    System.out.println(\"Hello \" + trimmedName);\n  }\n}\n        "
+    },
+    {
+      "description": "reassigned parameter, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        bar = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "one parameter, not reassigned, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {}\n}\n        "
+    },
+    {
+      "description": "instance variable and parameter have same name",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    private int bar;\n    void foo(float bar) {\n        bar = 2.2;\n    }\n}\n        "
+    },
+    {
+      "description": "qualified instance variable same name as parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int bar;\n    void foo(float bar) {\n        this.bar = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "qualified name same as parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Faz {\n    private class Foo {\n        public String bar;\n    }\n    void foo(String bar) {\n        Foo f = new Foo();\n        f.bar = bar;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to parameter public field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(Bar bar) {\n        bar.buz = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to array parameter slot",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(Bar[] bar) {\n        bar[0] = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "throws a stacktrace",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo(int x) {\n        try {\n            x = 2;\n        } catch (Throwable t) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "postfix increment in array dereference is bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void foo(int x) {\n        y[x++] = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to array slot",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int x[]) {\n        x[2] = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to array",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    int y[];\n    void foo(int x[]) {\n        x = y;\n    }\n}\n        "
+    },
+    {
+      "description": "The rule should also detect parameter reassignment in constructors (at least to help young programmers still learning java basic)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\npublic class Foo {\n    public Foo(int arg, String arg2, Object arg3) {\n        arg = arg + 3;\n        arg += arg + \"some other string\";\n        arg3 = arg3.clone();\n    }\n}\n        "
+    },
+    {
+      "description": "The rule should take into account uses of field names, inherited or not, matching the method parameter name.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass AbstractClass {\n    String string;\n}\n\npublic class RealClass extends AbstractClass {\n    String string;\n    public void setString(String string) {\n        super.string = string; //violation\n        this.string = string; // or violation\n    }\n}\n        "
+    },
+    {
+      "description": "parameter name starting with \"this\" or \"super\" should still be flagged",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class RealClass {\n    public void setString(int thisParam, int superParam) {\n        thisParam = 1;\n        superParam = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "local variables should not be flagged",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class RealClass {\n    public void setString(int thisParam, int superParam) {\n        int foo;\n        foo = 2;\n    }\n    public RealClass(int thisParam, int superParam) {\n        int foo;\n        foo = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "2410201, False+ AvoidReassigningParameters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PmdBug {\n    class Test {\n        public String field;\n        public Test t;\n    }\n    public void foo(String field) {\n        Test t = new Test();\n        t.field = field;\n        t.t.field = field;\n        t.field.toCharArray();\n    }\n    public static void main(String[] args) {\n        new PmdBug().foo(\"Hello world\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1330 AvoidReassigningParameters does not work with varargs",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidReassigningParameters {\n    public void a(String... s) {\n        s[0] =  \"\";\n    }\n}\n        "
+    },
+    {
+      "description": "#3254 AvoidReassigningParameters reports wrong line numbers",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class AvoidReassigningParameters {\n    public void a(String b) {\n        b = \"1\";\n        b = \"2\"; // this is not reported, only the first assignment is\n    }\n}\n        "
+    }
+  ]
+}

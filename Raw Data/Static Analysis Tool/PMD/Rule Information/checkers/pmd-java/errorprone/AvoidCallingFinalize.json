@@ -1,0 +1,84 @@
+{
+  "name": "AvoidCallingFinalize",
+  "language": "java",
+  "description": "\nThe method Object.finalize() is called by the garbage collector on an object when garbage collection determines\nthat there are no more references to the object. It should not be invoked by application logic.\n\nNote that Oracle has declared Object.finalize() as deprecated since JDK 9.\n        ",
+  "example": "void foo() {\n    Bar b = new Bar();\n    b.finalize();\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void foo () {\n        finalize();\n    }\n}\n        "
+    },
+    {
+      "description": "calling finalize on an object",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo () {\n        Foo f;\n        f.finalize();\n    }\n}\n        "
+    },
+    {
+      "description": "calling super.finalize",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void foo () {\n        super.finalize();\n    }\n}\n        "
+    },
+    {
+      "description": "no call to finalize",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void finalize () {\n    }\n}\n        "
+    },
+    {
+      "description": "it's ok in a finalizer",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void finalize () {\n        super.finalize();\n    }\n}\n        "
+    },
+    {
+      "description": "finalizer in anon inner class is OK too",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo () {\n        Foo myFoo = new Foo(new FooOtherInterface() {\n            protected void finalize() {\n                super.finalize();\n            }\n        });\n    }\n\n    interface FooOtherInterface { }\n}\n        "
+    },
+    {
+      "description": "#1440 NPE in AvoidCallingFinalize",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class InputFinalize {\n    {\n        super.finalize();\n    }\n}\n        "
+    },
+    {
+      "description": "overloaded finalize is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        finalize(\"hello\", \"world\");\n    }\n\n    public void finalize(String ... args) {}\n}\n        "
+    },
+    {
+      "description": "variable name false-positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int finalize;\n\n    public void bar() {\n        finalize++;\n        return finalize;\n    }\n}\n        "
+    },
+    {
+      "description": "super.finalize in constructor false-negative test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public Foo() throws Throwable {\n        super.equals(new String());\n        super.finalize();\n    }\n}\n        "
+    }
+  ]
+}

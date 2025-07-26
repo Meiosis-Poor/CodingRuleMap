@@ -1,0 +1,185 @@
+{
+  "name": "CodeFormat",
+  "language": "plsql",
+  "description": "\nThis rule verifies that the PLSQL code is properly formatted. The following checks are executed:\n\nSQL Queries:\n\n*   The selected columns must be each on a new line\n*   The keywords (BULK COLLECT INTO, FROM) start on a new line and are indented by one level\n*   UNION should be on the same indentation level as SELECT\n*   Each JOIN is on a new line. If there are more than one JOIN conditions, then each condition should be\n    on a separate line.\n\nParameter definitions for procedures:\n\n*   Each parameter should be on a new line\n*   Variable names as well as their types should be aligned\n\nVariable declarations:\n\n*   Each variable should be on a new line\n*   Variable names as well as their types should be aligned\n\nCalling a procedure:\n\n*   If there are more than 3 parameters\n    *   then named parameters should be used\n    *   and each parameter should be on a new line\n        ",
+  "example": "BEGIN\n  -- select columns each on a separate line\n  SELECT cmer_id\n        ,version\n        ,cmp_id\n    BULK COLLECT INTO v_cmer_ids\n        ,v_versions\n        ,v_cmp_ids\n    FROM cmer;\n\n  -- each parameter on a new line\n  PROCEDURE create_prospect(\n    company_info_in      IN    prospects.company_info%TYPE -- Organization\n   ,firstname_in         IN    persons.firstname%TYPE      -- FirstName\n   ,lastname_in          IN    persons.lastname%TYPE       -- LastName\n  );\n\n  -- more than three parameters, each parameter on a separate line\n  webcrm_marketing.prospect_ins(\n    cmp_id_in            => NULL\n   ,company_info_in      => company_info_in\n   ,firstname_in         => firstname_in\n   ,lastname_in          => lastname_in\n   ,slt_code_in          => NULL\n  );\n\nEND;",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 275,
+  "branches": 53,
+  "apis": 19,
+  "test": [
+    {
+      "description": "SQL Queries - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nBEGIN\n  SELECT cmer_id\n        ,version\n        ,cmp_id\n    BULK COLLECT INTO v_cmer_ids\n        ,v_versions\n        ,v_cmp_ids\n    FROM cmer;\nEND;\n/\n        "
+    },
+    {
+      "description": "SQL Queries - bad",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        2,
+        2,
+        3,
+        3,
+        3,
+        4
+      ],
+      "code": "\nBEGIN\n  SELECT cmer_id, version, cmp_id\n  BULK COLLECT INTO v_cmer_ids, v_versions, v_cmp_ids\n  FROM cmer;\nEND;\n/\n        "
+    },
+    {
+      "description": "SQL Queries: each join on separate lines, union aligned - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nBEGIN\n  SELECT cmer_id\n        ,version\n        ,cmp_id\n    BULK COLLECT INTO v_cmer_ids\n        ,v_versions\n        ,v_cmp_ids\n    FROM (SELECT cmer.cmer_id\n                ,cmer.version\n                ,cmer.cmp_id\n            FROM webcrm.comp_mprc_emp_role cmer\n                 JOIN webcrm.jcomp_mprc_emp_role insert_entry\n                   ON (insert_entry.cmer_id = cmer.cmer_id\n                   AND insert_entry.operation = 'I')\n                 LEFT JOIN webcrm.v_company_address caddr ON (caddr.cmp_id = cmer.cmp_id)\n          UNION\n          SELECT jcmer.cmer_id\n                ,jcmer.version\n                ,jcmer.cmp_id\n            FROM webcrm.jcomp_mprc_emp_role jcmer);\nEND;\n/\n        "
+    },
+    {
+      "description": "SQL Queries: each join on separate lines - violation",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        12,
+        12,
+        12,
+        12
+      ],
+      "code": "\nBEGIN\n  SELECT cmer_id\n        ,version\n        ,cmp_id\n    BULK COLLECT INTO v_cmer_ids\n        ,v_versions\n        ,v_cmp_ids\n    FROM (SELECT cmer.cmer_id\n                ,cmer.version\n                ,cmer.cmp_id\n            FROM webcrm.comp_mprc_emp_role cmer\n                 JOIN webcrm.jcomp_mprc_emp_role insert_entry ON (insert_entry.cmer_id = cmer.cmer_id AND insert_entry.operation = 'I') LEFT JOIN webcrm.v_company_address caddr ON (caddr.cmp_id = cmer.cmp_id)\n          UNION\n          SELECT jcmer.cmer_id\n                ,jcmer.version\n                ,jcmer.cmp_id\n            FROM webcrm.jcomp_mprc_emp_role jcmer);\nEND;\n/\n        "
+    },
+    {
+      "description": "SQL Queries: union not aligned - violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        16
+      ],
+      "code": "\nBEGIN\n  SELECT cmer_id\n        ,version\n        ,cmp_id\n    BULK COLLECT INTO v_cmer_ids\n        ,v_versions\n        ,v_cmp_ids\n    FROM (SELECT cmer.cmer_id\n                ,cmer.version\n                ,cmer.cmp_id\n            FROM webcrm.comp_mprc_emp_role cmer\n                 JOIN webcrm.jcomp_mprc_emp_role insert_entry\n                   ON (insert_entry.cmer_id = cmer.cmer_id\n                   AND insert_entry.operation = 'I')\n                 LEFT JOIN webcrm.v_company_address caddr ON (caddr.cmp_id = cmer.cmp_id)\n                    UNION\n          SELECT jcmer.cmer_id\n                ,jcmer.version\n                ,jcmer.cmp_id\n            FROM webcrm.jcomp_mprc_emp_role jcmer);\nEND;\n/        "
+    },
+    {
+      "description": "SQL Queries: union not aligned on wrong line - violation",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        15
+      ],
+      "code": "\nBEGIN\n  SELECT cmer_id\n        ,version\n        ,cmp_id\n    BULK COLLECT INTO v_cmer_ids\n        ,v_versions\n        ,v_cmp_ids\n    FROM (SELECT cmer.cmer_id\n                ,cmer.version\n                ,cmer.cmp_id\n            FROM webcrm.comp_mprc_emp_role cmer\n                 JOIN webcrm.jcomp_mprc_emp_role insert_entry\n                   ON (insert_entry.cmer_id = cmer.cmer_id\n                   AND insert_entry.operation = 'I')\n                 LEFT JOIN webcrm.v_company_address caddr ON (caddr.cmp_id = cmer.cmp_id) UNION\n          SELECT jcmer.cmer_id\n                ,jcmer.version\n                ,jcmer.cmp_id\n            FROM webcrm.jcomp_mprc_emp_role jcmer);\nEND;\n/        "
+    },
+    {
+      "description": "Parameters - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n-- comment is necessary in order to not trim the whitespace at the beginning\n  PROCEDURE create_prospect(\n    company_info_in      IN    prospects.company_info%TYPE -- Organization\n   ,firstname_in         IN    persons.firstname%TYPE      -- FirstName\n   ,lastname_in          IN    persons.lastname%TYPE       -- LastName\n  );\n        "
+    },
+    {
+      "description": "Parameters - not aligned",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        3,
+        4,
+        4
+      ],
+      "code": "\n-- comment is necessary in order to not trim the whitespace at the beginning\n  PROCEDURE create_prospect(\n    company_info_in      IN    prospects.company_info%TYPE  ,firstname_in         IN    persons.firstname%TYPE      -- FirstName\n        ,lastname_in          IN    persons.lastname%TYPE       -- LastName\n  );\n        "
+    },
+    {
+      "description": "Variables - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nPROCEDURE create_prospect()\n  IS\n    v_adt_id        academic_titles.adt_id%TYPE := 1;\n    v_region_id     addresses.rgn_id%TYPE;\n    v_prospect_id   prospects.prosp_id%TYPE;\n    v_address_id    addresses.adr_id%TYPE := 1;\n    v_message_rec   snapaddy_messages%ROWTYPE;\n  BEGIN\n  END;\n        "
+    },
+    {
+      "description": "Variables - same line, not ok",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3,
+        3
+      ],
+      "code": "\nPROCEDURE create_prospect()\n  IS\n    v_adt_id        academic_titles.adt_id%TYPE := 1; v_region_id     addresses.rgn_id%TYPE; v_prospect_id   prospects.prosp_id%TYPE; v_address_id    addresses.adr_id%TYPE := 1; v_message_rec   snapaddy_messages%ROWTYPE;\n  BEGIN\n  END;\n        "
+    },
+    {
+      "description": "Variables - types not aligned",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "code": "\nPROCEDURE create_prospect()\n  IS\n    v_adt_id        academic_titles.adt_id%TYPE := 1;\n    v_region_id addresses.rgn_id%TYPE;\n    v_prospect_id prospects.prosp_id%TYPE;\n    v_address_id addresses.adr_id%TYPE := 1;\n    v_message_rec snapaddy_messages%ROWTYPE;\n  BEGIN\n  END;\n        "
+    },
+    {
+      "description": "Calling a procedure / function - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nBEGIN\n-- more than three parameters, each parameter on a separate line\nwebcrm_marketing.prospect_ins(\n  cmp_id_in            => NULL\n ,company_info_in      => company_info_in\n ,firstname_in         => firstname_in\n ,lastname_in          => lastname_in\n ,slt_code_in          => NULL\n);\n\n-- three or less parameters, but line too long\nwebcrm_utils.breakup_string(\n  string_in       => 'test 123, test test, abadfhao , dhfj, wiezrohadf , '\n ,row_length_in   => 3\n ,separator_in    => ','\n);\n\n-- three or less parameters, line does not exceed 120 characters\nwebcrm_utils.breakup_string(string_in => 'test 123, test test, ab', row_length_in => 3, separator_in => ',');\n\nEND;\n/\n        "
+    },
+    {
+      "description": "Calling a procedure / function - same line",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        6,
+        6
+      ],
+      "code": "\nBEGIN\n-- more than three parameters, each parameter should be on a separate line\nwebcrm_marketing.prospect_ins(\n  cmp_id_in            => NULL ,company_info_in      => company_info_in\n ,firstname_in         => firstname_in, lastname_in          => lastname_in\n ,slt_code_in          => NULL\n);\nEND;\n/\n        "
+    },
+    {
+      "description": "Calling a procedure / function - line too long",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nBEGIN\n-- three or less parameters, but line too long\nwebcrm_utils.breakup_string(string_in       => 'test 123, test test, abadfhao , dhfj, wiezrohadf , ',row_length_in   => 3,separator_in    => ',');\nEND;\n/\n        "
+    },
+    {
+      "description": "Calling a procedure / function - bad alignment",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "code": "\nBEGIN\n-- more than three parameters, each parameter on a separate line\nwebcrm_marketing.prospect_ins(\n  cmp_id_in => NULL\n ,company_info_in => company_info_in\n ,firstname_in  => firstname_in\n ,lastname_in => lastname_in\n ,slt_code_in => NULL\n);\nEND;\n/\n        "
+    },
+    {
+      "description": "Calling a procedure / function - closing parenthesis should be on a new line",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nBEGIN\n-- more than three parameters, each parameter on a separate line\nwebcrm_marketing.prospect_ins(\n  cmp_id_in            => NULL\n ,company_info_in      => company_info_in\n ,firstname_in         => firstname_in\n ,lastname_in          => lastname_in\n ,slt_code_in          => NULL);\nEND;\n/\n        "
+    },
+    {
+      "description": "Calling a procedure / function without named parameters - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nBEGIN\n-- one parameter only, everything is on one line\nwebcrm_utils.boolean_to_string(TRUE);\n\n-- three parameters that fit on one line\nwebcrm_utils.breakup_string('test 123, test test, ', 3, ',');\nEND;\n/\n        "
+    },
+    {
+      "description": "Calling a procedure / function without named parameters - not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nBEGIN\n-- procedure call with more than three parameters, should not appear (procedure should be called using the named notation)\nwebcrm_marketing.prospect_ins(\n  NULL\n ,company_info_in\n ,firstname_in\n ,lastname_in\n ,NULL\n);\nEND;\n/\n        "
+    },
+    {
+      "description": "Complete Coding Style example",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nPROCEDURE create_prospect(\n  company_info_in       IN            prospects.company_info%TYPE             -- Organization\n ,firstname_in          IN            persons.firstname%TYPE                  -- FirstName\n ,lastname_in           IN            persons.lastname%TYPE                   -- LastName\n ,message_in            IN OUT NOCOPY CLOB                                    -- the whole message\n  )\n  IS\n    v_adt_id        academic_titles.adt_id%TYPE := 1;\n    v_region_id     addresses.rgn_id%TYPE;\n    v_prospect_id   prospects.prosp_id%TYPE;\n    v_address_id    addresses.adr_id%TYPE := 1;\n    v_message_rec   snapaddy_messages%ROWTYPE;\n  BEGIN\n    /* I AM A FORBIDDEN COMMENT SINCE I AM A BLOCK COMMENT */\n\n    -- try to find a matching academic title.\n    -- this comment is on a separate line, so it is left aligned\n    BEGIN                                                                       -- this comment is on the same line as an PL/SQL statement, it is right aligned\n      SELECT adt.adt_id\n        INTO v_adt_id\n        FROM academic_titles adt\n       WHERE UPPER(adt.short_description) = UPPER(title_in);\n    EXCEPTION\n      WHEN NO_DATA_FOUND THEN\n        v_adt_id := NULL;\n      WHEN TOO_MANY_ROWS THEN\n        v_adt_id := NULL;\n    END;\n\n\n    -- try to find a matching region\n    --      1. a case insensitive lookup on the name (restricted to the given country)\n    BEGIN\n      SELECT rgn.rgn_id\n        INTO v_region_id\n        FROM regions rgn\n       WHERE (street_cny_code_in IS NULL\n           OR rgn.cny_code = street_cny_code_in)\n         AND UPPER(rgn.name) = UPPER(street_rgn_in);\n    EXCEPTION\n      WHEN NO_DATA_FOUND THEN\n        v_region_id     := NULL;\n      WHEN TOO_MANY_ROWS THEN\n        v_region_id     := NULL;\n    END;\n\n    --      2. a case insensitive lookup on the SAP_CODE (restricted to the given country)\n    IF v_region_id IS NULL THEN\n      BEGIN\n        SELECT rgn.rgn_id\n          INTO v_region_id\n          FROM regions rgn\n         WHERE (street_cny_code_in IS NULL\n             OR rgn.cny_code = street_cny_code_in)\n           AND UPPER(rgn.sap_code) = UPPER(street_rgn_in);\n      EXCEPTION\n        WHEN NO_DATA_FOUND THEN\n          v_region_id := NULL;\n        WHEN TOO_MANY_ROWS THEN\n          v_region_id := NULL;\n      END;\n    END IF;\n\n    -- all preparations are done - create the prospect with the available data\n    webcrm_marketing.prospect_ins(\n      cmp_id_in         => NULL\n     ,company_info_in   => company_info_in\n     ,firstname_in      => firstname_in\n     ,lastname_in       => lastname_in\n     ,prosp_id_out      => v_prospect_id\n    );\n\n    -- create the address with the available data\n    webcrm_marketing.address_ins(\n      pa_id_in              => v_prospect_id\n     ,street_city_in        => street_city_in\n     ,street_tmz_id_in      => NULL\n     ,street_cny_code_in    => street_cny_code_in\n     ,street_rgn_id_in      => v_region_id\n     ,street_postalcode_in  => street_postalcode_in\n     ,street_addrline_1_in  => street_addrline_1_in\n     ,street_addrline_2_in  => NULL\n     ,street_addrline_3_in  => NULL\n     ,street_addr_id_out    => v_address_id\n    );\n\n    -- store the obtained message\n    v_message_rec.snap_msg_id       := seq_snap_msg.NEXTVAL;\n    v_message_rec.MESSAGE           := message_in;\n    v_message_rec.endpoint          := 'prospect/creation';\n    v_message_rec.processing_time   := SYSDATE;\n    dml_snap_msg.ins(v_message_rec);\nEND create_prospect;\n        "
+    }
+  ]
+}

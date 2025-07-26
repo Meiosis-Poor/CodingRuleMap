@@ -1,0 +1,50 @@
+{
+  "name": "AvoidCatchingGenericException",
+  "language": "java",
+  "description": "\nAvoid catching generic exceptions such as NullPointerException, RuntimeException, Exception in try-catch block.\n        ",
+  "example": "package com.igate.primitive;\n\npublic class PrimitiveType {\n\n    public void downCastPrimitiveType() {\n        try {\n            System.out.println(\" i [\" + i + \"]\");\n        } catch(Exception e) {\n            e.printStackTrace();\n        } catch(RuntimeException e) {\n            e.printStackTrace();\n        } catch(NullPointerException e) {\n            e.printStackTrace();\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (NullPointerException e) {\n        } catch (Exception e) {\n        } catch (RuntimeException e) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "catching another type, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (FooException e) {\n        }\n    }\n}\nclass FooException extends RuntimeException {}\n        "
+    },
+    {
+      "description": "catching subclass of NPE, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (FooException e) {\n        }\n    }\n}\nclass FooException extends NullPointerException {}\n        "
+    },
+    {
+      "description": "throwing it, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        throw new NullPointerException();\n    }\n}\n        "
+    },
+    {
+      "description": "failure case with multi-catch",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (NullPointerException | RuntimeException | FooException e) {\n        }\n    }\n}\nclass FooException extends Exception {}\n        "
+    },
+    {
+      "description": "[java] AvoidCatchingGenericException: Can no longer suppress on the exception itself #4873",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Example {\n    public void example() {\n        try {\n            someMethod();\n        } catch(@SuppressWarnings(\"PMD.AvoidCatchingGenericException\") Exception e) {\n            e.printStackTrace();\n        }\n    }\n}\n"
+    }
+  ]
+}

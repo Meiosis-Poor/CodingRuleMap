@@ -1,0 +1,173 @@
+{
+  "name": "BrokenNullCheck",
+  "language": "java",
+  "description": "\nThe null check is broken since it will throw a NullPointerException itself.\nIt is likely that you used || instead of && or vice versa.\n        ",
+  "example": "public String bar(String string) {\n  // should be &&\n    if (string!=null || !string.equals(\"\"))\n        return string;\n  // should be ||\n    if (string==null && string.equals(\"\"))\n        return string;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 117,
+  "branches": 26,
+  "apis": 10,
+  "test": [
+    {
+      "description": "should be &&",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n\npublic class Foo {\n    Object buz;\n    Object bar(Object list) {\n        if (list != null || !list.equals(buz)) {\n            return list;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, is &&",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object buz;\n    Object bar(Object list) {\n        if (list != null && !list.equals(buz)) {\n            return list;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "should be &&, but now with a longer expression",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Books {\n    String getJane() { return null; }\n    void bar(Books books) {\n        if (books.getJane()!= null || !books.getJane().equals(\"\")) { }\n    }\n}\n        "
+    },
+    {
+      "description": "should be ||",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object buz;\n    Object bar(Object list) {\n        if (list == null && list.equals(buz)) {\n            return list;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, is ||",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object buz;\n    Object bar(Object list) {\n        if (list == null || list.equals(buz)) {\n            return list;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Arrays are Ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String[] books;\n    void bar(int index) {\n        if (index >= 0 && books[index] == null) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Different method is Ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Book {\n    Book[] books;\n    String getJane() { return null; }\n    String getEyre() { return null; }\n    void bar(int i) {\n        if (books[i].getJane() == null &&\n            books[i].getEyre() == null) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Using a shorter expression with the same variable in the second check should not crash the test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Book {\n    Book[] books;\n    String getJane() { return null; }\n    void bar(String eyre) {\n        if (books.getJane() == null &&\n            books == eyre) { }\n    }\n}\n        "
+    },
+    {
+      "description": "1633683, should be ||, but now with another compare",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(String str) {\n        if (str == null && str.length() == 0) { }\n    }\n}\n        "
+    },
+    {
+      "description": "1633683, Arrays are Ok II",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(String[] p) {\n        if (p.length > 1 && p[0] == null) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Different literals in variables should not match",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String getJane() { return null; }\n    void bar(Foo[] p) {\n        if (p[0] == null && p[1].getJane()) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Assignments in checks are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Book {\n    Book[] books;\n    Book[] getBook(int i) {return books;}\n    void bar(int janeEyre) {\n        if (books == null &&\n            (books = getBook(janeEyre)) == null) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Useless code, but it will not throw a NullPointerException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Family {\n    String plain, bold;\n    void bar(Family family) {\n        if (family.plain == null && family.bold == null &&\n           family.plain == null && family.bold == null) { }\n    }\n}\n        "
+    },
+    {
+      "description": "Similar method calls with different arguments are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.Jane;\nimport my.Eyre;\npublic class Library {\n    String[] getBook(Class<?> i) {return null;}\n    void bar(Library library) {\n        if (library.getBooks(Jane.class) != null ||\n            library.getBooks(Eyre.class) != null) { }\n    }\n}\n        "
+    },
+    {
+      "description": "#3071 BrokenNullCheck FP",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test{\n                Object obj = new Object(), objectWithDifferentName = obj;\n\n                public void testPMD(){\n                    Object obj = new Object();\n                    String str = \"str\";\n\n                    //Case 1. : An Alarm is generated\n                    if(obj == null && !(obj instanceof String));\n\n                    //Case 3.\n                    if(obj == null && this.obj == null); //An Alarm is generated\n                    if(obj == null && this.objectWithDifferentName); //An Alarm isn't generated\n                    if(obj == null && objectWithDifferentName); //An Alarm isn't generated\n                }\n            }\n            "
+    },
+    {
+      "description": "BrokenNullCheck with Boolean variable",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        6,
+        7,
+        8,
+        9,
+        21,
+        22,
+        23,
+        24,
+        26
+      ],
+      "code": "\n            class Test{\n                public void testPMD(){\n                    Boolean boo = null;\n\n                    boolean result;\n                    result = boo == null && boo != true;  // boo != true would throw NPE because of unboxing\n                    result = boo == null && boo != false; // same\n                    result = boo == null && boo == true;  // same\n                    result = boo == null && boo == false; // same\n\n                    result = boo != null && boo != true;  // ok\n                    result = boo != null && boo != false; // ok\n                    result = boo != null && boo == true;  // ok\n                    result = boo != null && boo == false; // ok\n\n                    result = boo == null || boo != true;  // ok\n                    result = boo == null || boo != false; // ok\n                    result = boo == null || boo == true;  // ok\n                    result = boo == null || boo == false; // ok\n\n                    result = boo != null || boo != true;  // second expression will throw\n                    result = boo != null || boo != false; // second expression will throw\n                    result = boo != null || boo == true;  // second expression will throw\n                    result = boo != null || boo == false; // second expression will throw\n\n                    result = boo == null && boo;          // same\n                }\n            }\n            "
+    },
+    {
+      "description": "BrokenNullCheck with other kinds of NPEs (see QualifiableExpression)",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        10,
+        11,
+        12,
+        13,
+        17
+      ],
+      "code": "\n            class Test {\n                interface FunctionalItf { String describe(); }\n                boolean handle(FunctionalItf obj) {}\n                Test field;\n                class Inner {boolean isEmpty();}\n                public void testPMD(){\n                    Test boo = null;\n\n                    boolean result;\n                    result = boo == null && handle(boo::toString);           // method reference\n                    result = boo == null && boo.toString();                  // method call\n                    result = boo == null && boo.field.field.hashCode() == 0; // field access\n                    result = boo == null && boo.new Inner().isEmpty();       // qualified ctor call\n\n                    int[] arr = null;\n\n                    result = arr == null && arr[i] == 0;                     // array access\n                }\n            }\n            "
+    },
+    {
+      "description": "#3071 BrokenNullCheck FPs (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n\n            class Test {\n\n                Test foo = new Test(), another = new Test();\n                Map<String, String> map;\n                String field;\n                int idx;\n                String[] arr, anotherArr;\n\n                Object foo(Object o) {}\n\n                public void testPMD() {\n                    //Case 1.\n                    if ((foo == null) != (another == null) || foo != null && !foo.equals(another)) {\n                        ;\n                    }\n\n                    //Case 2.\n                    if (map.remove(null) != null || map.remove(\"\") != null) {\n                        ;\n                    }\n                    if (foo(foo) != null || foo(foo.field) != null) {\n                        ;\n                    }\n\n                    //Case 3.\n                    if (foo != null || foo == null && another != null && another.hashCode() == 0) {\n                        ;\n                    }\n\n                    //Case 4.\n                    if (null != arr[idx] || null == arr[idx] && !anotherArr[idx].isEmpty()) {\n                        ;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "BrokenNullCheck with unboxing",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "code": "\n            class Test {\n                public void testPMD(Integer i){\n                    boolean result;\n                    result = i == null && i == 0;\n                    result = i == null && i << 1;\n                    result = i == null && i + 0;\n                    result = i == null && i == 0.d;\n                }\n            }\n            "
+    },
+    {
+      "description": "Comparing two boxed things does not unbox",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test {\n                public void testPMD(Integer i, Integer d){\n                    boolean result;\n                    result = i == null && i == d;\n                    result = i == null && i != d;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] BrokenNullCheck false positive with parameter/field confusion #718 - Part 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PmdTest {\n    public static boolean test1(final boolean hasFoo, final boolean hasBar, final Object foo, final Object bar) {\n        final boolean hasFooObject = foo != null;\n        final boolean hasBarObject = bar != null;\n        if (hasFoo == hasFooObject && hasBar == hasBarObject) {\n            return true;\n        } else {\n            return false;\n        }\n    }\n\n    public static boolean test2(final boolean hasFoo, final boolean hasBar, final Object foo, final Object bar) {\n        if (hasFoo == (foo != null) && hasBar == (bar != null)) {\n            return true;\n        } else {\n            return false;\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] BrokenNullCheck false positive with parameter/field confusion #718 - Part 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PmdTest2 {\n  private Boolean f;\n\n  // parameter of the same name as field\n  public void f(Boolean f) {\n    if (f != null || this.f == null)\n      ;\n  }\n}\n        "
+    },
+    {
+      "description": "#3430 FP within ternary operator",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\nclass BrokenNullCheck {\n    private List<Object> properties = new ArrayList<>();\n\n    void test(int index, Object replacement, Object old) {\n        if (index < 0 || (replacement != null ? properties.set(index, replacement) : properties.remove(index)) != old) { // detected\n            // ...\n        }\n    }\n}\n        "
+    }
+  ]
+}

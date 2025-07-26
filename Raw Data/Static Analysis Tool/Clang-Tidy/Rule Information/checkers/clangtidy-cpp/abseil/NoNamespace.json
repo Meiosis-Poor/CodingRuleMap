@@ -1,0 +1,23 @@
+{
+  "name": "NoNamespace",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-no-namespace",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 32,
+  "branches": 2,
+  "apis": 10,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        16
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s abseil-no-namespace %t -- -- -I %S/Inputs\n// RUN: clang-tidy -checks='-*, abseil-no-namespace' -header-filter='.*' %s -- -I %S/Inputs 2>&1 | FileCheck %s\n\n/// Warning will not be triggered on internal Abseil code that is included.\n#include \"absl/strings/internal-file.h\"\n// CHECK-NOT: warning:\n\n/// Warning will be triggered on code that is not internal that is included.\n#include \"absl/external-file.h\"\n// CHECK: absl/external-file.h:1:11: warning: namespace 'absl' is reserved\n\nnamespace absl {}\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: namespace 'absl' is reserved for implementation of the Abseil library and should not be opened in user code [abseil-no-namespace]\n\nnamespace absl {\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: namespace 'absl'\nnamespace std {\nint i = 5;\n}\n}\n\n// Things that shouldn't trigger the check\nint i = 5;\nnamespace std {}"
+    }
+  ]
+}

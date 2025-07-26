@@ -1,0 +1,33 @@
+{
+  "name": "ThrowByValueCatchByReference",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-throw-by-value-catch-by-reference",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 170,
+  "branches": 37,
+  "apis": 91,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        26,
+        29,
+        30,
+        38,
+        39,
+        42,
+        47,
+        57,
+        65,
+        87,
+        140,
+        154
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-throw-by-value-catch-by-reference %t -- -- -fcxx-exceptions\n\n\nclass logic_error {\npublic:\n  logic_error(const char *message) {}\n};\n\ntypedef logic_error *logic_ptr;\ntypedef logic_ptr logic_double_typedef;\n\nint lastException;\n\ntemplate <class T> struct remove_reference { typedef T type; };\ntemplate <class T> struct remove_reference<T &> { typedef T type; };\ntemplate <class T> struct remove_reference<T &&> { typedef T type; };\n\ntemplate <typename T> typename remove_reference<T>::type &&move(T &&arg) {\n  return static_cast<typename remove_reference<T>::type &&>(arg);\n}\n\nlogic_error CreateException() { return logic_error(\"created\"); }\n\nvoid testThrowFunc() {\n  throw new logic_error(\"by pointer\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: throw expression throws a pointer; it should throw a non-pointer value instead [misc-throw-by-value-catch-by-reference]\n  logic_ptr tmp = new logic_error(\"by pointer\");\n  throw tmp;\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: throw expression should throw anonymous temporary values instead [misc-throw-by-value-catch-by-reference]\n  // CHECK-MESSAGES: :[[@LINE-2]]:9: warning: throw expression throws a pointer; it should throw a non-pointer value instead [misc-throw-by-value-catch-by-reference]\n  throw logic_error(\"by value\");\n  auto *literal = \"test\";\n  throw logic_error(literal);\n  throw \"test string literal\";\n  throw L\"throw wide string literal\";\n  const char *characters = 0;\n  throw characters;\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: throw expression should throw anonymous temporary values instead [misc-throw-by-value-catch-by-reference]\n  // CHECK-MESSAGES: :[[@LINE-2]]:9: warning: throw expression throws a pointer; it should throw a non-pointer value instead [misc-throw-by-value-catch-by-reference]\n  logic_error lvalue(\"lvalue\");\n  throw lvalue;\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: throw expression should throw anonymous temporary values instead [misc-throw-by-value-catch-by-reference]\n\n  throw move(lvalue);\n  int &ex = lastException;\n  throw ex;\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: throw expression should throw anonymous temporary values instead [misc-throw-by-value-catch-by-reference]\n  throw CreateException();\n}\n\nvoid throwReferenceFunc(logic_error &ref) { throw ref; }\n\nvoid catchByPointer() {\n  try {\n    testThrowFunc();\n  } catch (logic_error *e) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: catch handler catches a pointer value; should throw a non-pointer value and catch by reference instead [misc-throw-by-value-catch-by-reference]\n  }\n}\n\nvoid catchByValue() {\n  try {\n    testThrowFunc();\n  } catch (logic_error e) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: catch handler catches by value; should catch by reference instead [misc-throw-by-value-catch-by-reference]\n  }\n}\n\nvoid catchByReference() {\n  try {\n    testThrowFunc();\n  } catch (logic_error &e) {\n  }\n}\n\nvoid catchByConstReference() {\n  try {\n    testThrowFunc();\n  } catch (const logic_error &e) {\n  }\n}\n\nvoid catchTypedef() {\n  try {\n    testThrowFunc();\n  } catch (logic_ptr) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: catch handler catches a pointer value; should throw a non-pointer value and catch by reference instead [misc-throw-by-value-catch-by-reference]\n  }\n}\n\nvoid catchAll() {\n  try {\n    testThrowFunc();\n  } catch (...) {\n  }\n}\n\nvoid catchLiteral() {\n  try {\n    testThrowFunc();\n  } catch (const char *) {\n  } catch (const wchar_t *) {\n    // disabled for now until it is clear\n    // how to enable them in the test\n    //} catch (const char16_t*) {\n    //} catch (const char32_t*) {\n  }\n}\n\n// catching fundamentals should not warn\nvoid catchFundamental() {\n  try {\n    testThrowFunc();\n  } catch (int) {\n  } catch (double) {\n  } catch (unsigned long) {\n  }\n}\n\nstruct TrivialType {\n  double x;\n  double y;\n};\n\nvoid catchTrivial() {\n  try {\n    testThrowFunc();\n  } catch (TrivialType) {\n  }\n}\n\ntypedef logic_error &fine;\nvoid additionalTests() {\n  try {\n  } catch (int i) {  // ok\n    throw i;         // ok\n  } catch (fine e) { // ok\n    throw e;         // ok\n  } catch (logic_error *e) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: catch handler catches a pointer value; should throw a non-pointer value and catch by reference instead [misc-throw-by-value-catch-by-reference]\n    throw e;      // ok, despite throwing a pointer\n  } catch (...) { // ok\n    throw;        // ok\n  }\n}\n\nstruct S {};\n\nS &returnByReference();\nS returnByValue();\n\nvoid f() {\n  throw returnByReference(); // Should diagnose\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: throw expression should throw anonymous temporary values instead [misc-throw-by-value-catch-by-reference]\n  throw returnByValue(); // Should not diagnose\n}"
+    }
+  ]
+}

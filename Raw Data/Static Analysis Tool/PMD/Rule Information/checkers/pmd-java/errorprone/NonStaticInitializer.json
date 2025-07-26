@@ -1,0 +1,56 @@
+{
+  "name": "NonStaticInitializer",
+  "language": "java",
+  "description": "\nA non-static initializer block will be called any time a constructor is invoked (just prior to\ninvoking the constructor).  While this is a valid language construct, it is rarely used and is\nconfusing.\n        ",
+  "example": "public class MyClass {\n  // this block gets run before any call to a constructor\n  {\n    System.out.println(\"I am about to construct myself\");\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    {}\n}\n        "
+    },
+    {
+      "description": "static initializers are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static {}\n}\n        "
+    },
+    {
+      "description": "Allowed in anonymous classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Animation getStatusTransition() {\n        return new Transition() {\n\n            {\n                setCycleDuration(Duration.millis(1200));\n            }\n\n            @Override\n            protected void interpolate(double frac) {\n                // magic\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Flag in local class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    static {\n        class Local {{}}\n    }\n}\n        "
+    },
+    {
+      "description": "Allowed in enum constant",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic enum Foo {\n    A {\n        { setCycleDuration(Duration.millis(1200)); }\n    };\n\n\n    { setCycleDuration(Duration.millis(1200)); }\n\n}\n        "
+    },
+    {
+      "description": "Flag in nested local class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Foo {\n    public Animation getStatusTransition() {\n        return new Transition() {\n\n            {\n                setCycleDuration(Duration.millis(1200));\n                class ImInAnon {{}} // should be flagged\n            }\n\n            @Override\n            protected void interpolate(double frac) {\n                // magic\n            }\n        };\n     }\n}\n        "
+    }
+  ]
+}

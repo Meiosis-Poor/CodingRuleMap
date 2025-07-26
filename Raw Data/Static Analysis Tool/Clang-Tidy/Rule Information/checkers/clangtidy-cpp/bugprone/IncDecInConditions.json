@@ -1,0 +1,31 @@
+{
+  "name": "IncDecInConditions",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-inc-dec-in-conditions",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 92,
+  "branches": 5,
+  "apis": 67,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        22,
+        27,
+        33,
+        39,
+        44,
+        49,
+        55,
+        61,
+        68,
+        69
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-inc-dec-in-conditions %t\n\ntemplate<typename T>\nstruct Iterator {\n  Iterator operator++(int);\n  Iterator operator--(int);\n  Iterator& operator++();\n  Iterator& operator--();\n  T operator*();\n  bool operator==(Iterator) const;\n  bool operator!=(Iterator) const;\n};\n\ntemplate<typename T>\nstruct Container {\n  Iterator<T> begin();\n  Iterator<T> end();\n};\n\nbool f(int x) {\n  return (++x != 5 or x == 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: incrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool f2(int x) {\n  return (x++ != 5 or x == 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: incrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool c(Container<int> x) {\n  auto it = x.begin();\n  return (it++ != x.end() and *it);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: incrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool c2(Container<int> x) {\n  auto it = x.begin();\n  return (++it != x.end() and *it);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: incrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool d(int x) {\n  return (--x != 5 or x == 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: decrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool d2(int x) {\n  return (x-- != 5 or x == 10);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: decrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool g(Container<int> x) {\n  auto it = x.begin();\n  return (it-- != x.end() and *it);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: decrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool g2(Container<int> x) {\n  auto it = x.begin();\n  return (--it != x.end() and *it);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: decrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nbool doubleCheck(Container<int> x) {\n  auto it = x.begin();\n  auto it2 = x.begin();\n  return (--it != x.end() and ++it2 != x.end()) and (*it == *it2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: decrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n  // CHECK-MESSAGES: :[[@LINE-2]]:31: warning: incrementing and referencing a variable in a complex condition can cause unintended side-effects due to C++'s order of evaluation, consider moving the modification outside of the condition to avoid misunderstandings [bugprone-inc-dec-in-conditions]\n}\n\nnamespace PR85838 {\n  void test()\n  {\n    auto foo = 0;\n    auto bar = 0;\n    if (++foo < static_cast<decltype(foo)>(bar)) {}\n    if (static_cast<decltype(++foo)>(bar) < foo) {}\n  }\n}"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "name": "AvoidLosingExceptionInformation",
+  "language": "java",
+  "description": "\nStatements in a catch block that invoke accessors on the exception without using the information\nonly add to code size.  Either remove the invocation, or use the return result.\n        ",
+  "example": "public void bar() {\n    try {\n        // do something\n    } catch (SomeException se) {\n        se.getMessage();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "basic failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            se.getMessage();\n        }\n    }\n    public class SomeException extends Exception {}\n}\n        "
+    },
+    {
+      "description": "fetch the value returned by getMessage(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            String msg = se.getMessage();\n        }\n    }\n    public class SomeException extends Exception {}\n}\n        "
+    },
+    {
+      "description": "fetch the value returned by getCause(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            Throwable t = se.getCause();\n        }\n    }\n    public class SomeException extends Exception {}\n}\n        "
+    },
+    {
+      "description": "a mix of guilty calls to getMessage(), getLocalizedMessage(), getCause() or getStackTrace(), failure",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        9,
+        11
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n            // do something\n        }  catch (SomeException se) {\n            se.printStackTrace();\n            System.out.println(\"boo\");\n            long l = 1L + 4L;\n            se.getMessage();\n            int a = 1;\n            se.getMessage();\n        }\n    }\n    public class SomeException extends Exception {}\n}\n        "
+    },
+    {
+      "description": "a larger mix of guilty calls to getMessage(), getLocalizedMessage(), getCause(), getStackTrace() or toString(), failure",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        9,
+        11,
+        13,
+        14,
+        16
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n            // do something\n        }  catch (SomeException se) {\n            se.printStackTrace();\n            System.out.println(\"boo\");\n            int i = 1;\n            se.getLocalizedMessage();\n            long l = 1L + 4L;\n            se.getMessage();\n            int a = 1;\n            se.toString();\n            se.getMessage();\n            System.out.println(\"far\");\n            se.getStackTrace();\n        }\n    }\n    public class SomeException extends Exception {}\n}\n        "
+    }
+  ]
+}

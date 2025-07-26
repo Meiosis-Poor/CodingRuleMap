@@ -1,0 +1,26 @@
+{
+  "name": "IncludeCleaner",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-include-cleaner",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 253,
+  "branches": 34,
+  "apis": 144,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        5,
+        9,
+        13,
+        15,
+        17
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-include-cleaner %t -- -- -I%S/Inputs -isystem%S/Inputs/system\n#include \"bar.h\"\n// CHECK-FIXES: {{^}}#include \"baz.h\"{{$}}\n#include \"foo.h\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: included header foo.h is not used directly [misc-include-cleaner]\n// CHECK-FIXES: {{^}}\n// CHECK-FIXES: {{^}}#include <string>{{$}}\n#include <vector.h>\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: included header vector.h is not used directly [misc-include-cleaner]\n// CHECK-FIXES: {{^}}\nint BarResult = bar();\nint BazResult = baz();\n// CHECK-MESSAGES: :[[@LINE-1]]:17: warning: no header providing \"baz\" is directly included [misc-include-cleaner]\nstd::string HelloString;\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: no header providing \"std::string\" is directly included [misc-include-cleaner]\nint FooBarResult = foobar();\n// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: no header providing \"foobar\" is directly included [misc-include-cleaner]"
+    }
+  ]
+}

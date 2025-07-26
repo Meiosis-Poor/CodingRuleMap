@@ -1,0 +1,33 @@
+{
+  "name": "RedundantAccessSpecifiers",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-redundant-access-specifiers",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 78,
+  "branches": 9,
+  "apis": 36,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        7,
+        8,
+        19,
+        20,
+        31,
+        32,
+        43,
+        44,
+        55,
+        56,
+        71,
+        72
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-redundant-access-specifiers %t\n\nclass FooPublic {\npublic:\n  int a;\npublic: // comment-0\n  // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: redundant access specifier has the same accessibility as the previous access specifier [readability-redundant-access-specifiers]\n  // CHECK-MESSAGES: :[[@LINE-4]]:1: note: previously declared here\n  // CHECK-FIXES: {{^}}// comment-0{{$}}\n  int b;\nprivate:\n  int c;\n};\n\nstruct StructPublic {\npublic:\n  int a;\npublic: // comment-1\n  // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: redundant access specifier has the same accessibility as the previous access specifier [readability-redundant-access-specifiers]\n  // CHECK-MESSAGES: :[[@LINE-4]]:1: note: previously declared here\n  // CHECK-FIXES: {{^}}// comment-1{{$}}\n  int b;\nprivate:\n  int c;\n};\n\nunion UnionPublic {\npublic:\n  int a;\npublic: // comment-2\n  // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: redundant access specifier has the same accessibility as the previous access specifier [readability-redundant-access-specifiers]\n  // CHECK-MESSAGES: :[[@LINE-4]]:1: note: previously declared here\n  // CHECK-FIXES: {{^}}// comment-2{{$}}\n  int b;\nprivate:\n  int c;\n};\n\nclass FooProtected {\nprotected:\n  int a;\nprotected: // comment-3\n  // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: redundant access specifier has the same accessibility as the previous access specifier [readability-redundant-access-specifiers]\n  // CHECK-MESSAGES: :[[@LINE-4]]:1: note: previously declared here\n  // CHECK-FIXES: {{^}}// comment-3{{$}}\n  int b;\nprivate:\n  int c;\n};\n\nclass FooPrivate {\nprivate:\n  int a;\nprivate: // comment-4\n  // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: redundant access specifier has the same accessibility as the previous access specifier [readability-redundant-access-specifiers]\n  // CHECK-MESSAGES: :[[@LINE-4]]:1: note: previously declared here\n  // CHECK-FIXES: {{^}}// comment-4{{$}}\n  int b;\npublic:\n  int c;\n};\n\nclass FooMacro {\nprivate:\n  int a;\n#if defined(ZZ)\n  public:\n  int b;\n#endif\nprivate: // comment-5\n  // CHECK-MESSAGES: :[[@LINE-1]]:1: warning: redundant access specifier has the same accessibility as the previous access specifier [readability-redundant-access-specifiers]\n  // CHECK-MESSAGES: :[[@LINE-8]]:1: note: previously declared here\n  // CHECK-FIXES: {{^}}// comment-5{{$}}\n  int c;\nprotected:\n  int d;\npublic:\n  int e;\n};\n\nclass Valid {\nprivate:\n  int a;\npublic:\n  int b;\nprivate:\n  int c;\nprotected:\n  int d;\npublic:\n  int e;\n};\n\nclass ValidInnerClass {\npublic:\n  int a;\n\n  class Inner {\n  public:\n    int b;\n  };\n};\n\n#define MIXIN private: int b;\n\nclass ValidMacro {\nprivate:\n  int a;\nMIXIN\nprivate:\n  int c;\nprotected:\n  int d;\npublic:\n  int e;\n};"
+    }
+  ]
+}

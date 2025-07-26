@@ -1,0 +1,52 @@
+{
+  "name": "DoNotTerminateVM",
+  "language": "java",
+  "description": "\nWeb applications should not call `System.exit()`, since only the web container or the\napplication server should stop the JVM. Otherwise a web application would terminate all other applications\nrunning on the same application server.\n\nThis rule also checks for the equivalent calls `Runtime.getRuntime().exit()` and `Runtime.getRuntime().halt()`.\n\nThis rule has been renamed from \"DoNotCallSystemExit\" in PMD 6.29.0.\n        ",
+  "example": "public void bar() {\n    System.exit(0);                 // never call this when running in an application server!\n}\npublic void foo() {\n    Runtime.getRuntime().exit(0);   // never stop the JVM manually, the container will do this.\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "basic violations",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        10
+      ],
+      "code": "\npublic class Bar {\n\n    static {\n        // NEVER DO THIS IN A APP SERVER !!!\n        System.exit(0);\n    }\n\n    public void foo() {\n        // NEVER DO THIS IN A APP SERVER !!!\n        System.exit(0);\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SystemCall {\n    private App application;\n    public void methode() {\n        // OK\n        application.exit(0);\n    }\n}\nabstract class App {\n    void exit(int i);\n}\n        "
+    },
+    {
+      "description": "basic violations with Runtime",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\npublic class Bar {\n    public void foo() {\n        // NEVER DO THIS IN A APP SERVER !!!\n        Runtime.getRuntime().exit(0);\n        Runtime.getRuntime().halt(0);\n    }\n}\n        "
+    },
+    {
+      "description": "system exit in main",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SystemCall {\n    public static void main(String[] args) {\n        // OK in main()\n        System.exit(0);\n    }\n}\n        "
+    },
+    {
+      "description": "system exit in anonymous class inside main",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class SystemCall {\n    public static void main(String[] args) {\n        new Runnable() {\n            public void run() {\n                // NEVER DO THIS IN A APP SERVER !!!\n                System.exit(0);\n            }\n        };\n    }\n}\n        "
+    }
+  ]
+}

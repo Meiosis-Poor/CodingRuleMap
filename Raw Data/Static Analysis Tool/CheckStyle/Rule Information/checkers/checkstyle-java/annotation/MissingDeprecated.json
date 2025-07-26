@@ -1,0 +1,84 @@
+{
+  "name": "MissingDeprecated",
+  "language": "java",
+  "description": "<div>\n Verifies that the annotation {@code @Deprecated} and the Javadoc tag\n {@code @deprecated} are both present when either of them is present.\n </div>\n\n <p>\n Both ways of flagging deprecation serve their own purpose.\n The &#64;Deprecated annotation is used for compilers and development tools.\n The &#64;deprecated javadoc tag is used to document why something is deprecated\n and what, if any, alternatives exist.\n </p>\n\n <p>\n In order to properly mark something as deprecated both forms of\n deprecation should be present.\n </p>\n\n <p>\n Package deprecation is an exception to the rule of always using the\n javadoc tag and annotation to deprecate.  It is not clear if the javadoc\n tool will support it or not as newer versions keep flip-flopping on if\n it is supported or will cause an error. See\n <a href=\"https://bugs.openjdk.org/browse/JDK-8160601\">JDK-8160601</a>.\n The deprecated javadoc tag is currently the only way to say why the package\n is deprecated and what to use instead.  Until this is resolved, if you don't\n want to print violations on package-info, you can use a\n <a href=\"https://checkstyle.org/filters/index.html\">filter</a> to ignore\n these files until the javadoc tool faithfully supports it. An example config\n using SuppressionSingleFilter is:\n </p>\n <pre>\n &lt;!-- required till https://bugs.openjdk.org/browse/JDK-8160601 --&gt;\n &lt;module name=\"SuppressionSingleFilter\"&gt;\n     &lt;property name=\"checks\" value=\"MissingDeprecatedCheck\"/&gt;\n     &lt;property name=\"files\" value=\"package-info\\.java\"/&gt;\n &lt;/module&gt;\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 78,
+  "branches": 8,
+  "apis": 20,
+  "test": [
+    {
+      "description": "Auto test from InputMissingDeprecatedAbovePackage.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingdeprecated;\n@Deprecated\nclass InputMissingDeprecatedAbovePackage {\n}"
+    },
+    {
+      "description": "Auto test from InputMissingDeprecatedBadDeprecated.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        8,
+        19,
+        21,
+        28,
+        33,
+        40,
+        45,
+        53,
+        58
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingdeprecated;\npublic class InputMissingDeprecatedBadDeprecated\n{\n    protected InputMissingDeprecatedBadDeprecated() {\n    }\n    public String toString() {\n        return \"\";\n    }\n    enum Rock { \n        Metallica \n    }\n}\ninterface Foo1 { \n    interface Bar { \n    }\n}\n@interface Bleh { \n    int bleh(); \n}"
+    },
+    {
+      "description": "Auto test from InputMissingDeprecatedBadJavadoc.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        14,
+        31,
+        40,
+        51,
+        56
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingdeprecated;\nimport java.lang.annotation.Inherited;\n@Deprecated\npublic class InputMissingDeprecatedBadJavadoc\n{\n    @Deprecated \n    protected InputMissingDeprecatedBadJavadoc() {\n    }\n    @Deprecated\n    @Override\n    public String toString() {\n        return \"\";\n    }\n    @Deprecated\n    enum Rock {\n        @Bleh2(bleh=1) \n        @Deprecated\n        Metallica\n    }\n}\n@Deprecated \ninterface Foo2 {\n    @Deprecated\n    interface Bar {\n    }\n}\n@Deprecated \n@interface Bleh2 {\n    @Deprecated \n    int bleh();\n}"
+    },
+    {
+      "description": "Auto test from InputMissingDeprecatedClass.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        10,
+        10
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingdeprecated;\nimport java.lang.annotation.Inherited;\npublic class InputMissingDeprecatedClass\n{\n}"
+    },
+    {
+      "description": "Auto test from InputMissingDeprecatedMethod.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingdeprecated;\npublic class InputMissingDeprecatedMethod {\n    public void method(){ \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMissingDeprecatedSpecialCase.java",
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        8,
+        16,
+        16,
+        21,
+        36,
+        45,
+        54,
+        94,
+        101,
+        108
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.missingdeprecated;\n@Deprecated\npublic class InputMissingDeprecatedSpecialCase\n{\n    public int i; \n    public void foo() { \n    }\n    @Deprecated\n    public void foo2() {\n    }\n    @Deprecated\n    public void foo3() {\n    }\n    @Deprecated\n    public void foo4() {\n    }\n    @Deprecated\n    public void foo5() {\n    }\n    void local(@Deprecated String s) {\n    }\n    void local2(\n        String s) {\n    }\n    void local3( @Deprecated String s) {\n    }\n    void dontUse() {\n    }\n    @Deprecated\n    void dontUse2() {\n    }\n    int[] dontUse3() { \n        return null;\n    }\n    <T> T dontUse4() { \n        return null;\n    }\n    java.lang.String dontUse5() { \n        return null;\n    }\n}"
+    }
+  ]
+}

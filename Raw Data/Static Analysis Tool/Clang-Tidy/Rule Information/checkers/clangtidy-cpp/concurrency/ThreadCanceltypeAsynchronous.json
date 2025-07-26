@@ -1,0 +1,24 @@
+{
+  "name": "ThreadCanceltypeAsynchronous",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - concurrency-thread-canceltype-asynchronous",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 34,
+  "branches": 2,
+  "apis": 13,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        17,
+        32,
+        37
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s concurrency-thread-canceltype-asynchronous %t\n\n#define ONE (1 << 0)\n\n#define PTHREAD_CANCEL_DEFERRED 0\n// define the macro intentionally complex\n#define PTHREAD_CANCEL_ASYNCHRONOUS ONE\n\n#define ASYNCHR PTHREAD_CANCEL_ASYNCHRONOUS\n\nint pthread_setcanceltype(int type, int *oldtype);\n\nint main() {\n  int result, oldtype;\n\n  if ((result = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype)) != 0) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: the cancel type for a pthread should not be 'PTHREAD_CANCEL_ASYNCHRONOUS' [concurrency-thread-canceltype-asynchronous]\n    return 1;\n  }\n\n  if ((result = pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype)) != 0) {\n    return 1;\n  }\n\n  return 0;\n}\n\nint f1() {\n  int result, oldtype;\n\n  if ((result = pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype)) != 0) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: the cancel type for a pthread should not be 'PTHREAD_CANCEL_ASYNCHRONOUS' [concurrency-thread-canceltype-asynchronous]\n    return 1;\n  }\n\n  if ((result = pthread_setcanceltype(ASYNCHR, &oldtype)) != 0) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: the cancel type for a pthread should not be 'PTHREAD_CANCEL_ASYNCHRONOUS' [concurrency-thread-canceltype-asynchronous]\n    return 1;\n  }\n\n  return 0;\n}\n\nint f2(int type) {\n  int result, oldtype;\n\n  if ((result = pthread_setcanceltype(type, &oldtype)) != 0) {\n    return 1;\n  }\n\n  return 0;\n}"
+    }
+  ]
+}

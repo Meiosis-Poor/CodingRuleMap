@@ -1,0 +1,39 @@
+{
+  "name": "UniqueptrDeleteRelease",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-uniqueptr-delete-release",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 82,
+  "branches": 5,
+  "apis": 58,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        28,
+        29,
+        35,
+        36,
+        41,
+        42,
+        48,
+        49,
+        54,
+        55,
+        61,
+        62,
+        68,
+        69,
+        74,
+        75,
+        80,
+        81
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-uniqueptr-delete-release %t -check-suffix=NULLPTR\n// RUN: %check_clang_tidy %s readability-uniqueptr-delete-release %t -check-suffix=RESET -config='{ \\\n// RUN: CheckOptions: {readability-uniqueptr-delete-release.PreferResetCall: true}}'\nnamespace std {\ntemplate <typename T>\nstruct default_delete {};\n\ntemplate <typename T, typename D = default_delete<T>>\nclass unique_ptr {\n public:\n  unique_ptr();\n  ~unique_ptr();\n  explicit unique_ptr(T*);\n  template <typename U, typename E>\n  unique_ptr(unique_ptr<U, E>&&);\n  T* release();\n  void reset(T *P = nullptr);\n  T &operator*() const;\n  T *operator->() const;\n};\n}  // namespace std\n\nstd::unique_ptr<int>& ReturnsAUnique();\n\nvoid Positives() {\n  std::unique_ptr<int> P;\n  delete P.release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr' to reset 'unique_ptr<>' objects\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()' to reset 'unique_ptr<>' objects\n  // CHECK-FIXES-NULLPTR: {{^}}  P = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  P.reset();\n\n  auto P2 = P;\n  delete P2.release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr' to reset 'unique_ptr<>' objects\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()' to reset 'unique_ptr<>' objects\n  // CHECK-FIXES-NULLPTR: {{^}}  P2 = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  P2.reset();\n\n  delete (P2.release());\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  (P2 = nullptr);\n  // CHECK-FIXES-RESET: {{^}}  (P2.reset());\n\n  std::unique_ptr<int> Array[20];\n  delete Array[4].release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  Array[4] = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  Array[4].reset();\n\n  delete ReturnsAUnique().release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  ReturnsAUnique() = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  ReturnsAUnique().reset();\n\n  std::unique_ptr<int> *P3(&P);\n  delete P3->release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  *P3 = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  P3->reset();\n\n  std::unique_ptr<std::unique_ptr<int>> P4;\n  delete (*P4).release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  (*P4) = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  (*P4).reset();\n\n  delete P4->release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  *P4 = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  P4->reset();\n\n  delete (P4)->release();\n  // CHECK-MESSAGES-NULLPTR: :[[@LINE-1]]:3: warning: prefer '= nullptr'\n  // CHECK-MESSAGES-RESET: :[[@LINE-2]]:3: warning: prefer 'reset()'\n  // CHECK-FIXES-NULLPTR: {{^}}  *(P4) = nullptr;\n  // CHECK-FIXES-RESET: {{^}}  (P4)->reset();\n}\n\nstruct NotDefaultDeleter {};\n\nstruct NotUniquePtr {\n  int* release();\n};\n\nvoid Negatives() {\n  std::unique_ptr<int, NotDefaultDeleter> P;\n  delete P.release();\n\n  NotUniquePtr P2;\n  delete P2.release();\n\n  // We don't trigger on bound member function calls.\n  delete (P2.release)();\n}\n\ntemplate <typename T, typename D>\nvoid NegativeDeleterT() {\n  // Ideally this would trigger a warning, but we have all dependent types\n  // disabled for now.\n  std::unique_ptr<T> P;\n  delete P.release();\n\n  // We ignore this one because the deleter is a template argument.\n  // Not all instantiations will use the default deleter.\n  std::unique_ptr<int, D> P2;\n  delete P2.release();\n}\ntemplate void NegativeDeleterT<int, std::default_delete<int>>();\n\n// Test some macros\n\n#define DELETE_RELEASE(x) delete (x).release()\nvoid NegativesWithTemplate() {\n  std::unique_ptr<int> P;\n  DELETE_RELEASE(P);\n}"
+    }
+  ]
+}

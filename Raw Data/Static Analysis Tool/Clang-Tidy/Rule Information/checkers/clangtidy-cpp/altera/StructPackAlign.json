@@ -1,0 +1,39 @@
+{
+  "name": "StructPackAlign",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - altera-struct-pack-align",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 144,
+  "branches": 19,
+  "apis": 86,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        9,
+        10,
+        11,
+        12,
+        22,
+        23,
+        35,
+        36,
+        45,
+        46,
+        54,
+        55,
+        63,
+        64,
+        115,
+        116,
+        117,
+        118
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s altera-struct-pack-align %t -- -header-filter=.*\n\n// Struct needs both alignment and packing\nstruct error {\n  char a;\n  double b;\n  char c;\n};\n// CHECK-MESSAGES: :[[@LINE-5]]:8: warning: accessing fields in struct 'error' is inefficient due to padding; only needs 10 bytes but is using 24 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-6]]:8: note: use \"__attribute__((packed))\" to reduce the amount of padding applied to struct 'error'\n// CHECK-MESSAGES: :[[@LINE-7]]:8: warning: accessing fields in struct 'error' is inefficient due to poor alignment; currently aligned to 8 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-8]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'error' to 16 bytes\n// CHECK-FIXES: __attribute__((packed))\n// CHECK-FIXES: __attribute__((aligned(16)));\n\n// Struct is explicitly packed, but needs alignment\nstruct error_packed {\n  char a;\n  double b;\n  char c;\n} __attribute__((packed));\n// CHECK-MESSAGES: :[[@LINE-5]]:8: warning: accessing fields in struct 'error_packed' is inefficient due to poor alignment; currently aligned to 1 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-6]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'error_packed' to 16 bytes\n// CHECK-FIXES: __attribute__((aligned(16)))\n\n// Struct is properly packed, but needs alignment\nstruct align_only {\n  char a;\n  char b;\n  char c;\n  char d;\n  int e;\n  double f;\n};\n// CHECK-MESSAGES: :[[@LINE-8]]:8: warning: accessing fields in struct 'align_only' is inefficient due to poor alignment; currently aligned to 8 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-9]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'align_only' to 16 bytes\n// CHECK-FIXES: __attribute__((aligned(16)));\n\n// Struct is perfectly packed but wrongly aligned\nstruct bad_align {\n  char a;\n  double b;\n  char c;\n} __attribute__((packed)) __attribute__((aligned(8)));\n// CHECK-MESSAGES: :[[@LINE-5]]:8: warning: accessing fields in struct 'bad_align' is inefficient due to poor alignment; currently aligned to 8 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-6]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'bad_align' to 16 bytes\n// CHECK-FIXES: __attribute__((aligned(16)));\n\nstruct bad_align2 {\n  char a;\n  double b;\n  char c;\n} __attribute__((packed)) __attribute__((aligned(32)));\n// CHECK-MESSAGES: :[[@LINE-5]]:8: warning: accessing fields in struct 'bad_align2' is inefficient due to poor alignment; currently aligned to 32 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-6]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'bad_align2' to 16 bytes\n// CHECK-FIXES: __attribute__((aligned(16)));\n\nstruct bad_align3 {\n  char a;\n  double b;\n  char c;\n} __attribute__((packed)) __attribute__((aligned(4)));\n// CHECK-MESSAGES: :[[@LINE-5]]:8: warning: accessing fields in struct 'bad_align3' is inefficient due to poor alignment; currently aligned to 4 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-6]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'bad_align3' to 16 bytes\n// CHECK-FIXES: __attribute__((aligned(16)));\n\n// Struct is both perfectly packed and aligned\nstruct success {\n  char a;\n  double b;\n  char c;\n} __attribute__((packed)) __attribute__((aligned(16)));\n//Should take 10 bytes and be aligned to 16 bytes\n\n// Struct is properly packed, and explicitly aligned\nstruct success2 {\n  int a;\n  int b;\n  int c;\n} __attribute__((aligned(16)));\n\n// If struct is properly aligned, packing not needed\nstruct success3 {\n  char a;\n  double b;\n  char c;\n} __attribute__((aligned(16)));\n\n// If struct is templated, warnings should not be triggered\ntemplate <typename A, typename B>\nstruct success4 {\n  A a;\n  B b;\n  int c;\n};\n\n// Warnings should not trigger on struct instantiations\nvoid no_trigger_on_instantiation() {\n  struct bad_align3 instantiated { 'a', 0.001, 'b' };\n}\n\n// Make sure that we don't recommend aligning an empty struct to zero bytes (PR#51620)\nstruct StructWithNoFields {};\n\nstruct ContainsStructWithNoFields {\n  StructWithNoFields s;\n};\n\n// Make sure that an empty struct is treated like \"char\" for padding and alignment purposes\nstruct ContainsStructWithNoFields2 {\n  StructWithNoFields s;\n  double d;\n  StructWithNoFields t;\n};\n// CHECK-MESSAGES: :[[@LINE-5]]:8: warning: accessing fields in struct 'ContainsStructWithNoFields2' is inefficient due to padding; only needs 10 bytes but is using 24 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-6]]:8: note: use \"__attribute__((packed))\" to reduce the amount of padding applied to struct 'ContainsStructWithNoFields2'\n// CHECK-MESSAGES: :[[@LINE-7]]:8: warning: accessing fields in struct 'ContainsStructWithNoFields2' is inefficient due to poor alignment; currently aligned to 8 bytes, but recommended alignment is 16 bytes [altera-struct-pack-align]\n// CHECK-MESSAGES: :[[@LINE-8]]:8: note: use \"__attribute__((aligned(16)))\" to align struct 'ContainsStructWithNoFields2' to 16 bytes\n// CHECK-FIXES: __attribute__((packed))\n// CHECK-FIXES: __attribute__((aligned(16)));"
+    }
+  ]
+}

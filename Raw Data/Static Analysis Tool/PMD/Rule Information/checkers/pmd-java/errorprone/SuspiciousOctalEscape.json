@@ -1,0 +1,52 @@
+{
+  "name": "SuspiciousOctalEscape",
+  "language": "java",
+  "description": "\nA suspicious octal escape sequence was found inside a String literal.\nThe Java language specification (section 3.10.6) says an octal\nescape sequence inside a literal String shall consist of a backslash\nfollowed by:\n\n    OctalDigit | OctalDigit OctalDigit | ZeroToThree OctalDigit OctalDigit\n\nAny octal escape sequence followed by non-octal digits can be confusing,\ne.g. \"\\038\" is interpreted as the octal escape sequence \"\\03\" followed by\nthe literal character \"8\".\n        ",
+  "example": "public void foo() {\n  // interpreted as octal 12, followed by character '8'\n  System.out.println(\"suspicious: \\128\");\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 93,
+  "branches": 22,
+  "apis": 2,
+  "test": [
+    {
+      "description": "ok use of octal",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String x = \"\\027\";\n    }\n}\n        "
+    },
+    {
+      "description": "should be flagged",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        System.out.println(\"foo = \\128\");\n    }\n}\n        "
+    },
+    {
+      "description": "should be flagged - different octal",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        System.out.println(\"foo = \\0008\");\n    }\n}\n        "
+    },
+    {
+      "description": "should be flagged - different octal",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        System.out.println(\"foo = \\4008\");\n    }\n}\n        "
+    },
+    {
+      "description": "[ 2050064 ] False + SuspiciousOctalEscape with backslash literal",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        System.out.println(\"suspicious: \\\\128\");\n    }\n}\n        "
+    },
+    {
+      "description": "[ 2050064 ] False + SuspiciousOctalEscape with backslash literal, second test case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        System.out.println(\"suspicious: \\\\128 \\128\");\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "TrailingReturn",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-trailing-return",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 36,
+  "branches": 4,
+  "apis": 17,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++17-or-later %s fuchsia-trailing-return %t\n\nint add_one(const int arg) { return arg; }\n\nauto get_add_one() -> int (*)(const int) {\n  // CHECK-MESSAGES: [[@LINE-1]]:1: warning: a trailing return type is disallowed for this function declaration\n  // CHECK-NEXT: auto get_add_one() -> int (*)(const int) {\n  return add_one;\n}\n\nauto lambda = [](double x, double y) {return x + y;};\n\nauto lambda2 = [](double x, double y) -> double {return x + y;};\n\nint main() {\n  get_add_one()(5);\n  return 0;\n}\n\ntemplate <typename T1, typename T2>\nauto fn(const T1 &lhs, const T2 &rhs) -> decltype(lhs + rhs) {\n  return lhs + rhs;\n}\n\n// Now check that implicit and explicit C++17 deduction guides don't trigger this warning (PR#47614).\n\ntemplate <typename T>\nstruct ImplicitDeductionGuides {\n  ImplicitDeductionGuides(const T &);\n};\n\ntemplate <typename A, typename B>\nstruct pair {\n  A first;\n  B second;\n};\n\ntemplate <typename T>\nstruct UserDefinedDeductionGuides {\n  UserDefinedDeductionGuides(T);\n  template <typename T1, typename T2>\n  UserDefinedDeductionGuides(T1, T2);\n};\n\ntemplate <typename T1, typename T2>\nUserDefinedDeductionGuides(T1, T2) -> UserDefinedDeductionGuides<pair<T1, T2>>;\n\nvoid foo() {\n  ImplicitDeductionGuides X(42);\n  UserDefinedDeductionGuides s(1, \"abc\");\n}"
+    }
+  ]
+}

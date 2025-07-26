@@ -1,0 +1,42 @@
+{
+  "name": "ParameterAssignment",
+  "language": "java",
+  "description": "<div>\n Disallows assignment of parameters.\n </div>\n\n <p>\n Rationale:\n Parameter assignment is often considered poor\n programming practice. Forcing developers to declare\n parameters as final is often onerous. Having a check\n ensure that parameters are never assigned would give\n the best of both worlds.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 124,
+  "branches": 9,
+  "apis": 29,
+  "test": [
+    {
+      "description": "Auto test from InputParameterAssignmentWithEnhancedSwitch.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        20
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.parameterassignment;\npublic class InputParameterAssignmentWithEnhancedSwitch {\n    int method(int a) {\n        switch (a) {\n            case 1, 2 -> a = 12; \n            default -> throw new IllegalArgumentException(\"Invalid\");\n        }\n        return a;\n    }\n    public void validAssign(String result) {\n        result = switch (\"in\") { \n            case \"correct\" -> \"true\";\n            default -> \"also correct\";\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputParameterAssignmentWithUnchecked.java",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        16,
+        17,
+        19,
+        27,
+        44,
+        46,
+        49,
+        53,
+        56,
+        61,
+        62,
+        72
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.parameterassignment;\nimport javax.annotation.Nullable;\npublic class InputParameterAssignmentWithUnchecked {\n    int field;\n    void foo1(int field) {\n        int i = field;\n        this.field = field;\n        i++;\n        field = 0; \n        field += 1; \n        this.field++;\n        field--; \n    }\n    void foo2() {\n        field = 0;\n    }\n    @SuppressWarnings(value = \"unchecked\")\n    void foo3(String field, int field1) {\n        this.field = (field1 += field.length());\n    }\n    void foo4() {\n        String hidden = \"\";\n        new NestedClass() {\n            public void test(String hidden) {\n            }\n        };\n        hidden += \"test\";\n    }\n    void foo5(int EXPR) {\n        int i = EXPR;\n    }\n    SomeInterface obj = q -> q++; \n    SomeInterface obj2 = (int q) -> q += 12;\n    SomeInterface obj3 = (w) -> w--; \n    AnotherInterface obj4 = (int q, int w) -> obj.equals(obj2);\n    AnotherInterface obj5 = (q, w) -> w = 14;\n    SomeInterface obj6 = (@Nullable int a) -> a += 12;\n    AnotherInterface obj7 = (@Nullable int c, @Nullable int d) -> {\n        c += d; \n        d += c; \n    };\n    void method() {\n        int q = 12;\n        SomeInterface obj = (d) -> {\n            SomeInterface b = (c) -> obj2.equals(obj4);\n            int c = 12;\n            c++;\n            SomeInterface r = (field) -> this.field++;\n            d -= 10; \n        };\n    }\n    public static abstract class NestedClass {\n        public abstract void test(String hidden);\n    }\n    public interface SomeInterface {\n        void method(int a);\n    }\n    public interface AnotherInterface {\n        void method(int a, int b);\n    }\n}"
+    }
+  ]
+}

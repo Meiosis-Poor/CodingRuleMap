@@ -1,0 +1,32 @@
+{
+  "name": "SuspiciousMemsetUsage",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-suspicious-memset-usage",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 133,
+  "branches": 21,
+  "apis": 98,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        12,
+        15,
+        17,
+        20,
+        34,
+        38,
+        41,
+        44,
+        49,
+        53,
+        57
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-suspicious-memset-usage %t\n\nvoid *memset(void *, int, __SIZE_TYPE__);\n\nnamespace std {\n  using ::memset;\n}\n\ntemplate <typename T>\nvoid mtempl(int *ptr) {\n  memset(ptr, '0', sizeof(T));\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: memset fill value is char '0', potentially mistaken for int 0 [bugprone-suspicious-memset-usage]\n// CHECK-FIXES: memset(ptr, 0, sizeof(T));\n  memset(ptr, 256, sizeof(T));\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: memset fill value is out of unsigned character range, gets truncated [bugprone-suspicious-memset-usage]\n  memset(0, sizeof(T), 0);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped arguments [bugprone-suspicious-memset-usage]\n// CHECK-FIXES: memset(0, 0, sizeof(T));\n  memset(0, sizeof(int), 0);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped arguments [bugprone-suspicious-memset-usage]\n// CHECK-FIXES: memset(0, 0, sizeof(int));\n}\n\nvoid foo(int xsize, int ysize) {\n  int i[5] = {1, 2, 3, 4, 5};\n  char ca[3] = {'a', 'b', 'c'};\n  int *p = i;\n  int l = 5;\n  char z = '1';\n  char *c = &z;\n  int v = 0;\n\n  memset(p, '0', l);\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: memset fill value is char '0', potentially mistaken for int 0 [bugprone-suspicious-memset-usage]\n// CHECK-FIXES: memset(p, 0, l);\n\n  memset(p, 0xabcd, l);\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: memset fill value is out of unsigned character range, gets truncated [bugprone-suspicious-memset-usage]\n\n  memset(p, sizeof(int), 0);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped arguments [bugprone-suspicious-memset-usage]\n// CHECK-FIXES: memset(p, 0, sizeof(int));\n  std::memset(p, sizeof(int), 0x00);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped arguments [bugprone-suspicious-memset-usage]\n// CHECK-FIXES: std::memset(p, 0x00, sizeof(int));\n\n#define M_CHAR_ZERO memset(p, '0', l);\n  M_CHAR_ZERO\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset fill value is char '0', potentially mistaken for int 0 [bugprone-suspicious-memset-usage]\n\n#define M_OUTSIDE_RANGE memset(p, 0xabcd, l);\n  M_OUTSIDE_RANGE\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset fill value is out of unsigned character range, gets truncated [bugprone-suspicious-memset-usage]\n\n#define M_ZERO_LENGTH memset(p, sizeof(int), 0);\n  M_ZERO_LENGTH\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped arguments [bugprone-suspicious-memset-usage]\n\n  memset(p, '2', l);\n  memset(p, 0, l);\n  memset(c, '0', 1);\n  memset(ca, '0', sizeof(ca));\n\n  memset(p, 0x00, l);\n  mtempl<int>(p);\n\n  memset(p, sizeof(int), v + 1);\n  memset(p, 0xcd, 1);\n\n  // Don't warn when the fill char and the length are both known to be\n  // zero.  No bug is possible.\n  memset(p, 0, v);\n\n  // -1 is clearly not a length by virtue of being negative, so no warning\n  // despite v == 0.\n  memset(p, -1, v);\n}\n\nvoid *memset(int);\nvoid NoCrash() {\n  memset(1);\n}"
+    }
+  ]
+}

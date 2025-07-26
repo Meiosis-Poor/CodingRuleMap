@@ -1,0 +1,64 @@
+{
+  "name": "ConfusingArgumentToVarargsMethod",
+  "language": "java",
+  "description": "\n            Reports a confusing argument passed to a varargs method.\n\n            This can occur when an array is passed as a single varargs argument, when the array type is not exactly the\n            type of array that the varargs method expects. If, that array is a subtype of the component type of the expected\n            array type, then it might not be clear what value the called varargs method will receive.\n            For instance if you have:\n            ```java\n            void varargs(Object... parm);\n            ```\n            and call it like so:\n            ```java\n            varargs(new String[]{\"a\"});\n            ```\n            it is not clear whether you intended the method to receive the value `new Object[]{ new String[] {\"a\"} }` or\n            just `new String[] {\"a\"}` (the latter happens). This confusion occurs because `String[]` is both a subtype\n            of `Object[]` and of `Object`. To clarify your intent in this case, use a cast or pass individual elements like so:\n            ```java\n            // varargs call\n            // parm will be `new Object[] { \"a\" }`\n            varargs(\"a\");\n\n            // non-varargs call\n            // parm will be `new String[] { \"a\" }`\n            varargs((Object[]) new String[]{\"a\"});\n\n            // varargs call\n            // parm will be `new Object[] { new String[] { \"a\" } }`\n            varargs((Object) new String[]{\"a\"});\n            ```\n\n            Another confusing case is when you pass `null` as the varargs argument. Here it is not clear whether you intended\n            to pass an array with a single null element, or a null array (the latter happens). This can similarly be clarified\n            with a cast.\n        ",
+  "example": "import java.util.Arrays;\n\n            abstract class C {\n                abstract void varargs(Object... args);\n                static {\n                    varargs(new String[] { \"a\" });\n                    varargs(null);\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 65,
+  "branches": 11,
+  "apis": 10,
+  "test": [
+    {
+      "description": "Unnecessary in asList",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    Arrays.asList(\"a\" , \"b\");\n                    Arrays.asList(new String[] { \"a\", \"b\" });\n                    Arrays.asList(new Object[] { \"a\", \"b\" });\n                }\n            }\n            "
+    },
+    {
+      "description": "Necessary array creation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    Arrays.asList(new String[]{\"\"}, new String[] { \"a\", \"b\" });\n                }\n            }\n            "
+    },
+    {
+      "description": "Confusing argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    foo(new Object[]{ \"a\" });\n                    foo(new String[]{ \"a\" }); // confusing bc String[] <: Object\n                }\n                static void foo(Object... args) {}\n            }\n            "
+    },
+    {
+      "description": "Confusing null argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    foo(null); // confusing bc String[] <: Object\n                }\n                static void foo(Object... args) {}\n            }\n            "
+    },
+    {
+      "description": "Confusing argument, not an array allocation",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    String[] parms = getParms();\n                    foo(parms); // confusing bc String[] <: Object\n                }\n                static String[] getParms(){ }\n                static void foo(Object... args) {}\n            }\n            "
+    },
+    {
+      "description": "Array creation without elements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    foo(new Object[4]);\n                }\n                static void foo(Object... args) {}\n            }\n            "
+    },
+    {
+      "description": "#5070 Types of args are unresolved",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public class Foo {\n                static {\n                    // if we don't know the type of ARRAY we should not report a violation\n                    foo(Somewhere.ARRAY);\n                    // here we know the type is Unknown[] even if Unknown is unresolved,\n                    // we know it's not Object[] so we report\n                    foo(UNKNOWN);\n                }\n                static Unknown[] UNKNOWN;\n                static void foo(Object... args) {}\n            }\n            "
+    },
+    {
+      "description": "#5070 Types of args is array of unknown",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                static {\n                    var x = arr(UNKNOWN); // x: (*unknown*)[]\n                    foo(x);\n                }\n                static <T> T[] arr(T[] x) { return x; }\n                static void foo(Object... args) {}\n            }\n            "
+    }
+  ]
+}

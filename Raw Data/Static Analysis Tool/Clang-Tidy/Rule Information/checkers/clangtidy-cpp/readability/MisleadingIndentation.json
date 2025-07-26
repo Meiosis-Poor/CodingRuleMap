@@ -1,0 +1,30 @@
+{
+  "name": "MisleadingIndentation",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-misleading-indentation",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 139,
+  "branches": 36,
+  "apis": 94,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        24,
+        42,
+        43,
+        95,
+        120,
+        159,
+        170,
+        177,
+        187
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-misleading-indentation %t -- -- -fno-delayed-template-parsing\n\nvoid foo1();\nvoid foo2();\nvoid foo3();\n\n#define E\n\n#define BLOCK \\\n  if (cond1)  \\\n    foo1();   \\\n    foo2();\n\nvoid f()\n{\n  bool cond1 = true;\n  bool cond2 = true;\n\n  if (cond1)\n    if (cond2)\n      foo1();\n  else\n    foo2();\n  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: different indentation for 'if' and corresponding 'else' [readability-misleading-indentation]\n\n  if (cond1) {\n    if (cond2)\n      foo1();\n  }\n  else\n    foo2();\n\n  if (cond1)\n    if (cond2)\n      foo1();\n    else\n      foo2();\n\n  if (cond2)\n    foo1();\n    foo2();\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: misleading indentation: statement is indented too deeply [readability-misleading-indentation]\n    // CHECK-MESSAGES: :[[@LINE-4]]:3: note: did you mean this line to be inside this 'if'\n    foo2(); // No redundant warning.\n\n  if (cond1)\n  {\n    foo1();\n  }\n    foo2();\n\n  if (cond1)\n    foo1();\n  foo2();\n\n  if (cond2)\n    if (cond1) foo1(); else foo2();\n\n  if (cond1) {\n  } else {\n  }\n\n  if (cond1) {\n  }\n  else {\n  }\n\n  if (cond1)\n  {\n  }\n  else\n  {\n  }\n\n  if (cond1)\n    {\n    }\n  else\n    {\n    }\n\n  if(cond1) {\n  }\n  else if (cond2) {\n  }\n  else {\n  }\n\n  if(cond1) {\n  }\n  else if (cond2) {\n  }\n       else {\n  }\n  // CHECK-MESSAGES: :[[@LINE-2]]:8: warning: different indentation for 'if' and corresponding 'else' [readability-misleading-indentation]\n\n  if (cond1) {\n    if (cond1) {\n    }\n    else if (cond2) {\n    }\n    else {\n    }\n    if (cond1) {\n    } else if (cond2) {\n    } else if (!cond2) {\n    } else {\n    }\n  }\n  else if (cond2) {\n  }\n\n  BLOCK\n\n  if (cond1)\n    foo1();\n  else\n    foo2();\n  E foo3();\n  // CHECK-MESSAGES-NOT: :[[@LINE-1]]readability-misleading-indentation\n}\n\nvoid g(bool x) {\n  if (x)\n    #pragma unroll\n    for (int k = 0; k < 1; ++k) {}\n\n  #pragma unroll\n  for (int k = 0; k < 1; ++k) {}\n}\n\ntemplate<bool b>\nvoid mustPass() {\n  if constexpr (b) {\n    foo1();\n  } else {\n    foo2();\n  }\n}\n\nvoid mustPassNonTemplate() {\n  constexpr unsigned Value = 1;\n  if constexpr (Value == 0) {\n    foo1();\n  } else if constexpr (Value == 1) {\n    foo2();\n  } else {\n    foo3();\n  }\n}\n\ntemplate<bool b>\nvoid mustFail() {\n  if constexpr (b) {\n    foo1();\n  }\n    else {\n      foo2();\n      // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: different indentation for 'if' and corresponding 'else' [readability-misleading-indentation]\n  }\n}\n\nvoid mustFailNonTemplate() {\n  constexpr unsigned Value = 1;\n  if constexpr (Value == 0) {\n    foo1();\n  }\n    else {\n  foo2();\n  // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: different indentation for 'if' and corresponding 'else' [readability-misleading-indentation]\n  }\n\n  if constexpr (Value == 0)\n    foo1();\n    else\n  foo2();\n  // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: different indentation for 'if' and corresponding 'else' [readability-misleading-indentation]\n}\n\ntemplate<bool b>\nvoid mustFailNoInsta() {\n  if constexpr (b) {\n    foo1();\n  }\n    else {\n      foo2();\n      // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: different indentation for 'if' and corresponding 'else' [readability-misleading-indentation]\n  }\n}\n\ntemplate<bool b>\nvoid mustPassNoInsta() {\n  if constexpr (b) {\n    foo1();\n  }\n  else {\n    foo2();\n  }\n}\n\nvoid call() {\n  mustPass<true>();\n  mustPass<false>();\n  mustFail<true>();\n  mustFail<false>();\n}"
+    }
+  ]
+}

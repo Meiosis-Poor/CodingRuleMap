@@ -1,0 +1,43 @@
+{
+  "name": "ElseAfterReturn",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-else-after-return",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 325,
+  "branches": 54,
+  "apis": 232,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 22,
+      "expected-linenumbers": [
+        18,
+        25,
+        63,
+        70,
+        81,
+        88,
+        95,
+        102,
+        118,
+        127,
+        139,
+        149,
+        160,
+        171,
+        186,
+        196,
+        203,
+        211,
+        220,
+        238,
+        246,
+        310
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-else-after-return %t -- -- -fexceptions -std=c++17\n\nnamespace std {\nstruct string {\n  string(const char *);\n  ~string();\n};\n} // namespace std\n\nstruct my_exception {\n  my_exception(const std::string &s);\n};\n\nvoid f(int a) {\n  if (a > 0)\n    return;\n  else // comment-0\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not use 'else' after 'return'\n  // CHECK-FIXES: {{^}}  // comment-0\n    return;\n\n  if (a > 0) {\n    return;\n  } else { // comment-1\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n  // CHECK-FIXES: {{^}}  } // comment-1\n    return;\n  }\n\n  if (a > 0) {\n    f(0);\n    if (a > 10)\n      return;\n  } else {\n    return;\n  }\n\n  if (a > 0)\n    f(0);\n  else if (a > 10)\n    return;\n  else // comment-2\n  // CHECK-FIXES-NOT: {{^}}  // comment-2\n    f(0);\n\n  if (a > 0)\n    if (a < 10)\n      return;\n    else // comment-3\n    // CHECK-FIXES-NOT: {{^}}    // comment-3\n      f(0);\n  else\n    if (a > 10)\n      return;\n    else // comment-4\n    // CHECK-FIXES-NOT: {{^}}    // comment-4\n      f(0);\n\n  if (a > 0) {\n    if (a < 10)\n      return;\n    else // comment-5\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    // CHECK-FIXES: {{^}}    // comment-5\n      f(0);\n  } else {\n    if (a > 10)\n      return;\n    else // comment-6\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    // CHECK-FIXES: {{^}}    // comment-6\n      f(0);\n  }\n}\n\nvoid foo() {\n  for (unsigned x = 0; x < 42; ++x) {\n    if (x) {\n      continue;\n    } else { // comment-7\n    // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use 'else' after 'continue'\n    // CHECK-FIXES: {{^}}    } // comment-7\n      x++;\n    }\n    if (x) {\n      break;\n    } else { // comment-8\n    // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use 'else' after 'break'\n    // CHECK-FIXES: {{^}}    } // comment-8\n      x++;\n    }\n    if (x) {\n      throw 42;\n    } else { // comment-9\n    // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use 'else' after 'throw'\n    // CHECK-FIXES: {{^}}    } // comment-9\n      x++;\n    }\n    if (x) {\n      throw my_exception(\"foo\");\n    } else { // comment-10\n    // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: do not use 'else' after 'throw'\n    // CHECK-FIXES: {{^}}    } // comment-10\n      x++;\n    }\n  }\n}\n\nint g();\nint h(int);\n\nint declInConditionUsedInElse() {\n  if (int X = g()) { // comment-11\n    // CHECK-FIXES: {{^}}  int X = g();\n    // CHECK-FIXES-NEXT: {{^}}if (X) { // comment-11\n    return X;\n  } else { // comment-11\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-11\n    return h(X);\n  }\n}\nint declInConditionUnusedInElse() {\n  if (int X = g()) {\n    return h(X);\n  } else { // comment-12\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-12\n    return 0;\n  }\n}\n\nint varInitAndCondition() {\n  if (int X = g(); X != 0) { // comment-13\n    // CHECK-FIXES: {{^}}  int X = g();\n    // CHECK-FIXES-NEXT: {{^}}if ( X != 0) { // comment-13\n    return X;\n  } else { // comment-13\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-13\n    return h(X);\n  }\n}\n\nint varInitAndConditionUnusedInElse() {\n  if (int X = g(); X != 0) {\n    return X;\n  } else { // comment-14\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-14\n    return 0;\n  }\n}\n\nint initAndCondition() {\n  int X;\n  if (X = g(); X != 0) {\n    return X;\n  } else { // comment-15\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-15\n    return h(X);\n  }\n}\n\nint varInitAndConditionUnusedInElseWithDecl() {\n  int Y = g();\n  if (int X = g(); X != 0) {\n    return X;\n  } else { // comment-16\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES-NOT: {{^}}  } //comment-16\n    int Y = g();\n    h(Y);\n  }\n  return Y;\n}\n\nint varInitAndCondVarUsedInElse() {\n  if (int X = g(); int Y = g()) { // comment-17\n    // CHECK-FIXES:      {{^}}  int X = g();\n    // CHECK-FIXES-NEXT: {{^}}int Y = g();\n    // CHECK-FIXES-NEXT: {{^}}if ( Y) { // comment-17\n    return X ? X : Y;\n  } else { // comment-17\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-17\n    return X ? X : h(Y);\n  }\n}\n\nint lifeTimeExtensionTests(int a) {\n  if (a > 0) {\n    return a;\n  } else {\n      // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    int b = 0;\n    h(b);\n  }\n  if (int b = a; (b & 1) == 0) {\n    return a;\n  } else {\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    b++;\n  }\n  if (int b = a; b > 1) { // comment-18\n    // CHECK-FIXES:      {{^}}  int b = a;\n    // CHECK-FIXES-NEXT: {{^}}if ( b > 1) { // comment-18\n    return a;\n  } else { // comment-18\n           // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n           // CHECK-FIXES: {{^}}  } // comment-18\n    return b;\n  }\n}\n\nvoid test_B44745() {\n  // This is the actual minimum test case for the crash in bug 44745. We aren't\n  // too worried about the warning or fix here, more we don't want a crash.\n  // CHECK-MESSAGES: :[[@LINE+3]]:5: warning: do not use 'else' after 'return' [readability-else-after-return]\n  if (auto X = false) {\n    return;\n  } else {\n    for (;;) {\n    }\n  }\n  return;\n}\n\nvoid testPPConditionals() {\n\n  // These cases the return isn't inside the conditional so diagnose as normal.\n  if (true) {\n    return;\n#if 1\n#endif\n  } else {\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    return;\n  }\n  if (true) {\n#if 1\n#endif\n    return;\n  } else {\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    return;\n  }\n\n  // No return here in the AST, no special handling needed.\n  if (true) {\n#if 0\n    return;\n#endif\n  } else {\n    return;\n  }\n\n  // Return here is inside a preprocessor conditional block, ignore this case.\n  if (true) {\n#if 1\n    return;\n#endif\n  } else {\n    return;\n  }\n\n  // These cases, same as above but with an #else block.\n  if (true) {\n#if 1\n    return;\n#else\n#endif\n  } else {\n    return;\n  }\n  if (true) {\n#if 0\n#else\n    return;\n#endif\n  } else {\n    return;\n  }\n\n// Ensure it can handle macros.\n#define RETURN return\n  if (true) {\n#if 1\n    RETURN;\n#endif\n  } else {\n    return;\n  }\n#define ELSE else\n  if (true) {\n#if 1\n    return;\n#endif\n  }\n  ELSE {\n    return;\n  }\n\n  // Whole statement is in a conditional block so diagnose as normal.\n#if 1\n  if (true) {\n    return;\n  } else {\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not use 'else' after 'return'\n    return;\n  }\n#endif\n}"
+    }
+  ]
+}

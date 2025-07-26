@@ -1,0 +1,28 @@
+{
+  "name": "AvoidReferenceCoroutineParameters",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-avoid-reference-coroutine-parameters",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 35,
+  "branches": 3,
+  "apis": 17,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        54,
+        55,
+        60,
+        65,
+        80,
+        83,
+        97
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++20 %s cppcoreguidelines-avoid-reference-coroutine-parameters %t --\n\n// NOLINTBEGIN\nnamespace std {\n  template <typename T, typename... Args>\n  struct coroutine_traits {\n    using promise_type = typename T::promise_type;\n  };\n  template <typename T = void>\n  struct coroutine_handle;\n  template <>\n  struct coroutine_handle<void> {\n    coroutine_handle() noexcept;\n    coroutine_handle(decltype(nullptr)) noexcept;\n    static constexpr coroutine_handle from_address(void*);\n  };\n  template <typename T>\n  struct coroutine_handle {\n    coroutine_handle() noexcept;\n    coroutine_handle(decltype(nullptr)) noexcept;\n    static constexpr coroutine_handle from_address(void*);\n    operator coroutine_handle<>() const noexcept;\n  };\n} // namespace std\n\nstruct Awaiter {\n  bool await_ready() noexcept;\n  void await_suspend(std::coroutine_handle<>) noexcept;\n  void await_resume() noexcept;\n};\n\nstruct Coro {\n  struct promise_type {\n    Awaiter initial_suspend();\n    Awaiter final_suspend() noexcept;\n    void return_void();\n    Coro get_return_object();\n    void unhandled_exception();\n  };\n};\n// NOLINTEND\n\nstruct Obj {};\n\nCoro no_args() {\n  co_return;\n}\n\nCoro no_references(int x, int* y, Obj z, const Obj w) {\n  co_return;\n}\n\nCoro accepts_references(int& x, const int &y) {\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n  // CHECK-MESSAGES: :[[@LINE-2]]:33: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n  co_return;\n}\n\nCoro accepts_references_and_non_references(int& x, int y) {\n  // CHECK-MESSAGES: :[[@LINE-1]]:44: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n  co_return;\n}\n\nCoro accepts_references_to_objects(Obj& x) {\n  // CHECK-MESSAGES: :[[@LINE-1]]:36: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n  co_return;\n}\n\nCoro non_coro_accepts_references(int& x) {\n  if (x);\n  return Coro{};\n}\n\nvoid defines_a_lambda() {\n  auto NoArgs = [](int x) -> Coro { co_return; };\n\n  auto NoReferences = [](int x) -> Coro { co_return; };\n\n  auto WithReferences = [](int& x) -> Coro { co_return; };\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n\n  auto WithReferences2 = [](int&) -> Coro { co_return; };\n  // CHECK-MESSAGES: :[[@LINE-1]]:29: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n}\n\nvoid coroInFunctionWithReference(int&) {\n  auto SampleCoro = [](int x) -> Coro { co_return; };\n}\n\nCoro lambdaWithReferenceInCoro() {\n  auto SampleLambda = [](int& x) {};\n  co_return;\n}\n\nusing MyIntegerRef = int&;\nCoro coroWithReferenceBehindTypedef(MyIntegerRef ref) {\n// CHECK-MESSAGES: :[[@LINE-1]]:37: warning: coroutine parameters should not be references [cppcoreguidelines-avoid-reference-coroutine-parameters]\n  co_return;\n}"
+    }
+  ]
+}

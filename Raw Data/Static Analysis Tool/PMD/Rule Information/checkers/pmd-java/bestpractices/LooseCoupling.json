@@ -1,0 +1,170 @@
+{
+  "name": "LooseCoupling",
+  "language": "java",
+  "description": "\nExcessive coupling to implementation types (e.g., `HashSet`) limits your ability to use alternate\nimplementations in the future as requirements change. Whenever available, declare variables\nand parameters using a more general type (e.g, `Set`).\n\nThis rule reports uses of concrete collection types. User-defined types that should be treated\nthe same as interfaces can be configured with the property `allowedTypes`.\n        ",
+  "example": "import java.util.ArrayList;\nimport java.util.HashSet;\n\npublic class Bar {\n    // sub-optimal approach\n    private ArrayList<SomeType> list = new ArrayList<>();\n\n    public HashSet<SomeType> getFoo() {\n        return new HashSet<SomeType>();\n    }\n\n    // preferred approach\n    private List<SomeType> list = new ArrayList<>();\n\n    public Set<SomeType> getFoo() {\n        return new HashSet<SomeType>();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 95,
+  "branches": 27,
+  "apis": 19,
+  "test": [
+    {
+      "description": "returning a HashSet, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport java.util.HashSet;\npublic class Foo {\n    HashSet foo() {\n        return new HashSet();\n    }\n}\n        "
+    },
+    {
+      "description": "returning a Map, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\nimport java.util.HashMap;\npublic class Foo {\n    Map getFoo() {\n        return new HashMap();\n    }\n}\n        "
+    },
+    {
+      "description": "no problemo",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {}\n}\n        "
+    },
+    {
+      "description": "returning a set",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    Set fooSet = new HashSet(); // OK\n    Set foo() {\n        return fooSet;\n    }\n}\n        "
+    },
+    {
+      "description": "field declared of type HashSet",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashSet;\npublic class Foo {\n    HashSet fooSet = new HashSet(); // NOT OK\n}\n        "
+    },
+    {
+      "description": "field, return type both HashSet",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashSet;\npublic class Foo {\n    HashSet fooSet = new HashSet(); // NOT OK\n    HashSet foo() { // NOT OK\n        return fooSet;\n    }\n}\n        "
+    },
+    {
+      "description": "two fields",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashSet;\nimport java.util.HashMap;\npublic class Foo {\n    HashSet fooSet = new HashSet();\n    HashMap fooMap = new HashMap();\n}\n        "
+    },
+    {
+      "description": "method param is HashMap",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashMap;\npublic class Foo {\n    void foo(HashMap bar) {}\n}\n        "
+    },
+    {
+      "description": "Vector could be List",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    public void foo(Vector bar) {}\n}\n        "
+    },
+    {
+      "description": "ArrayList could be List",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    public void foo(ArrayList bar) {}\n}\n        "
+    },
+    {
+      "description": "#938 False positive on LooseCoupling for overriding methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.LinkedHashMap;\n\npublic class Test {\n    @Override\n    public LinkedHashMap findGetters() {}\n}\n        "
+    },
+    {
+      "description": "FP with method reference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashMap;\n\npublic class Test {\n    private static final ThreadLocal TREE_CACHE =\n            ThreadLocal.withInitial(HashMap::new);\n}\n        "
+    },
+    {
+      "description": "FP with instanceof and cast",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class Test {\n    boolean m(Map m) {\n        if (m instanceof HashMap) {\n            return ((HashMap) m).isEmpty();\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "FP with static method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class MyMap implements Map {\n    static Map create() { return null; }\n}\n\nclass Foo {\n    final Map map =\n            MyMap.create();\n}\n        "
+    },
+    {
+      "description": "FP with array creation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class MyMap implements Map { }\n\nclass Foo {\n    final Map[] map = new MyMap[5]; // ok\n}\n        "
+    },
+    {
+      "description": "FP with j.util.Properties",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Properties;\n\nclass Foo {\n    final Properties map = new Properties();\n}\n        "
+    },
+    {
+      "description": "Exception list, no exception",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage mine;\nimport java.util.List;\n\nclass O implements List {\n    final O map = new O();\n}\n        "
+    },
+    {
+      "description": "Exception list",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage mine;\nimport java.util.List;\n\nclass O implements List {\n    final O map = new O();\n}\n        "
+    },
+    {
+      "description": "#2464 class literals",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\n\nclass Foo {\n    final Object o = ArrayList.class;\n}\n        "
+    },
+    {
+      "description": "Inner class selection",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.AbstractMap;\n\nclass Foo {\n    final Object o =\n            new AbstractMap.SimpleEntry<>(\"\", \"\");\n}\n        "
+    },
+    {
+      "description": "Extends clause",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.AbstractMap;\n\nclass Foo extends AbstractMap<String, String> {\n\n}\n        "
+    },
+    {
+      "description": "This/super qualifier",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\n\nclass Foo extends ArrayList {\n\n    {\n        Foo.super.clear();\n    }\n\n    class Inner {\n        {\n            Foo.this.clear();\n            Foo.super.clear();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Verify with nested (local) classes",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        11,
+        15
+      ],
+      "code": "\nimport java.util.HashSet;\npublic class Foo {\n    void firstMethod() { }\n    void myMethod() {\n        class Inner {\n            HashSet foo() {\n                return new HashSet();\n            }\n        }\n        Object o = new Object() {\n            HashSet foo() { return new HashSet(); }\n        };\n    }\n    class Nested {\n        HashSet foo() {\n            return new HashSet();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with generics #3672",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Collection;\nimport java.util.Set;\npublic final class Foo<A, B extends Collection<A>> {\n    private final Set<? super B> things;\n}\n        "
+    },
+    {
+      "description": "[java] LooseCoupling FP with class literal #3940",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class TheClass {\n\n    private ObjectMapper objectMapper = new ObjectMapper();\n\n    public BiMap<String, Integer> getCountriesDictionary() throws IOException {\n        final Map<String, Integer> out = objectMapper.readValue(\".....\", HashMap.class);\n        return HashBiMap.create(out);\n    }\n}\n"
+    }
+  ]
+}

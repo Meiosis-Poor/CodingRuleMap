@@ -1,0 +1,58 @@
+{
+  "name": "HardCodedCryptoKey",
+  "language": "java",
+  "description": "\nDo not use hard coded values for cryptographic operations. Please store keys outside of source code.\n        ",
+  "example": "public class Foo {\n    void good() {\n        SecretKeySpec secretKeySpec = new SecretKeySpec(Properties.getKey(), \"AES\");\n    }\n\n    void bad() {\n        SecretKeySpec secretKeySpec = new SecretKeySpec(\"my secret here\".getBytes(), \"AES\");\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 21,
+  "branches": 1,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Hard coded inline cryptographic key, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport javax.crypto.spec.SecretKeySpec;\n\npublic class Foo {\n\n    void encrypt() {\n        SecretKeySpec keySpec =  new SecretKeySpec(\"hard coded key here\".getBytes(\"UTF-8\"), \"AES\");\n    }\n}\n        "
+    },
+    {
+      "description": "Key stored in a property, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.SecretKeySpec;\n\npublic class SecureProperty {\n    byte[] getKeyBytes() {return null;}\n    void encrypt(SecureProperty secureProperty) {\n        SecretKeySpec keySpec =  new SecretKeySpec(secureProperty.getKeyBytes(), \"AES\");\n    }\n}\n        "
+    },
+    {
+      "description": "Hard coded in field cryptographic key, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport javax.crypto.spec.SecretKeySpec;\n\npublic class Foo {\n\n    static private String key = \"0123456789ABCDEF\";\n\n    void encrypt() {\n        byte[] keyData = key.getBytes(\"UTF-8\");\n\n        SecretKeySpec keySpec =  new SecretKeySpec(keyData, \"AES\");\n    }\n}\n        "
+    },
+    {
+      "description": "Hard coded crypto key byte[], bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.SecretKeySpec;\n\npublic class Foo {\n\n    static private byte[] encryptionKey = new byte[] { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 };\n\n    void encrypt() {\n        SecretKeySpec keySpec =  new SecretKeySpec(encryptionKey, \"AES\");\n    }\n}\n        "
+    },
+    {
+      "description": "Key fetched from a property, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.SecretKeySpec;\nimport my.SecureUtils;\nimport my.Struct;\npublic class Foo {\n\n    void encrypt(Struct data) {\n        byte[] computedSecretKey = SecureUtils.computeSecretKey(data.getSecretKeyAlgorithm(),\n            data.getAccessKey(), data.getClientIp(), data.getTimeStamp(), data.getEnv());\n        SecretKeySpec secretKeySpec = new SecretKeySpec(computedSecretKey, data.getSecretKeyAlgorithm().getName());\n    }\n}\n        "
+    },
+    {
+      "description": "[java] HardcodedCryptoKey false negative with variable assignments #3368",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        7,
+        9,
+        16
+      ],
+      "code": "\nimport javax.crypto.spec.SecretKeySpec;\n\npublic class Foo {\n    public void testHardCodedCryptoKey(boolean tag) {\n       String str;\n       if (tag) {\n          str = \"Hardcoded Crypto Key1\"; // should report a warning here\n       } else {\n          str = \"Hardcoded Crypto Key2\"; // should report a warning here\n       }\n       SecretKeySpec secretKeySpec = new SecretKeySpec(str.getBytes(), \"AES\");\n    }\n\n    void encrypt() {\n        final String var0;\n        var0 = \"hard coded key here\";\n        SecretKeySpec keySpec =  new SecretKeySpec(var0.getBytes(), \"AES\");\n    }\n\n    void encrypt2(String prefix, String key) {\n        final String var0 = prefix;\n        var0 = var0 + key;\n        SecretKeySpec keySpec =  new SecretKeySpec(var0.getBytes(), \"AES\");\n    }\n}\n        "
+    }
+  ]
+}

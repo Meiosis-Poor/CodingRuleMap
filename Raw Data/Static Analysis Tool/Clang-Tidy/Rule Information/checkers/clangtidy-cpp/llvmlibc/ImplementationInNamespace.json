@@ -1,0 +1,30 @@
+{
+  "name": "ImplementationInNamespace",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - llvmlibc-implementation-in-namespace",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 65,
+  "branches": 5,
+  "apis": 32,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        6,
+        8,
+        10,
+        12,
+        14,
+        17,
+        23,
+        28,
+        43
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s llvmlibc-implementation-in-namespace %t\n\n#define MACRO_A \"defining macros outside namespace is valid\"\n\nclass ClassB;\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: declaration must be enclosed within the 'LIBC_NAMESPACE_DECL' namespace\nstruct StructC {};\n// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: declaration must be enclosed within the 'LIBC_NAMESPACE_DECL' namespace\nconst char *VarD = MACRO_A;\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: declaration must be enclosed within the 'LIBC_NAMESPACE_DECL' namespace\ntypedef int typeE;\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: declaration must be enclosed within the 'LIBC_NAMESPACE_DECL' namespace\nvoid funcF() {}\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: declaration must be enclosed within the 'LIBC_NAMESPACE_DECL' namespace\n\nnamespace outer_most {\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: the outermost namespace should be the 'LIBC_NAMESPACE_DECL' macro\n class A {};\n}\n\n// Wrapped in anonymous namespace.\nnamespace {\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: declaration must be enclosed within the 'LIBC_NAMESPACE_DECL' namespace\n class A {};\n}\n\nnamespace namespaceG {\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: the outermost namespace should be the 'LIBC_NAMESPACE_DECL' macro\nnamespace __llvm_libc {\nnamespace namespaceH {\nclass ClassB;\n} // namespace namespaceH\nstruct StructC {};\n} // namespace __llvm_libc\nconst char *VarD = MACRO_A;\ntypedef int typeE;\nvoid funcF() {}\n} // namespace namespaceG\n\n// Wrapped in macro namespace but with an incorrect name\n#define LIBC_NAMESPACE_DECL [[gnu::visibility(\"hidden\")]] custom_namespace\nnamespace LIBC_NAMESPACE_DECL {\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: the 'LIBC_NAMESPACE_DECL' macro expansion should start with '__llvm_libc'\n\nnamespace namespaceH {\nclass ClassB;\n} // namespace namespaceH\n} // namespace LIBC_NAMESPACE_DECL\n\n\n// Wrapped in macro namespace with a valid name, LIBC_NAMESPACE_DECL starts with '__llvm_libc'\n#undef LIBC_NAMESPACE_DECL\n#define LIBC_NAMESPACE_DECL [[gnu::visibility(\"hidden\")]] __llvm_libc_xyz\nnamespace LIBC_NAMESPACE_DECL {\nnamespace namespaceI {\nclass ClassB;\n} // namespace namespaceI\nstruct StructC {};\nconst char *VarD = MACRO_A;\ntypedef int typeE;\nvoid funcF() {}\nextern \"C\" void extern_funcJ() {}\n} // namespace LIBC_NAMESPACE_DECL"
+    }
+  ]
+}

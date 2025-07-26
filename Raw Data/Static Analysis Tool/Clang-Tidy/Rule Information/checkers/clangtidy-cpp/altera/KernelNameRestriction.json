@@ -1,0 +1,30 @@
+{
+  "name": "KernelNameRestriction",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - altera-kernel-name-restriction",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 103,
+  "branches": 9,
+  "apis": 32,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        7,
+        9,
+        11,
+        15,
+        17,
+        19,
+        24,
+        26,
+        28
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s altera-kernel-name-restriction %t -- -- -I%S/Inputs/kernel-name-restriction\n// RUN: %check_clang_tidy -check-suffix=UPPERCASE %s altera-kernel-name-restriction %t -- -- -I%S/Inputs/kernel-name-restriction/uppercase -DUPPERCASE\n\n#ifdef UPPERCASE\n// The warning should be triggered regardless of capitalization\n#include \"KERNEL.cl\"\n// CHECK-MESSAGES-UPPERCASE: :[[@LINE-1]]:1: warning: including 'KERNEL.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#include \"vERILOG.cl\"\n// CHECK-MESSAGES-UPPERCASE: :[[@LINE-1]]:1: warning: including 'vERILOG.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#include \"VHDL.cl\"\n// CHECK-MESSAGES-UPPERCASE: :[[@LINE-1]]:1: warning: including 'VHDL.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#else \n// These are the banned kernel filenames, and should trigger warnings\n#include \"kernel.cl\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: including 'kernel.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#include \"Verilog.cl\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: including 'Verilog.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#include \"vhdl.CL\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: including 'vhdl.CL' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n\n\n// The warning should be triggered if the names are within a directory\n#include \"some/dir/kernel.cl\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: including 'kernel.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#include \"somedir/verilog.cl\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: including 'verilog.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n#include \"otherdir/vhdl.cl\"\n// CHECK-MESSAGES: :[[@LINE-1]]:1: warning: including 'vhdl.cl' may cause additional compilation errors due to the name of the kernel source file; consider renaming the included kernel source file [altera-kernel-name-restriction]\n\n// There are no FIX-ITs for the altera-kernel-name-restriction lint check\n\n// The following include directives shouldn't trigger the warning\n#include \"otherthing.cl\"\n#include \"thing.h\"\n\n// It doesn't make sense to have kernel.h, verilog.h, or vhdl.h as filenames\n// without the corresponding .cl files, but the Altera Programming Guide doesn't\n// explicitly forbid it.\n#include \"kernel.h\"\n#include \"verilog.h\"\n#include \"vhdl.h\"\n\n// The files can still have the forbidden names in them, so long as they're not\n// the entire file name, and are not the kernel source file name.\n#include \"some_kernel.cl\"\n#include \"other_Verilog.cl\"\n#include \"vhdl_number_two.cl\"\n\n// Naming a directory kernel.cl, verilog.cl, or vhdl.cl is not explicitly\n// forbidden in the Altera Programming Guide either.\n#include \"some/kernel.cl/foo.h\"\n#include \"some/verilog.cl/foo.h\"\n#include \"some/vhdl.cl/foo.h\"\n#endif\n"
+    }
+  ]
+}

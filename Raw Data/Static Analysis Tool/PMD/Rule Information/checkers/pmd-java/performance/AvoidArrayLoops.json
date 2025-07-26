@@ -1,0 +1,167 @@
+{
+  "name": "AvoidArrayLoops",
+  "language": "java",
+  "description": "\nInstead of manually copying data between two arrays, use the more efficient `Arrays.copyOf`\nor `System.arraycopy` method instead.\n\nTo copy only part of the array, use `Arrays.copyOfRange` or `System.arraycopy`.\n\nIf you want to copy/move elements inside the _same_ array (e.g. shift the elements), use `System.arraycopy`.\n        ",
+  "example": "class Scratch {\n    void copy_a_to_b() {\n        int[] a = new int[10];\n        int[] b = new int[10];\n        for (int i = 0; i < a.length; i++) {\n            b[i] = a[i];\n        }\n        // equivalent\n        b = Arrays.copyOf(a, a.length);\n        // equivalent\n        System.arraycopy(a, 0, b, 0, a.length);\n\n        int[] c = new int[10];\n        // this will not trigger the rule\n        for (int i = 0; i < c.length; i++) {\n            b[i] = a[c[i]];\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "copy index into array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        int[] a = new int[10];\n        for (int i=0;i<10;i++) {\n            a[i] = i;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "copy one array to another",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar(int[] b) {\n        int[] a = new int[10];\n        for (int i=0;i<10;i++) {\n            a[i] = b[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "copy via while loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void bar(int[] b) {\n        int i = 0;\n        int[] a = new int[10];\n        while (i < 10) {\n            a[i] = b[i];\n            i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "copy via do-while loop #4091",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        int i = 0;\n        do {\n            a[i] = b[i];\n            i++;\n        } while (i < 10);\n    }\n}\n        "
+    },
+    {
+      "description": "copy involving multiple arrays is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int[] a, int[] b) {\n        int[] x = new int[10];\n        int[] y = new int[10];\n        for (int i = 0; i < 10; i++) {\n            x[i] = b[i] + 1;\n            y[i] = a[i] + 2;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "copy involving method invocation on array element is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int[] b) {\n        int[] a = new int[10];\n        for (int i=0;i<10;i++) {\n            a[i] = b[i].size();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "using an offset, still bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar(int[] a) {\n        int[] b = new int[10];\n        for (int i=0;i<10;i++) {\n            b[i]=a[i+6];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "nested arrays on LHS, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int[] a, int[] c) {\n        int[] b = new int[10];\n        for (int i=0;i<10;i++) {\n            b[c[i]] = a[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "adding to array is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar1() {\n        for (int i = 0; i < 10; i++) {\n            a[i] += b[i];\n        }\n    }\n    public void bar2() {\n        int i = 0;\n        for (i = 0; i < 10; i++) {\n            a[i] += b[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Example code",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Test {\n    public void bar() {\n        int[] a = new int[10];\n        int[] b = new int[10];\n\n        // instead of this loop\n        for (int i = 0; i < 10; i++) {\n            b[i] = a[i];\n        }\n        // use: System.arraycopy(a, 0, b, 0, 10);\n\n        int[] c = new int[10];\n        // this won't trigger the rule\n        for (int i = 0; i < 10; i++) {\n            b[i] = a[c[i]];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with calculated array index",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidArrayLoops {\n    public void test() {\n        String[] table = new String[10];\n        String[] labels = new String[10];\n        for (int i = 0; i < 10; i++) {\n            table[i] = labels[getIndex()];\n        }\n    }\n\n    private int getIndex() { return 0; }\n}\n        "
+    },
+    {
+      "description": "False positive with same array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidArrayLoops {\n    public void test() {\n        String[] array = new String[10];\n        for (int i = 0, j = 1; i < 9; i++, j++) {\n            array[i] = array[j];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Correct example - System.arraycopy can be used",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class AvoidArrayLoops {\n    public void test(byte[] time) {\n        byte[] blob = new byte[time.length + 8];\n        for (int i=0; i<time.length; i++) {\n            blob[8+time.length-i-1] = time[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with break/continue in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidArrayLoops {\n    public void test(String[] in) {\n        String[] array = new String[10];\n        for (int i = 0; i < in.length; i++) {\n            if (i % 2) {\n                continue;\n            }\n            array[i] = in[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with linked list",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidArrayLoops {\n    public void test(int[] uValues) {\n        int[] a = new int[10];\n        int headp = 0;\n        for (int i = 0; i < uValues.length; i++) {\n            int nextp = a[headp];\n            a[headp] = uValues[i];\n            headp = nextp;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with increment by 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AvoidArrayLoops {\n    public void test(int[] value) {\n        int[] dst = new int[10];\n        int dstBegin = 0;\n        for (int i = 0; i < value.length; i += 2) {\n            dst[dstBegin++] = value[i];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] AvoidArrayLoops false positive on double assignment #1167",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n  public static void main( String[] args ) {\n    double[] foo = new double[100];\n    double bar = 0.0;\n    int[] exps = new int[10];\n\n    for (int i = 0; i < exps.length; i++) {\n      double value = Math.random();\n      foo[i] = Math.exp(value);\n      bar += foo[i];\n    }\n  }\n}\n"
+    },
+    {
+      "description": "Nested array on RHS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass AvoidArrayLoops {\n  void copy_a_to_b(int[] a, int[] b) {\n        int[] c = new int[10];\n        // this will not trigger the rule\n        for (int i = 0; i < 10; i++) {\n            b[i] = a[c[i]];\n        }\n  }\n}\n"
+    },
+    {
+      "description": "Ignore multi-dim array assignment #1167",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Random;\nclass AvoidArrayLoops {\n    void bar1(int[][] target, int[] source) {\n        for (int i = 0; i < 10; i++) {\n            for(int j = 0; j < 10; j++) {\n                target[i][j] = source[i * 10 + j];\n            }\n        }\n    }\n    void bar2(int[][] target, int[] source) {\n        for (int i = 0; i < 10; i++) {\n            for(int j = 0; j < 10; j++) {\n                int sourceIndex = new Random().nextInt(source.length);\n                target[i][j] = source[sourceIndex];\n            }\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] AvoidArrayLoops should consider final variables #3847",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        10,
+        13
+      ],
+      "code": "\nclass AvoidArrayLoops {\n    void sample() {\n        int[] a = new int[10];\n        int[] b = new int[10];\n        final int c = 6;\n        for (int i = 0; i < 10; i++) {\n            b[i] = a[i + c];  // should report a warning at this line\n            // b[i] = a[i + 6];  // This line can be detected\n        }\n        for (int i = 0; i < 10; i++) {\n            b[i + c] = a[i];  // should report a warning at this line\n        }\n        for (int i = 0; i < 10; i++) {\n            b[i + c] = a[i + c];  // should report a warning at this line\n        }\n    }\n}\n"
+    },
+    {
+      "description": "Shifting left and right #2692",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        10,
+        20
+      ],
+      "code": "\nimport java.util.Arrays;\nclass Scratch {\n    public static void main(String[] args) {\n        int[] ints;\n        ints = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };\n        System.out.println(Arrays.toString(ints)); // [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]\n\n        // shift left\n        ints = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };\n        for (int i = 0; i < ints.length - 1; i++) {\n            ints[i] = ints[i + 1];\n        }\n        System.out.println(Arrays.toString(ints)); // [2, 3, 4, 5, 6, 7, 8, 9, 10, 10]\n        ints = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };\n        System.arraycopy(ints, 1, ints, 0, ints.length - 1);\n        System.out.println(Arrays.toString(ints)); // [2, 3, 4, 5, 6, 7, 8, 9, 10, 10]\n\n        // shift right\n        ints = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };\n        for (int i = ints.length - 1; i > 0; i--) {\n            ints[i] = ints[i - 1];\n        }\n        System.out.println(Arrays.toString(ints)); // [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]\n        ints = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };\n        System.arraycopy(ints, 0, ints, 1, ints.length - 1);\n        System.out.println(Arrays.toString(ints)); // [1, 1, 2, 3, 4, 5, 6, 7, 8, 9]\n    }\n}\n"
+    },
+    {
+      "description": "[java] AvoidArrayLoops regression: from false negative to false positive with final variables #4183",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        22,
+        29,
+        38
+      ],
+      "code": "\nclass AvoidArrayLoopsSamples {\n    public static void sample1() {\n        final int[] a = new int[10];\n        final int[] b = new int[10];\n        for (int i = 0; i < 10; i++) { // line 5 - no violation (false positive)\n            final int c = i;           // it's final but not a constant during the loop\n            b[i] = a[i + c];\n        }\n    }\n    public static void sample2() {\n        final int[] a = new int[10];\n        final int[] b = new int[10];\n        for (int i = 0; i < 10; i++) { // line 13 - no violation (false positive)\n            int c = i;                 // not final, not a constant (literal)\n            b[i] = a[i + c];\n        }\n    }\n    public static void sample3() {\n        final int[] a = new int[10];\n        final int[] b = new int[10];\n        final int c = 6;\n        for (int i = 0; i < 10; i++) { // line 22 - violation\n            b[i] = a[i + c];           // using c, which is a final and a constant\n        }\n    }\n    public static void sample4() {\n        final int[] a = new int[10];\n        final int[] b = new int[10];\n        for (int i = 0; i < 10; i++) { // line 29 - violation\n            final int c = 6;           // using c, which is a final and a constant\n            b[i] = a[i + c];\n        }\n    }\n    private static final int OFFSET = 5;\n    public static void sample5() {\n        final int[] a = new int[10];\n        final int[] b = new int[10];\n        for (int i = 0; i < 10; i++) { // line 38 - violation\n            b[i] = a[i + OFFSET];      // using OFFSET, a constant field\n        }\n    }\n}\n"
+    }
+  ]
+}

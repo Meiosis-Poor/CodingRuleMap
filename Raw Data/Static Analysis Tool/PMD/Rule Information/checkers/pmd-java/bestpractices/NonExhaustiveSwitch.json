@@ -1,0 +1,128 @@
+{
+  "name": "NonExhaustiveSwitch",
+  "language": "java",
+  "description": "\n            Switch statements should be exhaustive, to make their control flow\n            easier to follow. This can be achieved by adding a `default` case, or,\n            if the switch is on an enum type, by ensuring there is one switch branch\n            for each enum constant.\n\n            This rule doesn't consider Switch Statements, that use Pattern Matching, since for these the\n            compiler already ensures that all cases are covered. The same is true for Switch Expressions,\n            which are also not considered by this rule.\n        ",
+  "example": "class Foo {{\n    int x = 2;\n    switch (x) {\n      case 1: int j = 6;\n      case 2: int j = 8;\n      // missing default: here\n    }\n}}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        switch (x) {\n            case 2: int y=8;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "empty switch is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        switch (x) { } // this is ok. The empty switch is detected by EmptyControlStatement\n    }\n}\n        "
+    },
+    {
+      "description": "simple ok case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        switch (x) {\n            case 2: int y=8;\n            default: int j=8;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#651 Enum type, not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\npublic class Foo {\n    void bar() {\n        SimpleEnum a;\n\n        // This switch is NOT exhaustive\n        switch (a) {\n        case BZAZ:\n            int y = 8;\n            break;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#651 Enum type, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\npublic class Foo {\n    void bar() {\n        SimpleEnum x;\n\n        // This switch is exhaustive\n        switch (x) {\n        case BZAZ:\n            int y = 8;\n            break;\n        case FOO:\n            break;\n        case BAR:\n            int w = 8;\n            break;\n        }\n    }\n}\n            "
+    },
+    {
+      "description": "#3605 switch on enum with default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\n            public class Foo {\n\n                void bar(SimpleEnum x) {\n                    switch (x) {\n                    case BZAZ:\n                        int y = 8;\n                        break;\n                    case FOO:\n                        break;\n                    case BAR:\n                        int w = 8;\n                        break;\n                    default:\n                        break;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#3605 switch on enum with default, nonexhaustive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\n            public class Foo {\n\n                void bar(SimpleEnum x) {\n                    switch (x) {\n                    case BZAZ:\n                        int y = 8;\n                        break;\n                    case FOO:\n                        break;\n                    default:\n                        break;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#3605 switch on enum with default, nonexhaustive, arrow",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\n            public class Foo {\n                void bar(SimpleEnum x) {\n                    switch (x) {\n                    case FOO -> System.out.println(\"it is on\");\n                    case BAR -> System.out.println(\"it is off\");\n                    default -> System.out.println(\"it is neither on nor off - should not happen? maybe null?\");\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#3605 switch on enum with default, exhaustive, arrow",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\n            public class Foo {\n                void bar(SimpleEnum x) {\n                    switch (x) {\n                    case FOO -> System.out.println(\"it is on\");\n                    case BAR -> System.out.println(\"it is off\");\n                    case BZAZ -> System.out.println(\"it is bzaz\");\n                    default -> System.out.println(\"it is neither on nor off - should not happen? maybe null?\");\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Enum type, not ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n\npublic class Foo {\n    enum MyEnum { A, B, C }\n    void bar(MyEnum x) {\n        // This switch is not exhaustive\n        switch (x) {\n        case A:\n            int y = 8;\n            break;\n        case B:\n            break;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Enum type, not ok (arrow branches)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n\npublic class Foo {\n    enum MyEnum { A, B, C }\n    void bar(MyEnum x) {\n        // This switch is not exhaustive\n        switch (x) {\n        case A -> {\n            int y = 8;\n        }\n        case B -> throw new IllegalStateException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2806 [java] SwitchStmtsShouldHaveDefault false-positive with Java 14 non-fallthrough branches",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\npublic class Foo {\n    public String foo(String foo) {\n        switch (foo) {\n        case \"=\" -> foo = \"eq\";\n        case \"!=\" -> foo = \"ne\";\n        default -> throw new IllegalArgumentException();\n        }\n        return foo + 'a';\n    }\n}\n        "
+    },
+    {
+      "description": "[java] SwitchStmtsShouldHaveDefault false positive on enum inside enums #2946",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum GradeSystem {\n    SysA, SysB;\n\n    public boolean isValid() {\n        switch (this) { // false-positive\n        case SysA:\n        case SysB:\n            return true;\n        }\n\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] SwitchStmtsShouldHaveDefault false positive with pattern matching #4813",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic sealed interface AcceptableResult permits Success, Warning {\n    public String message();\n}\npublic final class Success implements AcceptableResult {\n    @Override\n    public String message() {\n        return \"Success!\";\n    }\n}\npublic abstract class Failure {\n    abstract public String message();\n}\npublic non-sealed class Warning extends Failure implements AcceptableResult {\n    @Override\n    public String message() {\n        return \"Oopsie\";\n    }\n}\npublic class ProviderWarning extends Warning {\n    @Override\n    public String message() {\n        return \"Ohoh\";\n    }\n}\npublic class Example {\n    public void test(AcceptableResult result) {\n        switch (result) {\n            case Warning failure -> System.out.println(\"WARNING \" + failure.message());\n            case Success success -> System.out.println(success.message());\n        }\n    }\n    public void test2(AcceptableResult result) {\n        switch (result) {\n            case ProviderWarning failure: System.out.println(\"Provider WARNING \" + failure.message()); break;\n            case Warning failure: System.out.println(\"WARNING \" + failure.message()); break;\n            case Success success: System.out.println(success.message()); break;\n        }\n    }\n    public void test3(AcceptableResult result) {\n        switch (result) {\n            case ProviderWarning failure -> System.out.println(\"Provider WARNING \" + failure.message());\n            case Success success -> System.out.println(success.message());\n            default -> System.out.println(\"default case\");\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] SwitchStmtsShouldHaveDefault false positive with pattern matching #4813, example 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nsealed interface S permits A, B {}\nfinal class A implements S {}\nsealed abstract class B implements S permits C, D {}\nfinal class C extends B {}\nfinal class D extends B {}\npublic class Example2 {\n    static int testSealedExhaustive(S s) {\n        switch(s) {\n            case A a -> { return 1; }\n            case C c -> { return 2; }\n            case D d -> { return 3; }\n            // case B b -> { return 4; } // not explicitly necessary, but possible\n        }\n    }\n}\n"
+    },
+    {
+      "description": "With Record Patterns #4813",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nrecord R(int i) {}\n\npublic class SwitchWithRecordPattern {\n    public void check(R r) {\n        switch(r) {\n            case R(int a) -> System.out.println(a);\n        }\n    }\n}\n"
+    },
+    {
+      "description": "Multiple Case Constants",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nenum MyEnum { A, B, C }\n\npublic class SwitchMultipleCaseConstants {\n    public void switchLabels(MyEnum e) {\n        switch(e) {\n            case A,B: System.out.println(\"a or b\"); break;\n            case C: System.out.println(\"c\");\n        }\n        String s = switch(e) {\n            case A,B: yield \"a or b\";\n            case C: yield \"c\";\n        };\n        System.out.println(s);\n    }\n    public void switchRules(MyEnum e) {\n        switch(e) {\n            case A,B -> System.out.println(\"a or b\");\n            case C -> System.out.println(\"c\");\n        }\n        String s = switch(e) {\n            case A,B -> \"a or b\";\n            case C -> \"c\";\n        };\n        System.out.println(s);\n    }\n}\n"
+    },
+    {
+      "description": "[java] False positive violation of SwitchStmtsShouldHaveDefault when using local variable inference #2743",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.Animal;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.switchstmtsshouldhavedefault.SimpleEnum;\n\npublic class Foo {\n    List<Animal> getAnimals() { return null; }\n\n    void check() {\n        for (var animal : getAnimals()) {\n            switch (animal.getType()) { // false violation\n                case FOO:\n                    // do something\n                    break;\n                case BAR:\n                    // do something\n                    break;\n                case BZAZ:\n                    // do something\n                    break;\n            }\n        }\n    }\n\n    void setValue(List<SimpleEnum> list) {\n        list.forEach(eIn -> {\n            switch (eIn) {\n                case FOO:\n                    // do something\n                    break;\n                case BAR:\n                    // do something\n                    break;\n                case BZAZ:\n                    // do something\n                    break;\n            }\n        });\n    }\n}\n"
+    },
+    {
+      "description": "[java] SwitchStmtsShouldHaveDefault and implicit default #3346",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nenum State { ON, OFF }\n\nclass Tester {\n    boolean isOn(State state) {\n        switch (state) {\n            case ON:\n                return true;\n            case OFF:\n                return false;\n        }\n    }\n}\n"
+    }
+  ]
+}

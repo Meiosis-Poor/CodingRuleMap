@@ -1,0 +1,38 @@
+{
+  "name": "UseIntegerSignComparison",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-use-integer-sign-comparison",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 182,
+  "branches": 22,
+  "apis": 123,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 17,
+      "expected-linenumbers": [
+        12,
+        23,
+        30,
+        53,
+        57,
+        61,
+        65,
+        70,
+        75,
+        80,
+        85,
+        89,
+        93,
+        98,
+        103,
+        108,
+        114
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes -std=c++20 %s modernize-use-integer-sign-comparison %t\n\n// CHECK-FIXES: #include <utility>\n\n// The code that triggers the check\n#define MAX_MACRO(a, b) (a < b) ? b : a\n\nunsigned int FuncParameters(int bla) {\n    unsigned int result = 0;\n    if (result == bla)\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_equal(result , bla))\n\n    return 1;\n}\n\ntemplate <typename T>\nvoid TemplateFuncParameter(T val) {\n    unsigned long uL = 0;\n    if (val >= uL)\n        return;\n// CHECK-MESSAGES-NOT: warning:\n}\n\ntemplate <typename T1, typename T2>\nint TemplateFuncParameters(T1 val1, T2 val2) {\n    if (val1 >= val2)\n        return 0;\n// CHECK-MESSAGES-NOT: warning:\n    return 1;\n}\n\nint AllComparisons() {\n    unsigned int uVar = 42;\n    unsigned short uArray[7] = {0, 1, 2, 3, 9, 7, 9};\n\n    int sVar = -42;\n    short sArray[7] = {-1, -2, -8, -94, -5, -4, -6};\n\n    enum INT_TEST {\n      VAL1 = 0,\n      VAL2 = -1\n    };\n\n    char ch = 'a';\n    unsigned char uCh = 'a';\n    signed char sCh = 'a';\n    bool bln = false;\n\n    if (bln == sVar)\n      return 0;\n// CHECK-MESSAGES-NOT: warning:\n\n    if (ch > uCh)\n      return 0;\n// CHECK-MESSAGES-NOT: warning:\n\n    if (sVar <= INT_TEST::VAL2)\n      return 0;\n// CHECK-MESSAGES-NOT: warning:\n\n    if (uCh < sCh)\n      return -1;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_less(uCh , sCh))\n\n    if ((int)uVar < sVar)\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_less(uVar, sVar))\n\n    (uVar != sVar) ? uVar = sVar\n                   : sVar = uVar;\n// CHECK-MESSAGES: :[[@LINE-2]]:6: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: (std::cmp_not_equal(uVar , sVar)) ? uVar = sVar\n\n    while (uArray[0] <= sArray[0])\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:12: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: while (std::cmp_less_equal(uArray[0] , sArray[0]))\n\n    if (uArray[1] > sArray[1])\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_greater(uArray[1] , sArray[1]))\n\n    MAX_MACRO(uVar, sArray[0]);\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n\n    if (static_cast<unsigned int>(uArray[2]) < static_cast<int>(sArray[2]))\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_less(uArray[2],sArray[2]))\n\n    if ((unsigned int)uArray[3] < (int)sArray[3])\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_less(uArray[3],sArray[3]))\n\n    if ((unsigned int)(uArray[4]) < (int)(sArray[4]))\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_less((uArray[4]),(sArray[4])))\n\n    if (uArray[5] > sArray[5])\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_greater(uArray[5] , sArray[5]))\n\n    #define VALUE sArray[6]\n    if (uArray[6] > VALUE)\n        return 0;\n// CHECK-MESSAGES: :[[@LINE-2]]:9: warning: comparison between 'signed' and 'unsigned' integers [modernize-use-integer-sign-comparison]\n// CHECK-FIXES: if (std::cmp_greater(uArray[6] , VALUE))\n\n\n    FuncParameters(uVar);\n    TemplateFuncParameter(sVar);\n    TemplateFuncParameters(uVar, sVar);\n\n    return 0;\n}"
+    }
+  ]
+}

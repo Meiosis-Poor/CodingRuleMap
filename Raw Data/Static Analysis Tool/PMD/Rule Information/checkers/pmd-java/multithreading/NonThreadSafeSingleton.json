@@ -1,0 +1,92 @@
+{
+  "name": "NonThreadSafeSingleton",
+  "language": "java",
+  "description": "\nNon-thread safe singletons can result in bad state changes. Eliminate\nstatic singletons if possible by instantiating the object directly. Static\nsingletons are usually not needed as only a single instance exists anyway.\nOther possible fixes are to synchronize the entire method or to use an\n[initialize-on-demand holder class](https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom).\n\nRefrain from using the double-checked locking pattern. The Java Memory Model doesn't\nguarantee it to work unless the variable is declared as `volatile`, adding an uneeded\nperformance penalty. [Reference](http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html)\n\nSee Effective Java, item 48.\n        ",
+  "example": "private static Foo foo = null;\n\n//multiple simultaneous callers may see partially initialized objects\npublic static Foo getFoo() {\n    if (foo==null) {\n        foo = new Foo();\n    }\n    return foo;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 113,
+  "branches": 20,
+  "apis": 15,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    private static List<Object> buz;\n    public static List<Object> bar() {\n        if (buz == null) buz = new ArrayList<>();\n        return buz;\n    }\n}\n        "
+    },
+    {
+      "description": "OK, method is synchronized",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    private static List<Object> buz;\n    public static synchronized List<Object> bar() {\n        if (buz == null) buz = new ArrayList<>();\n        return buz;\n    }\n}\n        "
+    },
+    {
+      "description": "OK, in synchronized block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    private static List<Object> buz;\n    public static List<Object> bar() {\n        synchronized (baz) {\n            if (buz == null) buz = new ArrayList<>();\n            return buz;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "OK, in returning non-static data",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Locale;\n\npublic class Foo {\n    private static Locale locale;\n    public static Locale bar() {\n        if (locale == null) return Locale.getDefault();\n        return locale;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, two if statements",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    private static List<Object> buz;\n    private static boolean b = false;\n    public static List<Object> bar(String foo) {\n        if (buz == null) {\n            buz = new ArrayList<>();\n            if (foo == null) {\n                b = true;\n            }\n        }\n        return buz;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, compound if statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    private static List<Object> list;\n    public static List<Object> bar(String param) {\n        if (list == null || !param.equals(\"foo\")) {\n            list = new ArrayList<>();\n            param = \"x\";\n        }\n        return list;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.util.Collections;\nimport java.util.List;\n\npublic class Foo {\n    private static List<Object> buz = null;\n    private static List<Object> bar() {\n        if (buz == null) {\n            buz = Collections.<Object> emptyList();\n        }\n        return buz;\n    }\n}\n        "
+    },
+    {
+      "description": "From defect 1573591",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class A {\n    public final static String FOO = \"0\";\n    private String bar;\n    public void bla() {\n        if (this.bar == null) {\n            this.bar = FOO;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#997 Rule NonThreadSafeSingleton gives analysis problem",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class B {}\nclass A extends B {\n    static B instance = null;\n    private boolean bar = false;\n\n    static void foo() {\n        if (instance == null) {\n            instance = new A();\n            ((A)instance).bar = false;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with correct double-checked pattern #4483",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static volatile Object o;\n    public static Object getO() {\n        if (o == null) {\n            synchronized(Foo.class) {\n                if (o == null) {\n                    o = new Object();\n                }\n            }\n        }\n        return o;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] A false positive about the rule NonThreadSafeSingleton #4043",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Tester {\n    private static List buz;\n    public static List bar() {\n        if (true) { // the first warning (wrong)\n            if (buz == null) // the second warning (correct)\n                buz = new ArrayList();\n        }\n        return buz;\n    }\n}\n"
+    }
+  ]
+}

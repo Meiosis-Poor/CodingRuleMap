@@ -1,0 +1,80 @@
+{
+  "name": "MissingSerialVersionUID",
+  "language": "java",
+  "description": "\nSerializable classes should provide a serialVersionUID field.\nThe serialVersionUID field is also needed for abstract base classes. Each individual class in the inheritance\nchain needs an own serialVersionUID field. See also [Should an abstract class have a serialVersionUID](https://stackoverflow.com/questions/893259/should-an-abstract-class-have-a-serialversionuid).\n        ",
+  "example": "public class Foo implements java.io.Serializable {\n    String name;\n    // Define serialization id to avoid serialization related bugs\n    // i.e., public static final long serialVersionUID = 4328743;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Happy case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n}\n        "
+    },
+    {
+      "description": "Simple failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.Serializable;\n\npublic class Foo implements Serializable {\n}\n        "
+    },
+    {
+      "description": "failure using java.io.Serializable",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements java.io.Serializable {\n}\n        "
+    },
+    {
+      "description": "implements Serializable and provides a serialVersionUID",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements Serializable {\n    public static final long serialVersionUID = 43L;\n}\n        "
+    },
+    {
+      "description": "TEST5",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements java.io.Serializable {\n    public static final long serialVersionUID = 43L;\n}\n        "
+    },
+    {
+      "description": "interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo implements Bar{\n    void getName();\n}\n        "
+    },
+    {
+      "description": "abstract case, see #1352",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.Serializable;\npublic abstract class Foo implements Serializable {\n}\n        "
+    },
+    {
+      "description": "inherited abstract case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone;\npublic abstract class AbstractMissingSerialVersionUIDTest extends MissingSerialVersionUIDBase {\n    // no serial version UID\n}\n        "
+    },
+    {
+      "description": "@SuppressWarnings(\"serial\")",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@SuppressWarnings(\"serial\")\npublic class Foo implements Serializable {\n}\n        "
+    },
+    {
+      "description": "#1078 [java] MissingSerialVersionUID rule does not seem to catch inherited classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.errorprone;\npublic class MissingSerialVersionUIDTest extends MissingSerialVersionUIDBase {\n    // ... no serialVersionUID value defined ...\n}\n        "
+    },
+    {
+      "description": "#1350 [java] MissingSerialVersionUID false-positive on interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface IDomainObject<ID extends Serializable & Comparable<? super ID>> extends MutablePrimaryIdentifier<ID>, Serializable {\n}\n        "
+    }
+  ]
+}

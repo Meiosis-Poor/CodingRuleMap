@@ -1,0 +1,234 @@
+{
+  "name": "LiteralsFirstInComparisons",
+  "language": "java",
+  "description": "\n            Position literals first in all String comparisons, if the second argument is null then NullPointerExceptions\n            can be avoided, they will just return false. Note that switching literal positions for compareTo and\n            compareToIgnoreCase may change the result, see examples.\n\n            Note that compile-time constant strings are treated like literals. This is because they are inlined into\n            the class file, are necessarily non-null, and therefore cannot cause an NPE at runtime.\n        ",
+  "example": "class Foo {\n    boolean bar(String x) {\n        return x.equals(\"2\"); // should be \"2\".equals(x)\n    }\n    boolean bar(String x) {\n        return x.equalsIgnoreCase(\"2\"); // should be \"2\".equalsIgnoreCase(x)\n    }\n    boolean bar(String x) {\n        return (x.compareTo(\"bar\") > 0); // should be: \"bar\".compareTo(x) < 0\n    }\n    boolean bar(String x) {\n        return (x.compareToIgnoreCase(\"bar\") > 0); // should be: \"bar\".compareToIgnoreCase(x) < 0\n    }\n    boolean bar(String x) {\n        return x.contentEquals(\"bar\"); // should be \"bar\".contentEquals(x)\n    }\n\n    static final String CONSTANT = \"const\";\n    {\n        CONSTANT.equals(\"literal\"); // not reported, this is effectively the same as writing \"const\".equals(\"foo\")\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 65,
+  "branches": 17,
+  "apis": 6,
+  "test": [
+    {
+      "description": "ok, literal comes first in .equals comparison",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return \"2\".equals(x);\n    }\n}\n        "
+    },
+    {
+      "description": "bad, literal comes last in .equals comparison",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return x.equals(\"2\");\n    }\n}\n        "
+    },
+    {
+      "description": "ok, empty literal in .equals comparison",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(String str) {\n        if ((str == null) || (str.equals(\"\"))) {\n            str = \"snafu\";\n        }\n        if (str == null || str.equals(\"\")) {\n            str = \"snafu\";\n        }\n        if ((str != null) && (str.equals(\"\"))) {\n            str = \"snafu\";\n        }\n        if (str != null && str.equals(\"\")) {\n            str = \"snafu\";\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Test case from bug [1472195] - PositionLiteralsFirstInComparisons gives many .equals false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\npublic class Foo\n{\n    public void bug(Number number)\n    {\n        if (number.equals(new BigDecimal(\"123\"))) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Test case from bug [1472195] - PositionLiteralsFirstInComparisons gives many .equals false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo\n{\n    public void testMethod(String str)\n    {\n        if (str.equals(getAnotherString(\"abc\"))){}\n    }\n\n    private String getAnotherString(String str)\n    {\n        return \"xyz\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1256 PositionLiteralsFirstInComparisons .equals false positive with Characters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class LiteralTest {\n    protected final boolean check;\n    public LiteralTest(Character c) {\n        check = c.equals('x');\n    }\n}\n        "
+    },
+    {
+      "description": "ok, literal comes first in .equalsIgnoreCase comparison",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return \"2\".equalsIgnoreCase(x);\n    }\n}\n        "
+    },
+    {
+      "description": "bad, literal comes last in .equalsIgnoreCase comparison",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return x.equalsIgnoreCase(\"2\");\n    }\n}\n        "
+    },
+    {
+      "description": "ok, testing .equalsIgnoreCase false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        if ((str == null) || (equalsIgnoreCase(\"\"))) {\n            str = \"snafu\";\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Test case from bug [1472195] - PositionLiteralsFirstInComparisons gives many .equalsIgnoreCase false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\npublic class Foo\n{\n    public void bug()\n    {\n        if (equalsIgnoreCase(new BigDecimal(\"123\"))) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Test case from bug [1472195] - PositionLiteralsFirstInComparisons gives many .equalsIgnoreCase false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo\n{\n    public void testMethod(String str)\n    {\n        if (equalsIgnoreCase(getAnotherString(\"abc\"))){}\n    }\n\n    private String getAnotherString(String str)\n    {\n        return \"xyz\";\n    }\n}\n        "
+    },
+    {
+      "description": "ok, literal comes first in .compareTo comparison",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return \"2\".compareTo(x) < 0;\n    }\n}\n        "
+    },
+    {
+      "description": "bad, literal comes last in .compareTo comparison",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return x.compareTo(\"2\") > 0;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, testing for .compareTo false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar() {\n        return compareTo(\"randomStringArg\");\n    }\n}\n        "
+    },
+    {
+      "description": "ok, literal comes first in .compareToIgnoreCase comparison",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return \"2\".compareToIgnoreCase(x) < 0;\n    }\n}\n        "
+    },
+    {
+      "description": "bad, literal comes last in .compareToIgnoreCase comparison",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return x.compareToIgnoreCase(\"2\") > 0;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, testing ,compareToIgnoreCase false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    String bar() {\n        return compareToIgnoreCase(\"randomStringArg\");\n    }\n}\n        "
+    },
+    {
+      "description": "ok, literal comes first in .contentEquals comparison",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return \"2\".contentEquals(x);\n    }\n}\n        "
+    },
+    {
+      "description": "bad, literal comes last in .contentEquals comparison",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return x.contentEquals(\"2\");\n    }\n}\n        "
+    },
+    {
+      "description": "ok, testing .contentEquals false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean bar(String x) {\n        return contentEquals(\"2\");\n    }\n}\n        "
+    },
+    {
+      "description": "bad, testing false negative at the end of a chain",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.File;\npublic class Foo {\n    public boolean bar() {\n        File f;\n        return f.getParent().equals(\"testStr\");\n    }\n}\n        "
+    },
+    {
+      "description": "ok, should be ignored in case both operands are string literals",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean isFoo;\n    public void bar() {\n        this.isFoo = \"Hello\".equals(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "Equals on method result with String argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    private String getStr(String a) {\n        return \"a\" + a;\n    }\n    public void bar() {\n        if (getStr(\"b\").equals(\"ab\")) { }   // nok\n        if (\"ab\".equals(getStr(\"b\"))) { }   // ok\n    }\n}\n        "
+    },
+    {
+      "description": "FN with unresolved types",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\nimport my.Unknown;\nclass Foo {\n    public void testObjectArray(Unknown uk) {\n        Unknown hasMap = (Unknown) this.beanFactory.getBean(\"literalMap\");\n        assertTrue(hasMap.getMap().size() == 3);\n        assertTrue(hasMap.getMap().get(\"foo\").equals(\"bar\"));\n        assertTrue(hasMap.getMap().get(\"fi\").equals(\"fum\"));\n        assertTrue(hasMap.getMap().get(\"fa\") == null);\n    }\n}\n        "
+    },
+    {
+      "description": "#575 LiteralsFirstInComparisons to consider constant fields, i.e. static final Strings",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static final String TEST_CONSTANT = \"Test-Constant\";\n    public boolean test(String someString) {\n        return someString.equals(TEST_CONSTANT);\n    }\n}\n        "
+    },
+    {
+      "description": "#575 LiteralsFirstInComparisons must not trigger if the field is not final",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static String TEST_CONSTANT = \"Test-Constant\";\n    public boolean test(String someString) {\n        return someString.equals(TEST_CONSTANT);\n    }\n}\n        "
+    },
+    {
+      "description": "#575 LiteralsFirstInComparisons must not trigger if the field is not static",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final String TEST_CONSTANT = \"Test-Constant\";\n    public boolean test(String someString) {\n        return someString.equals(TEST_CONSTANT);\n    }\n}\n        "
+    },
+    {
+      "description": "#575 LiteralsFirstInComparisons must not trigger if the constant field is not a String",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final Integer TEST_CONSTANT = 5;\n    public boolean test(String someString) {\n        return someString.equals(TEST_CONSTANT);\n    }\n}\n        "
+    },
+    {
+      "description": "#3236 [java] LiteralsFirstInComparisons should consider constant fields (cont'd)",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        6,
+        8,
+        17,
+        24,
+        26
+      ],
+      "code": "\n            class DT1 {\n                public static final String Q = \"q\";\n                public static final String T = \"t\";\n\n                public static int convert(String type) {\n                    if (type.equals(Q)) { // 6\n                        return 1;\n                    } else if (type.equals(T)) { // 8\n                        return 2;\n                    } else {\n                        return 3;\n                    }\n                }\n                public static int convert2(String type) {\n                    if (Q.equals(type)) { // 15\n                        return 1;\n                    } else if (type.equals(T)) { // 17\n                        return 2;\n                    } else {\n                        return 3;\n                    }\n                }\n                public static int convert3(String type) {\n                    if (type.equals(\"q\")) { // 24\n                        return 1;\n                    } else if (type.equals(\"t\")) { // 26\n                        return 2;\n                    } else {\n                        return 3;\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] LiteralsFirstInComparisons with one constant and a constant field but not CT-const",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class LiteralsFirstInComparisonCase {\n    private static final String S1 = \"s1\";\n    private static final String S2 = \"s2\";\n    public static boolean compare() {\n        return S1.equals(S2);\n    }\n    public static boolean isUnkown() {\n        return Foo.VERSION.equals(S2);\n    }\n}\nclass Foo {\n    // not a CT constant because initialized outline\n    public static final String VERSION;\n    static {\n        VERSION = \"auhesouat\";\n    }\n}\n        "
+    },
+    {
+      "description": "[java] LiteralsFirstInComparisons with two constants #3315",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class LiteralsFirstInComparisonCase {\n    private static final String S1 = \"s1\";\n    private static final String S2 = \"s2\";\n    public static boolean compare() {\n        return S1.equals(S2);\n    }\n    public static boolean isUnkown() {\n        return Foo.VERSION.equals(S2);\n    }\n}\nclass Foo {\n    // is a CT constant because initialized inline\n    public static final String VERSION = \"ctconstant\";\n}\n        "
+    },
+    {
+      "description": "False positive with non-String constants",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigInteger;\n\npublic class LiteralsFirstInComparisonBigInteger {\n    public void foo() {\n        BigInteger value = new BigInteger(\"1\");\n        if (value.equals(BigInteger.ZERO)) {\n            System.out.println(\"1==0!!\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] Regression with LiteralsFirstInComparisons in 6.35.0 #3352",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.BiFunction;\nclass Tester {\n    void testcase(BiFunction<Class<?>, Object, Boolean> ARG_CLASS_HAS_TOSTRING, Object arg, Object ctx) {\n        if (Boolean.TRUE.equals(ARG_CLASS_HAS_TOSTRING.apply(arg.getClass(), ctx)));\n    }\n}\n"
+    },
+    {
+      "description": "LiteralsFirstInComparisonsRule not applied on constant #5590",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\n            static class Foo {\n                private static final String FOO = null;\n\n                public static void bar(String _null) {\n                    String _null2 = null;\n                    FOO.equals(\"RAW\");\n                    _null.equals(\"RAW\");\n                    _null2.equals(\"RAW\");\n                }\n            }\n            "
+    },
+    {
+      "description": "Equals with self",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            static class Foo {\n\n                public static void bar(String _null) {\n                    equals(\"RAW\");\n                }\n            }\n            "
+    }
+  ]
+}

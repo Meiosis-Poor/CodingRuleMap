@@ -1,0 +1,39 @@
+{
+  "name": "NoexceptSwap",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - performance-noexcept-swap",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 61,
+  "branches": 1,
+  "apis": 56,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        27,
+        32,
+        36,
+        42,
+        46,
+        51,
+        57,
+        60,
+        67,
+        71,
+        75,
+        79,
+        84,
+        89,
+        91,
+        95,
+        99,
+        227
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s performance-noexcept-swap %t -- -- -fexceptions\n\nnamespace std\n{\n  template <typename T>\n  struct is_nothrow_move_constructible\n  {\n    static constexpr bool value = __is_nothrow_constructible(T, __add_rvalue_reference(T));\n  };\n} // namespace std\n\nvoid throwing_function() noexcept(false);\nvoid noexcept_function() noexcept;\n\ntemplate <typename>\nstruct TemplateNoexceptWithInt {\n  static void f() {}\n};\n\ntemplate <>\nstruct TemplateNoexceptWithInt<int> {\n  static void f() noexcept {}\n};\n\nclass A {\n  void swap(A &);\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n  // CHECK-FIXES: void swap(A &) noexcept ;\n};\n\nvoid swap(A &, A &);\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n// CHECK-FIXES: void swap(A &, A &) noexcept ;\n\nvoid iter_swap(A &, A &);\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n// CHECK-FIXES: void iter_swap(A &, A &) noexcept ;\n\nstruct B {\n  static constexpr bool kFalse = false;\n  void swap(B &) noexcept(kFalse);\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n};\n\nvoid swap(B &, B &) noexcept(B::kFalse);\n// CHECK-MESSAGES: :[[@LINE-1]]:30: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n\ntemplate <typename>\nstruct C {\n  void swap(C&);\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n  // CHECK-FIXES: void swap(C&) noexcept ;\n};\n\ntemplate <typename T>\nvoid swap(C<T>&, C<T>&);\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n// CHECK-FIXES: void swap(C<T>&, C<T>&) noexcept ;\nvoid swap(C<int>&, C<int>&);\n// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n// CHECK-FIXES: void swap(C<int>&, C<int>&) noexcept ;\n\ntemplate <typename>\nstruct D {\n  static constexpr bool kFalse = false;\n  void swap(D &) noexcept(kFalse);\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n};\n\nvoid swap(D<int> &, D<int> &) noexcept(D<int>::kFalse);\n// CHECK-MESSAGES: :[[@LINE-1]]:40: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n\nstruct E {\n  void swap(E &) noexcept(noexcept(throwing_function()));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n};\n\nvoid swap(E &, E &) noexcept(noexcept(throwing_function()));\n// CHECK-MESSAGES: :[[@LINE-1]]:30: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n\ntemplate <typename>\nstruct F {\n  void swap(F &) noexcept(noexcept(throwing_function()));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n};\n\ntemplate <typename T>\nvoid swap(F<T> &, F<T> &) noexcept(noexcept(throwing_function()));\n// CHECK-MESSAGES: :[[@LINE-1]]:36: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\nvoid swap(F<int> &, F<int> &) noexcept(noexcept(throwing_function()));\n// CHECK-MESSAGES: :[[@LINE-1]]:40: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n\nstruct G {\n  void swap(G &) noexcept(noexcept(TemplateNoexceptWithInt<double>::f()));\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n};\n\nvoid swap(G &, G &) noexcept(noexcept(TemplateNoexceptWithInt<double>::f()));\n// CHECK-MESSAGES: :[[@LINE-1]]:30: warning: noexcept specifier on swap function evaluates to 'false' [performance-noexcept-swap]\n\nclass OK {};\n\nstruct OK1 {\n  void swap(OK1 &) noexcept;\n};\n\nvoid swap(OK1 &, OK1 &) noexcept;\n\nstruct OK2 {\n  static constexpr bool kTrue = true;\n  void swap(OK2 &) noexcept(kTrue) {}\n};\n\nvoid swap(OK2 &, OK2 &) noexcept(OK2::kTrue);\n\nstruct OK3 {\n    void swap(OK3 &) = delete;\n};\n\nvoid swap(OK3 &, OK3 &) = delete;\n\nstruct OK4 {\n  void swap(OK4 &) noexcept(false);\n};\n\nvoid swap(OK4 &, OK4 &) noexcept(false);\n\nstruct OK5 {\n  void swap(OK5 &) noexcept(true);\n};\n\nvoid swap(OK5 &, OK5 &)noexcept(true);\n\nstruct OK12 {\n  void swap(OK12 &) noexcept(noexcept(noexcept_function()));\n};\n\nvoid swap(OK12 &, OK12 &) noexcept(noexcept(noexcept_function()));\n\nstruct OK13 {\n  void swap(OK13 &) noexcept(noexcept(TemplateNoexceptWithInt<int>::f()));\n};\n\nvoid swap(OK13 &, OK13 &) noexcept(noexcept(TemplateNoexceptWithInt<int>::f()));\n\ntemplate <typename>\nclass OK14 {};\n\ntemplate <typename>\nstruct OK15 {\n  void swap(OK15 &) noexcept;\n};\n\ntemplate <typename T>\nvoid swap(OK15<T> &, OK15<T> &) noexcept;\nvoid swap(OK15<int> &, OK15<int> &) noexcept;\n\ntemplate <typename>\nstruct OK16 {\n  static constexpr bool kTrue = true;\n  void swap(OK16 &) noexcept(kTrue);\n};\n\ntemplate <typename T>\nvoid swap(OK16<T> &, OK16<T> &) noexcept(OK16<T>::kTrue);\ntemplate <typename T>\nvoid swap(OK16<int> &, OK16<int> &) noexcept(OK16<int>::kTrue);\n\ntemplate <typename>\nstruct OK17 {\n    void swap(OK17 &) = delete;\n};\n\ntemplate <typename T>\nvoid swap(OK17<T> &, OK17<T> &) = delete;\nvoid swap(OK17<int> &, OK17<int> &) = delete;\n\ntemplate <typename>\nstruct OK18 {\n  void swap(OK18 &) noexcept(false);\n};\n\ntemplate <typename T>\nvoid swap(OK18<T> &, OK18<T> &) noexcept(false);\nvoid swap(OK18<int> &, OK18<int> &) noexcept(false);\n\ntemplate <typename>\nstruct OK19 {\n  void swap(OK19 &) noexcept(true);\n};\n\ntemplate <typename T>\nvoid swap(OK19<T> &, OK19<T> &)noexcept(true);\nvoid swap(OK19<int> &, OK19<int> &)noexcept(true);\n\ntemplate <typename>\nstruct OK20 {\n  void swap(OK20 &) noexcept(noexcept(noexcept_function()));\n};\n\ntemplate <typename T>\nvoid swap(OK20<T> &, OK20<T> &) noexcept(noexcept(noexcept_function()));\nvoid swap(OK20<int> &, OK20<int> &) noexcept(noexcept(noexcept_function()));\n\ntemplate <typename>\nstruct OK21 {\n  void swap(OK21 &) noexcept(noexcept(TemplateNoexceptWithInt<int>::f()));\n};\n\ntemplate <typename T>\nvoid swap(OK21<T> &, OK21<T> &) noexcept(noexcept(TemplateNoexceptWithInt<int>::f()));\nvoid swap(OK21<int> &, OK21<int> &) noexcept(noexcept(TemplateNoexceptWithInt<int>::f()));\n\nnamespace PR64303 {\n  void swap();\n  void swap(int&, bool&);\n  void swap(int&, int&, int&);\n  void swap(int&);\n\n  struct Test {\n    void swap();\n    void swap(Test&, Test&);\n    void swap(int&);\n    static void swap(int&, int&);\n\n    friend void swap(Test&, Test&);\n    // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: swap functions should be marked noexcept [performance-noexcept-swap]\n  };\n} // namespace PR64303\n\nnamespace gh68101\n{\n  template <typename T>\n  class Container {\n     public:\n      void swap(Container&) noexcept(std::is_nothrow_move_constructible<T>::value);\n  };\n} // namespace gh68101"
+    }
+  ]
+}

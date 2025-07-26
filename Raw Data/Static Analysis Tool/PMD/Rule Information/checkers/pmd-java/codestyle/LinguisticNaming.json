@@ -1,0 +1,231 @@
+{
+  "name": "LinguisticNaming",
+  "language": "java",
+  "description": "\n            This rule finds Linguistic Naming Antipatterns. It checks for fields, that are named, as if they should\n            be boolean but have a different type. It also checks for methods, that according to their name, should\n            return a boolean, but don't. Further, it checks, that getters return something and setters won't.\n            Finally, it checks that methods, that start with \"to\" - so called transform methods - actually return\n            something, since according to their name, they should convert or transform one object into another.\n            There is additionally an option, to check for methods that contain \"To\" in their name - which are\n            also transform methods. However, this is disabled by default, since this detection is prone to\n            false positives.\n\n            For more information, see [Linguistic Antipatterns - What They Are and How\nDevelopers Perceive Them](https://doi.org/10.1007/s10664-014-9350-8).\n        ",
+  "example": "public class LinguisticNaming {\n    int isValid;    // the field name indicates a boolean, but it is an int.\n    boolean isTrue; // correct type of the field\n\n    void myMethod() {\n        int hasMoneyLocal;      // the local variable name indicates a boolean, but it is an int.\n        boolean hasSalaryLocal; // correct naming and type\n    }\n\n    // the name of the method indicates, it is a boolean, but the method returns an int.\n    int isValid() {\n        return 1;\n    }\n    // correct naming and return type\n    boolean isSmall() {\n        return true;\n    }\n\n    // the name indicates, this is a setter, but it returns something\n    int setName() {\n        return 1;\n    }\n\n    // the name indicates, this is a getter, but it doesn't return anything\n    void getName() {\n        // nothing to return?\n    }\n\n    // the name indicates, it transforms an object and should return the result\n    void toDataType() {\n        // nothing to return?\n    }\n    // the name indicates, it transforms an object and should return the result\n    void grapeToWine() {\n        // nothing to return?\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 212,
+  "branches": 49,
+  "apis": 12,
+  "test": [
+    {
+      "description": "Method Prefix is",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixIs {\n    int isotherm() {\n        return 1;\n    }\n\n    int isValid() { // violation\n        return 1;\n    }\n\n    boolean isSmall() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix Has",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixHas {\n    int haskell() {\n        return 1;\n    }\n\n    int hasChild() { // violation\n        return 1;\n    }\n\n    boolean hasHorn() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix Have",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixHave {\n    int havelock() {\n        return 1;\n    }\n\n    int haveChild() { // violation\n        return 1;\n    }\n\n    boolean haveHorn() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix can",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixCan {\n    int cannibal() {\n        return 1;\n    }\n\n    int canFly() { // violation\n        return 1;\n    }\n\n    boolean canWalk() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix will",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixWill {\n    int william() {\n        return 1;\n    }\n\n    int willFly() { // violation\n        return 1;\n    }\n\n    boolean willWalk() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix should",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixShould {\n    int shoulder() {\n        return 1;\n    }\n\n    long shouldFly() { // violation\n        return 1L;\n    }\n\n    boolean shouldWalk() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Setters",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithSetters {\n    int settlement() {\n        return 1;\n    }\n\n    int setName() { // violation\n        return 1;\n    }\n\n    void setFlag() {\n        // do something\n    }\n}\n        "
+    },
+    {
+      "description": "Method Getters",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithGetters {\n    void getaways() {\n        // do something\n    }\n\n    void getName() { // violation\n        // do something\n    }\n\n    int getCount() {\n        return 1;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix to: Transform Method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixTo {\n    void tokenize() {\n        // do something\n    }\n\n    void toDataType() { // violation\n        // do something\n    }\n\n    int toMyInteger() {\n        return 1;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Prefix as: Transform Method with property configuration",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixAs {\n    void aspect() {\n        // do something\n    }\n\n    void asDataType() { // violation\n        // do something\n    }\n\n    int asNumber() {\n        return 1;\n    }\n}\n        "
+    },
+    {
+      "description": "Method Contains To: Transformation methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixTo {\n    void grapeToWine() { // violation\n        // do something\n    }\n\n    int hopsToBeer() {\n        return 1;\n    }\n\n    void doneTooMuch() { // shouldn't report a violation, since \"To\" is not followed by uppercase letter\n    }\n}\n        "
+    },
+    {
+      "description": "Method Contains As: Transformation methods with configured infix",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class MethodTypeAndNameIsInconsistentWithPrefixTo {\n    void grapeAsWine() { // violation\n        // do something\n    }\n\n    int hopsAsBeer() {\n        return 1;\n    }\n\n    void defaultAspectConfig() { // shouldn't report a violation, since \"As\" is not followed by uppercase letter\n    }\n}\n        "
+    },
+    {
+      "description": "Field/Variable Prefix is",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class AttributeTypeAndNameIsInconsistentWithPrefixIs {\n    int isotherm;\n    int isValid; // violation\n    boolean isTrue;\n\n    void myMethod() {\n        int isothermLocal;\n        int isValidLocal; // violation\n        boolean isTrueLocal;\n    }\n}\n        "
+    },
+    {
+      "description": "Field/Variable Prefix has",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class AttributeTypeAndNameIsInconsistentWithPrefixHas {\n    int haskell;\n    int hasMoney; // violation\n    boolean hasSalary;\n\n    void myMethod() {\n        int haskellLocal;\n        int hasMoneyLocal; // violation\n        boolean hasSalaryLocal;\n    }\n}\n        "
+    },
+    {
+      "description": "Field/Variable Prefix can",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class AttributeTypeAndNameIsInconsistentWithPrefixCan {\n    int cannibal;\n    int canFly; // violation\n    boolean canWalk;\n\n    void myMethod() {\n        int cannibalLocal;\n        int canFlyLocal; // violation\n        boolean canWalkLocal;\n    }\n}\n        "
+    },
+    {
+      "description": "Field/Variable Prefix will",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class AttributeTypeAndNameIsInconsistentWithPrefixWill {\n    int william;\n    int willMove; // violation\n    boolean willRun;\n\n    void myMethod() {\n        int williamLocal;\n        int willMoveLocal; // violation\n        boolean willRunLocal;\n    }\n}\n        "
+    },
+    {
+      "description": "Field/Variable Prefix have",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class AttributeTypeAndNameIsInconsistentWithPrefixHave {\n    int havexxx;\n    int haveLegs; // violation\n    boolean haveHorns;\n\n    void myMethod() {\n        int havexxxLocal;\n        int haveLegsLocal; // violation\n        boolean haveHornsLocal;\n    }\n}\n        "
+    },
+    {
+      "description": "Field/Variable Prefix should",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class AttributeTypeAndNameIsInconsistentWithPrefixShould {\n    int shoulder;\n    int shouldClimb; // violation\n    boolean shouldEat;\n\n    void myMethod() {\n        int shoulderLocal;\n        int shouldClimbLocal; // violation\n        boolean shouldEatLocal;\n    }\n}\n        "
+    },
+    {
+      "description": "Multiple fields/local variables",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        2,
+        2,
+        4,
+        4
+      ],
+      "code": "\npublic class MultipleLocalVariables {\n    int hasMoney, willMove;\n    void myMethod() {\n        int canFly, shouldClimb;\n    }\n}\n        "
+    },
+    {
+      "description": "Boolean fields/methods false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class BooleanFieldsMethodFP {\n    Boolean canFly;\n\n    public Boolean isFull() {\n        return true;\n    }\n\n    public void myMethod() {\n        Boolean hasLegs;\n    }\n}\n        "
+    },
+    {
+      "description": "#1334 [java] LinguisticNaming should support AtomicBooleans",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.concurrent.atomic.AtomicBoolean;\n\npublic class AtomicBooleanFP {\n    private final AtomicBoolean isX = new AtomicBoolean(true);\n    private final AtomicBoolean hasX = new AtomicBoolean(true);\n    private final AtomicBoolean canX = new AtomicBoolean(true);\n    private final AtomicBoolean haveX = new AtomicBoolean(true);\n    private final AtomicBoolean willX = new AtomicBoolean(true);\n    private final AtomicBoolean shouldX = new AtomicBoolean(true);\n\n    public AtomicBoolean isX() {\n        return isX;\n    }\n    public AtomicBoolean hasX() {\n        return hasX;\n    }\n    public AtomicBoolean canX() {\n        return canX;\n    }\n    public AtomicBoolean haveX() {\n        return haveX;\n    }\n    public AtomicBoolean willX() {\n        return willX;\n    }\n    public AtomicBoolean shouldX() {\n        return shouldX;\n    }\n    public void localVariables() {\n        AtomicBoolean isX = new AtomicBoolean(true);\n        AtomicBoolean hasX = new AtomicBoolean(true);\n        AtomicBoolean canX = new AtomicBoolean(true);\n        AtomicBoolean haveX = new AtomicBoolean(true);\n        AtomicBoolean willX = new AtomicBoolean(true);\n        AtomicBoolean shouldX = new AtomicBoolean(true);\n    }\n}\n        "
+    },
+    {
+      "description": "#1334 [java] LinguisticNaming should support AtomicBooleans false negative",
+      "expected-problems": 18,
+      "expected-linenumbers": [],
+      "code": "\nimport another.pkg.AtomicBoolean;\n\npublic class AtomicBooleanFN {\n    private final AtomicBoolean isX = new AtomicBoolean(true);\n    private final AtomicBoolean hasX = new AtomicBoolean(true);\n    private final AtomicBoolean canX = new AtomicBoolean(true);\n    private final AtomicBoolean haveX = new AtomicBoolean(true);\n    private final AtomicBoolean willX = new AtomicBoolean(true);\n    private final AtomicBoolean shouldX = new AtomicBoolean(true);\n\n    public AtomicBoolean isX() {\n        return isX;\n    }\n    public AtomicBoolean hasX() {\n        return hasX;\n    }\n    public AtomicBoolean canX() {\n        return canX;\n    }\n    public AtomicBoolean haveX() {\n        return haveX;\n    }\n    public AtomicBoolean willX() {\n        return willX;\n    }\n    public AtomicBoolean shouldX() {\n        return shouldX;\n    }\n    public void localVariables() {\n        AtomicBoolean isX = new AtomicBoolean(true);\n        AtomicBoolean hasX = new AtomicBoolean(true);\n        AtomicBoolean canX = new AtomicBoolean(true);\n        AtomicBoolean haveX = new AtomicBoolean(true);\n        AtomicBoolean willX = new AtomicBoolean(true);\n        AtomicBoolean shouldX = new AtomicBoolean(true);\n    }\n}\n        "
+    },
+    {
+      "description": "#1543 [java] LinguisticNaming should ignore overridden methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass Foo {\n    private int value;\n\n    public int setValue(int value) {\n        this.value = value;\n        return value;\n    }\n}\npublic class Bar extends Foo {\n    private int value;\n\n    @Override\n    public int setValue(int value) {\n        this.value = value;\n        return value;\n    }\n}\n        "
+    },
+    {
+      "description": "#1362 Predicate fields are treated like booleans",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Predicate;\n\npublic class ClassWithPredicates {\n    private final Predicate<String> isNotEmpty = string -> !string.isEmpty();\n}\n        "
+    },
+    {
+      "description": "#1362 Predicate variables are treated like booleans",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Predicate;\n\npublic class SomeClass {\n    public static void main(String[] args) {\n        Predicate<String> isEmpty = String::isEmpty;\n    }\n}\n        "
+    },
+    {
+      "description": "#1362 Methods returning Predicate are treated like booleans",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Predicate;\n\npublic class SomeClass {\n    public Predicate<String> isEmptyPredicate() {\n        return String::isEmpty;\n    }\n}\n        "
+    },
+    {
+      "description": "#2462 LinguisticNaming must ignore setters that returns current type - Simple Builder",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ObjectBuilder {\n\n   public ObjectBuilder setValue1(int value1) {\n        return this;\n    }\n\n    public ObjectBuilder setValue2(int value2) {\n        return this;\n    }\n\n    public Object build(){\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "#2462 LinguisticNaming must ignore setters that returns current type - Builder as inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooBar {\n    public static class FooBarBuilder {\n        public FooBarBuilder setFoo(String foo){\n            return this;\n        }\n\n        public FooBarBuilder setBar(int bar) {\n            return this;\n        }\n\n        public FooBar build() {\n            return null;\n        }\n    }\n}        "
+    }
+  ]
+}

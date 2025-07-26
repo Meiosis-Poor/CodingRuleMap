@@ -1,0 +1,92 @@
+{
+  "name": "UnitTestShouldUseTestAnnotation",
+  "language": "java",
+  "description": "\n            The rule will detect any test method starting with \"test\" that is not properly annotated, and will therefore not be run.\n\n            In JUnit 4, only methods annotated with the `@Test` annotation are executed.\n            In JUnit 5, one of the following annotations should be used for tests: `@Test`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate` or `@ParameterizedTest`.\n            In TestNG, only methods annotated with the `@Test` annotation are executed.\n\n            Note: This rule was named JUnit4TestShouldUseTestAnnotation before PMD 7.7.0.\n        ",
+  "example": "public class MyTest {\n    public void testBad() {\n        doSomething();\n    }\n\n    @Test\n    public void testGood() {\n        doSomething();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Contains test, no @Test",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\npublic class Foo extends TestCase {\n    public void testFoo() {\n    }\n}\n        "
+    },
+    {
+      "description": "OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport org.junit.Test;\npublic class Foo extends TestCase {\n    @Test\n    public void testFoo() {\n    }\n}\n        "
+    },
+    {
+      "description": "OK, renamed test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport org.junit.Test;\npublic class Foo extends TestCase{\n    @Test\n    public void foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "One test proper, the other incorrect",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport org.junit.Test;\npublic class Foo extends TestCase{\n    public void testFoo() {\n    }\n    @Test\n    public void foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "Two tests",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestCase;\nimport org.junit.Test;\npublic class Foo extends TestCase{\n    public void testOne() {\n    }\n    public void testTwo() {\n    }\n}\n        "
+    },
+    {
+      "description": "#1197 JUnit4TestShouldUseTestAnnotation for private method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\nimport static org.junit.Assert.fail;\n\npublic class Faa\n{\n    @Test\n    public void test()\n    {\n        testHelper();\n        fail( \"Not yet implemented\" );\n    }\n\n    private boolean testHelper()  // <- JUnit4TestShouldUseTestAnnotation\n    {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "#572 [java] False Alarm of JUnit4TestShouldUseTestAnnotation on Predicates",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Predicate;\n\npublic final class Whatever<T> implements Predicate<T> {\n    @Override\n    public boolean test(T t) {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Test class with test method not annotated",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\n\npublic class MyTest {\n    // should be annotated\n    public void testBad() { }\n\n    @Test\n    public void testGood() { }\n}\n        "
+    },
+    {
+      "description": "Test class named TestCase with test method not annotated",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyTestCase {\n    public void testBad() { }\n}\n        "
+    },
+    {
+      "description": "Test class prefix with Test with test method not annotated",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestForX {\n    public void testBad() { }\n}\n        "
+    },
+    {
+      "description": "Test class named MyTests with test method not annotated",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyTests {\n    public void testBad() { }\n}\n        "
+    },
+    {
+      "description": "#940 False positives with JUnit4TestShouldUseTestAnnotation when JUnit5 is used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.RepeatedTest;\nimport org.junit.jupiter.api.TestFactory;\nimport org.junit.jupiter.api.TestTemplate;\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\n\npublic class MyTests {\n    @Test\n    public void testRegular() { }\n\n    @RepeatedTest(2)\n    public void testRepeated() { }\n\n    @TestFactory\n    public void testFactory() { }\n\n    @TestTemplate\n    public void testTemplate() { }\n\n    @ParameterizedTest\n    @ValueSource(strings = {\"Hello\", \"World\"})\n    public void testParameterized(final String value) { }\n}\n        "
+    },
+    {
+      "description": "#4634 JUnit4TestShouldUseTestAnnotation rule false positive with TestNG",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.Test;\n\npublic class Foo {\n    @Test\n    public void testFoo() { }\n}\n        "
+    }
+  ]
+}

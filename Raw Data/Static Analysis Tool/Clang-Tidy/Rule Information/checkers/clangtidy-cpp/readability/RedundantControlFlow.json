@@ -1,0 +1,31 @@
+{
+  "name": "RedundantControlFlow",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-redundant-control-flow",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 91,
+  "branches": 9,
+  "apis": 60,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        9,
+        17,
+        42,
+        52,
+        63,
+        75,
+        178,
+        191,
+        203,
+        213
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-redundant-control-flow %t\n\nvoid g(int i);\nvoid j();\n\nvoid f() {\n  return;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:3: warning: redundant return statement at the end of a function with a void return type [readability-redundant-control-flow]\n// CHECK-FIXES: {{^}}void f() {{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\nvoid g() {\n  f();\n  return;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:3: warning: redundant return statement\n// CHECK-FIXES: {{^  }}f();{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\nvoid g(int i) {\n  if (i < 0) {\n    return;\n  }\n  if (i < 10) {\n    f();\n  }\n}\n\nint h() {\n  return 1;\n}\n\nvoid j() {\n}\n\nvoid k() {\n  for (int i = 0; i < 10; ++i) {\n    continue;\n  }\n}\n// CHECK-MESSAGES: :[[@LINE-3]]:5: warning: redundant continue statement at the end of loop statement\n// CHECK-FIXES: {{^}}  for (int i = 0; i < 10; ++i) {{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\nvoid k2() {\n  int v[10] = { 0 };\n  for (auto i : v) {\n    continue;\n  }\n}\n// CHECK-MESSAGES: :[[@LINE-3]]:5: warning: redundant continue statement\n// CHECK-FIXES: {{^}}  for (auto i : v) {{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\nvoid m() {\n  int i = 0;\n  do {\n    ++i;\n    continue;\n  } while (i < 10);\n}\n// CHECK-MESSAGES: :[[@LINE-3]]:5: warning: redundant continue statement\n// CHECK-FIXES: {{^  do {$}}\n// CHECK-FIXES-NEXT: {{^}}    ++i;{{$}}\n// CHECK-FIXES-NEXT: {{^ *}}} while (i < 10);{{$}}\n\nvoid p() {\n  int i = 0;\n  while (i < 10) {\n    ++i;\n    continue;\n  }\n}\n// CHECK-MESSAGES: :[[@LINE-3]]:5: warning: redundant continue statement\n// CHECK-FIXES: {{^}}  while (i < 10) {{{$}}\n// CHECK-FIXES-NEXT: {{^}}    ++i;{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\nvoid im_not_dead(int i) {\n  if (i > 0) {\n    return;\n  }\n  g();\n}\n\nvoid im_still_not_dead(int i) {\n  for (int j = 0; j < 10; ++j) {\n    if (i < 10) {\n      continue;\n    }\n    g();\n  }\n}\n\nvoid im_dead(int i) {\n  if (i > 0) {\n    return;\n    g();\n  }\n  g();\n}\n\nvoid im_still_dead(int i) {\n  for (int j = 0; j < 10; ++j) {\n    if (i < 10) {\n      continue;\n      g();\n    }\n    g();\n  }\n}\n\nvoid void_return() {\n  return g();\n}\n\nvoid nested_return_unmolested() {\n  g();\n  {\n    g();\n    return;\n  }\n}\n\nvoid nested_continue_unmolested() {\n  for (int i = 0; i < 10; ++i) {\n    if (i < 5) {\n      continue;\n    }\n  }\n}\n\n#define MACRO_RETURN_UNMOLESTED(fn_)  \\\n  (fn_)();                            \\\n  return\n\n#define MACRO_CONTINUE_UNMOLESTED(x_) \\\n  do {                                \\\n    for (int i = 0; i < (x_); ++i) {  \\\n      continue;                       \\\n    }                                 \\\n  } while (false)\n\nvoid macro_return() {\n  MACRO_RETURN_UNMOLESTED(g);\n}\n\nvoid macro_continue() {\n  MACRO_CONTINUE_UNMOLESTED(10);\n}\n\n#define MACRO_RETURN_ARG(stmt_) \\\n  stmt_\n\n#define MACRO_CONTINUE_ARG(stmt_)   \\\n  do {                              \\\n    for (int i = 0; i < 10; ++i) {  \\\n      stmt_;                        \\\n    }                               \\\n  } while (false)\n\nvoid macro_arg_return() {\n  MACRO_RETURN_ARG(return);\n}\n\nvoid macro_arg_continue() {\n  MACRO_CONTINUE_ARG(continue);\n}\n\ntemplate <typename T>\nvoid template_return(T check) {\n  if (check < T(0)) {\n    return;\n  }\n  return;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:3: warning: redundant return statement\n// CHECK-FIXES: {{^}}  if (check < T(0)) {{{$}}\n// CHECK-FIXES-NEXT: {{^    return;$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\ntemplate <>\nvoid template_return(int check) {\n  if (check < 0) {\n    return;\n  }\n  return;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:3: warning: redundant return statement\n// CHECK-FIXES: {{^}}  if (check < 0) {{{$}}\n// CHECK-FIXES-NEXT: {{^    return;$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\ntemplate <typename T>\nvoid template_loop(T end) {\n  for (T i = 0; i < end; ++i) {\n    continue;\n  }\n}\n// CHECK-MESSAGES: :[[@LINE-3]]:5: warning: redundant continue statement\n// CHECK-FIXES: {{^}}  for (T i = 0; i < end; ++i) {{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\ntemplate <>\nvoid template_loop(int end) {\n  for (int i = 0; i < end; ++i) {\n    continue;\n  }\n}\n// CHECK-MESSAGES: :[[@LINE-3]]:5: warning: redundant continue statement\n// CHECK-FIXES: {{^}}  for (int i = 0; i < end; ++i) {{{$}}\n// CHECK-FIXES-NEXT: {{^ *}$}}\n\nvoid call_templates() {\n  template_return(10);\n  template_return(10.0f);\n  template_return(10.0);\n  template_loop(10);\n  template_loop(10L);\n  template_loop(10U);\n}"
+    }
+  ]
+}

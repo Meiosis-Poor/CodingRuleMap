@@ -1,0 +1,94 @@
+{
+  "name": "UseArraysAsList",
+  "language": "java",
+  "description": "\n\nThe `java.util.Arrays` class has a `asList()` method that should be used when you want to create a new List from\nan array of objects. It is faster than executing a loop to copy all the elements of the array one by one.\n\nNote that the result of `Arrays.asList()` is backed by the specified array,\nchanges in the returned list will result in the array to be modified.\nFor that reason, it is not possible to add new elements to the returned list of `Arrays.asList()`\n(UnsupportedOperationException).\nYou must use `new ArrayList<>(Arrays.asList(...))` if that is inconvenient for you (e.g. because of concurrent access).\n\n        ",
+  "example": "public class Test {\n    public void foo(Integer[] ints) {\n        // could just use Arrays.asList(ints)\n        List<Integer> l = new ArrayList<>(100);\n        for (int i = 0; i < ints.length; i++) {\n            l.add(ints[i]);\n        }\n\n        List<Integer> anotherList = new ArrayList<>();\n        for (int i = 0; i < ints.length; i++) {\n            anotherList.add(ints[i].toString()); // won't trigger the rule\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Bar {\n    void foo() {\n        Integer[] ints = new Integer[10];\n        List l = new ArrayList(ints.length);\n        for (int i = 0; i < ints.length; i++) {\n            l.add(ints[i]);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "adding first element repeatedly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Bar {\n    void foo() {\n        Integer[] ints = new Integer(10);\n        List l = new ArrayList(10);\n        for (int i = 0; i < 100; i++) {\n            l.add(ints[1]);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "inside conditional",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Bar {\n    void foo() {\n        Integer[] ints = new Integer(10);\n        List l = new ArrayList(10);\n        for (int i = 0; i < 100; i++) {\n            if (y > 10) {\n                l.add(ints[1]);\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "adding new object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Bar {\n    void foo() {\n        Integer[] ints = new Integer(10);\n        List l = new ArrayList(10);\n        for (int i = 0; i < 100; i++) {\n            l.add(new Integer(i+1));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "calling method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Bar {\n    void foo() {\n        Integer[] ints = new Integer(10);\n        List l = new ArrayList(10);\n        for (int i = 0; i < 100; i++) {\n            l.add(String.valueOf(i));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Integer array passed as argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Test {\n    public void foo(Integer[] ints) {\n        // could just use Arrays.asList(ints)\n        List l = new ArrayList(10);\n        for (int i = 0; i < ints.length; i++) {\n            l.add(ints[i]);\n        }\n\n        List l2 = new ArrayList(10);\n        for (int i = 0; i < ints.length; i++) {\n            l2.add(ints[i].toString()); // won't trigger the rule\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1099 UseArraysAsList false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Test {\n    public void foo() {\n        String [] result = new String[10000];\n        // some code which populates result\n\n        // copy n items from result to a List, such that resultList[i] = result[i+1]\n        List<String> resultList = new ArrayList<String>();\n        for (int i = 1; i <= n; i++) {\n            resultList.add(result[i]);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UseArraysAsList false negative with for-each loop #3331",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class UseArraysAsListFN {\n    public List<String> convert(String[] arr) {\n        List<String> result = new ArrayList<>();\n        for (String s : arr) {\n            result.add(s);  // violation expected\n        }\n        return result;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UseArraysAsList with method call #3867",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Test {\n    public void foo(Integer[] ints) {\n        // could just use Arrays.asList(ints)\n        List<Integer> l = new ArrayList<>(100);\n        for (int i = 0; i < ints.length; i++) {\n            l.add(ints[i]); // line 9, here is the violation\n        }\n        List<Integer> anotherList = new ArrayList<>();\n        for (int i = 0; i < ints.length; i++) {\n            anotherList.add(ints[i].toString()); // line 13 - false positive\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UseArraysAsList false positive with non-trivial loops #3965",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\n\npublic class Test {\n    public void foo(Integer[] ints) {\n        List<Integer> l = new ArrayList<>(100);\n        for (int i = 0; i < 100; i++) {\n            switch (lookup(ints[i])) {\n            case 1: l.add(ints[i]); break; // line 10 - false positive\n            case 2: l.addAll(getInts(i)); break;\n            }\n        }\n\n        List<Integer> anotherList = new ArrayList<>();\n        for (int i : ints) {\n            switch (lookup(i)) {\n            case 1: anotherList.add(i); break; // line 18 - false positive\n            case 2: anotherList.addAll(getInts(i)); break;\n            }\n        }\n    }\n\n    int lookup(int a) {\n        return a;\n    }\n\n    List<Integer> getInts(int a) {\n        return Arrays.asList(a);\n    }\n}\n"
+    },
+    {
+      "description": "[java] UseArraysAsList must ignore primitive arrays #3379",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\nclass Test {\n    public void convert(Object value) {\n        short[] array = (short[]) value;\n        List<Short> arrayList = new ArrayList<>(array.length);\n        for (short v : array) {\n            arrayList.add(v); // line 9 - false positive\n        }\n\n        List<Short> arrayList2 = new ArrayList<>(array.length);\n        for (int i = 0; i < array.length; i++) {\n            arrayList2.add(array[i]); // line 14 - false positive\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] UseArraysAsList false positive with Sets #5711",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.HashSet;\nimport java.util.Set;\n\npublic class Foo {\n    private final Set<String> hashSet = new HashSet<>();\n\n    public void parseData(final String dataString) {\n        final String[] myArray = dataString.split(\",\");\n\n        for (final String element : myArray) {\n            this.hashSet.add(element); // line 11 - false positive\n        }\n        // e.g. this.hashSet = Arrays.asList(myArray); won't compile\n    }\n}\n"
+    }
+  ]
+}

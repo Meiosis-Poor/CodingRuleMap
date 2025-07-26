@@ -1,0 +1,39 @@
+{
+  "name": "TwineLocal",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - llvm-twine-local",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 63,
+  "branches": 6,
+  "apis": 45,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        19,
+        20,
+        25,
+        26,
+        31,
+        32,
+        36,
+        37,
+        42,
+        43,
+        47,
+        48,
+        52,
+        53,
+        57,
+        58,
+        62,
+        63
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s llvm-twine-local %t\n\nnamespace llvm {\nclass Twine {\npublic:\n  Twine(const char *);\n  Twine(int);\n  Twine();\n  Twine &operator+(const Twine &);\n};\n}\n\nusing namespace llvm;\n\nvoid foo(const Twine &x);\nvoid bar(Twine x);\n\nstatic Twine Moo = Twine(\"bark\") + \"bah\";\n// CHECK-MESSAGES: :[[@LINE-1]]:14: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: static std::string Moo = (Twine(\"bark\") + \"bah\").str();\n\nint main() {\n  const Twine t = Twine(\"a\") + \"b\" + Twine(42);\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t = (Twine(\"a\") + \"b\" + Twine(42)).str();\n  foo(Twine(\"a\") + \"b\");\n\n  Twine Prefix = false ? \"__INT_FAST\" : \"__UINT_FAST\";\n// CHECK-MESSAGES: :[[@LINE-1]]:9: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: const char * Prefix = false ? \"__INT_FAST\" : \"__UINT_FAST\";\n\n  const Twine t2 = Twine();\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t2 = (Twine()).str();\n  foo(Twine() + \"b\");\n\n  const Twine t3 = Twine(42);\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t3 = (Twine(42)).str();\n\n  const Twine t4 = Twine(42) + \"b\";\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t4 = (Twine(42) + \"b\").str();\n\n  const Twine t5 = Twine() + \"b\";\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t5 = (Twine() + \"b\").str();\n\n  const Twine t6 = true ? Twine() : Twine(42);\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t6 = (true ? Twine() : Twine(42)).str();\n\n  const Twine t7 = false ? Twine() : Twine(\"b\");\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: twine variables are prone to use-after-free bugs\n// CHECK-MESSAGES: note: FIX-IT applied suggested code changes\n// CHECK-FIXES: std::string t7 = (false ? Twine() : Twine(\"b\")).str();\n}"
+    }
+  ]
+}

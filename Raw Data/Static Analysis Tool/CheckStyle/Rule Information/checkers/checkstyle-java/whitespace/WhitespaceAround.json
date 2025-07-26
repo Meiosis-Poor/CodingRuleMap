@@ -1,0 +1,193 @@
+{
+  "name": "WhitespaceAround",
+  "language": "java",
+  "description": "<div>\n Checks that a token is surrounded by whitespace. Empty constructor,\n method, class, enum, interface, loop bodies (blocks), lambdas of the form\n </div>\n <pre>\n public MyClass() {}      // empty constructor\n public void func() {}    // empty method\n public interface Foo {} // empty interface\n public class Foo {} // empty class\n public enum Foo {} // empty enum\n MyClass c = new MyClass() {}; // empty anonymous class\n while (i = 1) {} // empty while loop\n for (int i = 1; i &gt; 1; i++) {} // empty for loop\n do {} while (i = 1); // empty do-while loop\n Runnable noop = () -&gt; {}; // empty lambda\n public @interface Beta {} // empty annotation type\n </pre>\n\n <p>\n may optionally be exempted from the policy using the {@code allowEmptyMethods},\n {@code allowEmptyConstructors}, {@code allowEmptyTypes}, {@code allowEmptyLoops},\n {@code allowEmptyLambdas}, {@code allowEmptyCatches}\n and {@code allowEmptySwitchBlockStatements} properties.\n </p>\n\n <p>\n This check does not flag as violation double brace initialization like:\n </p>\n <pre>\n new Properties() {{\n     setProperty(\"key\", \"value\");\n }};\n </pre>\n\n <p>\n Parameter allowEmptyCatches allows to suppress violations when token list\n contains SLIST to check if beginning of block is surrounded by whitespace\n and catch block is empty, for example:\n </p>\n <pre>\n try {\n     k = 5 / i;\n } catch (ArithmeticException ex) {}\n </pre>\n\n <p>\n With this property turned off, this raises violation because the beginning\n of the catch block (left curly bracket) is not separated from the end\n of the catch block (right curly bracket).\n </p>\n\n <p>\n Note: <a href=\"https://openjdk.org/jeps/361\">\n Switch expressions</a> are ignored by this check.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 330,
+  "branches": 20,
+  "apis": 43,
+  "test": [
+    {
+      "description": "Auto test from InputWhitespaceAround2.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\n@SuppressWarnings({\"this\", \"that\"})\npublic class InputWhitespaceAround2\n{\n    protected InputWhitespaceAround2 ( int i )\n    {\n        this (); \n        toString ();\n    }\n    protected InputWhitespaceAround2 ()\n    {\n        super ();\n    }\n    public void enhancedFor ()\n    {\n        int[] i = new int[2];\n        for ( int j: i ) { \n            System.identityHashCode ( j );\n        }\n    }\n}\n@interface CronExpression2 {\n    Class<?>[] groups() default {};\n}\n@interface CronExpression12 {\n    Class<?>[] groups() default { }; \n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundAfterEmoji.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        24,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundAfterEmoji {\n    String a = \"🎄❤️😂\" + \"🎅🔥😊🎁\";\n    String b = \"🎄❤️😂\"+ \"🎅🔥😊🎁\"; \n    String c = \"🎄❤️😂\" +\"🎅🔥😊🎁\"; \n    String d = \"🎄❤️😂\"+\"🎅🔥😊🎁\"; \n    String e = \"🎄\" + \"❤\" + \"️😂\" + \"🎅\" + \"🔥\" + \"😊\" + \"🎁\";\n    String f = \"🎄\"+\"❤\"+\"️😂\"+\"🎅\"+\"🔥\"+\"😊\"+\"🎁\"; \n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundAllowEmptyCompactCtors.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        40,
+        42,
+        52,
+        66,
+        79,
+        88
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundAllowEmptyCompactCtors {\n    record MyRecord() {} \n    record MyRecord1() {\n    }\n    record MyRecord2() {\n        class MyClass {} \n        interface Foo {} \n        record MyRecord () {} \n    }\n    record MyRecord3() {\n        void method (){ \n            final int a = 1;\n            int b= 1; \n            b=1; \n        }\n    }\n    record MyRecord4() {\n        public MyRecord4() {\n            final int a = 1;\n            int b= 1; \n            b=1; \n        }\n    }\n    record MyRecord5() {\n        public MyRecord5 {\n        }\n    }\n    record MyRecord6() {\n        static final int a = 1;\n        static int b= 1; \n    }\n    record TestRecord7() {\n        public TestRecord7 {}\n    }\n}\nclass foo {\n    public foo() {}\n}\nclass foo2 {\n    public foo2(){} \n}\nclass foo3 {\n    public foo3(){System.out.println();} \n}\nrecord TestRecord8(int a, int b) {\n    public TestRecord8{} \n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundAllowEmptyTypesAndNonEmptyClasses.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        29,
+        33,
+        37,
+        41,
+        47,
+        54
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nimport java.util.function.Function;\nimport java.util.function.Supplier;\npublic class InputWhitespaceAroundAllowEmptyTypesAndNonEmptyClasses {\n    private Object object;\n    class SomeClass{ \n        int a = 5;\n    }\n    public class CheckstyleTest{ \n        private static final int SOMETHING = 1;\n    }\n    class MyClass{ int a; } \n    class SomeTestClass{int a;} \n    class TestClass { int a; }int b; \n    class Table {} \n    interface SupplierFunction<T> extends Function<Supplier<T>, T> {} \n    class NoMtyCls{ void foo1() { foo2(); } } \n    public void foo2() {\n        do {} while (true); \n    }\n}\n    class EmptyAndNonEmptyClasses{ \n        int x;\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundAllowEmptyTypesAndNonEmptyClasses2.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        28,
+        32,
+        36,
+        40,
+        46,
+        53
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nimport java.util.function.Function;\nimport java.util.function.Supplier;\npublic class InputWhitespaceAroundAllowEmptyTypesAndNonEmptyClasses2 {\n    private Object object;\n    class SomeClass{ \n        int a = 5;\n    }\n    public class CheckstyleTest{ \n        private static final int SOMETHING = 1;\n    }\n    class MyClass{ int a; } \n    class SomeTestClass{int a;} \n    class TestClass { int a; }int b; \n    class Table {}\n    interface SupplierFunction<T> extends Function<Supplier<T>, T> {}\n        class NoMtyCls{ void foo1() { foo2(); } } \n    public void foo2() {\n        do {} while (true); \n    }\n}\n    class EmptyAndNonEmptyClasses2{ \n        int x;\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundArrayInitialization.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        19,
+        23,
+        27,
+        42
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundArrayInitialization {\n    public void arrayInitTest() {\n        final int[] COLORS = new int[]{5 }; \n        final int[] COLORS1 = new int[] {5 }; \n        final String[][] COLORS2 = {{\"\"}, {\"\"}}; \n        final String[][] COLORS21\n                = { {\"\", \"\"},{\"\"} }; \n        final String[][] COLORS22 = { {\"White\", \"Yellow\"}, {\"Pink\"} }; \n        final String[][][] COLORS31 = { { {\"Black\", \"Blue\"}, {\"Gray\", \"White\"}},\n                                       { {\"Green\", \"Brown\", \"Magneta\"}},\n                                       { {\"Red\", \"Purple\", \"Violet\"}} }; \n        final String[][][] COLORS32 = { {{\"Red\", \"Green\"},{\"Pink\"}} }; \n        final String[][][] COLORS33 = {{{\"White\"}}}; \n        final String[][][][] COLORS41 = { { { {\"Green\"}}, { {\"Purple\"}}}, { { {\"Yellow\"}}} };\n        final String[][][][] COLORS42 = {\n                { {{\"\", \"\"}, \n                   {\"Gray\", \"Black\"},},},\n                   { { {\"Red\"}}}};\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundBraces.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        50,
+        67
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nclass InputWhitespaceAroundBraces\n{\n    boolean condition()\n    {\n        return false;\n    }\n    void testDoWhile()\n    {\n        do {\n            testDoWhile();\n        }\n        while (condition());\n        do testDoWhile(); while (condition());\n    }\n    void testWhile()\n    {\n        while (condition()) {\n            testWhile();\n        }\n        while(condition()); \n        while (condition())\n            testWhile();\n        while (condition())\n            if (condition())\n                testWhile();\n    }\n    void testFor()\n    {\n        for (int i = 1; i < 5; i++) {\n            testFor();\n        }\n        for(int i = 1;i < 5;i++); \n        for (int i = 1; i < 5; i++)\n            testFor();\n        for (int i = 1; i < 5;\n             i++)\n            if (i > 2)\n                testFor();\n    }\n    public void testIf()\n    {\n        if (condition()) {\n            testIf();\n        }\n        else if (condition()) {\n            testIf();\n        }\n        else {\n            testIf();\n        }\n        if (condition());\n        if (condition())\n            testIf();\n        if (condition())\n            testIf();\n        else\n            testIf();\n        if (condition())\n            testIf();\n        else {\n            testIf();\n        }\n        if (condition()) {\n            testIf();\n        }\n        else\n            testIf();\n        if (condition())\n            if (condition())\n                testIf();\n    }\n    void whitespaceAfterSemi()\n    {\n        int i = 1;int j = 2;\n        for (;;) {\n        }\n    }\n    public InputWhitespaceAroundBraces() {} \n    public void emptyImplementation() {} \n    public void foo() {\n        boolean flag = true;\n        if(flag){} \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundBraces2.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        50,
+        67
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nclass InputWhitespaceAroundBraces2\n{\n    boolean condition()\n    {\n        return false;\n    }\n    void testDoWhile()\n    {\n        do {\n            testDoWhile();\n        }\n        while (condition());\n        do testDoWhile(); while (condition());\n    }\n    void testWhile()\n    {\n        while (condition()) {\n            testWhile();\n        }\n        while(condition()); \n        while (condition())\n            testWhile();\n        while (condition())\n            if (condition())\n                testWhile();\n    }\n    void testFor()\n    {\n        for (int i = 1; i < 5; i++) {\n            testFor();\n        }\n        for(int i = 1;i < 5;i++); \n        for (int i = 1; i < 5; i++)\n            testFor();\n        for (int i = 1; i < 5;\n             i++)\n            if (i > 2)\n                testFor();\n    }\n    public void testIf()\n    {\n        if (condition()) {\n            testIf();\n        }\n        else if (condition()) {\n            testIf();\n        }\n        else {\n            testIf();\n        }\n        if (condition());\n        if (condition())\n            testIf();\n        if (condition())\n            testIf();\n        else\n            testIf();\n        if (condition())\n            testIf();\n        else {\n            testIf();\n        }\n        if (condition()) {\n            testIf();\n        }\n        else\n            testIf();\n        if (condition())\n            if (condition())\n                testIf();\n    }\n    void whitespaceAfterSemi()\n    {\n        int i = 1;int j = 2;\n        for (;;) {\n        }\n    }\n    public InputWhitespaceAroundBraces2() {}\n    public void emptyImplementation() {}\n    public void foo() {\n        boolean flag = true;\n        if(flag){} \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundDoubleBraceInitialization.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        30,
+        31
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nimport java.util.Properties;\npublic class InputWhitespaceAroundDoubleBraceInitialization {\n    public InputWhitespaceAroundDoubleBraceInitialization() {\n        new Properties() {{\n            setProperty(\"double curly braces\", \"are not a style error\");\n        }};\n        new Properties() {{\n            setProperty(\"\", \"\");}}; \n        new Properties() {{setProperty(\"\", \"\"); \n        }}; \n        new Properties() {{setProperty(\"double curly braces\", \"are not a style error\");}};\n        new Properties() {{\n            setProperty(\"double curly braces\", \"are not a style error\");\n        }private int i;}; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundDoWhile.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundDoWhile {\n    public void doWhileTest(int n) {\n        int k = 0;\n        do {\n            ++k;\n        } while(k < n); \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundKeywordsAndOperators.java",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        32,
+        41,
+        44,
+        52,
+        73,
+        91,
+        134,
+        135,
+        138,
+        139,
+        164,
+        275
+      ],
+      "code": "package com . puppycrawl\n    .tools.\n    checkstyle.checks.whitespace.whitespacearound;\nclass InputWhitespaceAroundKeywordsAndOperators\n{\n    private int mVar1=1; \n    private int mVar2 =1; \n    private int mVar3 = 1;\n    void method1()\n    {\n        final int a = 1;\n        int b= 1; \n        b=1; \n        b+=1; \n        b -=- 1 + (+ b); \n        b = b ++ + b --; \n        b = ++ b - -- b; \n    }\n    void method2()\n    {\n        synchronized(this) { \n        }\n        try{ \n        }\n        catch(RuntimeException e){ \n        }\n    }\n    private int mVar4 = 1;\n    private void fastExit()\n    {\n        boolean complicatedStuffNeeded = true;\n        if( !complicatedStuffNeeded ) \n        {\n            return; \n        }\n        else\n        {\n        }\n    }\n    private int nonVoid()\n    {\n        if ( true )\n        {\n            return(2); \n        }\n        else\n        {\n            return 2;\n        }\n    }\n    private void testCasts()\n    {\n        Object o = (Object) new Object();\n        o = (Object)o;\n        o = ( Object ) o;\n        o = (Object)\n            o;\n    }\n    private void testQuestions()\n    {\n        boolean b = (1 == 2)?true:false; \n        b = (1==2) ? false : true; \n    }\n    private void starTest()\n    {\n        int x = 2 *3* 4; \n    }\n    private void boolTest()\n    {\n        boolean a = true;\n        boolean x = ! a;\n        int z = ~1 + ~ 2;\n    }\n    private void divTest()\n    {\n        int a = 4 % 2;\n        int b = 4% 2; \n        int c = 4 %2; \n        int d = 4%2; \n        int e = 4 / 2;\n        int f = 4/ 2; \n        int g = 4 /2; \n        int h = 4/2; \n    }\n    private java .lang.  String dotTest()\n    {\n        Object o = new java.lang.Object();\n        o.\n            toString();\n        o\n            .toString();\n        o . toString();\n        return o.toString();\n    }\n    public void assertTest()\n    {\n        assert true;\n        assert true : \"Whups\";\n        assert \"OK\".equals(null) ? false : true : \"Whups\";\n        assert(true); \n        assert true:\"Whups\"; \n    }\n    void donBradman(Runnable aRun)\n    {\n        donBradman(new Runnable() {\n            public void run() {\n            }\n        });\n        final Runnable r = new Runnable() {\n            public void run() {\n            }\n        };\n    }\n    void rfe521323()\n    {\n        doStuff() ;\n        for (int i = 0 ; i < 5; i++) {\n        }\n    }\n    private int i ;\n    private int i1, i2, i3 ;\n    private int i4, i5, i6;\n    void bug806243()\n    {\n        Object o = new InputWhitespaceAroundKeywordsAndOperators() {\n            private int j ;\n        };\n    }\n    void doStuff() {\n    }\n}\ninterface IFoo\n{\n    void foo() ;\n}\nclass SpecialCasesInForLoop\n{\n    void forIterator()\n    {\n        for (int i = 0; i++ < 5;) {\n    }\n    int i = 0;\n    for ( ; i < 5; i++ ) {\n    }\n        for (int anInt : getSomeInts()) {\n        }\n    }\n    int[] getSomeInts() {\n        int i = (int) ( 2 / 3 );\n        return null;\n    }\n    public void myMethod() {\n        new Thread() {\n            public void run() {\n            }\n        }.start();\n    }\n    public void foo(java.util.List<? extends String[]> bar, Comparable<? super Object[]> baz) { }\n    public void mySuperMethod() {\n        Runnable[] runs = new Runnable[] {new Runnable() {\n                public void run() {\n                }\n            },\n            new Runnable() {\n                public void run() {\n                }\n            }}; \n        runs[0]\n.\n run()\n;\n    }\n    public void testNullSemi() {\n        return ;\n    }\n    public void register(Object obj) { }\n    public void doSomething(String args[]) {\n        register(boolean[].class);\n        register( args );\n    }\n    public void parentheses() {\n        testNullSemi\n(\n)\n;\n    }\n    public static void testNoWhitespaceBeforeEllipses(String ... args) {\n    }\n    public String test() {\n        int pc = 0;\n        return ((100000+pc)+\"\").substring(1); \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundRecords.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        40,
+        42,
+        52,
+        61,
+        69
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundRecords {\n    record MyRecord() {} \n    record MyRecord1() {\n    }\n    record MyRecord2() {\n        class MyClass {} \n        interface Foo {} \n        record MyRecord () {} \n    }\n    record MyRecord3() {\n        void method (){ \n            final int a = 1;\n            int b= 1; \n            b=1; \n        }\n    }\n    record MyRecord4() {\n        public MyRecord4() {\n            final int a = 1;\n            int b= 1; \n            b=1; \n        }\n    }\n    record MyRecord5() {\n        public MyRecord5 {\n            final int a = 1;\n            int b= 1; \n            b=1; \n        }\n    }\n    record MyRecord6() {\n        static final int a = 1;\n        static int b= 1; \n    }\n    record TestRecord7() {\n        public TestRecord7 {} \n    }\n    record TestRecord8() {\n        public TestRecord8 () {\n        }\n    }\n    class TestClass {\n        public TestClass () {\n        }\n    }\n    record TestRecord9() {\n        public TestRecord9() {\n        }\n    }\n    class TestClass2 {\n        public TestClass2() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundSimple.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        165,
+        168,
+        169,
+        170,
+        171,
+        172
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nfinal class InputWhitespaceAroundSimple\n{\n    public static final int badConstant = 2;\n    public static final int MAX_ROWS = 2;\n    private static int badStatic = 2;\n    private static int sNumCreated = 0;\n    private int badMember = 2;\n    private int mNumCreated1 = 0;\n    protected int mNumCreated2 = 0;\n    private int[] mInts = new int[] {1,2, 3,\n                                     4};\n    public static int sTest1;\n    protected static int sTest3;\n    static int sTest2;\n    int mTest1;\n    public int mTest2;\n    int test1(int badFormat1,int badFormat2,\n              final int badFormat3)\n        throws Exception\n    {\n        return 0;\n    }\n    private void longMethod()\n    {\n    }\n    private InputWhitespaceAroundSimple()\n    {\n    }\n    private void localVariables()\n    {\n        int abc = 0;\n        int ABC = 0;\n        final int cde = 0;\n        final int CDE = 0;\n        for (int k = 0; k < 1; k++)\n        {\n            String innerBlockVariable = \"\";\n        }\n        for (int I = 0; I < 1; I++)\n        {\n            String InnerBlockVariable = \"\";\n        }\n    }\n    void ALL_UPPERCASE_METHOD()\n    {\n    }\n    private static final int BAD__NAME = 3;\n    void errorColumnAfterTabs()\n    {\n                int tab0 =1; \n        \tint tab1 =1; \n         \tint tab2 =1; \n\t\tint tab3 =1; \n  \t  \tint tab4 =1; \n  \t        int tab5 =1; \n    }\n    void veryLong()\n    {\n    }\n    void toManyArgs(int aArg1, int aArg2, int aArg3, int aArg4, int aArg5,\n                    int aArg6, int aArg7, int aArg8, int aArg9)\n    {\n    }\n}\nclass InputWhitespaceAroundSimple2\n{\n    public void doSomething()\n    {\n        for (Object O : new java.util.ArrayList())\n        {\n        }\n    }\n}\nenum MyEnum1\n{\n    ABC,\n    XYZ;\n    private int someMember;\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundStartOfTheLine.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        24
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundStartOfTheLine {\n public void checkSmth(\n){ \n  final int SOMETHING = 1;\n }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundSwitch.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundSwitch {\n    public void switchTest(int k) {\n        switch(k) { \n        default:\n            break;\n        }\n        switch (k) {\n        case 7:\n            break;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundSwitchCasesParens.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        113
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\npublic class InputWhitespaceAroundSwitchCasesParens {\n    void m(int k) {\n        switch (k) {\n            case 1 :\n                System.out.println(\"1\");\n            case 2: { }\n            case 3:\n            case 4: {}\n            default: {}\n        }\n    }\n    void m2(int k) {\n        switch (k) {\n            case 1 -> System.out.println(\"1\");\n            case 2 -> { }\n            case 3 -> {}\n            default -> {}\n        }\n    }\n    void m3(int k) {\n        switch (k) {\n            case 1 -> {System.out.println(\"1\");}\n            default -> { }\n        }\n    }\n    void m4(int k) {\n        switch (k) {\n            case 1 : {System.out.println(\"1\");}\n            default : { }\n        }\n    }\n    void m5(int k) {\n        {}\n        {System.out.println(\"1\");}\n    }\n    void m6(int k) {\n        switch (k) {\n            case 1: {} {}\n            case 2: { } { }\n            case 3: {;}\n            case 4: {{}}\n            case 5: { {} }\n            case 6: { { } }\n            case 7:  {\n            }break; \n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputWhitespaceAroundVarargs.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        18,
+        19
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.whitespace.whitespacearound;\nclass InputWhitespaceAroundVarargs\n{\n    public void main0(String... args) { } \n    public static void main1(String ...args) { } \n    public static void main2(String...args) { } \n    public static void main3(String ... args) { }\n    public void varargs(int...arr) { } \n    public void doubleValue(int a, int...b) { } \n}"
+    }
+  ]
+}

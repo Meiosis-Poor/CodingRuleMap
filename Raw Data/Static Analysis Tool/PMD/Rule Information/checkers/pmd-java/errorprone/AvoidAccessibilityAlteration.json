@@ -1,0 +1,82 @@
+{
+  "name": "AvoidAccessibilityAlteration",
+  "language": "java",
+  "description": "\nMethods such as `getDeclaredConstructors()`, `getDeclaredMethods()`, and `getDeclaredFields()` also\nreturn private constructors, methods and fields. These can be made accessible by calling `setAccessible(true)`.\nThis gives access to normally protected data which violates the principle of encapsulation.\n\nThis rule detects calls to `setAccessible` and finds possible accessibility alterations.\nIf the call to `setAccessible` is wrapped within a `PrivilegedAction`, then the access alteration\nis assumed to be deliberate and is not reported.\n\nNote that with Java 17 the Security Manager, which is used for `PrivilegedAction` execution,\nis deprecated: [JEP 411: Deprecate the Security Manager for Removal](https://openjdk.org/jeps/411).\nFor future-proof code, deliberate access alteration should be suppressed using the usual\nsuppression methods (e.g. by using `@SuppressWarnings` annotation).\n        ",
+  "example": "import java.lang.reflect.Constructor;\nimport java.lang.reflect.Field;\nimport java.lang.reflect.Method;\nimport java.security.AccessController;\nimport java.security.PrivilegedAction;\n\npublic class Violation {\n    private void invalidSetAccessCalls() throws NoSuchMethodException, SecurityException {\n        Constructor<?> constructor = this.getClass().getDeclaredConstructor(String.class);\n        // call to forbidden setAccessible\n        constructor.setAccessible(true);\n\n        Method privateMethod = this.getClass().getDeclaredMethod(\"aPrivateMethod\");\n        // call to forbidden setAccessible\n        privateMethod.setAccessible(true);\n\n        // deliberate accessibility alteration\n        String privateField = AccessController.doPrivileged(new PrivilegedAction<String>() {\n            @Override\n            public String run() {\n                try {\n                    Field field = Violation.class.getDeclaredField(\"aPrivateField\");\n                    field.setAccessible(true);\n                    return (String) field.get(null);\n                } catch (ReflectiveOperationException | SecurityException e) {\n                    throw new RuntimeException(e);\n                }\n            }\n        });\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Example code snippet",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        15
+      ],
+      "code": "\nimport java.lang.reflect.Constructor;\nimport java.lang.reflect.Field;\nimport java.lang.reflect.Method;\nimport java.security.AccessController;\nimport java.security.PrivilegedAction;\n\npublic class Violation {\n    private void invalidSetAccessCalls() throws NoSuchMethodException, SecurityException {\n        Constructor<?> constructor = this.getClass().getDeclaredConstructor(String.class);\n        // call to forbidden setAccessible\n        constructor.setAccessible(true);\n\n        Method privateMethod = this.getClass().getDeclaredMethod(\"aPrivateMethod\");\n        // call to forbidden setAccessible\n        privateMethod.setAccessible(true);\n\n        // deliberate accessibility alteration\n        String privateField = AccessController.doPrivileged(new PrivilegedAction<String>() {\n            @Override\n            public String run() {\n                try {\n                    Field field = Violation.class.getDeclaredField(\"aPrivateField\");\n                    field.setAccessible(true);\n                    return (String) field.get(null);\n                } catch (ReflectiveOperationException | SecurityException e) {\n                    throw new RuntimeException(e);\n                }\n            }\n        });\n    }\n}\n        "
+    },
+    {
+      "description": "Detect calls to setAccessible",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        9,
+        12,
+        13,
+        16,
+        19,
+        20,
+        23,
+        26,
+        27
+      ],
+      "code": "\nimport java.lang.reflect.AccessibleObject;\nimport java.lang.reflect.Constructor;\nimport java.lang.reflect.Field;\nimport java.lang.reflect.Method;\n\npublic class Violation {\n    public void invalidSetAccessibleCalls() {\n        for (Constructor<?> constructor : this.getClass().getConstructors()) {\n            constructor.setAccessible(true);\n        }\n        Constructor<?>[] constructors = this.getClass().getConstructors();\n        AccessibleObject.setAccessible(constructors, true);\n        Constructor.setAccessible(constructors, true);\n\n        for (Method method : this.getClass().getMethods()) {\n            method.setAccessible(true);\n        }\n        Method[] methods = this.getClass().getMethods();\n        AccessibleObject.setAccessible(methods, true);\n        Method.setAccessible(methods, true);\n\n        for (Field field : this.getClass().getFields()) {\n            field.setAccessible(true);\n        }\n        Field[] fields = this.getClass().getFields();\n        AccessibleObject.setAccessible(fields, true);\n        Field.setAccessible(fields, true);\n    }\n}\n        "
+    },
+    {
+      "description": "Make sure to detect method call chains",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "code": "\npublic class Violation {\n    public void invalidSetAccessibleCalls() {\n        this.getClass().getDeclaredConstructor(String.class).setAccessible(true);\n        this.getClass().getDeclaredMethod(\"aPrivateMethod\").setAccessible(true);\n        this.getClass().getDeclaredField(\"aPrivateField\").setAccessible(true);\n        Violation.class.getDeclaredConstructor(String.class).setAccessible(true);\n        Violation.class.getDeclaredMethod(\"aPrivateMethod\").setAccessible(true);\n        Violation.class.getDeclaredField(\"aPrivateField\").setAccessible(true);\n    }\n}\n        "
+    },
+    {
+      "description": "Anonymous privileged action is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.reflect.AccessibleObject;\nimport java.lang.reflect.Method;\nimport java.security.AccessController;\nimport java.security.PrivilegedAction;\n\npublic class NoViolation {\n    public void explicitAccessibilityAlteration() {\n        Method[] methods = AccessController.doPrivileged(new PrivilegedAction<Method[]>() {\n            @Override\n            public Method[] run() {\n                Method[] declaredMethods = NoViolation.class.getDeclaredMethods();\n                AccessibleObject.setAccessible(declaredMethods, true);\n                return declaredMethods;\n            }\n        });\n        try {\n            methods[0].invoke(null);\n        } catch (ReflectiveOperationException e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Inner class privileged action is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.reflect.AccessibleObject;\nimport java.lang.reflect.Field;\nimport java.security.PrivilegedAction;\n\npublic class Violation {\n    private static class MyPrivilegedAction implements PrivilegedAction<Field[]> {\n        @Override\n        public Field[] run() {\n            Field[] declaredFields = Violation.class.getDeclaredFields();\n            AccessibleObject.setAccessible(declaredFields, true);\n            return declaredFields;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "false positive when accessible object is used as primary prefix",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.reflect.Constructor;\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class NoViolation { {\n    List<Constructor<?>> list = new ArrayList<>();\n    Constructor<?> ctor = NoViolation.class.getConstructor();\n    list.add(ctor);\n} }\n        "
+    },
+    {
+      "description": "setAccessible(false) is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.reflect.AccessibleObject;\nimport java.lang.reflect.Constructor;\n\npublic class Violation {\n    private void invalidSetAccessCalls() throws NoSuchMethodException, SecurityException {\n        Constructor<?> constructor = this.getClass().getDeclaredConstructor(String.class);\n        // call to setAccessible with false - that's ok\n        constructor.setAccessible(false);\n\n        Constructor<?>[] constructors = this.getClass().getConstructors();\n        AccessibleObject.setAccessible(constructors, false);\n        Constructor.setAccessible(constructors, false);\n    }\n}\n        "
+    },
+    {
+      "description": "#4449 setAccessible is ok in LambdaExpression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n        import java.lang.reflect.Constructor;\n        import java.lang.reflect.Field;\n        import java.lang.reflect.Method;\n        import java.security.AccessController;\n        import java.security.PrivilegedAction;\n\n        public class Violation {\n\n            private void invalidSetAccessCalls() throws NoSuchMethodException, SecurityException {\n                Constructor<?> constructor = this.getClass().getDeclaredConstructor(String.class);\n                \n                // deliberate accessibility alteration\n                String privateField = AccessController.doPrivileged((PrivilegedAction<String>)() -> {\n                    try {\n                        Field field = Violation.class.getDeclaredField(\"aPrivateField\");\n                        field.setAccessible(true);    //no violation\n                        return (String) field.get(null);\n                    } catch (ReflectiveOperationException | SecurityException e) {\n                        throw new RuntimeException(e);\n                    }\n                });\n            }\n        }\n\n        "
+    }
+  ]
+}

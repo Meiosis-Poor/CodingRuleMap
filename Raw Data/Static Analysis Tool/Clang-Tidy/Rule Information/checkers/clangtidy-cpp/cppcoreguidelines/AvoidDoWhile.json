@@ -1,0 +1,42 @@
+{
+  "name": "AvoidDoWhile",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-avoid-do-while",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 36,
+  "branches": 4,
+  "apis": 17,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 21,
+      "expected-linenumbers": [
+        23,
+        24,
+        29,
+        30,
+        35,
+        36,
+        41,
+        42,
+        47,
+        48,
+        53,
+        54,
+        60,
+        61,
+        66,
+        67,
+        73,
+        74,
+        80,
+        83,
+        86
+      ],
+      "code": "\n// RUN: %check_clang_tidy -check-suffixes=DEFAULT       %s cppcoreguidelines-avoid-do-while %t\n// RUN: %check_clang_tidy -check-suffixes=IGNORE-MACROS %s cppcoreguidelines-avoid-do-while %t -- -config='{CheckOptions: {cppcoreguidelines-avoid-do-while.IgnoreMacros: true}}'\n\n#define FOO(x) \\\n  do { \\\n  } while (x != 0)\n\n#define BAR_0(x) \\\n  do { \\\n    bar(x); \\\n  } while (0)\n\n#define BAR_FALSE(x) \\\n  do { \\\n    bar(x); \\\n  } while (false)\n\nvoid bar(int);\nint baz();\n\nvoid foo()\n{\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+2]]:5: warning: avoid do-while loops [cppcoreguidelines-avoid-do-while]\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops [cppcoreguidelines-avoid-do-while]\n    do {\n\n    } while(0);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+2]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    do {\n\n    } while(1);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+2]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    do {\n\n    } while(-1);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+2]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    do {\n\n    } while(false);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+2]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    do {\n\n    } while(true);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+3]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+2]]:5: warning: avoid do-while loops\n    int x1{0};\n    do {\n      x1 = baz();\n    } while (x1 > 0);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+2]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    do {\n\n    } while (x1 != 0);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+3]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+2]]:5: warning: avoid do-while loops\n    constexpr int x2{0};\n    do {\n\n    } while (x2);\n\n    // CHECK-MESSAGES-IGNORE-MACROS: :[[@LINE+3]]:5: warning: avoid do-while loops\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+2]]:5: warning: avoid do-while loops\n    constexpr bool x3{false};\n    do {\n\n    } while (x3);\n\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    FOO(x1);\n\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    BAR_0(x1);\n\n    // CHECK-MESSAGES-DEFAULT: :[[@LINE+1]]:5: warning: avoid do-while loops\n    BAR_FALSE(x1);\n}"
+    }
+  ]
+}

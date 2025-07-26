@@ -1,0 +1,53 @@
+{
+  "name": "UseStdMinMax",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-use-std-min-max",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 199,
+  "branches": 30,
+  "apis": 143,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 32,
+      "expected-linenumbers": [
+        28,
+        33,
+        38,
+        43,
+        52,
+        58,
+        63,
+        68,
+        73,
+        78,
+        83,
+        88,
+        93,
+        99,
+        104,
+        109,
+        114,
+        119,
+        124,
+        129,
+        134,
+        139,
+        148,
+        185,
+        192,
+        206,
+        219,
+        225,
+        245,
+        250,
+        261,
+        269
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11-or-later %s readability-use-std-min-max %t -- -- -fno-delayed-template-parsing\n#define MY_MACRO_MIN(a, b) ((a) < (b) ? (a) : (b))\n\nconstexpr int myConstexprMin(int a, int b) {\n  return a < b ? a : b;\n}\n\nconstexpr int myConstexprMax(int a, int b) {\n  return a > b ? a : b;\n}\n\n#define MY_IF_MACRO(condition, statement) \\\n  if (condition) {                        \\\n    statement                             \\\n  }                                       \n\nclass MyClass {\npublic:\n  int member1;\n  int member2;\n};\n\ntemplate<typename T>\n\nvoid foo(T value7) {\n  int value1,value2,value3;\n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value1, value2);\n  if (value1 < value2)\n    value1 = value2; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value2 = std::min(value1, value2);\n  if (value1 < value2)\n    value2 = value1; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `>` [readability-use-std-min-max]\n  // CHECK-FIXES: value2 = std::min(value2, value1);\n  if (value2 > value1)\n    value2 = value1; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `>` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value2, value1);\n  if (value2 > value1)\n    value1 = value2; \n\n  // No suggestion needed here\n  if (value1 == value2)\n    value1 = value2;\n\n  // CHECK-MESSAGES: :[[@LINE+3]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max<int>(value1, value4);\n  short value4;\n  if(value1<value4)\n    value1=value4; \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value3 = std::min(value1+value2, value3);\n  if(value1+value2<value3)\n    value3 = value1+value2; \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value1, myConstexprMin(value2, value3));\n  if (value1 < myConstexprMin(value2, value3))\n    value1 = myConstexprMin(value2, value3); \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `>` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::min(value1, myConstexprMax(value2, value3));\n  if (value1 > myConstexprMax(value2, value3))\n    value1 = myConstexprMax(value2, value3); \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<=` [readability-use-std-min-max]\n  // CHECK-FIXES: value2 = std::min(value1, value2);\n  if (value1 <= value2)\n    value2 = value1; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<=` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value1, value2);\n  if (value1 <= value2)\n    value1 = value2; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `>=` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value2, value1);\n  if (value2 >= value1)\n    value1 = value2; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `>=` [readability-use-std-min-max]\n  // CHECK-FIXES: value2 = std::min(value2, value1);\n  if (value2 >= value1)\n    value2 = value1; \n  \n  // CHECK-MESSAGES: :[[@LINE+3]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member1 = std::max(obj.member1, obj.member2);\n  MyClass obj;\n  if (obj.member1 < obj.member2)\n    obj.member1 = obj.member2; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member2 = std::min(obj.member1, obj.member2);\n  if (obj.member1 < obj.member2)\n    obj.member2 = obj.member1; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `>` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member2 = std::min(obj.member2, obj.member1);\n  if (obj.member2 > obj.member1)\n    obj.member2 = obj.member1; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `>` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member1 = std::max(obj.member2, obj.member1);\n  if (obj.member2 > obj.member1)\n    obj.member1 = obj.member2; \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member1 = std::max<int>(obj.member1, value4);\n  if (obj.member1 < value4)\n    obj.member1 = value4; \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value3 = std::min(obj.member1 + value2, value3);\n  if (obj.member1 + value2 < value3)\n    value3 = obj.member1 + value2; \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<=` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member2 = std::min(value1, obj.member2);\n  if (value1 <= obj.member2)\n    obj.member2 = value1; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<=` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value1, obj.member2);\n  if (value1 <= obj.member2)\n    value1 = obj.member2; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `>=` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(obj.member2, value1);\n  if (obj.member2 >= value1)\n    value1 = obj.member2; \n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `>=` [readability-use-std-min-max]\n  // CHECK-FIXES: obj.member2 = std::min(obj.member2, value1);\n  if (obj.member2 >= value1)\n    obj.member2 = value1; \n  \n  // No suggestion needed here\n  if (MY_MACRO_MIN(value1, value2) < value3)\n    value3 = MY_MACRO_MIN(value1, value2); \n  \n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value4 = std::max<int>(value4, value2);\n  if (value4 < value2){\n    value4 = value2; \n  }\n\n  // No suggestion needed here\n  if(value1 < value2)\n    value2 = value1;\n  else\n    value2 = value3;\n  \n  // No suggestion needed here\n  if(value1<value2){\n    value2 = value1; \n  }\n  else{\n    value2 = value3;  \n  }\n\n  // No suggestion needed here\n  if(value1<value2){\n    value2 = value1; \n    int res = value1 + value2;\n  }\n\n  // No suggestion needed here\n  MY_IF_MACRO(value1 < value2, value1 = value2;)\n\n  // No suggestion needed here\n  if(value1<value2){\n    value1 = value2;\n  }\n  else if(value1>value2){\n    value2 = value1;\n  }\n\n  // CHECK-MESSAGES: :[[@LINE+3]]:5: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max(value1, value3);\n  if(value1 == value2){\n    if(value1<value3)\n      value1 = value3;\n  }\n\n  // CHECK-MESSAGES: :[[@LINE+5]]:7: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value1 = std::max<int>(value1, value4);\n  if(value1 == value2){\n    if(value2 == value3){\n      value3+=1;\n      if(value1<value4){\n        value1 = value4;\n      }\n    }\n    else if(value3>value2){\n      value2 = value3;\n    }\n  }\n  \n  // CHECK-MESSAGES: :[[@LINE+4]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value6 = std::min<unsigned int>(value5, value6);\n  unsigned int value5;\n  unsigned char value6;\n  if(value5<value6){\n    value6 = value5;\n  }\n\n  //No suggestion needed here\n  if(value7<value6){\n    value6 = value7;\n  }\n\n  //CHECK-MESSAGES: :[[@LINE+3]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  //CHECK-FIXES: value1 = std::min(value8, value1);\n  const int value8 = 5;\n  if(value8<value1)\n    value1 = value8;\n  \n  //CHECK-MESSAGES: :[[@LINE+3]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  //CHECK-FIXES: value1 = std::min(value9, value1);\n  volatile int value9 = 6;\n  if(value9<value1)\n    value1 = value9;\n}\n\nusing my_size = unsigned long long;\n\ntemplate<typename T>\nstruct MyVector\n{\n    using size_type = my_size;\n    size_type size() const;\n};\n\nvoid testVectorSizeType() {\n  MyVector<int> v;\n  unsigned int value;\n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `>` [readability-use-std-min-max]\n  // CHECK-FIXES: value = std::max<my_size>(v.size(), value);\n  if (v.size() > value)\n    value = v.size();\n\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: value = std::max<my_size>(value, v.size());\n  if (value < v.size())\n    value = v.size();\n}\n\nnamespace gh121676 {\n\nvoid useLeft() {\n  using U16 = unsigned short;\n  U16 I = 0;\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::max` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: I = std::max<U16>(I, 16U);\n  if (I < 16U)\n    I = 16U;\n}\nvoid useRight() {\n  using U16 = unsigned short;\n  U16 I = 0;\n  // CHECK-MESSAGES: :[[@LINE+2]]:3: warning: use `std::min` instead of `<` [readability-use-std-min-max]\n  // CHECK-FIXES: I = std::min<U16>(16U, I);\n  if (16U < I)\n    I = 16U;\n}\n\n} // namespace gh121676"
+    }
+  ]
+}

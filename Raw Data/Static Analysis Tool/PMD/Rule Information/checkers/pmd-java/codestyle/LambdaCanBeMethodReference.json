@@ -1,0 +1,110 @@
+{
+  "name": "LambdaCanBeMethodReference",
+  "language": "java",
+  "description": "\n            This rule reports lambda expressions that can be written more succinctly as a method reference. This is the case if the lambda is an expression lambda that only calls one method, passing the entire lambda parameter list in order to the method. For instance:\n            ```java\n                x -> Foo.call(x) // can be Foo::call\n                x -> call(x)     // can be this::call, if call is an instance method\n                (x, y, z) -> call(x, y, z) // can be this::call\n                () -> foo.get() // can be foo::get\n                x -> x.foo()    // can be XType::foo (where XType is the type of x)\n            ```\n\n            In some cases rewriting a lambda to a method reference can change the semantics of the code. For instance in `(x) -> someVar.call(x)`, the invocation of the lambda may produce a NullPointerException (NPE) if `someVar` is null. The method reference `someVar::call` will also NPE if `someVar` is null, but it will do so at the point the method reference is created, while the lambda is created without error and its NPE is only thrown if the lambda is invoked (which may be never). Code should probably not rely on this subtle semantic difference, therefore these potentially problematic lambdas are also reported by default. This behavior can be disabled by setting the property `ignoreIfMayNPE` to `true`.\n\n            The property `ignoreIfMayNPE` is true by default. By default, calls whose receiver is itself a method call are ignored, because they could cause side effects. This may be changed by setting the property `ignoreIfReceiverIsMethod` to `false`.\n\n            Scope limitations:\n            - This rule will not report lambdas of the form `x -> new CtorCall().something(x)`, because the semantics of the method reference would be to create a single new object, while the lambda creates one object per invocation.\n            - The rule cannot know if the qualifier of a method call performs side effects. This means `(x) -> sideEffectingMethod().foo(x)` will be reported. Suppress the warning in this case.\n        ",
+  "example": "import java.util.stream.Stream;\n\n            public class LambdaCanBeMethodReference {\n                static {\n                    Stream.of(\"abc\", \"d\")\n                            .mapToInt(s -> s.length()) // could be String::length\n                            .reduce((x, y) -> Integer.sum(x, y)) // could be Integer::sum\n                            .getAsInt();\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 190,
+  "branches": 36,
+  "apis": 30,
+  "test": [
+    {
+      "description": "Static referee, return type adapted int to void",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                static {\n                    iTakeLambda(x -> correct(x)); // flag\n                    int foo = 0;\n                    iTakeLambda(x -> correct(foo)); // ok\n                }\n                public static int correct(int a) {\n                    return 0;\n                }\n            }\n\n            interface ALambda {\n                void doSomething(int a);\n            }\n        "
+    },
+    {
+      "description": "self referee, return type adapted int to void",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                static {\n                    iTakeLambda(x -> correct(x)); // flag\n                    int foo = 0;\n                    iTakeLambda(x -> correct(foo)); // ok\n                }\n                public int correct(int a) {\n                    return 0;\n                }\n            }\n\n            interface ALambda {\n                void doSomething(int a);\n            }\n            "
+    },
+    {
+      "description": "Block lambda",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                static {\n                    iTakeLambda(x ->{ return correct(x); }); // flag\n                    iTakeLambda(x ->{ if(x == 1) return correct(x); else return correct(x); }); // do not flag\n                    iTakeLambda(x ->{\n                        foo();\n                        return correct(x);\n                    }); // do not flag\n                    iTakeLambda(x -> {});\n                }\n                public int correct(int a) {\n                    return 0;\n                }\n            }\n\n            interface ALambda {\n                void doSomething(int a);\n            }\n            "
+    },
+    {
+      "description": "cannot rewrite if qualifier is ctor call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                static {\n                    iTakeLambda(x -> new Foo().correct(x));\n                }\n                public int correct(int a) {\n                    return 0;\n                }\n            }\n\n            interface ALambda {\n                void doSomething(int a);\n            }\n            "
+    },
+    {
+      "description": "Ignore methods by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Property to consider methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "can rewrite many different qualifier types without NPE risk",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                public static void iTakeClass(Consumer<Class<?>> l) {}\n                static {\n                    iTakeLambda(x -> \"abc\".indexOf(x));\n                    iTakeLambda(x -> this.correct(x));\n                    iTakeLambda(x -> Integer.valueOf(x));\n                    iTakeClass(x -> String.class.isAssignableFrom(x));\n                }\n                public boolean correct(int a) {\n                    return false;\n                }\n            }\n\n            interface ALambda {\n                boolean doSomething(int a);\n            }\n            "
+    },
+    {
+      "description": "Test annotated lambda",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {\n                }\n\n                static {\n                    iTakeLambda((@Annot var x) -> Integer.valueOf(x));\n                }\n\n                public boolean correct(int a) {\n                    return false;\n                }\n            }\n\n            @Target(ElementType.TYPE_USE)\n            @interface Annot {\n            }\n\n            interface ALambda {\n                boolean doSomething(int a);\n            }\n            "
+    },
+    {
+      "description": "test when method call is invalid",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                static {\n                    // parseInt(int) does not exist\n                    iTakeLambda(x -> Integer.parseInt(x));\n                }\n                public boolean correct(int a) {\n                    return false;\n                }\n            }\n\n            interface ALambda {\n                boolean doSomething(int a);\n            }\n            "
+    },
+    {
+      "description": "Test when method ref is on receiver",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            public final class Foo {\n\n                public static void iTakeLambda(ALambda l) {}\n                public static void iTakeLambda(ALambda2 l) {}\n                static {\n                    // parseInt(int) does not exist\n                    iTakeLambda(x -> x.isEmpty());\n                    iTakeLambda((x,c) -> x.contains(c));\n                }\n                public boolean correct(int a) {\n                    return false;\n                }\n            }\n\n            interface ALambda {\n                boolean doSomething(String a, CharSequence c);\n            }\n            interface ALambda2 {\n                boolean doSomething(String a);\n            }\n            "
+    },
+    {
+      "description": "Risk of NPE, ignore = true",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Risk of NPE, ignore = false",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Risk of NPE, ignore = true, ignore method = false",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Risk of NPE, ignore npe = false, dont ignore methods",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "#5214 message when method is in outer class",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            public final class Outer {\n\n                class Inner {\n\n                    {\n                        iTakeLambda(i -> correct(i));\n                    }\n\n                    boolean something(int x) { return true; }\n                    class Deeper {\n\n                        {\n                            iTakeLambda(i -> something(i));\n                        }\n                    }\n                }\n\n                static void iTakeLambda(ALambda2 l) {\n                }\n\n                public boolean correct(int a) {\n                    return false;\n                }\n            }\n            interface ALambda2 {\n                boolean doSomething(int a);\n            }\n            "
+    }
+  ]
+}

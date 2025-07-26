@@ -1,0 +1,35 @@
+{
+  "name": "AvoidGoto",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-avoid-goto",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 61,
+  "branches": 5,
+  "apis": 37,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        9,
+        10,
+        18,
+        19,
+        24,
+        25,
+        136,
+        137,
+        153,
+        154,
+        160,
+        161,
+        169,
+        170
+      ],
+      "code": "\n// RUN: %check_clang_tidy -check-suffix=,MACRO %s cppcoreguidelines-avoid-goto %t\n// RUN: %check_clang_tidy %s cppcoreguidelines-avoid-goto %t -- -config=\"{CheckOptions: { cppcoreguidelines-avoid-goto.IgnoreMacros: true }}\"\n\nvoid noop() {}\n\nint main() {\n  noop();\n  goto jump_to_me;\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: avoid using 'goto' for flow control\n  // CHECK-MESSAGES: [[@LINE+3]]:1: note: label defined here\n  noop();\n\njump_to_me:;\n\njump_backwards:;\n  noop();\n  goto jump_backwards;\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: avoid using 'goto' for flow control\n  // CHECK-MESSAGES: [[@LINE-4]]:1: note: label defined here\n\n  goto jump_in_line;\n  ;\njump_in_line:;\n  // CHECK-MESSAGES: [[@LINE-3]]:3: warning: avoid using 'goto' for flow control\n  // CHECK-MESSAGES: [[@LINE-2]]:1: note: label defined here\n\n  // Test the GNU extension https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html\nsome_label:;\n  void *dynamic_label = &&some_label;\n\n  // FIXME: `IndirectGotoStmt` is not detected.\n  goto *dynamic_label;\n}\n\nvoid forward_jump_out_nested_loop() {\n  int array[] = {1, 2, 3, 4, 5};\n  for (int i = 0; i < 10; ++i) {\n    noop();\n    for (int j = 0; j < 10; ++j) {\n      noop();\n      if (i + j > 10)\n        goto early_exit1;\n    }\n    noop();\n  }\n\n  for (int i = 0; i < 10; ++i) {\n    noop();\n    while (true) {\n      noop();\n      if (i > 5)\n        goto early_exit1;\n    }\n    noop();\n  }\n\n  for (auto value : array) {\n    noop();\n    for (auto number : array) {\n      noop();\n      if (number == 5)\n        goto early_exit1;\n    }\n  }\n\n  do {\n    noop();\n    do {\n      noop();\n      goto early_exit1;\n    } while (true);\n  } while (true);\n\n  do {\n    for (auto number : array) {\n      noop();\n      if (number == 2)\n        goto early_exit1;\n    }\n  } while (true);\n\n  // Jumping further results in error, because the variable declaration would\n  // be skipped.\nearly_exit1:;\n\n  int i = 0;\n  while (true) {\n    noop();\n    while (true) {\n      noop();\n      if (i > 5)\n        goto early_exit2;\n      i++;\n    }\n    noop();\n  }\n\n  while (true) {\n    noop();\n    for (int j = 0; j < 10; ++j) {\n      noop();\n      if (j > 5)\n        goto early_exit2;\n    }\n    noop();\n  }\n\n  while (true) {\n    noop();\n    for (auto number : array) {\n      if (number == 1)\n        goto early_exit2;\n      noop();\n    }\n  }\n\n  while (true) {\n    noop();\n    do {\n      noop();\n      goto early_exit2;\n    } while (true);\n  }\nearly_exit2:;\n}\n\nvoid jump_out_backwards() {\n\nbefore_the_loop:\n  noop();\n\n  for (int i = 0; i < 10; ++i) {\n    for (int j = 0; j < 10; ++j) {\n      if (i * j > 80)\n        goto before_the_loop;\n      // CHECK-MESSAGES: [[@LINE-1]]:9: warning: avoid using 'goto' for flow control\n      // CHECK-MESSAGES: [[@LINE-8]]:1: note: label defined here\n    }\n  }\n}\n\n#define macro_goto_code \\\n  noop(); \\\n  goto jump_to_me; \\\n  noop(); \\\njump_to_me:; \\\n\n#define macro_goto_label jump_to_me:;\n#define macro_goto_jump goto jump_to_me;\n\nvoid inside_macro_all() {\n  macro_goto_code\n  // CHECK-MESSAGES-MACRO: [[@LINE-1]]:3: warning: avoid using 'goto' for flow control\n  // CHECK-MESSAGES-MACRO: [[@LINE-2]]:3: note: label defined here\n}\n\nvoid inside_macro_label() {\n  noop();\n  goto jump_to_me;\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: avoid using 'goto' for flow control\n  // CHECK-MESSAGES: [[@LINE+2]]:3: note: label defined here\n  noop();\n  macro_goto_label\n}\n\nvoid inside_macro_goto() {\n  noop();\n  macro_goto_jump\n  // CHECK-MESSAGES-MACRO: [[@LINE-1]]:3: warning: avoid using 'goto' for flow control\n  // CHECK-MESSAGES-MACRO: [[@LINE+2]]:3: note: label defined here\n  noop();\n  jump_to_me:;\n}"
+    }
+  ]
+}

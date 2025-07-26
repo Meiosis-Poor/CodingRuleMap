@@ -1,0 +1,25 @@
+{
+  "name": "UseAnonymousNamespace",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-use-anonymous-namespace",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 62,
+  "branches": 2,
+  "apis": 39,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        5,
+        7,
+        11,
+        13
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-use-anonymous-namespace %t -- -header-filter=.* -- -I%S/Inputs\n#include \"use-anonymous-namespace.h\"\n\nstatic void f1();\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: function 'f1' declared 'static', move to anonymous namespace instead [misc-use-anonymous-namespace]\nstatic int v1;\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: variable 'v1' declared 'static', move to anonymous namespace instead\n\nnamespace a {\n  static void f3();\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: function 'f3' declared 'static', move to anonymous namespace instead\n  static int v3;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: variable 'v3' declared 'static', move to anonymous namespace instead\n}\n\n// OK\nvoid f5();\nint v5;\n\n// OK\nnamespace {\n  void f6();\n  int v6;\n}\n\n// OK\nnamespace a {\nnamespace {\n  void f7();\n  int v7;\n}\n}\n\n// OK\nstruct Foo {\n  static void f();\n  static int x;\n};\n\n// OK\nvoid foo()\n{\n  static int x;\n}\n\n// OK\nstatic const int v8{123};\nstatic constexpr int v9{123};"
+    }
+  ]
+}

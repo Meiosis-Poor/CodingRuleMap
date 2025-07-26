@@ -1,0 +1,73 @@
+{
+  "name": "InnerAssignment",
+  "language": "java",
+  "description": "<div>\n Checks for assignments in subexpressions, such as in\n {@code String s = Integer.toString(i = 2);}.\n </div>\n\n <p>\n Rationale: Except for the loop idioms,\n all assignments should occur in their own top-level statement to increase readability.\n With inner assignments like the one given above, it is difficult to see all places\n where a variable is set.\n </p>\n\n <p>\n Note: Check allows usage of the popular assignments in loops:\n </p>\n <pre>\n String line;\n while ((line = bufferedReader.readLine()) != null) { // OK\n   // process the line\n }\n\n for (;(line = bufferedReader.readLine()) != null;) { // OK\n   // process the line\n }\n\n do {\n   // process the line\n }\n while ((line = bufferedReader.readLine()) != null); // OK\n </pre>\n\n <p>\n Assignment inside a condition is not a problem here, as the assignment is surrounded\n by an extra pair of parentheses. The comparison is {@code != null} and there is no chance that\n intention was to write {@code line == reader.readLine()}.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 132,
+  "branches": 7,
+  "apis": 17,
+  "test": [
+    {
+      "description": "Auto test from InputInnerAssignment.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        22,
+        27,
+        75
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.innerassignment;\nimport java.io.FileInputStream;\nimport java.io.IOException;\nimport java.util.jar.JarInputStream;\nimport java.util.jar.Manifest;\npublic class InputInnerAssignment\n{\n    void innerAssignments()\n    {\n        int a;\n        int b;\n        int c;\n        a = b = c = 1;\n        String s = Integer.toString(b = 2); \n        Integer i = new Integer(a += 5); \n        c = b++; \n        for (int j = 0; j < 6; j += 2) { \n            a += j;\n        }\n    }\n    public static void demoInputStreamIdiom(java.io.InputStream is) throws java.io.IOException\n    {\n        int b;\n        while ((b = is.read()) != -1) \n        {\n        }\n    }\n    public static void demoNoBrace()\n    {\n        int sum = 0;\n        for (int i = 0; i < 3; i++)\n            sum = sum + i;\n        if (sum > 4)\n            sum += 2;\n        else if (sum < 2)\n            sum += 1;\n        else\n            sum += 100;\n        while (sum > 4)\n            sum -= 1;\n        do\n            sum = sum + 1;\n        while (sum < 6);\n        ChildParent o = new ChildParent();\n        Object t = null;\n        while (o != null)\n            t = o = o.getParent(); \n    }\n    @SuppressWarnings(value = \"unchecked\")\n    public java.util.Collection<Object> allParams() {\n        java.util.ArrayList params = new java.util.ArrayList();\n        params.add(\"one\");\n        params.add(\"two\");\n        return params;\n    }\n    private static Manifest loadManifest(String fn) {\n        try (FileInputStream fis = new FileInputStream(fn);\n             JarInputStream jis = new JarInputStream(fis, false))\n        {\n            return jis.getManifest();\n        } catch (IOException e)\n        {\n            return null;\n        }\n    }\n    private static class ChildParent {\n        public ChildParent getParent() {\n            return this;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInnerAssignmentDemoBug1195047Comment3.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        16,
+        18,
+        19,
+        20,
+        21,
+        22,
+        29
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.innerassignment;\npublic class InputInnerAssignmentDemoBug1195047Comment3 {\n    public void demoBug1195047Comment3()\n    {\n        int y = 1;\n        int b = 0;\n        boolean bb;\n        int i;\n        if (bb = false) {} \n        for (i = 0; bb = false; i = i + 1) {} \n        while (bb = false) {} \n        if ((bb = false)) {} \n        for (int j = 0; (bb = false); j += 1) {} \n        while ((bb = false)) {} \n        i = (bb = false) ? (b = 2) : (b += 1);\n        i = (b += 1) + (b -= 1);\n        do {i += 1;} while (bb = false); \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInnerAssignmentMethod.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.innerassignment;\nimport java.io.FileInputStream;\nimport java.io.IOException;\npublic class InputInnerAssignmentMethod {\n    void method() throws IOException {\n        Integer line;\n        FileInputStream file = null;\n        while (!((line = file.read()) != null)) {}\n        while ((line = file.read()) != null && line < 3) {}\n        while ((line = file.read()) != null && line < 3 && line > 5) {}\n        while ((line = file.read()) != null || line < 3) {}\n        while ((line = file.read()) != null || line < 3 || line > 5) {}\n        while ((line = file.read()) != null & line < 3) {}\n        while ((line = file.read()) != null & line < 3 & line > 5) {}\n        while ((line = file.read()) != null | line < 3) {}\n        while ((line = file.read()) != null | line < 3 | line > 5) {}\n        while (line < 3 && (line = file.read()) != null) {}\n        while (line < 3 || (line = file.read()) != null) {}\n        while (line < 3 & (line = file.read()) != null) {}\n        while (line < 3 | (line = file.read()) != null) {}\n        do{}\n        while (!((line = file.read()) != null));\n        do{}\n        while ((line = file.read()) != null && line < 3);\n        do{}\n        while ((line = file.read()) != null && line < 3 && line > 5);\n        do{}\n        while ((line = file.read()) != null || line < 3);\n        do{}\n        while ((line = file.read()) != null || line < 3 || line > 5);\n        do{}\n        while ((line = file.read()) != null & line < 3);\n        do{}\n        while ((line = file.read()) != null & line < 3 & line > 5);\n        do{}\n        while ((line = file.read()) != null | line < 3);\n        do{}\n        while ((line = file.read()) != null | line < 3 | line > 5);\n        do{}\n        while (line < 3 && (line = file.read()) != null);\n        do{}\n        while (line < 3 || (line = file.read()) != null);\n        do{}\n        while (line < 3 & (line = file.read()) != null);\n        do{}\n        while (line < 3 | (line = file.read()) != null);\n        for (;!((line = file.read()) != null);) {}\n        for (;(line = file.read()) != null && line < 3;) {}\n        for (;(line = file.read()) != null && line < 3 && line > 5;) {}\n        for (;(line = file.read()) != null || line < 3;) {}\n        for (;(line = file.read()) != null || line < 3 || line > 5;) {}\n        for (;(line = file.read()) != null & line < 3;) {}\n        for (;(line = file.read()) != null & line < 3 & line > 5;) {}\n        for (;(line = file.read()) != null | line < 3;) {}\n        for (;(line = file.read()) != null | line < 3 | line > 5;) {}\n        for (;line < 3 && (line = file.read()) != null;) {}\n        for (;line < 3 || (line = file.read()) != null;) {}\n        for (;line < 3 & (line = file.read()) != null;) {}\n        for (;line < 3 | (line = file.read()) != null;) {}\n        String str1 = \"\";\n        String str2 = \"cd\";\n        for (;;(str1 = \"ab\").concat(str2)) {} \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInnerAssignmentNotInLoopContext.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.innerassignment;\npublic class InputInnerAssignmentNotInLoopContext {\n    int value = 3;\n    boolean b = 1 > (value = 2); \n}"
+    },
+    {
+      "description": "Auto test from InputInnerAssignmentSwitchAndSwitchExpression.java",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        27,
+        37,
+        39,
+        40,
+        48,
+        50,
+        51,
+        58,
+        60,
+        93,
+        95,
+        97
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.innerassignment;\npublic class InputInnerAssignmentSwitchAndSwitchExpression {\n    public void test1(int mode) {\n        int x = 0;\n        switch (mode) {\n            case 2 -> {\n                x = 2;\n            }\n            case 1 -> x = 1;\n        }\n    }\n    public void test2(int mode) {\n        int x = 0, y = 0;\n        switch (mode) {\n            case 2, 4, 6 -> {\n                x = 2;\n            }\n            case 1, 3, 5 -> {\n                x = y = 1;  \n            }\n            case 0, 7, 8 -> x = 1;\n        }\n    }\n    public void test3(int mode) {\n        int x = 0;\n        x = switch (mode) {\n            case 2 -> {\n                yield x = 2; \n            }\n            case 1 -> x = 1;  \n            default -> x = 0; \n        };\n    }\n    public void test4(int mode) {\n        int x = 0;\n        x = switch (mode) {\n            case 2, 4, 6 -> {\n                yield x = 2; \n            }\n            case 1, 3, 5 -> x = 1;  \n            default -> x = 0; \n        };\n    }\n    public void test5(String operation) {\n        boolean innerFlag, flag;\n        switch (operation) {\n            case \"Y\" -> flag = innerFlag = true; \n            case \"N\" -> {\n                flag = innerFlag = false; \n            }\n        }\n    }\n    public void test6(int mode) {\n        int x = 0;\n        switch (mode) {\n            case 2: {\n                x = 2;\n            }\n            case 1:\n                x = 1;\n        }\n    }\n    public void test7(int mode) {\n        int x = 0;\n        switch (mode) {\n            case 0:\n            case 1:\n            case 2: {\n                x = 2;\n            }\n            case 4:\n            case 5:\n                x = 1;\n        }\n    }\n    public void test8(int mode) {\n        int x = 4;\n        System.out.println(switch (x) {\n            case 1 -> x = 1;   \n            case 2 -> {\n                 yield x = 2;      \n            }\n            default ->  x = 3;     \n        });\n    }\n}"
+    }
+  ]
+}

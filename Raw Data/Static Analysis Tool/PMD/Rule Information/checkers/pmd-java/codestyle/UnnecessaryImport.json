@@ -1,0 +1,541 @@
+{
+  "name": "UnnecessaryImport",
+  "language": "java",
+  "description": "\n            Reports import statements that can be removed. They are either unused,\n            duplicated, or the members they import are already implicitly in scope,\n            because they're in java.lang, or the current package.\n\n            If some imports cannot be resolved, for instance because you run PMD with\n            an incomplete auxiliary classpath, some imports may be conservatively marked\n            as used even if they're not to avoid false positives.\n        ",
+  "example": "import java.io.File;            // not used, can be removed\n            import java.util.Collections;   // used below\n            import java.util.*;             // so this one is not used\n\n            import java.lang.Object;        // imports from java.lang, unnecessary\n            import java.lang.Object;        // duplicate, unnecessary\n\n            public class Foo {\n                static Object emptyList() {\n                    return Collections.emptyList();\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 474,
+  "branches": 86,
+  "apis": 30,
+  "test": [
+    {
+      "description": "simple unused single type import",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.File;\npublic class Foo {}\n        "
+    },
+    {
+      "description": "one used single type import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.File;\npublic class Foo {\n    private File file;\n}\n        "
+    },
+    {
+      "description": "2 unused single-type imports",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.File;\nimport java.util.List;\npublic class Foo {\n}\n        "
+    },
+    {
+      "description": "1 used single type import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.security.AccessController;\npublic class Foo {\n    public void foo() {\n        AccessController.doPrivileged(null);\n    }\n}\n        "
+    },
+    {
+      "description": "1 import stmt, used only in throws clause",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.rmi.RemoteException;\npublic class Foo {\n    public void foo() throws RemoteException {}\n}\n        "
+    },
+    {
+      "description": "for loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\npublic class Foo {\n    public void foo(ArrayList list) {\n        for (String s : list) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Generics",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport foo.TestInterfaceTwo;\nimport java.util.*;\npublic class Foo {\n    private List<TestInterfaceTwo> x = new ArrayList<TestInterfaceTwo>();\n}\n        "
+    },
+    {
+      "description": "Generics 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Collection;\nimport java.util.List;\nimport java.util.ArrayList;\npublic class Foo {\n    private List<Collection> x = new ArrayList<Collection>();\n}\n        "
+    },
+    {
+      "description": "Annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport foo.annotation.Retention;\nimport foo.annotation.RetentionPolicy;\n@Retention(RetentionPolicy.RUNTIME)\npublic @interface Foo {\n}\n        "
+    },
+    {
+      "description": "Annotations 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport foo.FooAnnotation1;\nimport foo.FooAnnotation2;\n@FooAnnotation1\n@FooAnnotation2\npublic class Foo {}\n        "
+    },
+    {
+      "description": "import from default package",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport Bar;\npublic class Foo {\n    public Bar foo() {}\n}\n        "
+    },
+    {
+      "description": "import from default package from somewhere else",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage somewhere;\nimport Bar;\npublic class Foo {\n    public Bar foo() {}\n}\n        "
+    },
+    {
+      "description": "import from default package",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage somewhere;\nimport Bar;\npublic class Foo {\n    public void foo() {}\n}\n        "
+    },
+    {
+      "description": "Used static import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static com.foo.MyClass.staticMethod;\npublic class Foo {\n    public Foo(){\n        staticMethod(\"This is OK\");\n    }\n}\n        "
+    },
+    {
+      "description": "Unused static import",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport static com.foo.MyClass.staticMethod;\npublic class Foo {\n    public Foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "On demand import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    List list = new ArrayList();\n}\n        "
+    },
+    {
+      "description": "imports used in javadoc comment, see also bug #254",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Calendar;\nimport java.util.List;\nimport java.util.LinkedList;\nimport java.util.NoSuchElementException;\nimport java.io.File;\nimport java.io.IOException;\n\npublic class Foo {\n    /**\n     * {@linkplain  List list}\n     * {@link  ArrayList  arraylist}\n     * {@link  LinkedList}\n     * {@value  Calendar#DATE}\n     * @see File\n     * @throws NoSuchElementException no such element\n     * @exception IOException IO operation exception\n     */\n    public void test() {}\n}\n        "
+    },
+    {
+      "description": "#1280 False Positive in UnusedImports when import used in javadoc",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport some.pack.SomeUtility;\n\npublic class Foo {\n    /**\n     * The {@link SomeUtility#someHelperMethod(String, SomeObject)} method does something.\n     */\n    public void someMethod() {\n    }\n}\n        "
+    },
+    {
+      "description": "#1720 False Positive in UnusedImports for Javadoc link with array type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport some.pack.SomeUtility;\n\npublic class Foo {\n    /**\n     * The {@link SomeUtility#someHelperMethod(String, SomeObjectArray[])} method does something.\n     */\n    public void someMethod() {\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 2606609 : False \"UnusedImports\" positive in package-info.java",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@DefaultAnnotation(NonNull.class)\npackage net.sourceforge.pmd.test;\n\nimport edu.umd.cs.findbugs.annotations.DefaultAnnotation;\nimport edu.umd.cs.findbugs.annotations.NonNull;\n        "
+    },
+    {
+      "description": "bug #254 False+ : UnusedImport with Javadoc @link",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Collections;\nimport java.util.NoSuchElementException;\n\npublic class Test {\n    /**\n     * {@link ArrayList#add(Object)}\n     * @see Collections\n     * @throws NoSuchElementException no such element\n     */\n    String[] getList() { }\n}\n        "
+    },
+    {
+      "description": "#1181 unused import false positive if used as parameter in javadoc only.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Collection;\nimport java.util.Collections;\nimport java.util.List;\nimport java.util.Vector;\n\npublic class Foo {\n    /**\n     * See here: {@link Collections#reverse(List, Collection)}\n     * @see Collections#reverse(ArrayList, Vector)\n     */\n    public Object bar() {}\n}\n        "
+    },
+    {
+      "description": "#1280 False Positive in UnusedImports when import used in javadoc",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport some.pack.SomeUtility;\n\npublic class Foo {\n    /**\n     * The {@link SomeUtility#someHelperMethod(String, test.SomeObject)} method does something.\n     */\n    public void someMethod() {\n    }\n}\n        "
+    },
+    {
+      "description": "#914 False +ve from UnusedImports with wildcard static imports",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static org.junit.Assert.*;\nimport org.junit.Test;\nimport static java.lang.Math.*;\n\npublic class FooTest {\n    @Test\n    public void testStuff() {\n        assertEquals( \"a\", \"a\" );\n        assertFalse( false );\n        assertTrue( true );\n        assertNull( null );\n    }\n    public static void main(String[] args) {\n        System.out.println(PI);\n    }\n}\n        "
+    },
+    {
+      "description": "#1465 False Positve UnusedImports with javadoc @link",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport a.b.c.d.AgentState;\nimport a.b.c.d.OtherState;\n\npublic interface Foo {\n    /**\n     * Gets all active AgentHandles.\n     * <p/>\n     * An agent is active if it has not posted a {@link AgentStateChangeEvent} containing {@link AgentState#TERMINATED}.\n     *\n     * @return agent handles.\n     * @see OtherState#TERMINATED\n     */\n    Iterable<AgentHandle> getAgentHandles();\n}\n        "
+    },
+    {
+      "description": "#1547 False Positve UnusedImports with javadoc for identifiers with underscores",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.net.HttpURLConnection;\n\nimport foo.bar.Some_Thing;\nimport foo.bar.Under_Score_Exception;\nimport foo.bar.Fixed_Values;\n\n/**\n * {@link HttpURLConnection#HTTP_NOT_ACCEPTABLE}\n *\n * {@value Fixed_Values#FOO_BAR}\n *\n * @see Some_Thing#SOMETHING_ELSE\n */\npublic interface Interface {\n\n    /**\n     * @throws Under_Score_Exception\n     */\n    void doSomething();\n\n}\n        "
+    },
+    {
+      "description": "#348 False Positive UnusedImports with javadoc for public static inner classes of imports",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.swing.GroupLayout;\n\npublic class Foo {\n\n    /**\n     * {@link Bar#doSomething(GroupLayout.Group)}\n     */\n    void doSomething();\n}\n        "
+    },
+    {
+      "description": "#925 [java] UnusedImports false positive for static import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.ClassWithConstants.*;\n\n            public class ClassWithImport {\n\n                public static void main(String[] args) {\n                    System.out.println(\"List 1: \" + LIST1);\n                    System.out.println(\"List 2: \" + LIST2);\n                }\n            }\n            "
+    },
+    {
+      "description": "#1404 [java] UnusedImports false positive for static import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.ClassWithStringConstants.*;\n\n            public class ClassWithImport {\n\n                public static void main(String[] args) {\n                    if (CONST1.equals(\"a\")) {\n                        System.out.println(\"CONST1 is a\");\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#1209 [java] UnusedImports false positive for static import with package-private method usage",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.PackagePrivateUtils.*;\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.PublicUtils.*;\n\n            public class Imports {\n\n                int importtest() {\n                    int i = 0;\n                    i = f1(i);\n                    i = g1(i);\n                    i = f2(i);\n                    i = g2(i);\n                    i = f3(i);\n                    i = g3(i);\n                    return i;\n                }\n            }\n            "
+    },
+    {
+      "description": "#1625 [java] UnusedImports false positive for method parameter type in @see Javadoc",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\nimport java.io.File;\nimport java.io.FileInputStream;\n\npublic class Derived extends FileInputStream {\n    /** @see #FileInputStream(File) */\n    void main() {}\n}\n        "
+    },
+    {
+      "description": "#1720 False Positive in UnusedImports for Javadoc @see with array type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\nimport java.io.File;\nimport java.io.FileInputStream;\n\npublic class Derived extends FileInputStream {\n    /** @see #FileInputStream(File, File[]) */\n    void main() {}\n}\n        "
+    },
+    {
+      "description": "#2025 False Positive in UnusedImports for params when using @see with FQCN",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport spark.Response; // flaged, should not\n\n/**\n * @see foo.bar.MyController#startTransaction(Response)\n */\npublic class VendingV2PaymentRequest {\n}\n        "
+    },
+    {
+      "description": "#2025 False Positive in UnusedImports for params when using @link with FQCN",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport spark.Request; // flaged, should not\n\n/**\n * {@link foo.bar.MyController#startTransaction(Request)}\n */\npublic class VendingV2PaymentRequest {\n}\n        "
+    },
+    {
+      "description": "#2016 [java] UnusedImports: False positive if wildcard is used and only static methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\n// star import is important here for the test case!!\nimport java.util.*;\n\n/**\n * Note: In order for this test case to work, the class \"Issue2016\" must also be compiled and available\n * on the auxclasspath.\n */\npublic class Issue2016 {\n    public void testFunction() {\n        Objects.toString(null);\n    }\n}\n        "
+    },
+    {
+      "description": "resolve ambiguous static on-demand imports (#2277)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.lang.Integer.*;\nimport static java.lang.Long.valueOf;\nimport static java.lang.Long.*;\n\npublic class Foo {\n    public void foo() {\n        // the \"valueOf\" method is both in Integer.* and Long.*\n        // we need an explicit static import to specify one of them, e.g. Long.valueOf\n        valueOf(\"123\", 10);\n\n        // covered by Integer.*\n        int i = parseInt(\"123\");\n\n        // covered by Long.*\n        long l = parseLong(\"123\");\n    }\n}\n     "
+    },
+    {
+      "description": "[java] UnusedImports with static imports on subclasses #3132",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.HelloMore.*; // flagged as unused\n\npublic class Test {\n    public static void main(String... args) {\n        sayHello();\n    }\n}\n        "
+    },
+    {
+      "description": "Unused import with member inherited AND imported",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.HelloMore.sayHello;\n\npublic class Test extends HelloMore {\n    public static void main(String... args) {\n        // import is unused as the method is inherited here\n        sayHello();\n    }\n}\n        "
+    },
+    {
+      "description": "NPE with static import on interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport static javax.swing.WindowConstants.*; //warn\n\nclass NPEImport {}\n        "
+    },
+    {
+      "description": "duplicate single type imports",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\n            import java.io.File;\n            import java.util.*;\n            import java.io.File;\n            public class Foo {\n                File f;\n            }\n            "
+    },
+    {
+      "description": "duplicate wildcard imports",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            import java.io.*;\n            import java.io.*;\n            public class Foo {\n                File f;\n            }\n            "
+    },
+    {
+      "description": "single type import after wildcard import",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\n            import java.io.*;\n            import java.io.File;\n            public class Foo {\n                File f;\n            }\n            "
+    },
+    {
+      "description": "subpackage import, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            import java.util.logging.*;\n            public class Foo {\n                List c; Logger f;\n            }\n            "
+    },
+    {
+      "description": "674394, disambiguation import should be allowed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.awt.*;\n            import java.util.*;\n            import java.util.List; //False positive\n\n            class Foo{\n                Color color;\n                List list;\n                Set set;\n            }\n            "
+    },
+    {
+      "description": "674394, disambiguation import because of conflict with java.lang",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\n            import foo.*;\n            import foo.System;  //False positive\n\n            class Foo {\n                System system;  //No, I do not mean java.lang.System\n            }\n            "
+    },
+    {
+      "description": "#1306 False positive on duplicate when using static imports",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static org.junit.Assert.*;\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryImportTest.*;\n            import static org.junit.Assert.assertTrue;\n            // this import is needed for disambiguation - as DuplicateImportsTest\n            // defines assertTrue with the same signature, too.\n\n            public class DuplicateImports {\n                static {\n                    assertTrue(\"\", true); // the one from the disambiguation import\n                    assertSomething(\"\", true); // from UnnecessaryImportTest.*\n                    assertFalse(\"\", true); // from Assert.*\n                }\n            }\n            "
+    },
+    {
+      "description": "Static on-demand import is used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static org.junit.Assert.*;\n            import static org.junit.Assert.assertTrue;\n\n            public class DuplicateImports {\n                static {\n                    assertTrue(\"\", true);\n                    assertFalse(\"\", true);\n                }\n            }\n            "
+    },
+    {
+      "description": "[java]  similar imports static/nonstatic with method #2546",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            // imports NonStatic -- unused\n            import net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n            // imports foo -- used\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n\n            public class DuplicateImports {\n                static {\n                    foo();\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] #2546 -- similar imports static/nonstatic - static is used",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\n            // The imports are actually duplicates, either could be removed.\n            // We always elect to report the static import as it is longer and may import\n            // methods or fields\n\n            // imports static and non-static (=used)\n            import net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n            // imports static (=used)\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n\n            public class DuplicateImports {\n                static {\n                    Static b;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] #2546 -- similar imports static/nonstatic - static is unused",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            // imports static and non-static (=used)\n            import net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n            // imports static (=unused)\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n\n            public class DuplicateImports {\n                static {\n                    NonStatic b;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] #2546 -- similar imports static/nonstatic - both are used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            // imports NonStatic\n            import net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n            // imports Static\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n\n            public class DuplicateImports {\n                static {\n                    // both are used\n                    NonStatic a;\n                    Static b;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] #2546 -- similar imports static/nonstatic - both are used (method)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            // imports NonStatic\n            import net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n            // imports foo()\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.NonStaticContainer.*;\n\n            public class DuplicateImports {\n                static {\n                    // both are used\n                    NonStatic a;\n                    foo();\n                }\n            }\n            "
+    },
+    {
+      "description": "ImportFromSamePackage: simple failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package foo;\n            import foo.Bar;\n            public class Baz {\n                Bar bar;\n            }\n        "
+    },
+    {
+      "description": "ImportFromSamePackage: class in default package importing from sub package",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package foo;\n            import foo.buz.Bar;\n            public class Baz{\n                Bar b;\n            }\n            "
+    },
+    {
+      "description": "ImportFromSamePackage: importing all from same package",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package foo.bar;\n            import foo.bar.*;\n            public class Baz{}\n            "
+    },
+    {
+      "description": "import java.lang.String (used)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.String;\n            public class Foo {\n                String foo;\n            }\n            "
+    },
+    {
+      "description": "import java.lang.String (unused)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.String;\n            public class Foo { }\n            "
+    },
+    {
+      "description": "import java.lang type when it shadows a same package type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            // this package redefines a String type\n            package net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.javalang;\n\n            import java.lang.String;\n            public class Foo {\n                String foo;\n            }\n            "
+    },
+    {
+      "description": "import java.lang type when it shadows a same package type (unused)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            // this package redefines a String type\n            package net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.javalang;\n\n            import java.lang.String;\n            public class Foo { }\n            "
+    },
+    {
+      "description": "import java.lang.*",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.*;\n            public class Foo {}\n            "
+    },
+    {
+      "description": "import java.lang.ref/reflect/annotation/instrument/management",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.ref.*;\n            import java.lang.reflect.*;\n            import java.lang.annotation.*;\n            import java.lang.management.*;\n            public class Foo {\n                Annotation a; Method m; WeakReference r;\n                RuntimeMXBean x;\n            }\n            "
+    },
+    {
+      "description": "Static Java imports are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static java.lang.String.*;\n            public class Foo {\n                static {\n                    valueOf(1);\n                }\n            }\n            "
+    },
+    {
+      "description": "Importing java.lang.Thread.UncaughtExceptionHandler, unused",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.Thread.UncaughtExceptionHandler;\n            public class Foo {\n                Thread.UncaughtExceptionHandler unused;\n            }\n            "
+    },
+    {
+      "description": "Importing java.lang.Thread.UncaughtExceptionHandler",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.Thread.UncaughtExceptionHandler;\n            public class Foo {\n                UncaughtExceptionHandler used;\n            }\n            "
+    },
+    {
+      "description": "import java.lang.ProcessBuilder.Redirect: #1031 false DontImportJavaLang",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.ProcessBuilder.Redirect;\n\n            public class Foo {\n                Redirect r;\n            }\n            "
+    },
+    {
+      "description": "import java.lang.invoke.MethodHandles: #339 false DontImportJavaLang",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.lang.invoke.MethodHandles;\n\n            public class Foo {\n                static {\n                    MethodHandles.argumentsWithCombiner();// use it\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UnnecessaryImport false positive for on-demand imports #2655",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.package1;\n\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.package2.*; // SUPPRESS CHECKSTYLE needed for test case\n\npublic class U {\n    private void g() {\n        String k = C.V;\n    }\n}\n        "
+    },
+    {
+      "description": "static import of a type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.ConcFlow.Subscriber;\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.ConcFlow.Publisher;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.ConcFlow.Subscription;\n\n/**\n * {@link Flow.Subscription#request(long) request}\n * {@link Flow.Subscription}\n */\npublic class SubmissionPublisher<T> implements Publisher<T> {\n    static final class ConsumerSubscriber<T> implements Subscriber<T> {\n        Subscription subscription;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnnecessaryImport false positive for on-demand imports of non-static nested classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.package1;\n\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.package2.C.*; // SUPPRESS CHECKSTYLE needed for test case\n\npublic class U {\n    IC c;\n}\n        "
+    },
+    {
+      "description": "[java] UnnecessaryImport false positive for static on-demand imports of static nested classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.package1;\n\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.package2.C.*; // SUPPRESS CHECKSTYLE needed for test case\n\npublic class U {\n    ISC sc;\n}\n        "
+    },
+    {
+      "description": "Necessary imports for @snippet tags introduced with JEP 413 in Java 18",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.math.BigDecimal;\nimport java.util.ArrayList;\n\n/**\n * {@snippet :\n *    BigDecimal n = new BigDecimal(\"10.0\"); // @link substring=\"BigDecimal\" target=\"BigDecimal\"\n * }\n *\n * <p>Other example:\n * {@snippet :\n *    Sample.add(this); // @link target=\"ArrayList#add(Object)\"\n * }\n */\npublic class Sample {\n    // ...\n}\n        "
+    },
+    {
+      "description": "#4432 - Necessary import for interface method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package p;\n\n            import static p.Top2.foo;\n\n            class Klass implements Top {\n                static {\n                    foo(); // This is Top2.foo\n                }\n\n                static class Child {\n                    {\n                        foo(); // This is also Top2.foo\n                    }\n                }\n            }\n            interface Top {\n                static void foo() {}\n            }\n            interface Top2 {\n                static void foo() {}\n            }\n            "
+    },
+    {
+      "description": "#4557 - UnnecessaryImport FP with static imports of overloaded methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package p;\n\n            import static p.Static.assertThat;\n\n            class Klass {\n                static {\n                    assertThat(1); // This is assertThat(Integer)\n                }\n            }\n            class Static {\n\n                public static Object assertThat(Integer actual) {\n                    return null;\n                }\n\n                public static Object assertThat(Long actual) {\n                    return null;\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UnnecessaryImport false-positive on generic method call with on lambda #4816",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport;\n\nimport java.util.function.Function;\nimport java.util.stream.Collectors; // UnnecessaryImport:\tUnused import 'java.util.stream.Collectors'\nimport java.util.TreeSet; // UnnecessaryImport:\tUnused import 'java.util.TreeSet'\nimport java.util.Set;\n\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.item.Item; // UnnecessaryImport:\tUnused import 'net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.item.Item'\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.item.ItemProducer;\n\npublic class Example {\n    private <X> X run(Function<ItemProducer, X> f) { return null; }\n\n    public Set<String> sample() {\n        return run((producer) -> producer\n            .stream()\n            .map(Item::getValue)\n            .collect(Collectors.toCollection(TreeSet::new)));\n    }\n}\n"
+    },
+    {
+      "description": "FP with unknown symbols",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static something.Foo.*;\n\npublic class Example {\n    public Set<String> sample() {\n        foo();\n    }\n}\n"
+    },
+    {
+      "description": "FP with unknown symbols 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static something.Foo.foo;\n\n            public class Example {\n                public Set<String> sample() {\n                    foo(x);\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with unknown symbols 3",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\n            import static something.Foo.bar;\n            import static something.Bar.*; // this is marked as not unnecessary\n            import static something.Other.*; // this is marked as not unnecessary\n\n            public class Example {\n                public Set<String> sample() {\n                    foo(x);\n                }\n            }\n            "
+    },
+    {
+      "description": "imports used in markdown javadoc comment (since java 23, JEP 467)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Calendar;\nimport java.util.List;\nimport java.util.LinkedList;\nimport java.io.File;\n\npublic class Foo {\n    ///\n    /// [`List`][List]\n    /// [arrayList][ArrayList]\n    /// [LinkedList]\n    /// [Calendar#DATE]\n    /// [File#exists()]\n    public void test() {}\n}\n        "
+    },
+    {
+      "description": "module import declarations (since java 23 preview, JEP 476)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport module java.base;\npublic class Foo {\n    private File file; // imported via module import from java.base\n}\n"
+    },
+    {
+      "description": "module import declarations - unnecessary (since java 23 preview, JEP 476)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nimport module java.base; // unnecessary\npublic class Foo {\n}\n"
+    },
+    {
+      "description": "module import declarations - duplicate 1 (since java 23 preview, JEP 476)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport module java.base;\nimport module java.base; // plain duplicate\npublic class Foo {\n    private File file;\n}\n"
+    },
+    {
+      "description": "module import declarations - duplicate 2 (since java 23 preview, JEP 476)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nimport module java.base; // unnecessary since there is a single import for java.io.File\nimport java.io.File;\npublic class Foo {\n    private File file;\n}\n"
+    },
+    {
+      "description": "[java] UnusedImports: False positive if nested interface is referenced in javadoc #2001",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryimport.Issue2001;\n\n/**\n * Foobedoo {@link Issue2001.B}\n */\npublic class C {\n}\n"
+    },
+    {
+      "description": "#5315 [java] UnnecessaryImport false positive for on-demand imports",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package org.example;\n\n            import java.util.Map;\n            import java.util.Map.*; // this import is reported as unnecessary. However, class Entry is a nested class of Map and requires that import\n\n            import static java.util.stream.Collectors.toMap;\n\n            public class Main {\n                public static void main(String[] args) {\n                    Map<String, String> map = Map.of(\"key1\", \"value1\");\n                    var weirdCopy = map.entrySet().stream().collect(toMap(Entry::getKey, Entry::getValue));\n                    System.out.println(weirdCopy);\n                }\n            }\n            "
+    }
+  ]
+}

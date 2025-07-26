@@ -1,0 +1,28 @@
+{
+  "name": "QueueableWithoutFinalizer",
+  "language": "apex",
+  "description": "\nDetects when the Queueable interface is used but a Finalizer is not attached.\nIt is best practice to call the `System.attachFinalizer(Finalizer f)` method within the `execute` method of a class which implements the `Queueable` interface.\nWithout attaching a Finalizer, there is no way of designing error recovery actions should the Queueable action fail.\n        ",
+  "example": "// Incorrect code, does not attach a finalizer.\npublic class UserUpdater implements Queueable {\n    public List<User> usersToUpdate;\n\n    public UserUpdater(List<User> usersToUpdate) {\n        this.usersToUpdate = usersToUpdate;\n    }\n\n    public void execute(QueueableContext context) { // no Finalizer is attached\n        update usersToUpdate;\n    }\n}\n\n// Proper code, attaches a finalizer.\npublic class UserUpdater implements Queueable, Finalizer {\n    public List<User> usersToUpdate;\n\n    public UserUpdater(List<User> usersToUpdate) {\n        this.usersToUpdate = usersToUpdate;\n    }\n\n    public void execute(QueueableContext context) {\n        System.attachFinalizer(this);\n        update usersToUpdate;\n    }\n\n    public void execute(FinalizerContext ctx) {\n        if (ctx.getResult() == ParentJobResult.SUCCESS) {\n            // Handle success\n        } else {\n            // Handle failure\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 93,
+  "branches": 15,
+  "apis": 6,
+  "test": [
+    {
+      "description": "[apex] Queueable Without Finalizer - positive test case #5302",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class UserUpdater implements Queueable {\n    public List<User> usersToUpdate;\n\n    public UserUpdater(List<User> usersToUpdate) {\n        this.usersToUpdate = usersToUpdate;\n    }\n\n    public void execute(QueueableContext context) {\n        update usersToUpdate;\n    }\n}\n        "
+    },
+    {
+      "description": "[apex] Queueable Without Finalizer - negative test case #5302",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UserUpdater implements Queueable, Finalizer {\n    public List<User> usersToUpdate;\n\n    public UserUpdater(List<User> usersToUpdate) {\n        this.usersToUpdate = usersToUpdate;\n    }\n\n    public void execute(QueueableContext context) {\n        System.attachFinalizer(this);\n        update usersToUpdate;\n    }\n\n    public void execute(FinalizerContext ctx) {\n        if (ctx.getResult() == ParentJobResult.SUCCESS) {\n            // Handle success\n        } else {\n            // Handle failure\n        }\n    }\n}\n        "
+    }
+  ]
+}

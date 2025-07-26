@@ -1,0 +1,46 @@
+{
+  "name": "DoubleBraceInitialization",
+  "language": "java",
+  "description": "\n            Double brace initialisation is a pattern to initialise eg collections concisely. But it implicitly\n            generates a new .class file, and the object holds a strong reference to the enclosing object. For those\n            reasons, it is preferable to initialize the object normally, even though it's verbose.\n\n            This rule counts any anonymous class which only has a single initializer as an instance of double-brace\n            initialization. There is currently no way to find out whether a method called in the initializer is not\n            accessible from outside the anonymous class, and those legit cases should be suppressed for the time being.\n        ",
+  "example": "// this is double-brace initialization\nreturn new ArrayList<String>(){{\n    add(\"a\");\n    add(\"b\");\n    add(\"c\");\n}};\n\n// the better way is to not create an anonymous class:\nList<String> a = new ArrayList<>();\na.add(\"a\");\na.add(\"b\");\na.add(\"c\");\nreturn a;",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Pos in return",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.util.*;\nclass Foo {\n    List<String> bar() {\n        return new ArrayList<String>(){{addAll(\"a\",\"b\",\"c\");}};\n    }\n}\n        "
+    },
+    {
+      "description": "Neg, override",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nclass Foo {\n    List<String> bar() {\n        return new ArrayList<String>() {\n            {addAll(\"a\",\"b\",\"c\");}\n\n            void add(String x) {\n                throw new UnsupportedOperationException();\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Neg, new field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nclass Foo {\n    List<String> bar() {\n        return new ArrayList<String>(){\n\n            {addAll(\"a\",\"b\",\"c\");}\n\n            int field;\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Neg, enum constant",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nenum Foo implements List<String> {\n    A {\n        // neg in enum cons\n        {addAll(Arrays.asList(\"a\",\"b\",\"c\"));}\n    };\n}\n        "
+    },
+    {
+      "description": "Neg, regular class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    // neg in regular class\n    {addAll(\"a\",\"b\",\"c\");}\n}\n        "
+    }
+  ]
+}

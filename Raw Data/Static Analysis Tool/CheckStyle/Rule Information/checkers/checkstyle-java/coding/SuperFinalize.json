@@ -1,0 +1,32 @@
+{
+  "name": "SuperFinalize",
+  "language": "java",
+  "description": "<div>\n Checks that an overriding {@code finalize()} method invokes {@code super.finalize()}.\n Does not check native methods, as they have no possible java defined implementation.\n </div>\n\n <p>\n References:\n <a href=\"https://www.oracle.com/technical-resources/articles/javase/finalization.html\">\n How to Handle Java Finalization's Memory-Retention Issues</a>;\n <a href=\"https://javarevisited.blogspot.com/2012/03/finalize-method-in-java-tutorial.html\">\n 10 points on finalize method in Java</a>.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 9,
+  "branches": 0,
+  "apis": 1,
+  "test": [
+    {
+      "description": "Auto test from InputSuperFinalizeMethodReference.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        22
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.superfinalize;\npublic class InputSuperFinalizeMethodReference extends ClassWithFinalizer {\n    public interface CheckedConsumer<E extends Throwable> {\n        void get() throws E;\n    }\n    @Override\n    protected void finalize() throws Throwable {\n        CheckedConsumer<Throwable> r = super::finalize;\n        r.get();\n    }\n}\nclass ClassWithFinalizer {\n    protected void finalize() throws Throwable { \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuperFinalizeVariations.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        33,
+        40,
+        82
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.superfinalize;\npublic class InputSuperFinalizeVariations\n{\n    public InputSuperFinalizeVariations() throws Throwable\n    {\n        super.equals(new String());\n        super.finalize();\n    }\n    public void finalize() throws Throwable\n    {\n        super.finalize();\n    }\n    public void method() throws Throwable\n    {\n        super.finalize();\n    }\n    {\n        super.finalize();\n    }\n}\nclass NoSuperFinalize\n{\n    public void finalize() \n    {\n    }\n}\nclass InputInnerFinalize\n{\n    public void finalize() \n    {\n        class Inner\n        {\n            public void finalize() throws Throwable\n            {\n                super.finalize();\n            }\n        }\n    }\n}\nclass MyClassWithGenericSuperMethod1\n{\n    void someMethod(java.util.List<? super java.util.Map> l)\n    {\n    }\n}\nclass TestNative {\n    public native void finalize();\n}\nclass InputOneMore {\n    public void doSmt() throws Throwable {\n        {\n            {\n                super.finalize();\n            }\n        }\n    }\n}\nclass FinalizeWithArgs {\n    public void finalize(Object a) {};\n}\nclass OverrideClass extends FinalizeWithArgs {\n    @Override\n    protected void finalize() throws Throwable { \n        super.finalize(new Object());\n    }\n}"
+    }
+  ]
+}

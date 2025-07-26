@@ -1,0 +1,122 @@
+{
+  "name": "UnnecessaryNullCheckWithInstanceOf",
+  "language": "java",
+  "description": "<div>\n Checks for redundant null checks with the instanceof operator.\n </div>\n\n <p>\n The instanceof operator inherently returns false when the left operand is null,\n making explicit null checks redundant in boolean expressions with instanceof.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 87,
+  "branches": 9,
+  "apis": 24,
+  "test": [
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfAnonymousClass.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        12,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfAnonymousClass {\n    public void basicAnonymousClass(final Object obj) {\n        Runnable r = new Runnable() {\n            @Override\n            public void run() {\n                if (obj != null && obj instanceof String) {\n                    String str = (String) obj;\n                }\n            }\n        };\n    }\n    interface Validator {\n        boolean validate(Object obj);\n    }\n    public void anonymousClassImplementation() {\n        Validator v = new Validator() {\n            @Override\n            public boolean validate(Object obj) {\n                return obj != null && obj instanceof String;\n            }\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfLambda.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        16,
+        20,
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.util.Objects;\nimport java.util.function.Predicate;\npublic class InputUnnecessaryNullCheckWithInstanceOfLambda {\n    private final List<Object> objects = new ArrayList<>();\n    public void simpleLambdas() {\n        objects.forEach(obj -> {\n            if (obj != null && obj instanceof String) { \n                String str = (String) obj;\n            }\n        });\n        Predicate<Object> isString = obj -> obj != null && obj instanceof String;\n        objects.removeIf(obj -> obj != null && obj instanceof Integer);\n    }\n    public void validLambdas() {\n        objects.forEach(obj -> {\n            if (obj instanceof String) {\n                String str = (String) obj;\n            }\n        });\n        objects.stream()\n               .filter(Objects::nonNull)\n               .filter(obj -> obj instanceof String)\n               .forEach(obj -> {\n                   String str = (String) obj;\n               });\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfMultipleConditions.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        10,
+        14,
+        19,
+        24,
+        48
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfMultipleConditions {\n    public void multipleConditions(Object obj, String str) {\n        if (obj != null && obj instanceof String && !str.isEmpty()) {\n            String s = (String) obj;\n        }\n        if (!str.isEmpty() && obj != null && obj instanceof String) {\n            String s = (String) obj;\n        }\n        if (obj != null && obj instanceof String && str != null && !str.isEmpty()) {\n            String s = (String) obj;\n        }\n        if ( obj instanceof String && str != null && obj != null ) {\n            String s = (String) obj;\n        }\n    }\n    public void multipleInstanceOfChecks(Object obj1, Object obj2) {\n        if (obj1 != null && obj1 instanceof String && obj2 != null && obj2 instanceof Integer) {\n            String s = (String) obj1;\n            Integer i = (Integer) obj2;\n        }\n        if (obj1 != null && obj2 instanceof String) {\n            String s = (String) obj1;\n        }\n        if (null != obj2 && obj1 instanceof String) {\n            String s = (String) obj1;\n        }\n        if (obj1 != obj2 && obj1 instanceof String) {\n            String s = (String) obj1;\n        }\n        if (obj1 != null && (obj2 != null && obj1 instanceof String)) {\n           System.out.println(\"obj is a String and obj2 is not null\");\n        }\n        if ((obj1 != null || obj2 instanceof String) && obj2 != null) {\n           String s = (String) obj1;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfNestedIf.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        10,
+        16,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfNestedIf {\n    public void nestedIfStatements(Object obj) {\n        if (obj.hashCode() > 0) {\n            if (obj != null && obj instanceof String) { \n                String str = (String) obj;\n            }\n        }\n        if (true) {\n            if (obj.hashCode() > 0) {\n                if (obj != null && obj instanceof String) {\n                    String str = (String) obj;\n                }\n            }\n        }\n    }\n    public void nestedIfWithMultipleObjects(Object obj1, Object obj2) {\n        if (obj1 != null) {\n            if (obj2 != null && obj2 instanceof String) { \n                String str = (String) obj2;\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfOne.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        11,
+        14,
+        23,
+        51,
+        54,
+        57,
+        66,
+        71,
+        85
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\nimport java.util.Objects;\npublic class InputUnnecessaryNullCheckWithInstanceOfOne {\n    public void basicIfStatements(Object obj) {\n        if (obj != null && obj instanceof String) { \n            String str = (String) obj;\n        }\n        if (obj instanceof String && (obj != null)) { \n            String str = (String) obj;\n        }\n        if (obj != null) {\n            String str = (String) obj;\n        }\n        if (obj instanceof String) {\n            String str = (String) obj;\n        }\n        if ((null != obj) && ((obj instanceof String))) { \n            String str = (String) obj;\n        }\n    }\n    public void separateIfStatements(Object obj) {\n        if (obj != null) {\n            if (obj instanceof String) {\n                String str = (String) obj;\n            }\n        }\n    }\n    public void processData(Object data, String s, String b, String getData) {\n        if (getData() != null && getData().toString().equals(\"a\") && getData() instanceof String) {\n            String text = (String) getData();\n            System.out.println(\"Text length: \" + text.length());\n        }\n        if (getData() != null && data instanceof String) {\n            String text = (String) getData();\n            System.out.println(\"Text length: \" + text.length());\n        }\n        if (data != null && getData() instanceof String) {\n            String text = (String) getData();\n            System.out.println(\"Text length: \" + text.length());\n        }\n        if (s != null && s instanceof String && s.toString().equals(\"abc\")) { }\n        if (b != null  && b.toString().equals(\"abc\") && b instanceof String) { }\n        if (b != null  && s.toString().equals(\"abc\") && b instanceof String) { }\n        if (s != null && s instanceof String && b.toString().equals(\"abc\")) { }\n        if (getData != null  && getData().toString().equals(\"abc\") && getData instanceof String) { }\n        Boolean accepted = (Boolean) null;\n         if((accepted == null && null == null) || (accepted != null && accepted && !accepted)){}\n         boolean valid = (getData != null && Objects.equals(b, s) || b != null)\n                 && getData instanceof String;\n         while (getData!= null && getData instanceof String) {\n             return;\n         }\n         for (int i = 0; getData!= null && getData instanceof String; i++) {\n             return;\n         }\n         if (data != null && (!Objects.equals(s, b) || data instanceof String)) { \n            boolean result = b != null && (s != null || b instanceof String); \n            return;\n        }\n         do {\n             return;\n         } while (getData != null && getData instanceof String);\n    }\n    private Object getData() {\n        return \"Some string data\";\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfSwitch.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        33
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfSwitch {\n    public void basicSwitch(Object obj, int type) {\n        switch (type) {\n            case 1:\n                if (obj != null && obj instanceof String) {\n                    String str = (String) obj;\n                }\n                break;\n            case 2:\n                if (obj instanceof Integer) {\n                    Integer i = (Integer) obj;\n                }\n                break;\n            default:\n                break;\n        }\n    }\n    public void switchWithDefault(Object obj, int type) {\n        switch (type) {\n            case 1:\n                if (obj instanceof String) {\n                    String str = (String) obj;\n                }\n                break;\n            default:\n                if (obj != null && obj instanceof Integer) {\n                    Integer i = (Integer) obj;\n                }\n                break;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfTernary.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        9,
+        16,
+        21,
+        25,
+        27,
+        31,
+        35,
+        47
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfTernary {\n    public String basicTernary(Object obj) {\n        return obj != null && obj instanceof String ? ((String) obj) : \"\";\n    }\n    public String validTernary(Object obj) {\n        return obj instanceof String ? ((String) obj) : \"\";\n    }\n    public String ternaryWithVariable(Object obj) {\n        boolean check = obj != null && obj instanceof String;\n        return check ? ((String) obj) : \"\";\n    }\n    public String simpleTernaryWithExtra(Object obj, boolean flag) {\n        return flag && obj != null && obj instanceof String ? ((String) obj) : \"\";\n    }\n    public int evaluateObjects(Object a, Object b) {\n        return a != null && a instanceof Integer \n                ? (b != null && b instanceof Double ? 100 : -100) : 0;\n    }\n    public Object chainedTernary(Object obj) {\n        return obj != null && obj instanceof Integer ? (Integer) obj * 2\n                : obj != null && obj instanceof Double ? (Double) obj / 2\n                : \"Unknown\";\n    }\n    public boolean complexLogical(Object a, Object b, boolean flag) {\n        return flag && a != null && a instanceof String && (b != null && b instanceof Number);\n    }\n    public int lambdaStyleCheck() {\n        java.util.function.Function<Object, Integer> func = (obj) ->\n                obj != null && obj instanceof String ? ((String) obj).length() : -1;\n        return func.apply(\"Hello\");\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfTryCatch.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        10,
+        21,
+        31
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfTryCatch {\n    public void basicTryCatch(Object obj) {\n        try {\n            if (obj != null && obj instanceof String) { \n                String str = (String) obj;\n            }\n        } catch (Exception e) {}\n    }\n    public void catchBlockCheck(Object obj) {\n        try {\n            String str = (String) obj;\n        }\n        catch (Exception e) {\n            if (e != null && e instanceof RuntimeException) {\n                throw (RuntimeException) e;\n            }\n        }\n    }\n    public void finallyBlockCheck(Object obj) {\n        try {\n            String str = (String) obj;\n        } finally {\n            if (obj != null && obj instanceof AutoCloseable) {\n                try {\n                    ((AutoCloseable) obj).close();\n                } catch (Exception ignored) {\n                }\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfTwo.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfTwo {\n    public void basicIfStatements(Object obj) {\n        if (obj != null && obj instanceof String s) { \n            String str = (String) obj;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputUnnecessaryNullCheckWithInstanceOfVariableAssignment.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        9,
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.unnecessarynullcheckwithinstanceof;\npublic class InputUnnecessaryNullCheckWithInstanceOfVariableAssignment {\n    public void variableAssignments(Object obj) {\n        boolean isValid = obj != null && obj instanceof String;\n        if (isValid) {\n            String str = (String) obj;\n        }\n        boolean isString = obj instanceof String;\n        boolean isValidMultiLine = obj != null\n                                && obj instanceof String;\n    }\n    public void multipleAssignments(Object obj) {\n        boolean notNull = obj == null;\n        boolean isString = obj instanceof String;\n        if (!notNull && isString) {\n            String str = (String) obj;\n        }\n    }\n}"
+    }
+  ]
+}

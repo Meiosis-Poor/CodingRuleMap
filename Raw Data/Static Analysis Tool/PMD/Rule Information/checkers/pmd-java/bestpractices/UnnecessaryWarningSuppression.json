@@ -1,0 +1,168 @@
+{
+  "name": "UnnecessaryWarningSuppression",
+  "language": "java",
+  "description": "\n            This rule reports suppression comments and annotations that did not suppress any PMD violation.\n            Note that violations of this rule cannot be suppressed.\n\n            Please note:\n            - The rule will report those suppressions comments/annotations that did not suppress a violation\n            _during the current run_. That means you cannot run this rule separately from other rules, it must\n            always be run with all the rules that could produce a warning. This is most likely not a problem, as\n            you can just include this rule in your regular ruleset.\n            - The rule for now only reports annotations specific to PMD, like `@SuppressWarnings(\"PMD\")`. For instance\n            `@SuppressWarnings(\"all\")` is never reported as we cannot know if another tool is producing a\n            warning there that must be suppressed. In the future we might be able to check for other common ones\n            like `@SuppressWarnings(\"unchecked\")` or `\"fallthrough\"`.\n        ",
+  "example": "public class Something {\n                // Unless some rule triggered on the following line, this rule will report the comment:\n                private void foo() {} // NOPMD\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "comment suppression (baseline)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\n            public class Foo {\n                static {\n\n                    int i = 0;\n                    i++;\n                }\n            }\n            "
+    },
+    {
+      "description": "comment suppression (violation is suppressed)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                static {\n\n                    int i = 0;\n                    i++; // NOPMD\n                }\n            }\n            "
+    },
+    {
+      "description": "comment suppression (comment is unused)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\n            public class Foo {\n                static {\n\n                    int i = 0; // NOPMD\n                    i++;\n                }\n            }\n            "
+    },
+    {
+      "description": "comment suppression (several comments)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            public class Foo {\n                static {\n\n                    int i = 0; // NOPMD\n                    i++; // NOPMD\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (all)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                @SuppressWarnings(\"all\")\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings(\"all\")\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (PMD)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings(\"PMD\")\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings(\"PMD\")\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (specific rule)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings(\"PMD.FakeRuleThatReportsIncrements\")\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings(\"PMD.FakeRuleThatReportsIncrements\")\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (multiple parts, specific rule)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        7
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings({\"PMD.FakeRuleThatReportsIncrements\", \"PMD\"})\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings({\"PMD.FakeRuleThatReportsIncrements\", \"PMD\"})\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (multiple parts, specific rule, inverted)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        7
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings({\"PMD\", \"PMD.FakeRuleThatReportsIncrements\"})\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings({\"PMD\", \"PMD.FakeRuleThatReportsIncrements\"})\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (multiple parts, specific rule, all)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        7
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings({\"all\", \"PMD.FakeRuleThatReportsIncrements\"})\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings({\"all\", \"PMD.FakeRuleThatReportsIncrements\"})\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (multiple parts, specific rule, all, inverted)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        7
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings({\"PMD.FakeRuleThatReportsIncrements\", \"all\"})\n                static void foo() {\n                    int i = 0;\n                    i++;\n                }\n                @SuppressWarnings({\"PMD.FakeRuleThatReportsIncrements\", \"all\"})\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "annotation suppression (multiple rules)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        8
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings({\"PMD.FakeRuleThatReportsIncrements\", \"PMD\"})\n                static void foo() {\n                    int i = 0;\n                    i++;\n                    i--;\n                }\n                @SuppressWarnings({\"PMD.FakeRuleThatReportsIncrements\", \"all\"})\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "unrelated annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                @Test\n                static void foo() {\n                    int i = 0;\n                }\n                @Override\n                static void bar() {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "Suppresswarnings unused on methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "\n            public class Foo {\n                @SuppressWarnings(\"unused\") // no violation: parameter i is unused - this suppression is not unnecessary\n                public static void foo1(int i) {\n                }\n\n                @SuppressWarnings(\"unused\") // no violation: while parameter i is used now, the suppression could mean the entire public method\n                public static void foo2(int i) {\n                    i = 2;\n                    foo3(i);\n                }\n\n                @SuppressWarnings(\"unused\") // --> violation: parameter i is used and method is used as well (in #foo2)\n                private static void foo3(int i) {\n                    i = 2;\n                }\n\n                @SuppressWarnings(\"unused\") // no violation: both parameter and method are unused - suppression is necessary\n                private static void foo4(int i) {\n                }\n\n                @SuppressWarnings(\"unused\") // no violation: parameter is used but method is unused - suppression is necessary\n                private static void foo5(int i) {\n                    i = 2;\n                }\n            }\n            "
+    },
+    {
+      "description": "Suppresswarnings unused on field",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public class Foo {\n\n                private static class TestSockJsService extends AbstractSockJsService {\n\n                    private String sessionId;\n\n                    @SuppressWarnings(\"unused\") // --> violation - this field is actually used in #handleTransportRequest\n                    private String transport;\n\n                    private WebSocketHandler handler;\n\n                    public TestSockJsService(TaskScheduler scheduler) {\n                        super(scheduler);\n                    }\n\n                    @Override\n                    protected void handleRawWebSocketRequest(ServerHttpRequest req, ServerHttpResponse res,\n                                                             WebSocketHandler handler) throws IOException {\n                        this.handler = handler;\n                    }\n\n                    @Override\n                    protected void handleTransportRequest(ServerHttpRequest req, ServerHttpResponse res, WebSocketHandler handler,\n                                                          String sessionId, String transport) throws SockJsException {\n                        this.sessionId = sessionId;\n                        this.transport = transport;\n                        this.handler = handler;\n                    }\n\n                    public String getTransport() {\n                        return transport;\n                    }\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Suppresswarnings unused on field - 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\npublic class Foo {\n    @SuppressWarnings(\"unused\") // no violation: this is really unused, it is only set\n    private String field1;\n\n    public void setField1(String field1) {\n        this.field1 = field1;\n    }\n\n    @SuppressWarnings(\"unused\") // -> violation: the field is used in the getter\n    private String field2;\n\n    public void setField2(String field2) {\n        this.field2 = field2;\n    }\n    public String getField2() {\n        return field2;\n    }\n}\n        "
+    },
+    {
+      "description": "Suppresswarnings unused on fields - 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @SuppressWarnings(\"unused\")\n    private String s1, s2, s3;\n\n    @SuppressWarnings(\"unused\")\n    private String s4 = \"bar\";\n}\n        "
+    },
+    {
+      "description": "Suppresswarnings unused on type param",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "\n            public class OuterClass {\n                @SuppressWarnings(\"unused\") // no violation: type parameter \"T\" is not used - necessary suppression\n                public static class Foo1<T> {\n                }\n\n                @SuppressWarnings(\"unused\") // no violation: type parameter \"T\" is used, class Foo2 is public and might or might not be used\n                public static class Foo2<T> {\n                    class Bar extends Foo2<T> {\n                    }\n                }\n\n                @SuppressWarnings(\"unused\") // -> violation: type parameter \"T\" is used, class Foo3 is used - nothing is unused -> suppression is unnecessary\n                private static class Foo3<T> {\n                    class Bar extends Foo3<T> {\n                    }\n                }\n\n                public static void main(String[] args) {\n                    Foo3<String> f = new Foo3<>();\n                }\n            }\n            "
+    },
+    {
+      "description": "Suppresswarnings unused when a method is unused",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            @SuppressWarnings(\"unused\")\n            public class Foo {\n                private void foo() {\n                }\n            }\n\n            @SuppressWarnings(\"unused\") // method is used\n            class Bar {\n                private void foo() {\n                }\n\n                {\n                    foo();\n                }\n\n                // we don't know if this method is used or not\n                @SuppressWarnings(\"unused\")\n                static void foo(int i) {\n                    i = 2;\n                }\n            }\n            "
+    },
+    {
+      "description": "Do not report on entire inner class as unused",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class OuterClass {\n    @SuppressWarnings(\"unused\") // this class is public, we don't know whether it is used or not\n    public static class InnerClass {}\n\n    @SuppressWarnings(\"unused\") // valid suppression - this class is private and not used\n    private static class UnusedInnerClass {}\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "name": "SizeofContainer",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-sizeof-container",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 43,
+  "branches": 1,
+  "apis": 40,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        67,
+        69,
+        71,
+        73,
+        75
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-sizeof-container %t -- -- -target x86_64-unknown-unknown\n\nnamespace std {\n\ntypedef unsigned int size_t;\n\ntemplate <typename T>\nstruct basic_string {\n  size_t size() const;\n};\n\ntemplate <typename T>\nbasic_string<T> operator+(const basic_string<T> &, const T *);\n\ntypedef basic_string<char> string;\n\ntemplate <typename T>\nstruct vector {\n  size_t size() const;\n};\n\n// std::bitset<> is not a container. sizeof() is reasonable for it.\ntemplate <size_t N>\nstruct bitset {\n  size_t size() const;\n};\n\n// std::array<> is, well, an array. sizeof() is reasonable for it.\ntemplate <typename T, size_t N>\nstruct array {\n  size_t size() const;\n};\n\nclass fake_container1 {\n  size_t size() const; // non-public\n};\n\nstruct fake_container2 {\n  size_t size(); // non-const\n};\n\n}\n\nusing std::size_t;\n\n#define ARRAYSIZE(a) \\\n  ((sizeof(a) / sizeof(*(a))) / static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))\n\n#define ARRAYSIZE2(a) \\\n  (((sizeof(a)) / (sizeof(*(a)))) / static_cast<size_t>(!((sizeof(a)) % (sizeof(*(a))))))\n\nstruct string {\n  std::size_t size() const;\n};\n\ntemplate<typename T>\nvoid g(T t) {\n  (void)sizeof(t);\n}\n\nvoid f() {\n  string s1;\n  std::string s2;\n  std::vector<int> v;\n\n  int a = 42 + sizeof(s1);\n// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: sizeof() doesn't return the size of the container; did you mean .size()? [bugprone-sizeof-container]\n  a = 123 * sizeof(s2);\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: sizeof() doesn't return the size\n  a = 45 + sizeof(s2 + \"asdf\");\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: sizeof() doesn't return the size\n  a = sizeof(v);\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: sizeof() doesn't return the size\n  a = sizeof(std::vector<int>{});\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: sizeof() doesn't return the size\n\n  a = sizeof(a);\n  a = sizeof(int);\n  a = sizeof(std::string);\n  a = sizeof(std::vector<int>);\n\n  g(s1);\n  g(s2);\n  g(v);\n\n  std::fake_container1 fake1;\n  std::fake_container2 fake2;\n  std::bitset<7> std_bitset;\n  std::array<int, 3> std_array;\n\n  a = sizeof(fake1);\n  a = sizeof(fake2);\n  a = sizeof(std_bitset);\n  a = sizeof(std_array);\n\n\n  std::string arr[3];\n  a = ARRAYSIZE(arr);\n  a = ARRAYSIZE2(arr);\n  a = sizeof(arr) / sizeof(arr[0]);\n\n  (void)a;\n}"
+    }
+  ]
+}

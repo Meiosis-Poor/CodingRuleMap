@@ -1,0 +1,28 @@
+{
+  "name": "AvoidLogicInTrigger",
+  "language": "apex",
+  "description": "\nAs triggers do not allow methods like regular classes they are less flexible and suited to apply good encapsulation style.\nTherefore delegate the triggers work to a regular class (often called Trigger handler class).\n\nSee more here: <https://developer.salesforce.com/page/Trigger_Frameworks_and_Apex_Trigger_Best_Practices>\n        ",
+  "example": "trigger Accounts on Account (before insert, before update, before delete, after insert, after update, after delete, after undelete) {\n    for(Account acc : Trigger.new) {\n        if(Trigger.isInsert) {\n            // ...\n        }\n\n        // ...\n\n        if(Trigger.isDelete) {\n            // ...\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 34,
+  "branches": 3,
+  "apis": 4,
+  "test": [
+    {
+      "description": "Trigger without logic",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ntrigger Accounts on Account (before insert, after insert, before update, after update, before delete, after delete) {\n    // We recently switched to the awesome fflib Apex Commons library\n    fflib_SObjectDomain.triggerHandler(Accounts.class);\n}\n        "
+    },
+    {
+      "description": "Trigger with logic",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\ntrigger AccountTrigger on Account (after insert, after update) {\n    for(Account a : Trigger.new){\n        if(Trigger.isInsert){\n\n        }\n\n        if(Trigger.isDelete){\n\n        }\n    }\n\n    for(Account a : Trigger.new){\n        if(Trigger.isInsert){\n\n        }\n\n        if(Trigger.isDelete){\n\n        }\n    }\n}\n        "
+    }
+  ]
+}

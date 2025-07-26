@@ -1,0 +1,277 @@
+{
+  "name": "IllegalType",
+  "language": "java",
+  "description": "<div>\n Checks that particular classes or interfaces are never used.\n </div>\n\n <p>\n Rationale: Helps reduce coupling on concrete classes.\n </p>\n\n <p>\n For additional restriction of type usage see also:\n <a href=\"https://checkstyle.org/checks/coding/illegalinstantiation.html#IllegalInstantiation\">\n IllegalInstantiation</a>,\n <a href=\"https://checkstyle.org/checks/imports/illegalimport.html#IllegalImport\">\n IllegalImport</a>\n </p>\n\n <p>\n It is possible to set illegal class names via short or\n <a href=\"https://docs.oracle.com/javase/specs/jls/se11/html/jls-6.html#jls-6.7\">canonical</a>\n name. Specifying illegal type invokes analyzing imports and Check puts violations at\n corresponding declarations (of variables, methods or parameters).\n This helps to avoid ambiguous cases, e.g.: {@code java.awt.List} was set as\n illegal class name, then, code like:\n </p>\n <pre>\n import java.util.List;\n ...\n List list; //No violation here\n </pre>\n\n <p>\n will be ok.\n </p>\n\n <p>\n In most cases it's justified to put following classes to <b>illegalClassNames</b>:\n </p>\n <ul>\n <li>GregorianCalendar</li>\n <li>Hashtable</li>\n <li>ArrayList</li>\n <li>LinkedList</li>\n <li>Vector</li>\n </ul>\n\n <p>\n as methods that are differ from interface methods are rarely used, so in most cases user will\n benefit from checking for them.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 305,
+  "branches": 53,
+  "apis": 69,
+  "test": [
+    {
+      "description": "Auto test from InputIllegalTypeAbstractClassNameFormat.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\npublic class InputIllegalTypeAbstractClassNameFormat {\n}\nclass Test extends Gitter { \n}\nclass Test1 extends Github {\n}\nclass Gitter{}\nclass Github{}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeArrays.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        18,
+        20,
+        22,
+        25,
+        31,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\npublic class InputIllegalTypeArrays {\n    public Boolean[] array; \n    public Boolean[][] matrix; \n    public Boolean[] getArray() { \n        Boolean[] value = array != null ? array : new Boolean[0];\n        return value;\n    }\n    public Boolean[][] getMatrix() {\n        Boolean[][] value = matrix != null ? matrix : new Boolean[0][0];\n        return value;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeEmptyStringMemberModifiers.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        34,
+        34,
+        60,
+        61
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeEmptyStringMemberModifiers implements InputIllegalTypeSuper {\n    private AbstractClass a = null;\n    private NotAnAbstractClass b = null; \n    private com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.AbstractClass\n        c = null; \n    private java.util.List d = null;\n    private abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet table1() { return null; }\n    private TreeSet table2() { return null; } \n    static class SomeStaticClass {\n    }\n    InputIllegalTypeEmptyStringMemberModifiers(Integer i) {}\n    private void table2(Integer i) {}\n    private void getInitialContext(java.util.TreeSet v) {}\n    @Override\n    public void foo(HashMap<?, ?> buffer) {} \n    @Override\n    public HashMap<?, ?> foo() { \n        return null;\n    }\n    @Override\n    public HashMap<?, ?> bar() { \n        return null;\n    }\n}\ninterface InputIllegalTypeSuperEmptyStringMemberModifiers {\n    void foo(HashMap<?, ?> buffer); \n    HashMap<?, ?> foo(); \n    Object bar();\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeNewArrayStructure.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport javax.xml.crypto.dsig.keyinfo.KeyValue;\npublic class InputIllegalTypeNewArrayStructure {\n    void method(int x) {\n        int numberOfTests = x + 9;\n        if (x > 7) {\n            HashMap<String, KeyValue>[] kvMaps = new HashMap[numberOfTests];\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeRecordsAndCompactCtors.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        27,
+        32,
+        34,
+        38,
+        43,
+        45,
+        54
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.LinkedHashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeRecordsAndCompactCtors {\n    record MyTestRecord\n            (LinkedHashMap<Integer, Integer> linkedHashMap) {\n    }\n    record MyTestRecord2(String string) implements Cloneable {\n        static LinkedHashMap<Integer, Integer> lhm\n                = new LinkedHashMap<>();\n        public MyTestRecord2 {\n            TreeSet<String> treeSet = new TreeSet<>();\n        }\n    }\n    record MyTestRecord3(String str, TreeSet treeSet) {\n        void foo(HashMap<Integer, Integer> hashMap) {\n        }\n    }\n    record MyTestRecord4(int x, int y) {\n        public MyTestRecord4(TreeSet treeSet) { \n            this(4, 5);\n            LinkedHashMap<Integer, Integer> linkedHashMap\n                    = new LinkedHashMap<>();\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeRecordsWithMemberModifiersDefault.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        44,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.*;\npublic class InputIllegalTypeRecordsWithMemberModifiersDefault\n{\n    public record IdentifiersPair(\n        UUID productId,\n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent {\n        private final UUID productId;\n        private final String identifier;\n        public IdentifiersPairEquivalent(UUID productId, String identifier) {\n            this.productId = productId;\n            this.identifier = identifier;\n        }\n    }\n    public record IdentifiersPair2(\n        HashSet x, \n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent2 {\n        private final HashSet x; \n        private final String identifier;\n        public IdentifiersPairEquivalent2(Set x, String identifier) {\n            this.x = (HashSet) x;\n            this.identifier = identifier;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeRecordsWithMemberModifiersFinal.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        44,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.*;\npublic class InputIllegalTypeRecordsWithMemberModifiersFinal\n{\n    public record IdentifiersPair(\n        UUID productId,\n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent {\n        private final UUID productId;\n        private final String identifier;\n        public IdentifiersPairEquivalent(UUID productId, String identifier) {\n            this.productId = productId;\n            this.identifier = identifier;\n        }\n    }\n    public record IdentifiersPair2(\n        HashSet x, \n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent2 {\n        private final HashSet x; \n        private final String identifier;\n        public IdentifiersPairEquivalent2(Set x, String identifier) {\n            this.x = (HashSet) x;\n            this.identifier = identifier;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeRecordsWithMemberModifiersPrivateFinal.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        44,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.*;\npublic class InputIllegalTypeRecordsWithMemberModifiersPrivateFinal\n{\n    public record IdentifiersPair(\n        UUID productId,\n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent {\n        private final UUID productId;\n        private final String identifier;\n        public IdentifiersPairEquivalent(UUID productId, String identifier) {\n            this.productId = productId;\n            this.identifier = identifier;\n        }\n    }\n    public record IdentifiersPair2(\n        HashSet x, \n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent2 {\n        private final HashSet x; \n        private final String identifier;\n        public IdentifiersPairEquivalent2(Set x, String identifier) {\n            this.x = (HashSet) x;\n            this.identifier = identifier;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeRecordsWithMemberModifiersPublicProtectedStatic.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.*;\npublic class InputIllegalTypeRecordsWithMemberModifiersPublicProtectedStatic\n{\n    public record IdentifiersPair(\n        UUID productId,\n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent {\n        private final UUID productId;\n        private final String identifier;\n        public IdentifiersPairEquivalent(UUID productId, String identifier) {\n            this.productId = productId;\n            this.identifier = identifier;\n        }\n    }\n    public record IdentifiersPair2(\n        HashSet x, \n        String identifier\n    )\n    {\n    }\n    public class IdentifiersPairEquivalent2 {\n        private final HashSet x;\n        private final String identifier;\n        public IdentifiersPairEquivalent2(Set x, String identifier) {\n            this.x = (HashSet) x;\n            this.identifier = identifier;\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeSameFileNameFalsePositive.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        27,
+        43
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.awt.List;\nimport java.util.ArrayList;\nimport java.util.Date;\nimport com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalTypeGregCal.SubCal;\npublic class InputIllegalTypeSameFileNameFalsePositive\n{\n    InputIllegalTypeGregCal cal = AnObject.getInstance();\n    Date date = null;\n    SubCal subCalendar = null; \n    private static class AnObject extends InputIllegalTypeGregCal {\n        public static InputIllegalTypeGregCal getInstance()\n        {\n            return null;\n        }\n    }\n    private void foo() {\n        List l;\n        java.io.File file = null;\n    }\n    java.util.List<Integer> list = new ArrayList<>();\n    private ArrayList<String> values;\n    private Boolean d;\n    private Boolean[] d1;\n    private Boolean[][] d2;\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestAbstractClassNamesTrue.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        27,
+        45,
+        48,
+        53
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\npublic class InputIllegalTypeTestAbstractClassNamesTrue {\n    abstract class AbstractClass {\n        abstract String getClassInfo();\n        abstract boolean isPerfectClass();\n    }\n    class MyNonAbstractClass extends AbstractClass {\n        boolean perfect = true;\n        private MyNonAbstractClass() {}\n        @Override\n        String getClassInfo() {\n            return \"This is my non abstract class.\";\n        }\n        @Override\n        boolean isPerfectClass() {\n            return perfect;\n        }\n    }\n    AbstractClass a = new MyNonAbstractClass();\n    public String getInnerClassInfo(AbstractClass clazz) {\n        return clazz.getClassInfo();\n    }\n    public AbstractClass newInnerClassInstance() {\n        return new MyNonAbstractClass();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestClearDataBetweenFiles.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        21,
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeTestClearDataBetweenFiles implements InputIllegalTypeSuper {\n    private AbstractClass a = null;\n    private NotAnAbstractClass b = null; \n    private com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.AbstractClass\n        c = null; \n    private java.util.List d = null;\n    public abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet table1() { return null; }\n    private TreeSet table2() { return null; }\n    static class SomeStaticClass {\n    }\n    InputIllegalTypeTestClearDataBetweenFiles(Integer i) {}\n    private void table2(Integer i) {}\n    private void getInitialContext(java.util.TreeSet v) {}\n    @Override\n    public void foo(HashMap<?, ?> buffer) {} \n    @Override\n    public HashMap<?, ?> foo() { \n        return null;\n    }\n    @Override\n    public HashMap<?, ?> bar() { \n        return null;\n    }\n}\ninterface InputIllegalTypeSuperTestClearDataBetweenFiles {\n    void foo(HashMap<?, ?> buffer);\n    HashMap<?, ?> foo();\n    Object bar();\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestDefaults.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        34,
+        36,
+        61,
+        62
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeTestDefaults implements InputIllegalTypeSuper {\n    private AbstractClass a = null;\n    private NotAnAbstractClass b = null; \n    private com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.AbstractClass\n        c = null; \n    private java.util.List d = null;\n    private abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet table1() { return null; }\n    private TreeSet table2() { return null; }\n    static class SomeStaticClass {\n    }\n    InputIllegalTypeTestDefaults(Integer i) {}\n    private void table2(Integer i) {}\n    private void getInitialContext(java.util.TreeSet v) {}\n    @Override\n    public void foo(HashMap<?, ?> buffer) {} \n    @Override\n    public HashMap<?, ?> foo() { \n        return null;\n    }\n    @Override\n    public HashMap<?, ?> bar() { \n        return null;\n    }\n}\ninterface InputIllegalTypeSuperTestDefaults {\n    void foo(HashMap<?, ?> buffer); \n    HashMap<?, ?> foo(); \n    Object bar();\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestEnhancedInstanceof.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        29,
+        32,
+        37,
+        43,
+        45
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.LinkedHashMap;\nimport java.util.Map;\nimport java.util.TreeSet;\nimport java.util.AbstractMap;\npublic class InputIllegalTypeTestEnhancedInstanceof {\n    public void InputIllegalTypeEnhancedInstanceof(Map<Integer, Integer> lmm) {\n        LinkedHashMap<Integer, Integer> lhm = new LinkedHashMap<Integer, Integer>();\n        if (lmm instanceof LinkedHashMap<Integer, Integer> linkedHashMap) {\n            System.out.println(linkedHashMap);\n        } else if (lmm instanceof AbstractMap<Integer, Integer> map) {\n            System.out.println(map);\n        } else if (lmm instanceof HashMap<Integer, Integer> hashMap) {\n            System.out.println(hashMap);\n        }\n    }\n    public void InputIllegalTypeEnhancedInstanceof(TreeSet treeSet) {\n        Object set = new Object();\n        if (set instanceof TreeSet t) { \n            System.out.println(t);\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestExtendsImplements.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        23,
+        24,
+        29,
+        31,
+        33,
+        34,
+        36,
+        38,
+        39
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.io.Serializable;\nimport java.util.*;\npublic abstract class InputIllegalTypeTestExtendsImplements {\n    public abstract class Bar\n        extends Hashtable \n            <Boolean,\n                Bar> {\n    }\n    public abstract class Foo<\n            T extends Boolean> \n        implements Cloneable,\n            Serializable, \n            Comparator,\n            Comparable<Foo< \n                ? extends Boolean>> { \n    }\n    public interface Interface<Foo> \n        extends Comparable<Boolean>, \n            Serializable { \n    }\n    abstract class NonPublicBar\n            extends Hashtable\n            <Boolean,\n                Bar> {\n    }\n    abstract class NonPublicFoo<\n            T extends Boolean>\n        implements Cloneable,\n            Serializable,\n            Comparator,\n            Comparable<Foo<\n                ? extends Boolean>> {\n    }\n    interface NonPublicInterface<Foo>\n        extends Comparable<Boolean>,\n            Serializable {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestFormat.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        34,
+        34,
+        60,
+        61
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeTestFormat implements InputIllegalTypeSuper {\n    private AbstractClass a = null;\n    private NotAnAbstractClass b = null; \n    private com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.AbstractClass\n        c = null; \n    private java.util.List d = null;\n    private abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet table1() { return null; }\n    private TreeSet table2() { return null; } \n    static class SomeStaticClass {\n    }\n    InputIllegalTypeTestFormat(Integer i) {}\n    private void table2(Integer i) {}\n    private void getInitialContext(java.util.TreeSet v) {}\n    @Override\n    public void foo(HashMap<?, ?> buffer) {} \n    @Override\n    public HashMap<?, ?> foo() { \n        return null;\n    }\n    @Override\n    public HashMap<?, ?> bar() { \n        return null;\n    }\n}\ninterface InputIllegalTypeSuperTestFormat {\n    void foo(HashMap<?, ?> buffer); \n    HashMap<?, ?> foo(); \n    Object bar();\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestGenerics.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        27,
+        34,
+        47,
+        72,
+        86
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.io.Serializable;\nimport java.util.Map;\nimport java.util.Set;\nimport java.util.TreeSet;\nimport java.util.function.Consumer;\npublic abstract class InputIllegalTypeTestGenerics {\n    private Set<Boolean> privateSet;\n    private java.util.List<Map<Boolean, Foo>> privateList;\n    public Set<Boolean> set; \n    public java.util.List<Map<Boolean, Foo>> list;\n    private void methodCall() {\n        Bounded.<Boolean>foo(); \n        final Consumer<Foo> consumer = Foo<Boolean>::foo;\n    }\n    public <T extends Boolean, U extends Serializable> void typeParameter(T a) {}\n    public void fullName(java.util.ArrayList<? super Boolean> a) {}\n    public abstract Set<Boolean> shortName(Set<? super Set<Boolean>> a);\n    public Set<? extends Foo<Boolean>> typeArgument() {\n        return new TreeSet<Foo<Boolean>>();\n    }\n    public class MyClass<Foo extends Boolean> {}\n}\nclass Bounded {\n    public boolean match = new TreeSet<Integer>().stream()\n            .allMatch(new TreeSet<>()::add);\n    public static <Boolean> void foo() {} \n}\nclass Foo<T extends Boolean & Serializable> {\n    void foo() {}\n}\n@interface Annotation {\n    Class<? extends Boolean>[] nonPublic();\n    public Class<? extends Boolean>[] value(); \n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestIgnoreMethodNames.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        22,
+        27,
+        36,
+        46,
+        63,
+        64
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeTestIgnoreMethodNames implements InputIllegalTypeSuper {\n    private AbstractClass a = null; \n    private NotAnAbstractClass b = null; \n    private com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.AbstractClass\n            c = null;\n    private java.util.List d = null;\n    private abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet table1() { return null; }\n    private TreeSet table2() { return null; }\n    static class SomeStaticClass {\n    }\n    InputIllegalTypeTestIgnoreMethodNames(Integer i) {}\n    private void table2(Integer i) {}\n    private void getInitialContext(java.util.TreeSet v) {}\n    @Override\n    public void foo(HashMap<?, ?> buffer) {} \n    @Override\n    public HashMap<?, ?> foo() { \n        return null;\n    }\n    @Override\n    public HashMap<?, ?> bar() { \n        return null;\n    }\n}\ninterface InputIllegalTypeSuperTestIgnoreMethodNames {\n    void foo(HashMap<?, ?> buffer); \n    HashMap<?, ?> foo(); \n    Object bar();\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestLegalAbstractClassNames.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        27,
+        36,
+        36,
+        62,
+        63
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.HashMap;\nimport java.util.TreeSet;\npublic class InputIllegalTypeTestLegalAbstractClassNames implements InputIllegalTypeSuper {\n    private AbstractClass a = null;\n    private NotAnAbstractClass b = null; \n    private com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.AbstractClass\n            c = null;\n    private java.util.List d = null;\n    private abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet table1() { return null; }\n    private TreeSet table2() { return null; } \n    static class SomeStaticClass {\n    }\n    InputIllegalTypeTestLegalAbstractClassNames(Integer i) {}\n    private void table2(Integer i) {}\n    private void getInitialContext(java.util.TreeSet v) {} \n    @Override\n    public void foo(HashMap<?, ?> buffer) {} \n    @Override\n    public HashMap<?, ?> foo() { \n        return null;\n    }\n    @Override\n    public HashMap<?, ?> bar() { \n        return null;\n    }\n}\ninterface InputIllegalTypeSuperTestLegalAbstractClassNames {\n    void foo(HashMap<?, ?> buffer); \n    HashMap<?, ?> foo(); \n    Object bar();\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestMemberModifiers.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        21,
+        25,
+        33,
+        35,
+        42,
+        45,
+        52
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.util.TreeSet;\npublic class InputIllegalTypeTestMemberModifiers {\n    private AbstractClass a = null; \n    private NotAnAbstractClass b = null; \n    private java.util.AbstractList c = null;\n    private java.util.List d = null;\n    private abstract class AbstractClass {}\n    private class NotAnAbstractClass {}\n    private java.util.TreeSet<Object> table1() { return null; }\n    private TreeSet<Object> table2() { return null; }\n    static class SomeStaticClass {\n    }\n    protected java.util.AbstractList c1 = null;\n    public final static java.util.TreeSet<Object> table3() { return null; }\n    java.util.TreeSet<Object> table4() { java.util.TreeSet<Object> treeSet = null; return null; }\n    private class Some {\n        java.util.TreeSet<Object> treeSet = null;\n    }\n    protected AbstractClass a1 = null; \n    public AbstractClass a2 = null;\n    public void table5(java.util.TreeSet<Object> arg) { }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestPlainAndArraysTypes.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        18,
+        22,
+        24,
+        35,
+        37
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\npublic class InputIllegalTypeTestPlainAndArraysTypes {\n    public Boolean flag; \n    public Boolean[] array;\n    public Boolean[][] matrix; \n    public Boolean getFlag() { \n        return flag;\n    }\n    public Boolean[] getArray() {\n        Boolean[] value = array != null ? array : new Boolean[0];\n        return value;\n    }\n    public Boolean[][] getMatrix() {\n        Boolean[][] value = matrix != null ? matrix : new Boolean[0][0];\n        return value;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestSameFileNameGeneral.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        25,
+        30,
+        33,
+        41,
+        42,
+        45,
+        45,
+        47
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.awt.List;\nimport java.util.ArrayList;\nimport com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalTypeGregCal.SubCal;\npublic class InputIllegalTypeTestSameFileNameGeneral\n{\n    InputIllegalTypeGregCal cal = AnObject.getInstance();\n    java.util.Date date = null;\n    SubCal subCalendar = null;\n    private static class AnObject extends InputIllegalTypeGregCal {\n        public static InputIllegalTypeGregCal getInstance()\n        {\n            return null;\n        }\n    }\n    private void foo() {\n        List l; \n        java.io.File file = null; \n    }\n    java.util.List<Integer> list = new ArrayList<>();\n    private ArrayList<String> values; \n    private Boolean d; \n    private Boolean[] d1;\n    private Boolean[][] d2;\n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestStarImports.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport java.net.*;\nimport java.util.*;\nimport org.antlr.v4.runtime.*;\npublic class InputIllegalTypeTestStarImports\n{\n    List<Integer> l = new LinkedList<>(); \n}"
+    },
+    {
+      "description": "Auto test from InputIllegalTypeTestStaticImports.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        25,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.illegaltype;\nimport static com.puppycrawl.tools.checkstyle.checks.coding.illegaltype.InputIllegalType.SomeStaticClass;\nimport java.lang.String;\npublic class InputIllegalTypeTestStaticImports\n{\n     private boolean foo(String s) {\n         return true;\n     }\n     SomeStaticClass staticClass; \n     private static SomeStaticClass foo1() { return null;}\n     private static void foo2(SomeStaticClass s) {}\n}"
+    }
+  ]
+}

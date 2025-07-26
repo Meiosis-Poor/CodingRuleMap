@@ -1,0 +1,112 @@
+{
+  "name": "UncommentedEmptyConstructor",
+  "language": "java",
+  "description": "\nUncommented Empty Constructor finds instances where a constructor does not\ncontain statements, but there is no comment. By explicitly commenting empty\nconstructors it is easier to distinguish between intentional (commented)\nand unintentional empty constructors.\n        ",
+  "example": "public Foo() {\n  // This constructor is intentionally empty. Nothing special is needed here.\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "only 'this(...)' is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        this();\n    }\n}\n        "
+    },
+    {
+      "description": "only 'this(...)' is not OK, if ignoring explicit constructor calls",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        this();\n    }\n}\n        "
+    },
+    {
+      "description": "only 'super(...)' is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        super();\n    }\n}\n        "
+    },
+    {
+      "description": "single-line comment is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        // Comment\n    }\n}\n        "
+    },
+    {
+      "description": "multiple-line comment is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        this();\n        /* Comment */\n    }\n}\n        "
+    },
+    {
+      "description": "Javadoc comment is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        super();\n        /** Comment */\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        int bar;\n    }\n}\n        "
+    },
+    {
+      "description": "with 'this(...)' ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        this();\n        bar();\n    }\n}\n        "
+    },
+    {
+      "description": "with 'super(...)' ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {\n        super();\n        bar++;\n    }\n}\n        "
+    },
+    {
+      "description": "private is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "Empty constructor with documenting javadoc still triggers",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class WebAgent {\n    /**\n     * <p>Instantiate a WebAgent.</p>\n     * <p>Call {@link #configure configure()} before calling {@link #retrieve retrieve()}.</p>\n     */\n    public WebAgent() {}\n}\n        "
+    },
+    {
+      "description": "#357 UncommentedEmptyConstructor consider annotations on Constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.inject.Inject;\n\npublic class MyClass {\n    @Inject MyClass() {\n    }\n}\n        "
+    },
+    {
+      "description": "#357 UncommentedEmptyConstructor consider fully qualified annotations on Constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyClass {\n    @javax.inject.Inject MyClass() {\n    }\n}\n        "
+    },
+    {
+      "description": "#4141 UncommentedEmptyConstructor FP when annotated constructor with @Autowired",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.springframework.beans.factory.annotation.Autowired;\npublic class Bug {\n    @Autowired\n    public Bug() {\n    }\n}\n        "
+    },
+    {
+      "description": "#4141 UncommentedEmptyConstructor FP when annotated constructor with @Autowired",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bug {\n    @org.springframework.beans.factory.annotation.Autowired\n    public Bug() {\n    }\n}\n        "
+    }
+  ]
+}

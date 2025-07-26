@@ -1,0 +1,54 @@
+{
+  "name": "AvoidPrintStackTrace",
+  "language": "java",
+  "description": "\nAvoid printStackTrace(); use a logger call instead.\n        ",
+  "example": "class Foo {\n    void bar() {\n        try {\n            // do something\n        } catch (Exception e) {\n            e.printStackTrace();\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (Exception e) {\n            e.printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (Exception e) {\n            LOG.error(e, \"Whoa!\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "pos in call chain #2437",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (Exception e) {\n            e.getCause().printStackTrace();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "neg, not a real call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (Exception e) {\n            e.getCause().printStackTrace;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "neg, not a real call 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (Exception e) {\n            e.printStackTrace;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "neg, not a real call 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (Exception e) {\n            e.printStackTrace(e);\n        }\n    }\n}\n        "
+    }
+  ]
+}

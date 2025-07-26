@@ -1,0 +1,33 @@
+{
+  "name": "SuspiciousMemoryComparison",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-suspicious-memory-comparison",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 82,
+  "branches": 9,
+  "apis": 47,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        19,
+        33,
+        50,
+        52,
+        58,
+        60,
+        100,
+        134,
+        147,
+        176,
+        206,
+        226
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-suspicious-memory-comparison %t \\\n// RUN: -- -- -target x86_64-unknown-unknown\n\nnamespace std {\ntypedef __SIZE_TYPE__ size_t;\nint memcmp(const void *lhs, const void *rhs, size_t count);\n} // namespace std\n\nnamespace sei_cert_example_oop57_cpp {\nclass C {\n  int i;\n\npublic:\n  virtual void f();\n};\n\nvoid f(C &c1, C &c2) {\n  if (!std::memcmp(&c1, &c2, sizeof(C))) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: comparing object representation of non-standard-layout type 'C'; consider using a comparison operator instead\n  }\n}\n} // namespace sei_cert_example_oop57_cpp\n\nnamespace inner_padding_64bit_only {\nstruct S {\n  int x;\n  int *y;\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'S' which does not have a unique object representation; consider comparing the members of the object manually\n}\n} // namespace inner_padding_64bit_only\n\nnamespace padding_in_base {\nclass Base {\n  char c;\n  int i;\n};\n\nclass Derived : public Base {};\n\nclass Derived2 : public Derived {};\n\nvoid testDerived() {\n  Derived a, b;\n  std::memcmp(&a, &b, sizeof(Base));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'Derived' which does not have a unique object representation; consider comparing the members of the object manually\n  std::memcmp(&a, &b, sizeof(Derived));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'Derived' which does not have a unique object representation; consider comparing the members of the object manually\n}\n\nvoid testDerived2() {\n  Derived2 a, b;\n  std::memcmp(&a, &b, sizeof(Base));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'Derived2' which does not have a unique object representation; consider comparing the members of the object manually\n  std::memcmp(&a, &b, sizeof(Derived2));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'Derived2' which does not have a unique object representation; consider comparing the members of the object manually\n}\n\n} // namespace padding_in_base\n\nnamespace no_padding_in_base {\nclass Base {\n  int a, b;\n};\n\nclass Derived : public Base {};\n\nclass Derived2 : public Derived {};\n\nvoid testDerived() {\n  Derived a, b;\n  std::memcmp(&a, &b, sizeof(Base));\n  std::memcmp(&a, &b, sizeof(Derived));\n}\n\nvoid testDerived2() {\n  Derived2 a, b;\n  std::memcmp(&a, &b, sizeof(char));\n  std::memcmp(&a, &b, sizeof(Base));\n  std::memcmp(&a, &b, sizeof(Derived2));\n}\n} // namespace no_padding_in_base\n\nnamespace non_standard_layout {\nclass C {\nprivate:\n  int x;\n\npublic:\n  int y;\n};\n\nvoid test() {\n  C a, b;\n  std::memcmp(&a, &b, sizeof(C));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of non-standard-layout type 'C'; consider using a comparison operator instead\n}\n\n} // namespace non_standard_layout\n\nnamespace static_ignored {\nstruct S {\n  static char c;\n  int i;\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n}\n} // namespace static_ignored\n\nnamespace operator_void_ptr {\nstruct S {\n  operator void *() const;\n};\n\nvoid test() {\n  S s;\n  std::memcmp(s, s, sizeof(s));\n}\n} // namespace operator_void_ptr\n\nnamespace empty_struct {\nstruct S {};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'S' which does not have a unique object representation; consider comparing the members of the object manually\n}\n} // namespace empty_struct\n\nnamespace empty_field {\nstruct Empty {};\nstruct S {\n  Empty e;\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'S' which does not have a unique object representation; consider comparing the members of the object manually\n}\n} // namespace empty_field\n\nnamespace no_unique_address_attribute {\nstruct Empty {};\n\nnamespace no_padding {\nstruct S {\n  char c;\n  [[no_unique_address]] Empty e;\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n}\n\n} // namespace no_padding\n\nnamespace multiple_empties_same_type {\nstruct S {\n  char c;\n  [[no_unique_address]] Empty e1, e2;\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'S' which does not have a unique object representation; consider comparing the members of the object manually\n}\n\n} // namespace multiple_empties_same_type\n\nnamespace multiple_empties_different_types {\nstruct Empty2 {};\n\nstruct S {\n  char c;\n  [[no_unique_address]] Empty e1;\n  [[no_unique_address]] Empty2 e2;\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n}\n} // namespace multiple_empties_different_types\n} // namespace no_unique_address_attribute\n\nnamespace alignment {\nstruct S {\n  char x;\n  alignas(sizeof(int)) char y[sizeof(int)];\n};\n\nvoid test() {\n  S a, b;\n  std::memcmp(&a, &b, sizeof(S));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: comparing object representation of type 'S' which does not have a unique object representation; consider comparing the members of the object manually\n}\n} // namespace alignment\n\nnamespace no_warning_in_template {\ntemplate <typename T>\nint compare(const T *l, const T *r) {\n  return std::memcmp(l, r, sizeof(T));\n}\n\nvoid test() {\n  int a, b;\n  compare(&a, &b);\n}\n} // namespace no_warning_in_template\n\nnamespace warning_in_template {\ntemplate <typename T>\nint compare(const T *l, const T *r) {\n  return std::memcmp(l, r, sizeof(T));\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: comparing object representation of type 'float' which does not have a unique object representation; consider comparing the values manually\n}\n\nvoid test() {\n  float a, b;\n  compare(&a, &b);\n}\n} // namespace warning_in_template"
+    }
+  ]
+}

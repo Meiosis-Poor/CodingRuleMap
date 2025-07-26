@@ -1,0 +1,23 @@
+{
+  "name": "BadSignalToKillThread",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-bad-signal-to-kill-thread",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 71,
+  "branches": 6,
+  "apis": 37,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        24,
+        34
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-bad-signal-to-kill-thread %t\n\n#define SIGTERM 15\n#define SIGINT 2\nusing pthread_t = int;\nusing pthread_attr_t = int;\n\nint pthread_create(pthread_t *thread, const pthread_attr_t *attr,\n                   void *(*start_routine)(void *), void *arg);\n\nint pthread_kill(pthread_t thread, int sig);\n\nint pthread_cancel(pthread_t thread);\n\nvoid *test_func_return_a_pointer(void *foo);\n\nint main() {\n  int result;\n  pthread_t thread;\n\n  if ((result = pthread_create(&thread, nullptr, test_func_return_a_pointer, 0)) != 0) {\n  }\n  if ((result = pthread_kill(thread, SIGTERM)) != 0) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: thread should not be terminated by raising the 'SIGTERM' signal [bugprone-bad-signal-to-kill-thread]\n  }\n\n  //compliant solution\n  if ((result = pthread_cancel(thread)) != 0) {\n  }\n\n  if ((result = pthread_kill(thread, SIGINT)) != 0) {\n  }\n  if ((result = pthread_kill(thread, 0xF)) != 0) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: thread should not be terminated by raising the 'SIGTERM' signal [bugprone-bad-signal-to-kill-thread]\n  }\n\n  return 0;\n}"
+    }
+  ]
+}

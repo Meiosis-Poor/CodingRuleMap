@@ -1,0 +1,41 @@
+{
+  "name": "UnnecessaryVarargsArrayCreation",
+  "language": "java",
+  "description": "\n            Reports explicit array creation when a varargs is expected.\n            For instance:\n            ```java\n            Arrays.asList(new String[] { \"foo\", \"bar\", });\n            ```\n            can be replaced by:\n            ```java\n            Arrays.asList(\"foo\", \"bar\");\n            ```\n        ",
+  "example": "import java.util.Arrays;\n\nclass C {\n    static {\n        Arrays.asList(new String[]{\"foo\", \"bar\",});\n        // should be\n        Arrays.asList(\"foo\", \"bar\");\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 54,
+  "branches": 9,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Unnecessary in asList",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        7
+      ],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    Arrays.asList(\"a\" , \"b\");\n                    Arrays.asList(new String[] { \"a\", \"b\" });\n                    Arrays.asList(new Object[] { \"a\", \"b\" });\n                }\n            }\n            "
+    },
+    {
+      "description": "Necessary array creation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    Arrays.asList(new String[]{\"\"}, new String[] { \"a\", \"b\" });\n                }\n            }\n            "
+    },
+    {
+      "description": "Confusing argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    foo(new Object[]{ \"a\" }); // regular unnecessary\n                    foo(new String[]{ \"a\" }); // confusing bc String[] <: Object (ConfusingArgumentToVarargsArray)\n                }\n                static void foo(Object... args) {}\n            }\n            "
+    },
+    {
+      "description": "Array creation without elements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n\n            public class Foo {\n                static {\n                    foo(new Object[4]);\n                }\n                static void foo(Object... args) {}\n            }\n            "
+    }
+  ]
+}

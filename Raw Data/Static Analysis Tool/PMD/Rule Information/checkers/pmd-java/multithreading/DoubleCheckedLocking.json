@@ -1,0 +1,62 @@
+{
+  "name": "DoubleCheckedLocking",
+  "language": "java",
+  "description": "\nPartially created objects can be returned by the Double Checked Locking pattern when used in Java.\nAn optimizing JRE may assign a reference to the baz variable before it calls the constructor of the object the\nreference points to.\n\nNote: With Java 5, you can make Double checked locking work, if you declare the variable to be `volatile`.\n\nFor more details refer to: <http://www.javaworld.com/javaworld/jw-02-2001/jw-0209-double.html>\nor <http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html>\n        ",
+  "example": "public class Foo {\n    /*volatile */ Object baz = null; // fix for Java5 and later: volatile\n    Object bar() {\n        if (baz == null) { // baz may be non-null yet not fully created\n            synchronized(this) {\n                if (baz == null) {\n                    baz = new Object();\n                }\n              }\n        }\n        return baz;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 143,
+  "branches": 25,
+  "apis": 16,
+  "test": [
+    {
+      "description": "simple ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {}\n}\n        "
+    },
+    {
+      "description": "simple failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object baz;\n    Object bar() {\n        if(baz == null) { //baz may be non-null yet not fully created\n            synchronized(this) {\n                if(baz == null) {\n                    baz = new Object();\n                }\n            }\n        }\n        return baz;\n    }\n}\n        "
+    },
+    {
+      "description": "skip interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    void foo();\n}\n        "
+    },
+    {
+      "description": "Generics",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo<T> {\n    public static <T> Foo<T> foo() { /* blah */}\n}\n        "
+    },
+    {
+      "description": "inversed null check see bug 2835074 False -: DoubleCheckedLocking with reversed null check (1)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object baz;\n    Object bar() {\n        if (null == baz) { //baz may be non-null yet not fully created\n            synchronized(this) {\n                if (baz == null) {\n                    baz = new Object();\n                }\n            }\n        }\n        return baz;\n    }\n}\n        "
+    },
+    {
+      "description": "inversed null check see bug 2835074 False -: DoubleCheckedLocking with reversed null check (2)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object baz;\n    Object bar() {\n        if (baz == null) { //baz may be non-null yet not fully created\n            synchronized(this) {\n                if (null == baz) {\n                    baz = new Object();\n                }\n            }\n        }\n        return baz;\n    }\n}\n        "
+    },
+    {
+      "description": "Use of volatile keyword see #884 False +: DoubleCheckedLocking warning with volatile field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    volatile Object baz;\n\n    Object bar() {\n        if (baz == null) { // baz may be non-null yet not fully created\n            synchronized (this) {\n                if (baz == null) {\n                    baz = new Object();\n                }\n            }\n        }\n        return baz;\n    }\n}\n        "
+    },
+    {
+      "description": "#1471 False positives for DoubleCheckedLocking",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static volatile Foo instance;\n\n    public static Foo getInstance() {\n        Foo result = instance;\n        if (result == null) {\n            synchronized (Foo.class) {\n                result = instance;\n                if (result == null) {\n                    result = instance = new Foo();\n                }\n            }\n        }\n        return result;\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "name": "MethodNamingConventions",
+  "language": "java",
+  "description": "\n            Configurable naming conventions for method declarations. This rule reports\n            method declarations which do not match the regex that applies to their\n            specific kind (e.g. JUnit test or native method). Each regex can be\n            configured through properties.\n\n            By default, this rule uses the standard Java naming convention (Camel case).\n        ",
+  "example": "public class Foo {\n    public void fooStuff() {\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 92,
+  "branches": 13,
+  "apis": 5,
+  "test": [
+    {
+      "description": "method names should start with lowercase character",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void Bar() {}\n}\n        "
+    },
+    {
+      "description": "method names should not contain underscores",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar_foo() {}\n}\n        "
+    },
+    {
+      "description": "all is well",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {}\n}\n        "
+    },
+    {
+      "description": "#1343 MethodNamingConventions for overridden methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MethodNamingConventions implements SomeUnknownInterface {\n    @Override\n    public void _foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "Static method pattern",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nclass Foo {\n    static void foo() {\n    }\n\n    static void st_whatever() {\n    }\n\n    // not reported\n    void bar() {\n    }\n}\n        "
+    },
+    {
+      "description": "Native method pattern",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nclass Foo {\n    native void foo() {\n    }\n\n    native void nt_whatever() {\n    }\n\n    // not reported\n    void bar() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 3 test detection",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport junit.framework.Assert;\nimport junit.framework.TestCase;\n\npublic class TournamentTest extends TestCase {\n\n    public void testGetBestTeam() {\n    }\n\n    // this is ok tho\n    public void test_getBestTeam() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 test detection",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        11
+      ],
+      "code": "\nimport junit.framework.TestCase;\nimport org.junit.Test;\n\npublic class TournamentTest extends TestCase {\n\n    @Test // note that this is also a junit 3 test, but the junit4 rule applies\n    public void testGetBestTeam() {\n    }\n\n    @Test // this is just a junit 4 test\n    public void getBestTeam() {\n    }\n\n    // this is ok\n    @Test\n    public void getBestTeamTest() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 4 test detection without proper auxclasspath",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport org.junit.Test; // note: test case uses \"useAuxClasspath=false\"!!\n\npublic class TournamentTest {\n\n    // wrong test name pattern\n    @Test\n    public void get_best_team() {\n    }\n\n    // this is ok\n    @Test\n    public void getBestTeam() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit 5 test detection",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        10,
+        14
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.params.ParameterizedTest;\n\npublic class TournamentTest {\n    @Test // note that this is also a junit 3 test, but the junit 5 rule applies\n    public void testGetBestTeam() {\n    }\n\n    @Test // this is just a junit 5 test\n    public void getBestTeam() {\n    }\n\n    @ParameterizedTest // this is a paramterized junit 5 test\n    public void getWorstTeam(String param) {\n    }\n\n    // this is ok\n    @Test\n    public void getBestTeamTest() {\n    }\n}\n        "
+    },
+    {
+      "description": "Instance method custom convention",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n\n    public void fooBar() {\n    }\n\n    public void m_fooBar() {\n    }\n}\n        "
+    },
+    {
+      "description": "#2528 [java] MethodNamingConventions - JUnit 5 method naming not support ParameterizedTest",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        14
+      ],
+      "code": "\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.ValueSource;\nimport static org.junit.jupiter.api.Assertions.*;\npublic class Foo {\n\n    @ParameterizedTest\n    @ValueSource(strings = { \"FEMALE\", \"MALE\" })\n    public void moo_str(final String value) {\n        assertNotNull(Gender.fromValue(value));\n    }\n\n    @ParameterizedTest\n    @ValueSource(strings = { \"FEMALE\", \"MALE\" })\n    public void moo_str2(final String value) {\n        assertNotNull(Gender.fromValue(value));\n    }\n\n    enum Gender { }\n}\n        "
+    }
+  ]
+}

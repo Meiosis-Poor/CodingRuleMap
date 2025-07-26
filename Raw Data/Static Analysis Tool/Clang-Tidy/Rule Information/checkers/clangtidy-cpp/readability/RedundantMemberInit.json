@@ -1,0 +1,41 @@
+{
+  "name": "RedundantMemberInit",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-redundant-member-init",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 108,
+  "branches": 10,
+  "apis": 83,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 20,
+      "expected-linenumbers": [
+        30,
+        38,
+        46,
+        47,
+        56,
+        66,
+        81,
+        89,
+        90,
+        108,
+        115,
+        132,
+        133,
+        148,
+        257,
+        264,
+        271,
+        278,
+        286,
+        294
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-redundant-member-init %t \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {readability-redundant-member-init.IgnoreBaseInCopyConstructors: \\\n// RUN:                true} \\\n// RUN:             }\"\n\nstruct S {\n  S() = default;\n  S(int i) : i(i) {}\n  int i = 1;\n};\n\nstruct T {\n  T(int i = 1) : i(i) {}\n  int i;\n};\n\nstruct U {\n  int i;\n};\n\nunion V {\n  int i;\n  double f;\n};\n\n// Initializer calls default constructor\nstruct F1 {\n  F1() : f() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for member 'f' is redundant\n  // CHECK-FIXES: F1()  {}\n  S f;\n};\n\n// Initializer calls default constructor with default argument\nstruct F2 {\n  F2() : f() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for member 'f' is redundant\n  // CHECK-FIXES: F2()  {}\n  T f;\n};\n\n// Multiple redundant initializers for same constructor\nstruct F3 {\n  F3() : f(), g(1), h() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for member 'f' is redundant\n  // CHECK-MESSAGES: :[[@LINE-2]]:21: warning: initializer for member 'h' is redundant\n  // CHECK-FIXES: F3() :  g(1) {}\n  S f, g, h;\n};\n\n// Templated class independent type\ntemplate <class V>\nstruct F4 {\n  F4() : f() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for member 'f' is redundant\n  // CHECK-FIXES: F4()  {}\n  S f;\n};\nF4<int> f4i;\nF4<S> f4s;\n\n// Base class\nstruct F5 : S {\n  F5() : S() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for base class 'S' is redundant\n  // CHECK-FIXES: F5()  {}\n};\n\n// Constructor call requires cleanup\nstruct Cleanup {\n  ~Cleanup() {}\n};\n\nstruct UsesCleanup {\n  UsesCleanup(const Cleanup &c = Cleanup()) {}\n};\n\nstruct F6 {\n  F6() : uc() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for member 'uc' is redundant\n  // CHECK-FIXES: F6()  {}\n  UsesCleanup uc;\n};\n\n// Multiple inheritance\nstruct F7 : S, T {\n  F7() : S(), T() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for base class 'S' is redundant\n  // CHECK-MESSAGES: :[[@LINE-2]]:15: warning: initializer for base class 'T' is redundant\n  // CHECK-FIXES: F7()  {}\n};\n\nnamespace Foo {\ninline namespace Bar {\ntemplate <int N>\nstruct Template {\n  Template() = default;\n  int i = N;\n};\n}\n}\n\nenum { N_THINGS = 5 };\n\nstruct F8 : Foo::Template<N_THINGS> {\n  F8() : Template() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for base class 'Foo::Template<N_THINGS>' is redundant\n  // CHECK-FIXES: F8()  {}\n};\n\n// Anonymous struct\nstruct F9 {\n  F9() : s1() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: initializer for member 's1' is redundant\n  // CHECK-FIXES: F9()  {}\n  struct {\n    S s1;\n    S s2;\n  };\n};\n\n// struct whose inline copy constructor default-initializes its base class\nstruct WithCopyConstructor1 : public T {\n  WithCopyConstructor1(const WithCopyConstructor1& other) : T(),\n    f(),\n    g()\n  {}\n  S f, g;\n};\n// No warning in copy constructor about T since IgnoreBaseInCopyConstructors=1\n// CHECK-MESSAGES: :[[@LINE-6]]:5: warning: initializer for member 'f' is redundant\n// CHECK-MESSAGES: :[[@LINE-6]]:5: warning: initializer for member 'g' is redundant\n// CHECK-FIXES: WithCopyConstructor1(const WithCopyConstructor1& other) : T()\n// CHECK-NEXT: \n// CHECK-NEXT: \n// CHECK-NEXT: {}\n\n// struct whose copy constructor default-initializes its base class\nstruct WithCopyConstructor2 : public T {\n  WithCopyConstructor2(const WithCopyConstructor2& other);\n  S a;\n};\nWithCopyConstructor2::WithCopyConstructor2(const WithCopyConstructor2& other)\n  : T(), a()\n{}\n// No warning in copy constructor about T since IgnoreBaseInCopyConstructors=1\n// CHECK-MESSAGES: :[[@LINE-3]]:10: warning: initializer for member 'a' is redundant\n// CHECK-FIXES: {{^}}  : T() {{$}}\n// CHECK-NEXT: {}\n\n// Initializer not written\nstruct NF1 {\n  NF1() {}\n  S f;\n};\n\n// Initializer doesn't call default constructor\nstruct NF2 {\n  NF2() : f(1) {}\n  S f;\n};\n\n// Initializer calls default constructor without using default argument\nstruct NF3 {\n  NF3() : f(1) {}\n  T f;\n};\n\n// Initializer calls default constructor without using default argument\nstruct NF4 {\n  NF4() : f(2) {}\n  T f;\n};\n\n// Initializer is zero-initialization\nstruct NF5 {\n  NF5() : i() {}\n  int i;\n};\n\n// Initializer is direct-initialization\nstruct NF6 {\n  NF6() : i(1) {}\n  int i;\n};\n\n// Initializer is aggregate initialization of struct\nstruct NF7 {\n  NF7() : f{} {}\n  U f;\n};\n\n// Initializer is zero-initialization of struct\nstruct NF7b {\n  NF7b() : f() {}\n  U f;\n};\n\n// Initializer is aggregate initialization of array\nstruct NF8 {\n  NF8() : f{} {}\n  int f[2];\n};\n\nstruct NF9 {\n  NF9() : f{} {}\n  S f[2];\n};\n\n// Initializing member of union\nunion NF10 {\n  NF10() : s() {}\n  int i;\n  S s;\n};\n\n// Templated class dependent type\ntemplate <class V>\nstruct NF11 {\n  NF11() : f() {}\n  V f;\n};\nNF11<int> nf11i;\nNF11<S> nf11s;\n\n// Delegating constructor\nclass NF12 {\n  NF12() = default;\n  NF12(int) : NF12() {}\n};\n\n// Const member\nstruct NF13 {\n  NF13() : f() {}\n  const S f;\n};\n\n// Union member\nstruct NF14 {\n  NF14() : f() {}\n  V f;\n};\n\n// Anonymous union member\nstruct NF15 {\n  NF15() : s1() {}\n  union {\n    S s1;\n    S s2;\n  };\n};\n\n// Direct in-class initialization with default constructor\nstruct D1 {\n  S f1 {};\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: initializer for member 'f1' is redundant\n  // CHECK-FIXES: S f1;\n};\n\n// Direct in-class initialization with constructor with default argument\nstruct D2 {\n  T f2  {};\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: initializer for member 'f2' is redundant\n  // CHECK-FIXES: T f2;\n};\n\n// Direct in-class initialization with default constructor (assign)\nstruct D3 {\n  S f3 = {};\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: initializer for member 'f3' is redundant\n  // CHECK-FIXES: S f3;\n};\n\n// Direct in-class initialization with constructor with default argument (assign)\nstruct D4 {\n  T f4 = {};\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: initializer for member 'f4' is redundant\n  // CHECK-FIXES: T f4;\n};\n\n// Templated class independent type\ntemplate <class V>\nstruct D5 {\n  S f5 /*comment*/ = S();\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: initializer for member 'f5' is redundant\n  // CHECK-FIXES: S f5 /*comment*/;\n};\nD5<int> d5i;\nD5<S> d5s;\n\nstruct D6 {\n  UsesCleanup uc2{};\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: initializer for member 'uc2' is redundant\n  // CHECK-FIXES: UsesCleanup uc2;\n};\n\ntemplate<typename V>\nstruct D7 {\n  V f7;\n};\n\nD7<int> d7i;\nD7<S> d7s;\n\nstruct SS {\n  SS() = default;\n  SS(S s) : s(s) {}\n\n  S s;\n};\n\nstruct D8 {\n  SS ss = S();\n};\n\nstruct D9 {\n  D9() : ss(S()) {}\n  SS ss;\n};"
+    }
+  ]
+}

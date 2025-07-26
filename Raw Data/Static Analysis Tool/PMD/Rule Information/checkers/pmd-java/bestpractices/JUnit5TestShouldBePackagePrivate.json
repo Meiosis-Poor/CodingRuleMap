@@ -1,0 +1,71 @@
+{
+  "name": "JUnit5TestShouldBePackagePrivate",
+  "language": "java",
+  "description": "\nReports JUnit 5 test classes and methods that are not package-private.\nContrary to JUnit 4 tests, which required public visibility to be run by the engine,\nJUnit 5 tests can also be run if they're package-private. Marking them as such\nis a good practice to limit their visibility.\n\nTest methods are identified as those which use `@Test`, `@RepeatedTest`,\n`@TestFactory`, `@TestTemplate` or `@ParameterizedTest`.\n            ",
+  "example": "class MyTest { // not public, that's fine\n    @Test\n    public void testBad() { } // should not have a public modifier\n\n    @Test\n    protected void testAlsoBad() { } // should not have a protected modifier\n\n    @Test\n    private void testNoRun() { } // should not have a private modifier\n\n    @Test\n    void testGood() { } // package private as expected\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Public modifier is not necessary on a test method nor on the class",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\npublic class MyTests {\n    @Test\n    public void testRegular() { }\n}\n        "
+    },
+    {
+      "description": "Package private modifiers are what is required",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\nclass MyTests {\n    @Test\n    void testRegular() { }\n}\n        "
+    },
+    {
+      "description": "Private method modifiers should be reported by rule 'JUnit5TestNoPrivateModifier' and ignored by rule 'JUnit5TestShouldBePackagePrivate'",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\nclass MyTests {\n  @Test\n  private void ignoredTest() {}\n}\n        "
+    },
+    {
+      "description": "Private modifiers for inner classes should be reported by rule 'JUnit5TestNoPrivateModifier' and ignored by rule 'JUnit5TestShouldBePackagePrivate'",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\nclass MyTests {\n\n  private static class InnerPrivateClass {\n    @Test\n    void testFoo() {}\n  }\n}\n        "
+    },
+    {
+      "description": "Public modifier is allowed on an abstract test classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\npublic abstract class MyTests {\n    @Test\n    void testRegular() { }\n}\n        "
+    },
+    {
+      "description": "Public modifier is allowed on test interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\npublic interface MyTests {\n    @Test\n    default void testRegular() { }\n}\n        "
+    },
+    {
+      "description": "Public and protected modifiers on all JUnit5 test types should be rejected",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        8,
+        10,
+        13,
+        19,
+        23
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.RepeatedTest;\nimport org.junit.jupiter.api.TestFactory;\nimport org.junit.jupiter.api.TestTemplate;\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\n\nprotected class MyTests {\n    @Test\n    public void testRegular() { }\n\n    @RepeatedTest(2)\n    protected void testRepeated() { }\n\n    @TestFactory\n    private void testFactory() { }\n\n    @TestTemplate\n    public void testTemplate() { }\n\n    @ParameterizedTest\n    @ValueSource(strings = {\"Hello\", \"World\"})\n    protected void testParameterized(final String value) { }\n}\n        "
+    },
+    {
+      "description": "Public JUnit4 tests are not flagged",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\npublic class Foo {\n    @Test\n    public void testFoo() { }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "DefaultArgumentsCalls",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-default-arguments-calls",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 31,
+  "branches": 2,
+  "apis": 11,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n// RUN: %check_clang_tidy %s fuchsia-default-arguments-calls %t\n\nint foo(int value = 5) { return value; }\n\nvoid f() {\n  foo();\n  // CHECK-NOTES: [[@LINE-1]]:3: warning: calling a function that uses a default argument is disallowed [fuchsia-default-arguments-calls]\n  // CHECK-NOTES: [[@LINE-5]]:9: note: default parameter was declared here\n}\n\nint bar(int value) { return value; }\n\nvoid n() {\n  foo(0);\n  bar(0);\n}\n\nvoid x(int i = 12);\n\nstruct S {\n  void x(int i);\n};\n\nvoid S::x(int i = 12) {}\n\nint main() {\n  S s;\n  s.x();\n  // CHECK-NOTES: [[@LINE-1]]:5: warning: calling a function that uses a default argument is disallowed [fuchsia-default-arguments-calls]\n  // CHECK-NOTES: [[@LINE-6]]:11: note: default parameter was declared here\n  // CHECK-NEXT: void S::x(int i = 12) {}\n  x();\n  // CHECK-NOTES: [[@LINE-1]]:3: warning: calling a function that uses a default argument is disallowed [fuchsia-default-arguments-calls]\n  // CHECK-NOTES: [[@LINE-16]]:8: note: default parameter was declared here\n  // CHECK-NEXT: void x(int i = 12);\n}"
+    }
+  ]
+}

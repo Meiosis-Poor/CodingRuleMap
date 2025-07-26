@@ -1,0 +1,48 @@
+{
+  "name": "DoNotCallGarbageCollectionExplicitly",
+  "language": "java",
+  "description": "\nCalls to `System.gc()`, `Runtime.getRuntime().gc()`, and `System.runFinalization()` are not advised.\nCode should have the same behavior whether the garbage collection is disabled using the option\n`-Xdisableexplicitgc` or not.\n\nMoreover, \"modern\" JVMs do a very good job handling garbage collections. If memory usage issues unrelated to memory\nleaks develop within an application, it should be dealt with JVM options rather than within the code itself.\n        ",
+  "example": "public class GCCall {\n    public GCCall() {\n        // Explicit gc call !\n        System.gc();\n    }\n\n    public void doSomething() {\n        // Explicit gc call !\n        Runtime.getRuntime().gc();\n    }\n\n    public explicitGCcall() {\n        // Explicit gc call !\n        System.gc();\n    }\n\n    public void doSomething() {\n        // Explicit gc call !\n        Runtime.getRuntime().gc();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Basic test case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class GCCall {\n    public void doSomething() {\n        // Explicit gc call !\n        Runtime.getRuntime().gc();\n    }\n}\n        "
+    },
+    {
+      "description": "Alernate Basic test case",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        9
+      ],
+      "code": "\npublic class GCCall {\n    public void explicitGCcall() {\n        // Explicit gc call !\n        System.gc();\n    }\n\n    public void doSomething() {\n        // Explicit gc call !\n        Runtime.getRuntime().gc();\n    }\n}\n        "
+    },
+    {
+      "description": "Call in a constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class GCCall {\n    public GCCall() {\n        // Explicit gc call !\n        System.gc();\n    }\n}\n        "
+    },
+    {
+      "description": "run finalization",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Finalizer {\n    public void doSomething() {\n        System.runFinalization();\n        Runtime.getRuntime().runFinalization();\n    }\n}\n        "
+    }
+  ]
+}

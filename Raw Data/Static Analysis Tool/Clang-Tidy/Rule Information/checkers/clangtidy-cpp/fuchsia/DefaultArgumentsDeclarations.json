@@ -1,0 +1,20 @@
+{
+  "name": "DefaultArgumentsDeclarations",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-default-arguments-declarations",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 51,
+  "branches": 4,
+  "apis": 27,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n// RUN: %check_clang_tidy %s fuchsia-default-arguments-declarations %t\n\nint foo(int value = 5) { return value; }\n// CHECK-NOTES: [[@LINE-1]]:9: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n// CHECK-FIXES: int foo(int value) { return value; }\n\nint bar(int value) { return value; }\n\nclass Baz {\npublic:\n  int a(int value = 5) { return value; }\n  // CHECK-NOTES: [[@LINE-1]]:9: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n  // CHECK-FIXES: int a(int value) { return value; }\n\n  int b(int value) { return value; }\n};\n\nclass Foo {\n  // Fix should be suggested in declaration\n  int a(int value = 53);\n  // CHECK-NOTES: [[@LINE-1]]:9: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n  // CHECK-FIXES: int a(int value);\n};\n\n// Fix shouldn't be suggested in implementation\nint Foo::a(int value) {\n  return value;\n}\n\n// Elided functions\nvoid f(int = 5) {};\n// CHECK-NOTES: [[@LINE-1]]:8: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n// CHECK-FIXES: void f(int) {};\n\nvoid g(int) {};\n\n// Should not suggest fix for macro-defined parameters\n#define D(val) = val\n\nvoid h(int i D(5));\n// CHECK-NOTES: [[@LINE-1]]:8: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n// CHECK-FIXES-NOT: void h(int i);\n\nvoid x(int i);\nvoid x(int i = 12);\n// CHECK-NOTES: [[@LINE-1]]:8: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n// CHECK-FIXES: void x(int i);\n\nvoid x(int i) {}\n\nstruct S {\n  void x(int i);\n};\n\nvoid S::x(int i = 12) {}\n// CHECK-NOTES: [[@LINE-1]]:11: warning: declaring a parameter with a default argument is disallowed [fuchsia-default-arguments-declarations]\n// CHECK-FIXES: void S::x(int i) {}"
+    }
+  ]
+}

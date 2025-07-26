@@ -1,0 +1,42 @@
+{
+  "name": "ImplicitFunctionalInterface",
+  "language": "java",
+  "description": "\n            Reports functional interfaces that were not explicitly declared as such with\n            the annotation `@FunctionalInterface`. If an interface is accidentally a functional\n            interface, then it should bear a `@SuppressWarnings(\"PMD.ImplicitFunctionalInterface\")`\n            annotation to make this clear.\n        ",
+  "example": "// The intent on this declaration is unclear, and the rule will report it.\n            public interface MyInterface {\n                void doSomething();\n            }\n\n            // This is clearly intended as a functional interface.\n            @FunctionalInterface\n            public interface MyInterface {\n                void doSomething();\n            }\n\n            // This is clearly NOT intended as a functional interface.\n            @SuppressWarnings(\"PMD.ImplicitFunctionalInterface\")\n            public interface MyInterface {\n                void doSomething();\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 31,
+  "branches": 6,
+  "apis": 5,
+  "test": [
+    {
+      "description": "Basic test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\ninterface Foo {}\n\ninterface Bar { // warn\n    void run();\n}\n\n@FunctionalInterface\ninterface Baz { // no warning\n}\n        "
+    },
+    {
+      "description": "Inheritance test",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n@FunctionalInterface\ninterface Foo {\n    void x();\n}\n\ninterface Bar extends Foo { // warn\n    default void run() {\n    }\n}\n        "
+    },
+    {
+      "description": "ImplicitFunctionalInterface should not be reported on sealed interfaces #5724",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public sealed interface MyInterface permits MyInterface1, MyInterface2 {\n                String message();\n            }\n            interface MyInterface1 {}\n            interface MyInterface2 {}\n        "
+    },
+    {
+      "description": "Annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public @interface MyInterface {\n                String message();\n            }\n            "
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "ChainedComparison",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-chained-comparison",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 149,
+  "branches": 18,
+  "apis": 96,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        7,
+        13,
+        19,
+        25,
+        31,
+        37,
+        43,
+        47,
+        59,
+        65,
+        86,
+        91
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++98-or-later --extra-arg=-Wno-error=parentheses %s bugprone-chained-comparison %t\n\nvoid badly_chained_1(int x, int y, int z)\n{\n    bool result = x < y < z;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 < v1 < v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_2(int x, int y, int z)\n{\n    bool result = x <= y <= z;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 <= v1 <= v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_3(int x, int y, int z)\n{\n    bool result = x > y > z;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 > v1 > v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_4(int x, int y, int z)\n{\n    bool result = x >= y >= z;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 >= v1 >= v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_5(int x, int y, int z)\n{\n    bool result = x == y != z;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 == v1 != v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_6(bool x, bool y, bool z)\n{\n    bool result = x != y == z;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 != v1 == v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_multiple(bool a, bool b, bool c, bool d, bool e, bool f, bool g, bool h)\n{\n    bool result = a == b == c == d == e == f == g == h;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 == v1 == v2 == v3 == v4 == v5 == v6 == v7' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_limit(bool v[29])\n{\n// CHECK-MESSAGES: :[[@LINE+1]]:19: warning: chained comparison 'v0 == v1 == v2 == v3 == v4 == v5 == v6 == v7 == v8 == v9 == v10 == v11 == v12 == v13 == v14 == v15 == v16 == v17 == v18 == v19 == v20 == v21 == v22 == v23 == v24 == v25 == v26 == v27 == v28' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n    bool result = v[0] == v[1] == v[2] == v[3] == v[4] == v[5] == v[6] == v[7] ==\n                  v[8] == v[9] == v[10] == v[11] == v[12] == v[13] == v[14] ==\n                  v[15] == v[16] == v[17] == v[18] == v[19] == v[20] == v[21] ==\n                  v[22] == v[23] == v[24] == v[25] == v[26] == v[27] == v[28];\n\n}\n\nvoid badly_chained_parens2(int x, int y, int z, int t, int a, int b)\n{\n    bool result = (x < y) < (z && t) > (a == b);\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:19: warning: chained comparison 'v0 < v1 > v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid badly_chained_inner(int x, int y, int z, int t, int u)\n{\n    bool result = x && y < z < t && u;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:24: warning: chained comparison 'v0 < v1 < v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nvoid properly_chained_1(int x, int y, int z)\n{\n    bool result = x < y && y < z;\n}\n\nvoid properly_chained_2(int x, int y, bool z)\n{\n    bool result = (x < y) == z;\n}\n\nstruct Value {\n    bool operator<(const Value&) const;\n};\n\nbool operator==(bool, const Value&);\n\nbool badWithCppOperator(Value a, Value b, Value c) {\n    return a < b == c;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:12: warning: chained comparison 'v0 < v1 == v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]\n\nbool mixedBinaryAndCpp(Value a, Value b, bool c) {\n    return a < b == c;\n}\n// CHECK-MESSAGES: :[[@LINE-2]]:12: warning: chained comparison 'v0 < v1 == v2' may generate unintended results, use parentheses to specify order of evaluation or a logical operator to separate comparison expressions [bugprone-chained-comparison]"
+    }
+  ]
+}

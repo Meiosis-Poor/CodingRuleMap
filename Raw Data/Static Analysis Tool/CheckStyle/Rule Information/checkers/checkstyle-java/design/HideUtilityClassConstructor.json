@@ -1,0 +1,46 @@
+{
+  "name": "HideUtilityClassConstructor",
+  "language": "java",
+  "description": "<div>\n Makes sure that utility classes (classes that contain only static methods or fields in their API)\n do not have a public constructor.\n </div>\n\n <p>\n Rationale: Instantiating utility classes does not make sense.\n Hence, the constructors should either be private or (if you want to allow subclassing) protected.\n A common mistake is forgetting to hide the default constructor.\n </p>\n\n <p>\n If you make the constructor protected you may want to consider the following constructor\n implementation technique to disallow instantiating subclasses:\n </p>\n <pre>\n public class StringUtils // not final to allow subclassing\n {\n   protected StringUtils() {\n     // prevents calls from subclass\n     throw new UnsupportedOperationException();\n   }\n\n   public static int count(char c, String s) {\n     // ...\n   }\n }\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 117,
+  "branches": 14,
+  "apis": 24,
+  "test": [
+    {
+      "description": "Auto test from InputHideUtilityClassConstructorIgnoreAnnotationBy.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.hideutilityclassconstructor;\n@Skip\npublic class InputHideUtilityClassConstructorIgnoreAnnotationBy {\n  public static void func() {}\n}\n@SkipWithParam(name = \"tool1\")\nclass ToolClass1 {\n  public static void func() {}\n}\n@SkipWithAnnotationAsParam(skip = @Skip)\nclass ToolClass2 {\n  public static void func() {}\n}\n@CommonAnnot\n@Skip\nclass ToolClass3 {\n  public static void func() {}\n}\n@CommonAnnot \nclass ToolClass4 {\n  public static void func() {}\n}\n@interface Skip {}\n@interface SkipWithParam {\n  String name();\n}\n@interface SkipWithAnnotationAsParam {\n  Skip skip();\n}\n@interface CommonAnnot {}"
+    },
+    {
+      "description": "Auto test from InputHideUtilityClassConstructorIgnoreAnnotationByFullyQualifiedName.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.hideutilityclassconstructor;\n@Deprecated \npublic class InputHideUtilityClassConstructorIgnoreAnnotationByFullyQualifiedName {\n  public static void func() {}\n}\n@java.lang.Deprecated\nclass DeprecatedClass {\n  public static void func() {}\n}\n@interface Deprecated {}"
+    },
+    {
+      "description": "Auto test from InputHideUtilityClassConstructorInnerStaticClasses.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.hideutilityclassconstructor;\npublic class InputHideUtilityClassConstructorInnerStaticClasses { \n    private static int value = 0;\n    public static void foo (int val) { value = val;}\n    public static class Inner {\n        public int foo;\n    }\n    public static class Inner2 {\n        public static int foo;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputHideUtilityClassConstructorPublic.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.hideutilityclassconstructor;\npublic class InputHideUtilityClassConstructorPublic { \n    public InputHideUtilityClassConstructorPublic() {}\n    private static int value = 0;\n    public static void foo (int val) { value = val;}\n}"
+    }
+  ]
+}

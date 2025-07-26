@@ -1,0 +1,33 @@
+{
+  "name": "TemporaryObjects",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - zircon-temporary-objects",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 58,
+  "branches": 4,
+  "apis": 32,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        45,
+        47,
+        51,
+        54,
+        60,
+        62,
+        66,
+        69,
+        76,
+        78,
+        85,
+        86
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s zircon-temporary-objects %t -- \\\n// RUN:   -config=\"{CheckOptions: {zircon-temporary-objects.Names: 'Foo;NS::Bar'}}\" \\\n// RUN:   -header-filter=.*\n\n// Should flag instances of Foo, NS::Bar.\n\nclass Foo {\npublic:\n  Foo() = default;\n  Foo(int Val) : Val(Val){};\n\nprivate:\n  int Val;\n};\n\nnamespace NS {\n\nclass Bar {\npublic:\n  Bar() = default;\n  Bar(int Val) : Val(Val){};\n\nprivate:\n  int Val;\n};\n\n} // namespace NS\n\nclass Bar {\npublic:\n  Bar() = default;\n  Bar(int Val) : Val(Val){};\n\nprivate:\n  int Val;\n};\n\nint func(Foo F) { return 1; };\n\nint main() {\n  Foo F;\n  Foo *F2 = new Foo();\n  new Foo();\n  Foo();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: creating a temporary object of type 'Foo' is prohibited\n  Foo F3 = Foo();\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: creating a temporary object of type 'Foo' is prohibited\n\n  Bar();\n  NS::Bar();\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: creating a temporary object of type 'NS::Bar' is prohibited\n\n  int A = func(Foo());\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: creating a temporary object of type 'Foo' is prohibited\n\n  Foo F4(0);\n  Foo *F5 = new Foo(0);\n  new Foo(0);\n  Foo(0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: creating a temporary object of type 'Foo' is prohibited\n  Foo F6 = Foo(0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: creating a temporary object of type 'Foo' is prohibited\n\n  Bar(0);\n  NS::Bar(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: creating a temporary object of type 'NS::Bar' is prohibited\n\n  int B = func(Foo(0));\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: creating a temporary object of type 'Foo' is prohibited\n}\n\nnamespace NS {\n\nvoid f() {\n  Bar();\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: creating a temporary object of type 'NS::Bar' is prohibited\n  Bar(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: creating a temporary object of type 'NS::Bar' is prohibited\n}\n\n} // namespace NS\n\ntemplate <typename Ty>\nTy make_ty() { return Ty(); }\n// CHECK-MESSAGES: :[[@LINE-1]]:23: warning: creating a temporary object of type 'Foo' is prohibited\n// CHECK-MESSAGES: :[[@LINE-2]]:23: warning: creating a temporary object of type 'NS::Bar' is prohibited\n\nvoid ty_func() {\n  make_ty<Bar>();\n  make_ty<NS::Bar>();\n  make_ty<Foo>();\n}\n\n// Inheriting the disallowed class does not trigger the check.\n\nclass Bingo : NS::Bar {}; // Not explicitly disallowed\n\nvoid f2() {\n  Bingo();\n}\n\ntemplate <typename Ty>\nclass Quux : Ty {};\n\nvoid f3() {\n  Quux<NS::Bar>();\n  Quux<Bar>();\n}"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "StaticallyConstructedObjects",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - fuchsia-statically-constructed-objects",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 51,
+  "branches": 3,
+  "apis": 24,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        27,
+        28,
+        30,
+        31,
+        36,
+        37,
+        39,
+        40,
+        49,
+        50,
+        55,
+        56,
+        76,
+        77,
+        81,
+        82
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s fuchsia-statically-constructed-objects %t\n\n// Trivial static is fine\nstatic int i;\n\nclass ClassWithNoCtor {};\n\nclass ClassWithCtor {\npublic:\n  ClassWithCtor(int Val) : Val(Val) {}\nprivate:\n  int Val;\n};\n\nclass ClassWithConstexpr {\npublic:\n  ClassWithConstexpr(int Val1, int Val2) : Val(Val1) {}\n  constexpr ClassWithConstexpr(int Val) : Val(Val) {}\n\nprivate:\n  int Val;\n};\n\nClassWithNoCtor A;\nClassWithConstexpr C(0);\nClassWithConstexpr E(0, 1);\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  ClassWithConstexpr E(0, 1);\nClassWithCtor G(0);\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  ClassWithCtor G(0);\n\nstatic ClassWithNoCtor A2;\nstatic ClassWithConstexpr C2(0);\nstatic ClassWithConstexpr E2(0, 1);\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  static ClassWithConstexpr E2(0, 1);\nstatic ClassWithCtor G2(0);\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  static ClassWithCtor G2(0);\n\nstruct StructWithConstexpr { constexpr StructWithConstexpr(int Val) {} };\nstruct StructWithNoCtor {};\nstruct StructWithCtor { StructWithCtor(); };\n\nStructWithNoCtor SNoCtor;\nStructWithConstexpr SConstexpr(0);\nStructWithCtor SCtor;\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  StructWithCtor SCtor;\n\nstatic StructWithConstexpr SConstexpr2(0);\nstatic StructWithNoCtor SNoCtor2;\nstatic StructWithCtor SCtor2;\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  static StructWithCtor SCtor2;\n\nextern StructWithCtor SCtor3;\n\nclass ClassWithStaticMember {\nprivate:\n  static StructWithNoCtor S;\n};\n\nClassWithStaticMember Z();\n\nclass S {\n  int Val;\npublic:\n  constexpr S(int i) : Val(100 / i) {}\n  int getVal() const { return Val; }\n};\n\nstatic S s1(1);\nstatic S s2(0); \n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT: static S s2(0);\n\nextern int get_i();\nstatic S s3(get_i());\n// CHECK-MESSAGES: [[@LINE-1]]:1: warning: static objects are disallowed; if possible, use a constexpr constructor instead [fuchsia-statically-constructed-objects]\n// CHECK-MESSAGES-NEXT:  static S s3(get_i());\n\nvoid f() {\n  // Locally static is fine\n  static int i;\n  static ClassWithNoCtor A2;\n  static ClassWithConstexpr C2(0);\n  static ClassWithConstexpr E2(0, 1);\n  static ClassWithCtor G2(0);\n}"
+    }
+  ]
+}

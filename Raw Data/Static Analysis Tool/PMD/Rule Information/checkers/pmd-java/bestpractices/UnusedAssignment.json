@@ -1,0 +1,1223 @@
+{
+  "name": "UnusedAssignment",
+  "language": "java",
+  "description": "\n            Reports assignments to variables that are never used before the variable is overwritten,\n            or goes out of scope. Unused assignments are those for which\n            1. The variable is never read after the assignment, or\n            2. The assigned value is always overwritten by other assignments before the next read of\n            the variable.\n\n            The rule tracks assignements to fields of `this`, and static fields of the current class.\n            This may cause some false positives in timing-sensitive concurrent code, which the rule cannot detect.\n\n            The rule may be suppressed with the standard `@SuppressWarnings(\"unused\")` tag.\n\n            The rule subsumes {% rule \"UnusedLocalVariable\" %}, and {% rule \"UnusedFormalParameter\" %}.\n            Those violations are filtered\n            out by default, in case you already have enabled those rules, but may be enabled with the property\n            `reportUnusedVariables`. Variables whose name starts with `ignored` or `unused` are filtered out, as\n            is standard practice for exceptions.\n\n            Limitations:\n            * The rule currently cannot know which method calls throw exceptions, or which exceptions they throw.\n            In the body of a try block, every method or constructor call is assumed to throw.  This may cause false-negatives.\n            The only other language construct that is assumed to throw is the `throw` statement, in particular,\n            things like `assert` statements, or NullPointerExceptions on dereference are ignored.\n            * The rule cannot resolve assignments across constructors, when they're called with the special\n            `this(...)` syntax. This may cause false-negatives.\n\n            Both of those limitations may be partly relaxed in PMD 7.\n        ",
+  "example": "class A {\n                // this field initializer is redundant,\n                // it is always overwritten in the constructor\n                int f = 1;\n\n                A(int f) {\n                    this.f = f;\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 234,
+  "branches": 39,
+  "apis": 15,
+  "test": [
+    {
+      "description": "NPE on nested record decl #3224",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test {\n                public record NestedRecord(int x, int y) { }\n            }\n            "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int b) {\n        for (int i = 0; i < 10; i++) {\n            throw new Exception();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "DD anomaly",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        i=1;\n        if (i==2) {}\n    }\n}\n        "
+    },
+    {
+      "description": "DU anomaly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n    }\n}\n        "
+    },
+    {
+      "description": "DU anomaly (reportUnusedVariables)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n    }\n}\n        "
+    },
+    {
+      "description": "UR anomaly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i;\n        if (i == 0) {}\n    }\n}\n        "
+    },
+    {
+      "description": "Conditional flow 0",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        int j = 0;\n        int z = 0; // unused\n        if (i < 10) {\n            j = i;\n            print(j);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Conditional flow 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        int j = 0;\n        int z = 0; // unused\n        if (i < 10) {\n            j = i;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "Conditional flow 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        int j = 0; // unused\n        int z = 0;\n        if (i < 10) {\n            j = i;\n        } else {\n            j = z;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "Conditional flow with abrupt throw",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        int j = 0; // unused\n        int z = 0;\n        if (i < 10) {\n            j = i; // unused\n            throw new Exception();\n        } else {\n            j = z;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "Conditional flow with abrupt return",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        int j = 0;  // unused\n        int z = 0;\n        if (i < 10) {\n            j = i;  // unused\n            return;\n        } else {\n            j = z;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "Local variable in loop",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        2,
+        10,
+        11,
+        19
+      ],
+      "code": "\npublic class LoopTest {\n    public static void main(String[] args) {\n        int[] a = {1,2,3};\n        int[] b = {4,5,6};\n        int[] c = {7,8,9};\n        for (int i : a) {\n            if (i == 0) {\n                break;\n            } else {\n                boolean fail = false;\n                for (int j : b) {\n                    boolean match = false;\n                    for (int k : c) {\n                        if (k == 42) {\n                            match = true;\n                        }\n                    }\n                    if (!match) {\n                        fail = true;\n                    }\n                }\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#408 Assert statements causing ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AssertTest {\n    public void test() {\n        final String s = \"\";\n        assert(s != null);\n\n        System.out.println(s);\n\n        final Double d = 9;\n        assert(d != null);\n\n        System.out.println(d);\n\n        final String k = \"k\";\n        assert(k != null);\n\n        System.out.println(k);\n    }\n}\n        "
+    },
+    {
+      "description": "#1905 [java] DataflowAnomalyAnalysis Rule in right order : Case 1. DU-Anomaly(b)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int b = 0 ;\n        a = a + b ;\n        b = a + b ;\n    }\n}\n        "
+    },
+    {
+      "description": "For loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        for(int i = 0 ; i <= 10; i ++){\n            a = a+3;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "For loop 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        for(int i = 0 ; i <= 10; i ++){\n            a = i * 3;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "For loop 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        for(int i = 0 ; i <= 10; i ++){\n            a = i * 3;\n        }\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "For loop 4",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        for(int i = 0 ; (i + a) <= 10; i ++){\n            a = i * 3;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Foreach",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int[] b = new int[10];\n        for(int a : b){\n            a = a+3;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Foreach unused",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        4
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int[] b = new int[10];\n        for(int a : b){\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        while (i < 30) {\n            a = a + 3;\n            i += 3;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        7
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0; // unused\n        while (a < 30) {\n            a = a + 3;\n            i = 5; // unused (kills itself)\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop with break",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        while (true) {\n            if (a >= 30) {\n                i = a + 1; // unused\n                break;\n            }\n            a = a + 3;\n            i = i + 1; // used by itself\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop without break (control case)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0; // used by compound below\n        int i = 0;\n        while (true) {\n            if (a >= 30) {\n                i += a + 1; // unused by below\n                // break;  // no break here\n            }\n            a = a + 3;\n            i = a + 2; // used by above\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop without break 2 (control case)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0; // unused now\n\n        outer:\n        while (true) {\n            a += 2;\n\n            while (true) {\n                if (a >= 30) {\n                    i += a + 1; // unused because of i = a + 2\n                    // break outer;\n                }\n                a = a + 3;\n                i = a + 2;  // killed by below\n            }\n\n            i = 2; // used by print\n        }\n\n        System.out.println(i); // uses i = i + 1\n    }\n}\n        "
+    },
+    {
+      "description": "While loop without break 2 (control case)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0; // unused now\n\n        outer:\n        while (true) {\n            a += 2;\n\n            while (true) {\n                if (a >= 30) {\n                    i += a + 1; // unused because of i = 2\n                    break;\n                }\n                a = a + 3;\n                i = a + 2;  // used by i += a + 1\n            }\n\n            i = 2; // used by print\n        }\n\n        System.out.println(i); // uses i = i + 1\n    }\n}\n        "
+    },
+    {
+      "description": "While loop with named break 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0; // unused now\n\n        outer:\n        while (true) {\n            a += 2;\n\n            while (true) {\n                if (a >= 30) {\n                    i += a + 1; // used by print\n                    break outer;\n                }\n                a = a + 3;\n                i = a + 2;  // used by i += a + 1\n            }\n\n            i = 2; // used by print\n        }\n\n        System.out.println(i); // uses i = i + 1\n    }\n}\n        "
+    },
+    {
+      "description": "While loop with continue",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        while (true) {\n            if (a >= 30) {\n                i = a + 1; // used by below\n                continue;\n            }\n            a = a + 3;\n            i = i + 1; // used by itself\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop with continue 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        while (a < 50) {\n            if (i >= 30) {\n                a = i + 1; // used by loop condition\n                continue;\n            }\n            i++; // used by itself\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "While loop with break (control for continue test above)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        while (a < 50) {\n            if (i >= 30) {\n                a = i + 1; // unused\n                break;\n            }\n            i++; // used by itself\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Do while 0",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        do {\n            a = a+3;\n            i += 3;\n        } while (i < 30);\n   }\n}\n        "
+    },
+    {
+      "description": "Do while 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        do {\n            a = i+3;\n            i += 3;\n        } while ((a+i) < 30);\n   }\n}\n        "
+    },
+    {
+      "description": "Do while with break",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        8
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        do {\n            if (a >= 20) {\n                i = 4;\n                a *= 5;\n                break;\n            }\n\n            a = i + 3;\n            i += 3;\n        } while (i < 30);\n   }\n}\n        "
+    },
+    {
+      "description": "Do while with continue",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0;\n        int i = 0;\n        do {\n            if (a >= 20) {\n                i = 4;  // used by condition\n                a *= 5;\n                continue;\n            }\n\n            a = i + 3;\n            i += 3;\n        } while (i < 30);\n   }\n}\n        "
+    },
+    {
+      "description": "Switch statement 0",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        6,
+        8,
+        10,
+        12
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i){\n            case 1 : a = a+1;\n            break;\n            case 2 : a = a+2;\n            break;\n            case 3 : a = a+3;\n            break;\n            default : a = a + 1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Switch statement 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i){\n            case 1 : a = 1;\n            break;\n            case 2 : a = 2;\n            break;\n            case 3 : a = 3;\n            break;\n            default : a = a + 1;\n        }\n\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch statement 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i){\n            case 1 : a = 1;\n                     if (args.length > 0) break; // else fallthrough\n            case 2 : a = 2; break;\n            case 3 : a = 3; break;\n            default : a = a + 1;\n        }\n\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch fallthrough",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i){\n            case 1 : a = 1; // unused\n            // break; // no break\n            case 2 : a = 2;\n            break;\n            case 3 : a = 3;\n            break;\n            default : a = a + 1;\n        }\n\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch fallthrough 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i){\n            case 1 : a = a+1;\n            case 2 : a = a+2;\n            case 3 : a = a+3;\n            default : a = a + 0; // this one\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Switch non-fallthrough",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i) {\n            case 1 -> a = 1;\n            case 2 -> a = 2;\n            case 3 -> a = 3;\n            default -> a = a + 1;\n        }\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch non-fallthrough blocks",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        int i = 0 ;\n        switch(i) {\n            case 1 -> a = 1;\n            case 2 -> {\n                if (args.length > 0) {\n                    i = 4;\n                    break;\n                }\n                a = 2;\n            }\n            case 3 -> a = 3;\n            default -> a = a + 1;\n        }\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch expr non-fallthrough",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        6,
+        7,
+        8,
+        9
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        a = switch(i) { // this is used\n            // all those are unused\n            case 1 -> a = 1;\n            case 2 -> a = 2;\n            case 3 -> a = 3;\n            default -> a = a + 1;\n        };\n\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch expr with yield",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        6,
+        9,
+        13,
+        14
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int a = 0 ;\n        a = switch(i) { // this is used\n            // all those are unused\n            case 1 -> a = 1;\n            case 2 -> {\n                if (a > 0) {\n                    yield a++;\n                }\n                yield 4;\n            }\n            case 3 -> a = 3;\n            default -> a = a + 1;\n        };\n\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "Usage as LHS of method",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int t1 = 0 ;\n        Test test = new Test() ;\n        t1 = test.simpleTest(t1) ;\n    }\n    Test simpleTest(Test t) {return t;}\n}\n        "
+    },
+    {
+      "description": "Assignment in operand",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int t1 = 0 ;\n        int t2 = 0 ;\n        Test test = new Test();\n        if((t1 = test.simpleTest(t1)) == t2);\n    }\n    Test simpleTest(Test t) {return t;}\n}\n        "
+    },
+    {
+      "description": "Assignment in operand 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int t1 = 0 ;\n        int t2 = 0 ;\n        // the left assignment reaches the right of the ==\n        if (   (t1 = t1 + t2)\n            == (t1 = t2 * t1) ); // only this assignment is unused\n    }\n}\n        "
+    },
+    {
+      "description": "Assignment in operand 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int t1 = 0 ;\n\n        Test test = new Test();\n        if( (t1 = test.simpleTest(t1)) == t1);\n   }\n    Test simpleTest(Test t) {return t;}\n}\n        "
+    },
+    {
+      "description": "Assignment in operand 4",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        4,
+        6
+      ],
+      "code": "\nclass Test{\n    public static void main(String[] args){\n        int t1 = 0;\n        int t2 = 0;\n        Test test = new Test() ;\n        if( t1 == (t1 = test.simpleTest(t1))) ;\n   }\n    Test simpleTest(Test t) {return t;}\n}\n        "
+    },
+    {
+      "description": "#1749 DD False Positive in DataflowAnomalyAnalysis",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Test {\n    public void test(){\n        int a = 0;\n        a = a + 3;\n    }\n}\n        "
+    },
+    {
+      "description": "Compound assignment",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Test {\n    public void test(){\n        int a = 0;\n        a += 3; // same with compound\n    }\n}\n        "
+    },
+    {
+      "description": "Another case",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\npublic class Test {\n    public void test(Test node, ScopeData before){\n       ScopeData iter = acceptOpt(node.getBody(), before.fork()); // this assignment is unused\n       iter = acceptOpt(node.getCondition(), before.fork());\n       iter = acceptOpt(node.getBody(), iter);\n    }\n    Test getBody() { return this; }\n    Test getCondition() { return this; }\n    ScopeData acceptOpt(Test node, ScopeData data) {return data;}\n    class ScopeData {ScopeData fork() {return this;}}\n}\n        "
+    },
+    {
+      "description": "Var usage in lambda (#1304)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Set;\npublic class Foo {\n\n    public boolean dummyMethod(final String captured, final Set<String> dummySet) {\n        captured = captured.trim();\n        return dummySet.stream().noneMatch(value -> value.equalsIgnoreCase(captured));\n    }\n\n}        "
+    },
+    {
+      "description": "Try/catch",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.io.*;\npublic class Foo {\n\n    public int foo() {\n        int a = 0;\n        try (Reader r = new StringReader(\"\")) {\n            a = r.read();\n        } catch (IOException e) {\n            a = -1;\n        }\n        return a;\n    }\n\n}        "
+    },
+    {
+      "description": "Try with several catches",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class Foo {\n\n    public int foo() {\n        int a;\n        try (Reader r = new StringReader(\"\")) {\n            a = r.read();\n        } catch (IOException e) {\n            a = -1;\n        } catch (IllegalArgumentException e) {\n            a = 2;\n        }\n        return a;\n    }\n\n}        "
+    },
+    {
+      "description": "Try with resources: resources should be used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class Foo {\n\n    public void foo() {\n        try (Reader r = new StringReader(\"\")) {\n\n        }\n    }\n\n}        "
+    },
+    {
+      "description": "Definitions in try block reach catch blocks through method calls (#3975)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n\n    void method() {\n        boolean halfway = false; // (line 4)\n\n        try {\n            halfway = true; // this may not fail so the catch block is unreachable (line 7)\n        } catch(Exception e) {\n            System.out.println(halfway);\n        }\n    }\n}\n\n\n"
+    },
+    {
+      "description": "Definitions in try block reach catch blocks through method calls 2 (#3975)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n\n    void method() {\n        boolean halfway = false;\n\n        try {\n            halfway = true;\n            trySomethingWhichFails(); // catch may be reached if this throws\n        } catch(Exception e) {\n            System.out.println(halfway);\n        }\n    }\n    void trySomethingWhichFails() throws Exception {}\n}\n\n\n"
+    },
+    {
+      "description": "Definitions in try block reach catch blocks through method calls 3 (#3975)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    void method() {\n        boolean halfway = false;\n\n        try {\n            trySomethingWhichFails(); // catch may be reached if this throws (initializer would be used)\n            halfway = true;\n        } catch(Exception e) {\n            System.out.println(halfway);\n        }\n    }\n    void trySomethingWhichFails() throws RuntimeException {}\n}\n\n\n"
+    },
+    {
+      "description": "Try/catch finally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class Foo {\n\n    public int foo() {\n        int a = 0; // used in catch\n        try (Reader r = new StringReader(\"\")) {\n            a = r.read();  // used in finally\n        } catch (IOException e) {\n            a = -1; // used in finally\n        } finally {\n            print(a);\n        }\n        return 0;\n    }\n\n}        "
+    },
+    {
+      "description": "Try/catch finally 3",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.io.*;\npublic class Foo {\n\n    public int foo() {\n        int a = 0;\n        try (Reader r = new StringReader(\"\")) {\n            a = r.read();  // used in return\n        } catch (IOException e) {\n            a = -1; // used in return\n        } finally {\n            // don't use a\n        }\n        return a;\n    }\n\n}        "
+    },
+    {
+      "description": "Try/catch finally 4",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        5,
+        7,
+        9
+      ],
+      "code": "\nimport java.io.*;\npublic class Foo {\n\n    public int foo() {\n        int a = 0; // overwritten in try body & catch\n        try (Reader r = new StringReader(\"\")) {\n            a = r.read();  // overwritten in finally\n        } catch (IOException e) {\n            a = -1; // overwritten in finally\n        } finally {\n            a = 0;\n        }\n        return a;\n    }\n\n}        "
+    },
+    {
+      "description": "Nested finally",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        8,
+        11,
+        13,
+        16
+      ],
+      "code": "\n            import java.io.IOException;\n            import java.io.Reader;\n            import java.io.StringReader;\n\n            public class Foo {\n\n                public int foo() {\n                    int a = 0;\n                    try (Reader r = new StringReader(\"\")) {\n                        try (Reader r = new StringReader(\"\")) {\n                            a = r.read();       // overwritten in finally\n                        } finally {\n                            a = 0; // overwritten in enclosing catch, if `read()` threw, otherwise in enclosing finally\n                        }\n                    } catch (IOException e) {\n                        a = -1; // overwritten in finally\n                    } finally {\n                        a = 1;\n                    }\n                    return a;\n                }\n\n            }\n        "
+    },
+    {
+      "description": "Try/catch finally in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\nimport java.io.Reader;\nimport java.io.StringReader;\n\nclass Foo {\n\n    public int foo() {\n        int a = 0;\n        while (a > 10) {\n            try (Reader r = new StringReader(\"\")) {\n                r.read();\n            } catch (IOException e) {\n                a = -1; // used in finally even if break\n                break;\n            } finally {\n                a++;\n            }\n        }\n        return a;\n    }\n\n}\n        "
+    },
+    {
+      "description": "Abstract method NPE",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\nabstract class Foo {\n\n    public abstract int foo();\n\n    interface Bar {\n        int bar();\n    }\n\n}\n        "
+    },
+    {
+      "description": "FP in finally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\nclass Foo {\n    public Object intercept(Object proxy) throws Throwable {\n        Object oldProxy = null; // FP here\n        try {\n            oldProxy = new Object[] { proxy };\n            return null;\n        }\n        finally {\n            System.out.println(oldProxy);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Lambda captured var use",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.function.Function;\nimport java.util.stream.Stream;\n\nclass Foo {\n\n  public Stream<Object> decode() {\n    Stream<List<String>> splitEvents = null;\n    return map(events -> {\n      return unmarshal(events, splitEvents);\n    });\n  }\n  Stream<Object> map(Function<List<String>, Object> f) {return null;}\n  Object unmarshal(List<String> items, Stream<List<String>> splitEvts) { return null;}\n}\n        "
+    },
+    {
+      "description": "Lambda assignment",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\nclass Foo {\n\n  public void decode() {\n    doSomething(events -> {\n      int k = 0;\n      return k = 2;\n    });\n  }\n\n}\n        "
+    },
+    {
+      "description": "Lambda returns 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        9,
+        11
+      ],
+      "code": "\n            import java.util.ArrayList;\n            import java.util.List;\n            import java.util.function.Function;\n            import java.util.stream.Stream;\n\n            class Foo {\n\n                public Stream<Object> decode() {\n                    Stream<List<String>> splitEvents = null;\n                    return map(events -> {\n                        events = new ArrayList<>(events);\n                        return null;\n                    });\n                }\n\n                Stream<Object> map(Function<List<String>, Object> f) { f.apply(null); return null; }\n            }\n            "
+    },
+    {
+      "description": "FP in try",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage foo;\nimport java.lang.reflect.Method;\nclass Foo {\n\n    public Object getSubject() {\n      try {\n        Object subject = Other.currentUserMethod.invoke();\n        if (subject == null) {\n          subject = Other.anonymousSubjectMethod.invoke(0);\n        }\n        return subject;\n      } catch (Exception ex) {\n        throw new RuntimeException(\"Failed to obtain SubjectHandle\", ex);\n      }\n    }\n\n    static class Other {\n        Method currentUserMethod;\n        Method anonymousSubjectMethod;\n    }\n}\n        "
+    },
+    {
+      "description": "Field initializers 0",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f2 = f1++;\n\n}\n        "
+    },
+    {
+      "description": "Field initializers 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f2 = f1 = 1, f3 = f2;\n\n}\n        "
+    },
+    {
+      "description": "Field initializers 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f2 = this.f1 = 1, f3 = f2;\n\n}\n        "
+    },
+    {
+      "description": "Field initializers and ctor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f2 = 0;\n\n    Foo(int f) {\n        f1 = f;\n    }\n\n    Foo(int f, int g) {\n        f1 = f;\n        f2 = f + g;\n    }\n\n}\n        "
+    },
+    {
+      "description": "Field initializers and ctor with this",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f2 = 0;\n\n    Foo(int f) {\n        this.f1 = f;\n    }\n\n    Foo(int f, int g) {\n        this.f1 = f;\n        this.f2 = f + g;\n    }\n\n}\n        "
+    },
+    {
+      "description": "Field initializers and ctor with this, shadowing",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f2 = 0;\n\n    Foo(int f1) {\n        this.f1 = f1;\n    }\n\n    Foo(int f1, int g) {\n        this.f1 = f1;\n        this.f2 = f1 + g;\n    }\n\n}\n        "
+    },
+    {
+      "description": "Field initializers and ctor with this, field access",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n\n    Bar f1 = new Bar();\n    Bar f2 = null;\n\n    Foo(Bar f1) {\n        this.f1.field = f1;\n    }\n\n    Foo(Bar f1, Bar g) {\n        this.f1 = f1;\n        this.f2 = f1.plus(g);\n    }\n\n    static class Bar { Bar field; Bar plus(Bar other) { return other; }}\n}\n        "
+    },
+    {
+      "description": "Field initializers and ctor",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        11
+      ],
+      "code": "\nclass Foo {\n\n    int f1 = 0;\n    int f3 = 0;\n\n    Foo(int f) {\n        f1 = f;\n    }\n\n    {\n        f1 = 1;\n    }\n\n    Foo(int f, int g) {\n        f1 = f;\n        f2 = f + g;\n    }\n\n}\n        "
+    },
+    {
+      "description": "Static initializer",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.annotation.Annotation;\nclass Foo {\n\tprivate static Class<? extends Annotation> ejbRefClass;\n\n\tprivate static Class<? extends Annotation> webServiceRefClass;\n\n\tstatic {\n\t\ttry {\n\t\t\tClass<? extends Annotation> clazz = (Class<? extends Annotation>)\t\t\t\t\tClass.forName(\"javax.xml.ws.WebServiceRef\");\n\t\t\twebServiceRefClass = clazz;\n\t\t} catch (ClassNotFoundException ex) {\n\t\t\twebServiceRefClass = null;\n\t\t}\n\n\t\ttry {\n\t\t\tClass<? extends Annotation> clazz = (Class) Class.forName(\"javax.ejb.EJB\");\n\t\t\tejbRefClass = clazz;\n\t\t} catch (ClassNotFoundException ex) {\n\t\t\tejbRefClass = null;\n\t\t}\n\t}\n\n\n\tprivate static Class<? extends Annotation> other = webServiceRefClass;\n\n}\n        "
+    },
+    {
+      "description": "FP with anonymous classes on the way",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.security.AccessController.getProtectionDomain;\n\nimport java.lang.reflect.*;\nimport java.lang.invoke.*;\nimport java.security.*;\nimport java.util.ArrayList;\nimport java.util.List;\n\nimport net.sourceforge.pmd.FooRule;\n\nclass Foo {\n    private static final Method privateLookupInMethod;\n\n    private static final Method lookupDefineClassMethod;\n\n    private static final Method classLoaderDefineClassMethod;\n\n    private static final ProtectionDomain PROTECTION_DOMAIN;\n\n    private static final Throwable THROWABLE;\n\n    private static final List<Method> OBJECT_METHODS = new ArrayList<Method>();\n\n    static {\n        Method privateLookupIn;\n        Method lookupDefineClass;\n        Method classLoaderDefineClass;\n        ProtectionDomain protectionDomain;\n        Throwable throwable = null;\n        try {\n            privateLookupIn = (Method) AccessController.doPrivileged(new PrivilegedExceptionAction() {\n                public Object run() throws Exception {\n                    try {\n                        return MethodHandles.class.getMethod(\"privateLookupIn\", Class.class, MethodHandles.Lookup.class);\n                    }\n                    catch (NoSuchMethodException ex) {\n                        return null;\n                    }\n                }\n            });\n            lookupDefineClass = (Method) AccessController.doPrivileged(new PrivilegedExceptionAction() {\n                public Object run() throws Exception {\n                    try {\n                        return MethodHandles.Lookup.class.getMethod(\"defineClass\", byte[].class);\n                    }\n                    catch (NoSuchMethodException ex) {\n                        return null;\n                    }\n                }\n            });\n            classLoaderDefineClass = (Method) AccessController.doPrivileged(new PrivilegedExceptionAction() {\n                public Object run() throws Exception {\n                    return ClassLoader.class.getDeclaredMethod(\"defineClass\",\n                                                               String.class, byte[].class, Integer.TYPE, Integer.TYPE, ProtectionDomain.class);\n                }\n            });\n            protectionDomain = getProtectionDomain(Foo.class);\n            AccessController.doPrivileged(new PrivilegedExceptionAction() {\n                public Object run() throws Exception {\n                    Method[] methods = Object.class.getDeclaredMethods();\n                    for (Method method : methods) {\n                        if (\"finalize\".equals(method.getName())\n                            || (method.getModifiers() & (Modifier.FINAL | Modifier.STATIC)) > 0) {\n                            continue;\n                        }\n                        OBJECT_METHODS.add(method);\n                    }\n                    return null;\n                }\n            });\n        }\n        catch (Throwable t) {\n            privateLookupIn = null;\n            lookupDefineClass = null;\n            classLoaderDefineClass = null;\n            protectionDomain = null;\n            throwable = t;\n        }\n        privateLookupInMethod = privateLookupIn;\n        lookupDefineClassMethod = lookupDefineClass;\n        classLoaderDefineClassMethod = classLoaderDefineClass;\n        PROTECTION_DOMAIN = protectionDomain;\n        THROWABLE = throwable;\n    }\n\n}\n        "
+    },
+    {
+      "description": "FP with array access 0",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\n\nclass Foo {\n    void foo(Map<String, String> map, String name, int[] arr) {\n        Integer index = map.get(name);\n        arr[index] = 4;\n    }\n\n}\n        "
+    },
+    {
+      "description": "FP with array access 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n\nclass Foo {\n    int foo(int index, int[] arr) {\n        arr = new int[4];\n        index = arr[index];\n        return index;\n    }\n\n}\n        "
+    },
+    {
+      "description": "FP with long field access",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\nclass Foo {\n    int foo(int index, int[] arr) {\n        index.method().field = 4; // not an assignment to index\n    }\n\n}\n        "
+    },
+    {
+      "description": "FP with long access 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n\nclass Foo {\n    int foo(int index, String[] arr) {\n        arr = new String[] { \"1\" };\n        arr[0].trim(); // this is a usage of arr\n    }\n\n}\n        "
+    },
+    {
+      "description": "FP with long access 3",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n\nclass Foo {\n    int foo(int index, String[] arr) {\n        arr = new String[] { \"1\" };\n        arr.clone().clone(); // this is a usage of arr\n    }\n\n}\n        "
+    },
+    {
+      "description": "FN with casts",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport static org.junit.Assert.assertSame;\nclass Foo {\n\n\tpublic void test(BeanFactory bf, Foo tb) {\n\t\t// Two calls\n\t\tFoo bean = (Foo) bf.getBean(\"annotatedBean\");\n\t\tbean = (Foo) bf.getBean(\"annotatedBean\");\n\t\tassertSame(tb, bean.getTestBean());\n\t\tassertSame(tb, bean.getTestBean2());\n\t}\n\tclass BeanFactory { Object getBean(String name) {return null;}}\n}\n        "
+    },
+    {
+      "description": "SuppressWarnings test (local)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        int j = 0;\n        @SuppressWarnings(\"unused\")\n        int z = 0; // unused\n        if (i < 10) {\n            j = i;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "SuppressWarnings test (method)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @SuppressWarnings(\"unused\")\n    void bar(int i) {\n        int j = 0;\n        int z = 0; // unused\n        if (i < 10) {\n            j = i;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "SuppressWarnings test (class)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@SuppressWarnings(\"unused\")\npublic class Foo {\n    void bar(int i) {\n        int j = 0;\n        int z = 0; // unused\n        if (i < 10) {\n            j = i;\n        }\n        System.out.println(j);\n    }\n}\n        "
+    },
+    {
+      "description": "Post-increment behavior",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        i++;\n        i++;\n    }\n}\n        "
+    },
+    {
+      "description": "Post-increment behavior 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        i++;\n        i++;\n        foo(i++);\n    }\n}\n        "
+    },
+    {
+      "description": "Pre-increment behavior",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        ++i;\n        ++i;\n    }\n}\n        "
+    },
+    {
+      "description": "Pre-increment behavior",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        ++i;\n        ++i;\n    }\n    void foo(int i) {}\n}\n        "
+    },
+    {
+      "description": "Pre-increment behavior 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        ++i;\n        ++i;\n        foo(++i);\n    }\n    void foo(int i) {}\n}\n        "
+    },
+    {
+      "description": "Pre-increment behavior 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        ++i;\n        ++i;\n        foo(++i);\n    }\n    void foo(int i) {}\n}\n        "
+    },
+    {
+      "description": "Pre-increment behavior 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int i=0;\n        --i;\n        --i;\n        foo(--i);\n    }\n    void foo(int i) {}\n}\n        "
+    },
+    {
+      "description": "Test local class",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int captured = 0;\n        int shadowed = 2;\n        class Local {\n            int f = captured;\n            Local(int shadowed) {\n                f = shadowed;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Test anonymous class",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        4,
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        int captured = 0;\n        int shadowed = 2;\n        new Foo(shadowed = 4) {\n            int f = captured;\n            {\n                f = 2;\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Test shortcut AND",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Foo {\n\n  void main(int[] bufline, int start, int bufsize) {\n\n    int i = 0, j, k = 0;\n\n    while (i < bufline.length\n        // this is AND\n        && bufline[j = start % bufsize] == bufline[k = ++start % bufsize]) {\n\n      bufline[j] = bufline[k];\n      i++;\n    }\n  }\n}\n\n        "
+    },
+    {
+      "description": "Test shortcut OR",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n\n  void main(int[] bufline, int start, int bufsize) {\n\n    int i = 0, j, k = 0;\n\n    while (i < bufline.length\n        // this is OR\n        || bufline[j = start % bufsize] == bufline[k = ++start % bufsize]) {\n\n      // here j, k might be their initializers\n      bufline[j] = bufline[k];\n      i++;\n    }\n  }\n}\n\n        "
+    },
+    {
+      "description": "Test shortcut OR",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        5,
+        7,
+        8
+      ],
+      "code": "\nclass Foo {\n\n  void main(int[] bufline, int start, int bufsize) {\n\n    int i = 0, j, k = 0;\n\n    if (  (i = 2) < (j = i)\n     ||   (j = k) == i       ) {\n\n        // reaching: i = 2, j = i, j = k\n\n    } else {\n        // reaching: i = 2, j = k  (not j = i)\n    }\n  }\n}\n\n        "
+    },
+    {
+      "description": "Test shortcut OR 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n\n  void main(int[] bufline, int start, int bufsize) {\n\n    int i = 0, j, k = 0;\n\n    if (  (i = 2) < (j = i)\n     ||   (j = k) == i       ) {\n\n        // reaching: i = 2, j = i, j = k\n        log(j);\n    } else {\n        // reaching: i = 2, j = k  (not j = i)\n    }\n  }\n}\n\n        "
+    },
+    {
+      "description": "Test shortcut AND",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        7
+      ],
+      "code": "\nclass Foo {\n\n  void main(int[] bufline, int start, int bufsize) {\n\n    int i = 0, j, k = 0;\n\n    if (  (i = 2) < (j = i)\n       && (j = k) == i       ) {\n\n        // reaching: i = 2, j = k  (not j = i)\n        log(j);\n    } else {\n        // reaching: i = 2, j = k, j = i\n    }\n  }\n}\n\n        "
+    },
+    {
+      "description": "Test shortcut AND 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n\n              void main(int[] bufline, int start, int bufsize) {\n\n                int i = 0, j, k = 0;\n\n                if (  (i = 2) < (j = i)\n                   && (j = k) == i       ) {\n\n                    // reaching: i = 2, j = k  (not j = i)\n                } else {\n                    // reaching: i = 2, j = k, j = i\n                    log(j);\n                }\n              }\n            }\n\n        "
+    },
+    {
+      "description": "Nested boolean logic 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n\n              void main(int[] bufline, int start, int bufsize) {\n\n                int i = 0, j, k = 0;\n\n                if ( (i = 1) > 0 || ((i = 2) < (j = i) && (j = k) == i) ) {\n                    // reaching: i = 1, i = 2, j = k  (not j = i)\n                } else {\n                    // reaching: i = 2, j = k, j = i  (not i = 1)\n                    log(j);\n                    log(i);\n                }\n              }\n            }\n\n        "
+    },
+    {
+      "description": "Nested boolean logic 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n\n              void main(int[] bufline, int start, int bufsize) {\n\n                int i = 0, j, k = 0;\n\n                if ( (i = 1) > 0 && ((i = 2) < (j = i) || (j = k) == i) ) {\n                    // reaching: i = 2, j = i, j = k  (not i = 1)\n                    log(i);\n                } else {\n                    // reaching: i = 1, i = 2, j = k, j = i\n                    log(j);\n                }\n              }\n            }\n\n        "
+    },
+    {
+      "description": "FP with argument",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n\n                static String replaceBackslash(String str) {\n                    int i = 0, len = str.length();\n                    char c;\n                    StringBuffer b = new StringBuffer();\n                    for (i = 0; i < len; i++)\n                        if ((c = str.charAt(i)) == '\\\\')\n                            b.append(\"\\\\\\\\\");\n                        else\n                            b.append(c);\n\n                    return b.toString();\n                }\n            }\n        "
+    },
+    {
+      "description": "DU anomaly false positive? #1304",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static org.apache.commons.lang3.StringUtils.trimToNull;\n            import java.util.Set;\n\n            public class DummyService {\n\n                public boolean dummyMethod(final String stringValue, final Set<String> dummySet) {\n                    final String trimmedValue = stringValue.trim();\n                    return dummySet.stream()\n                                   .noneMatch(value -> value.equalsIgnoreCase(trimmedValue));\n                }\n\n            }\n        "
+    },
+    {
+      "description": "DataflowAnomalyAnalysis DU false positive #399",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Test {\n                boolean[] digits;\n                int size;\n                public int indexOf(Object obj) {\n                    // throws ClassCastException\n                    Integer dig = (Integer)obj;\n                    if (dig != 0 && dig != 1) {\n                        return -1;\n                    }\n                    // throws IllegalArgumentException and NullPointerException\n                    boolean cand = int2bool(dig);//<cand\n                    for(int i = 0; i < this.size; i++) {\n                        if (cand == this.digits[i]) {\n                            return i;\n                        }\n                    }\n                    return -1;\n                }\n            }\n        "
+    },
+    {
+      "description": "DataflowAnomalyAnalysis: DD false positive #400",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Test<T> {\n                T zeroS() {return null;}\n                public T addS(java.util.List<T> args) {\n                    T res = zeroS();//<res\n                    for (T arg : args) {\n                        res = res.add(arg);\n                    }\n\n                    return res;\n                }\n            }\n        "
+    },
+    {
+      "description": "DU Anomaly #1107",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Sample {\n\n                public ZDT sample(final String date, final ZDT paymentTimeStamp) {\n                    final ZDT startOfDayOnInceptionDate = zonedDateTimeAtOnePastMidnight(date, paymentTimeStamp.getZone());\n                    final ZDT startOfDayOnPaymentDate = zonedDateTimeAtOnePastMidnight(paymentTimeStamp.toLocalDate(), paymentTimeStamp.getZone());\n                    if (startOfDayOnInceptionDate.isAfter(paymentTimeStamp)) {\n                        return startOfDayOnInceptionDate;\n                    } else if (paymentTimeStamp.isAfter(startOfDayOnPaymentDate)) {\n                        return paymentTimeStamp;\n                    } else {\n                        return startOfDayOnPaymentDate;\n                    }\n                }\n\n                public ZDT zonedDateTimeAtOnePastMidnight(final String date, final ZoneId zoneId) {\n                    return zonedDateTimeAtOnePastMidnight(parseStringWithIsoDateFormat(date), zoneId);\n                }\n\n                private ZDT zonedDateTimeAtOnePastMidnight(final LocalDate localDate, final ZoneId zoneId) {\n                    return ZDT.of(localDate, zoneId);\n                }\n\n                LocalDate parseStringWithIsoDateFormat(String s) {return null;}\n                static abstract class ZDT {\n                    abstract boolean isAfter(ZDT zdt);\n                    abstract boolean isBefore(ZDT zdt);\n                    abstract ZoneId getZone();\n                    abstract LocalDate toLocalDate();\n                    static ZDT of(LocalDate date, ZoneId zone) {return null;}\n                }\n                static class LocalDate { }\n                static enum ZoneId { }\n            }\n\n        "
+    },
+    {
+      "description": "DataflowAnomalyAnalysis: DD false positive for arrays #1251",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.math.BigInteger;\n            public class Test {\n                public void test(int x2) {\n                    final BigInteger[] msg2 = new BigInteger[11];\n                    msg2[0] = modPow(x2, 4);\n                    BigInteger[] res = proofKnowLog(x2, 3);\n                    msg2[1] = res[0];\n                    msg2[2] = res[1];\n                    // etc.\n                }\n                BigInteger modPow(int x2, int op);\n                BigInteger[] proofKnowLog(int x2, int op);\n            }\n        "
+    },
+    {
+      "description": "DU false positive in DataflowAnomalyAnalysis #1606",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public final class Fib {\n                /** utility class */\n                private Fib() {}\n\n                public static int fib(final int n) {\n                    checkArgument(n >= 0);\n\n                    if (n < 2) {\n                        return n;\n                    } else {\n                        int a = 0;\n                        int b = 1;\n                        final int m = n - 1;\n\n                        for (int i = 0; i < m; i++) {\n                            final int c = a;\n                            a = b;\n                            b = c + b;\n                        }\n\n                        return b;\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "false-positive in DD-part of DataflowAnomalyAnalysis #1675",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "import java.lang.reflect.InvocationTargetException;\n\npublic class Formatter {\n                public Formatter test(String formatterClassName) {\n                    Formatter formatter = null;\n                    if (formatterClassName != null) {\n                        try {\n                            Class<? extends Formatter> formatterClass = (Class) Class.forName(formatterClassName);\n                            formatter = formatterClass.getDeclaredConstructor().newInstance();\n                        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException ignored) {\n                        }\n                    }\n                    return ((formatter == null) ? new Formatter() : formatter);\n                }\n            }\n        "
+    },
+    {
+      "description": "DU false positive in DataflowAnomalyAnalysis #1682",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "import java.util.Map;\nimport java.util.List;\n\npublic class Test {\n\n    Map<String, List<String>> bufferedMessages;\n\n    static class LogEvent { int timeMillis; String message; }\n    static class DiscordManager { }\n    void sendMessage(DiscordManager discordManager, String message) {}\n    void bufferMessage(String message, int time) {}\n\n    public void append(LogEvent event, DiscordManager discordManager) {\n        String logMessage = event.message;\n        if (discordManager == null) {\n            bufferMessage(logMessage, event.timeMillis);\n        } else {\n            bufferedMessages.computeIfPresent(\"getName()\", (name, bufferedMessages) -> {\n                bufferedMessages.forEach(bufferedMessage -> sendMessage(discordManager, bufferedMessage));\n                return null;\n            });\n            sendMessage(discordManager, logMessage);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "DataflowAnomalyAnalysis has false positive for object initialised outside loop. #2131",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package pmdtests;\n\n            import java.util.ArrayList;\n            import java.util.List;\n            import java.util.stream.Collectors;\n            import java.util.stream.IntStream;\n\n            public class TestDu {\n\n                private List<String> list = new ArrayList<>();\n\n                public void run() {\n                    String str = Thread.currentThread().getName() + \" Element : %d\";\n                    for (int i = 0; i < 10_000; i++) {\n                        list.add(String.format(str, i));\n                    }\n                }\n\n                public void runAgain() {\n                    String str = Thread.currentThread().getName() + \" Element : %d\";\n                    for (int i = 0; i < 10_000; i++)\n                        list.add(String.format(str, i));\n                }\n\n                public void runOnceMore() {\n                    String str = Thread.currentThread().getName() + \" Element : %d\";\n                    list =  IntStream.range(0, 10_000)\n                                     .mapToObj(i -> String.format(str, i))\n                                     .collect(Collectors.toList());\n                }\n            }\n        "
+    },
+    {
+      "description": "ClassCastException with annotated foreach var",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\n\n            class Foo {\n                {\n                    for (String s : someExpression()) {\n\n                    }\n\n                    for (final String s : someExpression()) {\n\n                    }\n\n                    for (@Annot final String s : someExpression()) {\n\n                    }\n\n                    for (final @Annot String s : someExpression()) {\n\n                    }\n                }\n                @interface Annot {}\n            }\n\n        "
+    },
+    {
+      "description": "Catch in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            class Foo {\n                {\n                    for (String s : someExpression()) {\n                        try {\n                            foo(s);\n                        } catch (Exception e) {\n                            print(\"failure\");\n                        }\n\n                    }\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Catch in loop (reportUnusedVariables)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            class Foo {\n                {\n                    for (String s : someExpression()) {\n                        try {\n                            foo(s);\n                        } catch (Exception e) {\n                            print(\"failure\");\n                        }\n\n                    }\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Catch in loop (reportUnusedVariables)",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        9,
+        11,
+        18,
+        19,
+        25,
+        34
+      ],
+      "code": "\n\n            class Foo {\n                void method(int i) {\n                    while (true) {\n                        switch (i) {\n                        case 19:\n                            try {\n                                i++;\n                                break;\n                            } catch (RuntimeException e) { // warn\n                                break;\n                            } catch (Error e) { // warn\n                                return;\n                            }\n                        case 20:\n                            try {\n                                i++;\n                                break;\n                            } catch (RuntimeException e) { // warn\n                            } catch (Error e) { // warn\n                                return;\n                            }\n                        case 21:  //fallthrough\n                            try {\n                                i++;\n                            } catch (RuntimeException e) { // warn\n                                i--;\n                            } finally {\n                                break;\n                            }\n                        case 22:\n                            try {\n                                i++;\n                                break;\n                            } catch (RuntimeException e) { // warn\n                                i--;\n                                break;\n                            } finally {\n                                i++;\n                            }\n                        default:  //warn\n                            // this is the last label\n                            i++;\n                        }\n                    }\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Custom label causes NPE",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            class Foo {\n                boolean method(int i) {\n                    int k = 0;\n                    parse: try {\n                        i++; // used\n                        if (method(2)) break parse;\n                        k = 2; // unused\n                        return false;\n                    } catch (RuntimeException e) {\n                        i = 2;\n                        break parse;\n                    }\n                    print(i + k);\n                    return true;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Try with nested finally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                boolean method(int i) {\n                    try {\n                        parse: try {\n                            i = 1;\n                            foo();\n                        } catch (RuntimeException e) {\n                            i = 2;\n                            if (foo()) throw e;\n                            i = 3;\n                        } finally {\n                            System.out.print(i);\n                        }\n                    } catch (RuntimeException e) {\n                        // i = 2;\n                        i = 4;\n                    } finally {\n                        System.out.print(i);\n                    }\n                    return true;\n                }\n                boolean foo(){}\n            }\n\n        "
+    },
+    {
+      "description": "Labeled statements (1)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        13
+      ],
+      "code": "\nclass Foo {\n    boolean method() {\n        int i,j,k;\n        a:\n        if (foo()) {\n            return true;\n        } else {\n            i = 2; // warn\n            j = 2;\n            k = 2;\n            if (foo()) {\n                i = 3;\n                j++; // warn\n                k = 0;\n                break a;\n            }\n            i = 3;\n        }\n        System.out.println(i);\n        System.out.println(k);\n    }\n\n    boolean foo() {\n        return false;\n    }\n}\n\n        "
+    },
+    {
+      "description": "Labeled break statement (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    boolean method() {\n        int i = 0;\n        a: break a;\n        System.out.println(i);\n    }\n}\n\n        "
+    },
+    {
+      "description": "Labeled synchronized statement (3)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    boolean method() {\n        int i = 0;\n        x:\n        synchronized (this) {\n            if(foo()) break x;\n            i = 2;\n        }\n        System.out.println(i);\n    }\n    boolean foo() {}\n}\n\n        "
+    },
+    {
+      "description": "Labeled block",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    boolean method() {\n        int i = 0;\n        x: {\n            if(foo()) break x;\n            i = 2;\n        }\n        System.out.println(i);\n    }\n    boolean foo() {}\n}\n\n        "
+    },
+    {
+      "description": "Unused formal value",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            class Foo {\n                int method(int i) {\n                    i = 2;\n                    return i;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Unused formal value",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                int method(int i) {\n                    i = 2;\n                    return i;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Test ignored name 0",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                int method(int param, int other) {\n                    return 2;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Test ignored name 1 (method param, reportUnusedVariables)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                int method(int ignored, int unused) {\n                    return 2;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Test ignored name 2 (single underscore, reportUnusedVariables)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                int method(int[] arr) {\n                    for (int _ : arr) {\n                        print(\"iter\");\n                    }\n                    return 2;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Test ignored name 3 (reportUnusedVariables)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import Something;\n\n            class Foo {\n                int method() {\n                    try (Something ignored = Something.create()) {\n                        // even if ignored is unused, it won't be flagged\n                        // its purpose might be to side-effect in the create/close routines\n\n                    } catch (Exception e) { // this is unused and will cause a warning if `reportUnusedVariables` is true\n                        // you should choose a name that starts with \"ignored\"\n                        return;\n                    }\n                }\n                static class Something {\n                    static Something create() {}\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Test ignored name 3 (!reportUnusedVariables)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import Something;\n\n            class Foo {\n                int method() {\n                    try (Something ignored = Something.create()) {\n                        // even if ignored is unused, it won't be flagged\n                        // its purpose might be to side-effect in the create/close routines\n\n                    } catch (Exception e) { // this is unused and will cause a warning if `reportUnusedVariables` is true\n                        // you should choose a name that starts with \"ignored\"\n                        return;\n                    }\n                }\n            }\n\n        "
+    },
+    {
+      "description": "Test annot suppression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                int method(@SuppressWarnings(\"unused\") int param) {\n                    return 2;\n                }\n            }\n\n        "
+    },
+    {
+      "description": "This reference leak #2668",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        19,
+        26
+      ],
+      "code": "\n\n            class Worker {\n                private final Worker.Listener listener;\n\n                Worker(Listener listener) {\n                    this.listener = listener;\n                    work();\n                }\n\n                void work() {listener.onWork();}\n\n                interface Listener { void onWork(); }\n            }\n\n            class A implements Worker.Listener {\n                private boolean ignore;\n                private Worker worker;\n\n                A() {\n                    ignore = false; // actually unused\n                    ignore = true;  // may be observed by the leak\n                    worker = new Worker(this); // leak\n\n                    // This could technically be observed by another thread (not sure, maybe the field needs to be volatile too)\n                    // This looks like a very rare circumstance though.\n                    // So we say it's unused\n                    ignore = false;\n\n                    ignore = false; // this exits the ctor so may be used later\n                }\n\n                void doWork() { worker.work(); }\n\n                public void onWork() {\n                    if (ignore) {\n                        return;\n                    }\n                    System.out.println(\"onWork\");\n                }\n            }\n\n            "
+    },
+    {
+      "description": "This reference leak in field initializers #2668",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import somewhere.Worker;\n\n            class A {\n                private boolean ignore = true;  // used\n\n                A() {\n                    ignore = false; // used\n                }\n\n                private Worker worker = new Worker(this.foo()); // there is a leak here\n\n                A foo() { return null; } // is virtual\n            }\n            "
+    },
+    {
+      "description": "This reference leak in conditional #2668",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        13
+      ],
+      "code": "\n            import somewhere.Worker;\n\n            class A {\n                private boolean ignore = true;  // unused\n\n                A() {\n                    ignore = false; // may be used by leak\n\n                    if (Worker.something()) {\n                        worker = new Worker(this.foo()); // marks the reaching defs as used bc of leak\n                    } else {\n                        worker = null;\n                        ignore = true; // there is no leak in this branch\n                    }\n                    ignore = true;\n                }\n            }\n            "
+    },
+    {
+      "description": "This reference leak with super call #2668",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            import somewhere.Worker;\n\n            class A extends Worker { // extends some unknown class\n                private boolean ignore = true;  // unused\n\n                A() {\n                    // implicit super call, which may observe the default value of ignore\n                    ignore = false; // may be used by leak\n                }\n            }\n            "
+    },
+    {
+      "description": "This reference leak with explicit this ctor #2668",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import somewhere.Worker;\n\n            class A {\n                private boolean ignore = true;\n\n                A() {\n                    this(2); // this may observe `ignore = true`\n                    ignore = false; // may be used by leak\n                }\n\n                A(int k) {\n                    Worker.show(this); // observes `ignore = true`\n                }\n            }\n            "
+    },
+    {
+      "description": "Don't report params of abstract methods #2686",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import somewhere.Worker;\n\n            abstract class A {\n\n                abstract void foo(int p, String d);\n\n            }\n\n            interface A {\n\n                void foo(int p, String d);\n\n            }\n            "
+    },
+    {
+      "description": "Don't report params of abstract methods (reportUnusedVariables) #2686",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import somewhere.Worker;\n\n            abstract class A {\n\n                abstract void foo(int p, String d);\n\n            }\n\n            interface A {\n\n                void foo(int p, String d);\n\n            }\n            "
+    },
+    {
+      "description": "Don't report params of native methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedAssignmentNative {\n    public final native void call(int p);\n}\n        "
+    },
+    {
+      "description": "Don't report params of native methods (reportUnusedVariables)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedAssignmentNative {\n    public final native void call(int p);\n}\n        "
+    },
+    {
+      "description": "Try stmt FP in try when method can throw #2684",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.Reader;\n            import java.io.StringReader;\n            import java.io.IOException;\n\n            public class Foo {\n\n                public int foo() {\n                    int a = 0;\n                    try (Reader r = new StringReader(\"\")) {\n                        a = r.read(); // might assign or fail\n                        a = r.read(); // might assign or fail\n                    } catch (IOException e) {\n                    }\n                    return a;\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Try stmt FP in try when method can throw (2) #2684",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\n            import java.io.IOException;\n            import java.io.Reader;\n            import java.io.StringReader;\n\n            class Foo {\n\n                public int foo() {\n                    int a;\n                    try (Reader r = new StringReader(\"\")) {\n                        a = r.read(); // really unused: overwritten with r.read() and 0;\n                        a = r.read(); // might assign or fail\n                    } catch (IOException e) {\n                        a = 0;\n                    }\n                    return a;\n                }\n\n            }\n            "
+    },
+    {
+      "description": "False positive with method that may throw in forked state (the if state) #2759",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test {\n                int a() {\n                    int a = 10;\n                    while (a > 0) {\n                        a--;\n                        try {\n                            if (dummy) {\n                                return somethingThatCanThrowRandomly(1);\n                            } else {\n                                return somethingThatCanThrowRandomly(2);\n                            }\n                        } catch (RuntimeException e) {\n                            // retry\n                        }\n                    }\n                    return 0;\n                }\n            }\n            "
+    },
+    {
+      "description": "Call chain with side-effects in try",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            class Test {\n                int a() {\n                    int a = 10;\n                    try {\n                        // both method calls may throw, so a = 2 and a = 4 reach after the try,\n                        // but not a = 10\n                        \"\".substring(a = 2)\n                          .substring(a = 4);\n                    } catch (RuntimeException e) {\n\n                    }\n                    return a;\n                }\n            }\n            "
+    },
+    {
+      "description": "Explicit this ctor call",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            class Test {\n\n                private int field = 0;\n\n                Test() {\n                    this(0);\n                }\n\n                Test(int i) {\n                    field = i;\n                }\n            }\n            "
+    },
+    {
+      "description": "Field access on something else than this",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test {\n                int field;\n                void foo(Test t) {\n                    t.field = 2 * t.field;\n                    if (t.field > 5) {\n                        t.field = 5;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Assignment to an ignorable prefix increment",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        6
+      ],
+      "code": "\n            class Test {\n                static {\n                    int b = 0;\n                    int d = 0;\n                    {\n                        d = ++b;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Static field reassignment",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            class Test {\n                static int b = 0;\n                static {\n                    b = 2;\n                }\n            }\n            "
+    },
+    {
+      "description": "Static field reassignment with ctor",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            class Test {\n                static int b = 0;\n                Test() {\n                    System.out.println(b); // does not count as usage\n                }\n                static {\n                    b = 2;\n                }\n            }\n            "
+    },
+    {
+      "description": "Branches in switch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test {\n                private int getC(int c) { return c + 1; }\n                private int use(int cc) { return cc + 2; }\n                private String readUTF(int index, final int utfLen, final char[] buf) {\n                    int endIndex = index + utfLen;\n                    int c;\n                    char cc = 0;\n                    while (index < endIndex) {\n                        c = getC(index++);\n                        switch (st) {\n                        case 0:\n                            if (c < 0xE0 && c > 0xBF) cc = 1;\n                            else cc = 0;\n                            break;\n\n                        case 1:\n                            use(cc); break;\n\n                        case 2:\n                            cc = use(cc); break;\n                        }\n                    }\n                    return \"\";\n                }\n            }\n            "
+    },
+    {
+      "description": "This field in method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Test<T> {\n                private final java.util.List<T> interceptors;\n                private int preProcessIndex = -1;\n\n                public void applyPreProcess(String request, java.util.concurrent.Callable<?> task) throws Exception {\n                    for (T interceptor : this.interceptors) {\n                        interceptor.preProcess(request, task);\n                        this.preProcessIndex++;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UnusedAssignment false positive in for-each assignment #3076",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import static java.lang.System.arraycopy;\n            import static java.util.Arrays.fill;\n\n            public class RadixSort {\n                private static final int TEN = 10;\n                int[] a;\n\n                void countSort(int exp) {\n                    int[] count = new int[TEN];\n                    fill(count, 0);\n                    for (int val : a) // error flagged here\n                        count[(val / exp) % TEN]++;\n\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UnusedAssignment false positive when reporting unused variables #3114",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\nimport static org.objectweb.asm.Opcodes.*;\nimport org.objectweb.asm.ClassWriter; \nimport org.objectweb.asm.FieldVisitor; \nimport org.objectweb.asm.MethodVisitor;\n\npublic class Dumper {\n    private static final String VERSION = \"version\";\n    private static final String CLASS = \"Dumper\";\n\n    public static byte[] dump() throws IOException {\n        // ClassWriter is a class visitor that generates the code for the class\n        ClassWriter cw = new ClassWriter(0);\n        // Start creating the class.\n        cw.visit(V11, ACC_PUBLIC + ACC_SUPER, CLASS, null, \"java/lang/Object\", null);\n        FieldVisitor fv; // false positive\n        MethodVisitor mv; // false positive\n        {\n            // version field\n            fv = cw.visitField(ACC_PRIVATE, VERSION, \"I\", null, null);\n            fv.visitEnd();\n        }\n        {\n            // Implementing the constructor\n            mv = cw.visitMethod(ACC_PUBLIC, \"<init>\", \"()V\", null, null);\n            mv.visitCode();\n            mv.visitVarInsn(ALOAD, 0);\n            mv.visitMethodInsn(INVOKESPECIAL, \"java/lang/Object\", \"<init>\", \"()V\", false);\n            mv.visitInsn(RETURN);\n            mv.visitMaxs(1, 1);\n            mv.visitEnd();\n        }\n        cw.visitEnd();\n\n        return cw.toByteArray();\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedAssignment false positive when reporting unused variables #3114 - simplified code",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedAssignmentUnusedVariableFP {\n    public void case1() {\n        String notUnused;\n        {\n            notUnused = \"a\";\n            System.out.println(notUnused);\n        }\n    }\n    public int case2() {\n        int start;\n        if (true)\n            start = 1;\n        else\n            start = 2;\n        return start;\n    }\n    private boolean case3(int number) {\n        String stringNumber = String.valueOf(number);\n        int divRest;\n        if (stringNumber.length() == 3)\n            divRest = number % 10;\n        else if (stringNumber.length() == 4)\n            divRest = number % 100;\n        else\n            divRest = number % 10_000;\n        if (divRest == 0)\n            return true;\n        return number % 2 == 0;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] [7.0-rc1] UnusedAssignment for used field #4435",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n        class FP {\n            long nanos;\n            static final long[] SHIFT = {};\n            public void advance(long currentTimeNanos) {\n                long previousTimeNanos = nanos;\n                nanos = currentTimeNanos;\n\n                try {\n                    // ...\n                    for (int i = 0; i < SHIFT.length; i++) {\n                        expire(i, i * 2L, i * 4L);\n                    }\n                } catch (Throwable t) {\n                    nanos = previousTimeNanos;\n                    throw t;\n                }\n            }\n            void expire(int index, long previousTicks, long delta) {}\n        }\n\n        "
+    },
+    {
+      "description": "Consider method calls in ctors as leaking this",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n        class FP {\n            long nanos;\n            FP() {\n                nanos = 2;\n                unknownMethod(4);\n                nanos = 6;\n            }\n            FP(int i) {\n                nanos = 2;\n                advance(4);\n                nanos = 6;\n            }\n            void advance(int i) {}\n        }\n        "
+    },
+    {
+      "description": "Don't consider fields that are not of this ",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n        class Foo {\n            long nanos;\n            void method() {\n                nanos = 2; // warn here\n                nanos = 4;\n            }\n            void method(Foo other) {\n                nanos = 2; // do not warn here\n                other.nanos = 4;\n            }\n        }\n        "
+    },
+    {
+      "description": "FP with synchronized",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n        class Foo {\n            private static boolean someField;\n            private static final Object lock = new Object();\n            static void method() {\n                synchronized (lock) {\n                    processPendingActive = true;\n                }\n                doSomething();\n                synchronized (lock) {\n                    processPendingActive = false;\n                }\n            }\n            static void doSomething() {\n\n            }\n        }\n        "
+    },
+    {
+      "description": "FP with synchronized 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n        class Foo {\n            private static native void waitForReferencePendingList();\n\n            private static final Object processPendingLock = new Object();\n            private static boolean processPendingActive = false;\n\n            private static void processPendingReferences() {\n                // Only the singleton reference processing thread calls\n                // waitForReferencePendingList() and getAndClearReferencePendingList().\n                // These are separate operations to avoid a race with other threads\n                // that are calling waitForReferenceProcessing().\n                waitForReferencePendingList();\n                Reference<Object> pendingList;\n                synchronized (processPendingLock) {\n                    pendingList = getAndClearReferencePendingList();\n                    processPendingActive = true;\n                }\n                while (pendingList != null) {\n                    Reference<Object> ref = pendingList;\n                    pendingList = ref.discovered;\n                    ref.discovered = null;\n\n                    if (ref instanceof Cleaner) {\n                        ((Cleaner)ref).clean();\n                        // Notify any waiters that progress has been made.\n                        // This improves latency for nio.Bits waiters, which\n                        // are the only important ones.\n                        synchronized (processPendingLock) {\n                            processPendingLock.notifyAll();\n                        }\n                    } else {\n                        ReferenceQueue<? super Object> q = ref.queue;\n                        if (q != ReferenceQueue.NULL) q.enqueue(ref);\n                    }\n                }\n                // Notify any waiters of completion of current round.\n                synchronized (processPendingLock) {\n                    processPendingActive = false;\n                    processPendingLock.notifyAll();\n                }\n            }\n        }\n        "
+    },
+    {
+      "description": "Problem with assignment to field #4618",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n\n    private boolean withIssues = false;\n\n    interface SkipMode {\n\n        boolean isDeclared();\n    }\n\n    SkipMode getSkipModeForModule(String mod) {\n\n    }\n    static boolean something() {}\n\n    void foo() {\n        if (!getSkipModeForModule(\"junixsocket-rmi\").isDeclared()) {\n            try {\n                Class.forName(\"java.rmi.Remote\");\n            } catch (ClassNotFoundException e) {\n                System.setProperty(\"selftest.skip.junixsocket-rmi\", \"force_auto\");\n                withIssues = true;\n            }\n\n            if (!something()) {\n                System.setProperty(\"selftest.skip.junixsocket-rmi\", \"force_auto\");\n                withIssues = true;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedAssignment false positive in record compact constructor #4603",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(new TestRecord(2).foo());\n    }\n}\n\nrecord TestRecord(int foo) {\n    TestRecord {\n        // src/Main.java:10:        UnusedAssignment:       The value assigned to variable 'foo' is never used\n        foo = Math.min(foo, 1); // <!--- violation here\n        // implicit this.foo = foo;\n    }\n}\n"
+    },
+    {
+      "description": "[java] Verify explicit canonical record constructor #4603",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println(new TestRecord(2).foo());\n    }\n}\n\nrecord TestRecord(int foo) {\n    TestRecord(int foo) {\n        foo = Math.min(foo, 1);\n        this.foo = foo; // explicit\n    }\n}\n"
+    },
+    {
+      "description": "Label on switch",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Main {\n    public static String main(int i, int k) {\n        String r;\n        OUTER: switch (j) {\n        case 0:\n            String res;\n            INNER: switch (k) {\n            case 0: res = \"0-0-0\"; break;\n            case 1: res = \"0-0-1\"; break;\n            case 2: res = \"0-0-2\"; break INNER;\n            default: r = \"0-0-X\"; break OUTER;\n            }\n            r = res;\n            break;\n        case 1:\n            r = \"0-1\";\n            break;\n        default:\n            r = \"0-X\";\n            break;\n        }\n        return r;\n    }\n}\n"
+    },
+    {
+      "description": "[java] UnusedAssignment false-positive with try-with-resources #4127",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Function;\n\nclass Lock implements Autocloseable {\n    public close() { }\n\n    private static Function<Integer, Lock> locks;\n    public static void foo() {\n        Lock lock;\n        synchronized (locks) {\n            lock = locks.get(0);\n        }\n        try (lock) {\n            // ...\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] UnusedAssignment false-positive with continue in foreach #5504",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.nio.file.Files;\n\nclass Lock {\n\n    public static void foo() {\n        List<String> lines = Files.readAllLines(\"someFile\");\n        int lineNumber = 0;\n        boolean expectingAnotherLine = false;\n        for (String line : lines)\n        {\n            ++lineNumber;\n            if (line.endsWith(\"\\\\\"))\n            {\n                expectingAnotherLine = true; // line 9 - false positive unused assignment\n                continue;\n            }\n            expectingAnotherLine = false;\n        }\n        if (expectingAnotherLine)\n            throw new IllegalArgumentException(\"Unexpected end of line: \" + command);\n\n    }\n}\n"
+    },
+    {
+      "description": "[java] UnusedAssignment false positive in record compact constructor when using ternary #5592",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Set;\n            import java.util.Collections;\n            import java.util.TreeSet;\n            record TestRecord(Set<Integer> foo) {\n                TestRecord {\n                    foo = foo == null ? Collections.emptySet() : new TreeSet<>(foo); // <!--- violation here\n                }\n            }\n            "
+    },
+    {
+      "description": "Compact record ctor 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            import java.util.Set;\n            import java.util.Collections;\n            import java.util.TreeSet;\n            record TestRecord(Set<Integer> foo) { // initial value unused\n                TestRecord {\n                    foo = Collections.emptySet();\n                }\n            }\n            "
+    }
+  ]
+}

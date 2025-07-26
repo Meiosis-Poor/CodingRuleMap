@@ -1,0 +1,23 @@
+{
+  "name": "EmptyCatch",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-empty-catch",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 109,
+  "branches": 3,
+  "apis": 68,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        13,
+        15
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++98-or-later %s bugprone-empty-catch %t -- \\\n// RUN: -config=\"{CheckOptions: {bugprone-empty-catch.AllowEmptyCatchForExceptions: '::SafeException;WarnException', \\\n// RUN:        bugprone-empty-catch.IgnoreCatchWithKeywords: '@IGNORE;@TODO'}}\" -- -fexceptions\n\nstruct Exception {};\nstruct SafeException {};\nstruct WarnException : Exception {};\n\nint functionWithThrow() {\n  try {\n    throw 5;\n  } catch (const Exception &) {\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: empty catch statements hide issues; to handle exceptions appropriately, consider re-throwing, handling, or avoiding catch altogether [bugprone-empty-catch]\n  } catch (...) {\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: empty catch statements hide issues; to handle exceptions appropriately, consider re-throwing, handling, or avoiding catch altogether [bugprone-empty-catch]\n  }\n  return 0;\n}\n\nint functionWithHandling() {\n  try {\n    throw 5;\n  } catch (const Exception &) {\n    return 2;\n  } catch (...) {\n    return 1;\n  }\n  return 0;\n}\n\nint functionWithReThrow() {\n  try {\n    throw 5;\n  } catch (...) {\n    throw;\n  }\n}\n\nint functionWithNewThrow() {\n  try {\n    throw 5;\n  } catch (...) {\n    throw Exception();\n  }\n}\n\nvoid functionWithAllowedException() {\n  try {\n\n  } catch (const SafeException &) {\n  } catch (WarnException) {\n  }\n}\n\nvoid functionWithComment() {\n  try {\n  } catch (const Exception &) {\n    // @todo: implement later, check case insensitive\n  }\n}\n\nvoid functionWithComment2() {\n  try {\n  } catch (const Exception &) {\n    // @IGNORE: relax its safe\n  }\n}"
+    }
+  ]
+}

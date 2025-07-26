@@ -1,0 +1,25 @@
+{
+  "name": "BoolPointerImplicitConversion",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-bool-pointer-implicit-conversion",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 85,
+  "branches": 12,
+  "apis": 73,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        18,
+        23,
+        78,
+        96
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-bool-pointer-implicit-conversion %t\n\nbool *SomeFunction();\nvoid SomeOtherFunction(bool*);\nbool F();\nvoid G(bool);\n\n\ntemplate <typename T>\nvoid t(T b) {\n  if (b) {\n  }\n}\n\nvoid foo() {\n  bool *b = SomeFunction();\n  if (b) {\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: dubious check of 'bool *' against 'nullptr'\n// CHECK-FIXES: if (*b) {\n  }\n\n  if (F() && b) {\n// CHECK-MESSAGES: :[[@LINE-1]]:14: warning: dubious check of 'bool *' against 'nullptr'\n// CHECK-FIXES: if (F() && *b) {\n  }\n\n  // TODO: warn here.\n  if (b) {\n    G(b);\n  }\n\n#define TESTMACRO if (b || F())\n\n  TESTMACRO {\n  }\n\n  t(b);\n\n  if (!b) {\n    // no-warning\n  }\n\n  if (SomeFunction()) {\n    // no-warning\n  }\n\n  bool *c = SomeFunction();\n  if (c) {\n    (void)c;\n    (void)*c; // no-warning\n  }\n\n  if (c) {\n    *c = true; // no-warning\n  }\n\n  if (c) {\n    c[0] = false; // no-warning\n  }\n\n  if (c) {\n    SomeOtherFunction(c); // no-warning\n  }\n\n  if (c) {\n    delete[] c; // no-warning\n  }\n\n  if (c) {\n    *(c) = false; // no-warning\n  }\n\n  struct {\n    bool *b;\n  } d = { SomeFunction() };\n\n  if (d.b) {\n    // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: dubious check of 'bool *' against 'nullptr'\n    // CHECK-FIXES: if (*d.b) {\n  }\n\n  if (d.b) {\n    (void)*d.b; // no-warning\n  }\n\n#define CHECK(b) \\\n  if (b) {       \\\n  }\n  CHECK(c)\n}\n\nstruct H {\n  bool *b;\n  void foo() const {\n    if (b) {\n      // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: dubious check of 'bool *' against 'nullptr'\n      // CHECK-FIXES: if (*b) {\n    }\n\n    if (b) {\n      (void)*b; // no-warning\n    }\n  }\n};"
+    }
+  ]
+}

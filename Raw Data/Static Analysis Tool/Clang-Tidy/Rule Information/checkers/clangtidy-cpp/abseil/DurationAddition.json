@@ -1,0 +1,39 @@
+{
+  "name": "DurationAddition",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-duration-addition",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 69,
+  "branches": 5,
+  "apis": 48,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        10,
+        13,
+        16,
+        19,
+        22,
+        25,
+        29,
+        32,
+        35,
+        38,
+        41,
+        44,
+        49,
+        54,
+        59,
+        65,
+        71,
+        90
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s abseil-duration-addition %t -- -- -I%S/Inputs\n\n#include \"absl/time/time.h\"\n\nvoid f() {\n  absl::Time t;\n  int i;\n\n  i = absl::ToUnixHours(t) + 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixHours(t + absl::Hours(5))\n  i = absl::ToUnixMinutes(t) + 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMinutes(t + absl::Minutes(5))\n  i = absl::ToUnixSeconds(t) + 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixSeconds(t + absl::Seconds(5))\n  i = absl::ToUnixMillis(t) + 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMillis(t + absl::Milliseconds(5))\n  i = absl::ToUnixMicros(t) + 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMicros(t + absl::Microseconds(5))\n  i = absl::ToUnixNanos(t) + 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixNanos(t + absl::Nanoseconds(5))\n\n  i = 3 + absl::ToUnixHours(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixHours(absl::Hours(3) + t)\n  i = 3 + absl::ToUnixMinutes(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMinutes(absl::Minutes(3) + t)\n  i = 3 + absl::ToUnixSeconds(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixSeconds(absl::Seconds(3) + t)\n  i = 3 + absl::ToUnixMillis(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMillis(absl::Milliseconds(3) + t)\n  i = 3 + absl::ToUnixMicros(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMicros(absl::Microseconds(3) + t)\n  i = 3 + absl::ToUnixNanos(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixNanos(absl::Nanoseconds(3) + t)\n\n  // Undoing inverse conversions\n  i = absl::ToUnixMicros(t) + absl::ToInt64Microseconds(absl::Seconds(1));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixMicros(t + absl::Seconds(1))\n\n  // Parens\n  i = 3 + (absl::ToUnixHours(t));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixHours(absl::Hours(3) + t)\n\n  // Float folding\n  i = absl::ToUnixSeconds(t) + 5.0;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixSeconds(t + absl::Seconds(5))\n\n  // We can rewrite the argument of the duration conversion\n#define THIRTY absl::FromUnixSeconds(30)\n  i = absl::ToUnixSeconds(THIRTY) + 1;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixSeconds(THIRTY + absl::Seconds(1))\n#undef THIRTY\n\n  // Some other contexts\n  if (absl::ToUnixSeconds(t) + 1.0 > 10) {}\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixSeconds(t + absl::Seconds(1))\n\n  // These should not match\n  i = 5 + 6;\n  i = absl::ToUnixSeconds(t) - 1.0;\n  i = absl::ToUnixSeconds(t) * 1.0;\n  i = absl::ToUnixSeconds(t) / 1.0;\n  i += absl::ToInt64Microseconds(absl::Seconds(1));\n\n#define PLUS_FIVE(z) absl::ToUnixSeconds(z) + 5\n  i = PLUS_FIVE(t);\n#undef PLUS_FIVE\n}\n\n// Within a templated function\ntemplate<typename T>\nvoid foo(absl::Time t) {\n  int i = absl::ToUnixNanos(t) + T{};\n  // CHECK-MESSAGES: [[@LINE-1]]:11: warning: perform addition in the duration domain [abseil-duration-addition]\n  // CHECK-FIXES: absl::ToUnixNanos(t + absl::Nanoseconds(T{}))\n}\n\nvoid g() {\n  absl::Time t;\n  foo<int>(t);\n  foo<double>(t);\n}"
+    }
+  ]
+}

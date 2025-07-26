@@ -1,0 +1,42 @@
+{
+  "name": "TimeSubtraction",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-time-subtraction",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 197,
+  "branches": 19,
+  "apis": 154,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 21,
+      "expected-linenumbers": [
+        13,
+        16,
+        19,
+        22,
+        25,
+        28,
+        32,
+        35,
+        38,
+        41,
+        44,
+        47,
+        52,
+        55,
+        60,
+        63,
+        68,
+        91,
+        99,
+        112,
+        115
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes -std=c++11-or-later %s abseil-time-subtraction %t -- -- -I %S/Inputs\n\n#include \"absl/time/time.h\"\n\nvoid g(absl::Duration d);\n\nvoid f() {\n  absl::Time t;\n  int x, y;\n  absl::Duration d;\n\n  d = absl::Hours(absl::ToUnixHours(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixHours(x));\n  d = absl::Minutes(absl::ToUnixMinutes(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixMinutes(x));\n  d = absl::Seconds(absl::ToUnixSeconds(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixSeconds(x));\n  d = absl::Milliseconds(absl::ToUnixMillis(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixMillis(x));\n  d = absl::Microseconds(absl::ToUnixMicros(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixMicros(x));\n  d = absl::Nanoseconds(absl::ToUnixNanos(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixNanos(x));\n\n  y = x - absl::ToUnixHours(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: y = absl::ToInt64Hours(absl::FromUnixHours(x) - t);\n  y = x - absl::ToUnixMinutes(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: y = absl::ToInt64Minutes(absl::FromUnixMinutes(x) - t);\n  y = x - absl::ToUnixSeconds(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: y = absl::ToInt64Seconds(absl::FromUnixSeconds(x) - t);\n  y = x - absl::ToUnixMillis(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: y = absl::ToInt64Milliseconds(absl::FromUnixMillis(x) - t);\n  y = x - absl::ToUnixMicros(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: y = absl::ToInt64Microseconds(absl::FromUnixMicros(x) - t);\n  y = x - absl::ToUnixNanos(t);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: y = absl::ToInt64Nanoseconds(absl::FromUnixNanos(x) - t);\n\n  // Check parenthesis placement\n  d = 5 * absl::Seconds(absl::ToUnixSeconds(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:11: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = 5 * (t - absl::FromUnixSeconds(x));\n  d = absl::Seconds(absl::ToUnixSeconds(t) - x) / 5;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixSeconds(x)) / 5;\n\n  // No extra parens around arguments\n  g(absl::Seconds(absl::ToUnixSeconds(t) - x));\n  // CHECK-MESSAGES: [[@LINE-1]]:5: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: g(t - absl::FromUnixSeconds(x));\n  g(absl::Seconds(x - absl::ToUnixSeconds(t)));\n  // CHECK-MESSAGES: [[@LINE-1]]:5: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: g(absl::FromUnixSeconds(x) - t);\n\n  // More complex subexpressions\n  d = absl::Hours(absl::ToUnixHours(t) - 5 * x);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: d = (t - absl::FromUnixHours(5 * x));\n\n  // These should not trigger; they are likely bugs\n  d = absl::Milliseconds(absl::ToUnixSeconds(t) - x);\n  d = absl::Seconds(absl::ToUnixMicros(t) - x);\n\n  // Various macro scenarios\n#define SUB(z, t1) z - absl::ToUnixSeconds(t1)\n  y = SUB(x, t);\n#undef SUB\n\n#define MILLIS(t1) absl::ToUnixMillis(t1)\n  y = x - MILLIS(t);\n#undef MILLIS\n\n#define HOURS(z) absl::Hours(z)\n  d = HOURS(absl::ToUnixHours(t) - x);\n#undef HOURS\n\n  // This should match the expression inside the macro invocation.\n#define SECONDS(z) absl::Seconds(z)\n  d = SECONDS(x - absl::ToUnixSeconds(t));\n  // CHECK-MESSAGES: [[@LINE-1]]:15: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: SECONDS(absl::ToInt64Seconds(absl::FromUnixSeconds(x) - t))\n#undef SECONDS\n}\n\ntemplate<typename T>\nvoid func(absl::Time t, T x) {\n  absl::Duration d = absl::Seconds(absl::ToUnixSeconds(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:22: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: absl::Duration d = t - absl::FromUnixSeconds(x);\n}\n\nvoid g() {\n  func(absl::Now(), 5);\n}\n\nabsl::Duration parens_in_return() {\n  absl::Time t;\n  int x;\n\n  return absl::Seconds(absl::ToUnixSeconds(t) - x);\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: return t - absl::FromUnixSeconds(x);\n  return absl::Seconds(x - absl::ToUnixSeconds(t));\n  // CHECK-MESSAGES: [[@LINE-1]]:10: warning: perform subtraction in the time domain [abseil-time-subtraction]\n  // CHECK-FIXES: return absl::FromUnixSeconds(x) - t;\n}"
+    }
+  ]
+}

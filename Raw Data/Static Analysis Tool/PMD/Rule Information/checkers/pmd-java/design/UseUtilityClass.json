@@ -1,0 +1,192 @@
+{
+  "name": "UseUtilityClass",
+  "language": "java",
+  "description": "\nFor classes that only have static methods, consider making them utility classes.\nNote that this doesn't apply to abstract classes, since their subclasses may\nwell include non-static methods.  Also, if you want this class to be a utility class,\nremember to add a private constructor to prevent instantiation.\n(Note, that this use was known before PMD 5.1.0 as UseSingleton).\n        ",
+  "example": "public class MaybeAUtility {\n  public static void foo() {}\n  public static void bar() {}\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 106,
+  "branches": 23,
+  "apis": 13,
+  "test": [
+    {
+      "description": "should be utility class since all static, public constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n    public static void doSomething() {}\n    public static void main(String args[]) {\n        doSomething();\n    }\n}\n        "
+    },
+    {
+      "description": "ok, uses non-static",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n    public void doSomething() { }\n    public static void main(String args[]) { }\n}\n        "
+    },
+    {
+      "description": "should be utility class, couple of statics, no constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void doSomething1() { }\n    public static void doSomething2() { }\n}\n        "
+    },
+    {
+      "description": "public constructor, no static - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n}\n        "
+    },
+    {
+      "description": "classic utility class - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo() {}\n    public static Foo get() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "abstract, so ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    public static void doSomething1() { }\n    public static void doSomething2() { }\n    public static void doSomething3() { }\n}\n        "
+    },
+    {
+      "description": "has some private and no public static fields, so ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n    private int x;\n    public static void doSomething() {}\n}\n        "
+    },
+    {
+      "description": "has public static field, so need to check",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static final int x = 5;\n    public static void doSomething() {}\n}\n        "
+    },
+    {
+      "description": "junit 3 'suite' method is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport junit.framework.TestSuite;\nimport junit.framework.Test;\n\npublic class FooTest extends TestSuite {\n    public static Test suite() {\n        return new TestSuite();\n    }\n}\n        "
+    },
+    {
+      "description": "junit 4 'suite' method is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.runner.RunWith;\nimport org.junit.runners.Suite;\nimport org.junit.runners.Suite.SuiteClasses;\n\n@RunWith(Suite.class)\n@SuiteClasses(FooTest.class)\npublic class FooTest {\n}\n            "
+    },
+    {
+      "description": "Reproducing bug [ 2315599 ] False +: UseSingleton with class containing constructor: Although there is a static method, the class also has a non-private constructor. This is a common design for custom exceptions which contain a private static method to format error message strings.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseSingleton extends Exception {\n    UseSingleton(final String string) {\n        super(foo(string));\n    }\n\n    private static String foo(final String string) {\n        return string;\n    }\n}\n        "
+    },
+    {
+      "description": "inner should be utility class since all static, public constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static class Bar {\n        public Bar() { }\n        public static void doSomething() {}\n    }\n    public void doSomething() {}\n}\n        "
+    },
+    {
+      "description": "[ 2404700 ] UseSingleton should not act on enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum EnumTest {\n    A, B;\n\n    EnumTest() { }\n\n    public static void main(String[] args) {\n        System.out.println(EnumTest.A);\n    }\n}\n        "
+    },
+    {
+      "description": "NPE in incorrect implementation...",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n    public void doSomething() { }\n    public static void main(String args[]) { }\n    ;\n}\n        "
+    },
+    {
+      "description": "OK, method annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() { }\n    @Override\n    public void doSomething() { }\n    public static void main(String args[]) { }\n}\n        "
+    },
+    {
+      "description": "#1255 UseUtilityClass false positive with Exceptions",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class MyException extends RuntimeException {\n\n    private static final long serialVersionUID = 2854498759784815062L;\n\n    public MyException() {\n        super(foo());\n    }\n\n    protected static String foo() {\n        return \"foo\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1467 UseUtilityClass can't correctly check functions with multiple annotations",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class AccountFragment {\n\n    public static AccountFragment newInstance() {\n        // ...\n        return new AccountFragment();\n    }\n\n    @SafeVarargs\n    @Override\n    public void onCreateView() {\n        // ...\n    }\n}\n        "
+    },
+    {
+      "description": "Lombok NoArgsConstructor - ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.NoArgsConstructor;\nimport lombok.AccessLevel;\n\n@NoArgsConstructor(access = AccessLevel.PRIVATE)\npublic class Foo {\n    public static Foo get() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Lombok NoArgsConstructor static import- ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static lombok.AccessLevel.PRIVATE;\n\nimport lombok.NoArgsConstructor;\n\n@NoArgsConstructor(access = PRIVATE)\npublic class Foo {\n    public static Foo get() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Lombok NoArgsConstructor with no access level- should be a utility class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.NoArgsConstructor;\n\n@NoArgsConstructor\npublic class Foo {\n    public static Foo get() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Lombok NoArgsConstructor with wrong access level - should be a utility class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.NoArgsConstructor;\n\n@NoArgsConstructor(access = lombok.AccessLevel.PUBLIC)\npublic class Foo {\n    public static Foo get() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Lombok AllArgsConstructor - ok",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.AllArgsConstructor;\nimport lombok.AccessLevel;\n\n@AllArgsConstructor(access = AccessLevel.PRIVATE)\npublic class Foo {\n    public static Foo get() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "#824 False Positive when extending another class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\n\npublic class FooLocal extends ThreadLocal<Integer> {\n    public static FooLocal get() {\n        return new FooLocal();\n    }\n}\n        "
+    },
+    {
+      "description": "#1094 [java] UseUtilityClass should be LombokAware",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n\n@UtilityClass\npublic class MyUtil {\n    private final static int CONSTANT = 5;\n\n    public static int addSomething(int in) {\n        return in + CONSTANT;\n    }\n}\n        "
+    },
+    {
+      "description": "Inner class in abstract class false-negative",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic abstract class Outer {\n    static class Inner { // no violation if private\n        public static int getInt() { return 42; }\n    }\n}\n        "
+    },
+    {
+      "description": "Private inner class in abstract class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Outer {\n    private static class Inner { // no violation if private\n        public static int getInt() { return 42; }\n    }\n}\n        "
+    },
+    {
+      "description": "Inner class in abstract class false-negative",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Outer {\n    static class Inner {\n        private static int answer;\n        public static int getInt() { return answer; }\n    }\n}\n        "
+    },
+    {
+      "description": "Inner class in interface false-negative",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Outer {\n    static class Inner {\n        public static int getInt() { return 42; }\n    }\n}\n        "
+    },
+    {
+      "description": "Inner class in sub-class false-negative",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Outer extends Object {\n    static class Inner {\n        public static boolean isYes(int a) {\n            return a != 0;\n        }\n    }\n}\n        "
+    }
+  ]
+}

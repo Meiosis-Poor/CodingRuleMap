@@ -1,0 +1,37 @@
+{
+  "name": "ParentVirtualCall",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-parent-virtual-call",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 147,
+  "branches": 12,
+  "apis": 106,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        29,
+        32,
+        47,
+        48,
+        49,
+        57,
+        58,
+        61,
+        62,
+        95,
+        98,
+        105,
+        108,
+        143,
+        167,
+        175
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-parent-virtual-call %t\n\nextern int foo();\n\nclass A {\npublic:\n  A() = default;\n  virtual ~A() = default;\n\n  virtual int virt_1() { return foo() + 1; }\n  virtual int virt_2() { return foo() + 2; }\n\n  int non_virt() { return foo() + 3; }\n  static int stat() { return foo() + 4; }\n};\n\nclass B : public A {\npublic:\n  B() = default;\n\n  // Nothing to fix: calls to direct parent.\n  int virt_1() override { return A::virt_1() + 3; }\n  int virt_2() override { return A::virt_2() + 4; }\n};\n\nclass C : public B {\npublic:\n  int virt_1() override { return A::virt_1() + B::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' refers to a member overridden in subclass; did you mean 'B'? [bugprone-parent-virtual-call]\n  // CHECK-FIXES:  int virt_1() override { return B::virt_1() + B::virt_1(); }\n  int virt_2() override { return A::virt_1() + B::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'B'? {{.*}}\n  // CHECK-FIXES:  int virt_2() override { return B::virt_1() + B::virt_1(); }\n\n  // Test that non-virtual and static methods are not affected by this cherker.\n  int method_c() { return A::stat() + A::non_virt(); }\n};\n\n// Check aliased type names\nusing A1 = A;\ntypedef A A2;\n#define A3 A\n\nclass C2 : public B {\npublic:\n  int virt_1() override { return A1::virt_1() + A2::virt_1() + A3::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A1::virt_1' {{.*}}; did you mean 'B'? {{.*}}\n  // CHECK-MESSAGES: :[[@LINE-2]]:49: warning: qualified name 'A2::virt_1' {{.*}}; did you mean 'B'? {{.*}}\n  // CHECK-MESSAGES: :[[@LINE-3]]:64: warning: qualified name 'A3::virt_1' {{.*}}; did you mean 'B'? {{.*}}\n  // CHECK-FIXES:  int virt_1() override { return B::virt_1() + B::virt_1() + B::virt_1(); }\n};\n\n// Test that the check affects grand-grand..-parent calls too.\nclass D : public C {\npublic:\n  int virt_1() override { return A::virt_1() + B::virt_1() + D::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'C'? {{.*}}\n  // CHECK-MESSAGES: :[[@LINE-2]]:48: warning: qualified name 'B::virt_1' {{.*}}; did you mean 'C'? {{.*}}\n  // CHECK-FIXES:  int virt_1() override { return C::virt_1() + C::virt_1() + D::virt_1(); }\n  int virt_2() override { return A::virt_1() + B::virt_1() + D::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'C'? {{.*}}\n  // CHECK-MESSAGES: :[[@LINE-2]]:48: warning: qualified name 'B::virt_1' {{.*}}; did you mean 'C'? {{.*}}\n  // CHECK-FIXES:  int virt_2() override { return C::virt_1() + C::virt_1() + D::virt_1(); }\n};\n\n// Test classes in namespaces.\nnamespace {\nclass BN : public A {\npublic:\n  int virt_1() override { return A::virt_1() + 3; }\n  int virt_2() override { return A::virt_2() + 4; }\n};\n} // namespace\n\nnamespace N1 {\nclass A {\npublic:\n  A() = default;\n  virtual int virt_1() { return foo() + 1; }\n  virtual int virt_2() { return foo() + 2; }\n};\n} // namespace N1\n\nnamespace N2 {\nclass BN : public N1::A {\npublic:\n  int virt_1() override { return A::virt_1() + 3; }\n  int virt_2() override { return A::virt_2() + 4; }\n};\n} // namespace N2\n\nclass CN : public BN {\npublic:\n  int virt_1() override { return A::virt_1() + BN::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'BN'? {{.*}}\n  // CHECK-FIXES:  int virt_1() override { return BN::virt_1() + BN::virt_1(); }\n  int virt_2() override { return A::virt_1() + BN::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'BN'? {{.*}}\n  // CHECK-FIXES:  int virt_2() override { return BN::virt_1() + BN::virt_1(); }\n};\n\nclass CNN : public N2::BN {\npublic:\n  int virt_1() override { return N1::A::virt_1() + N2::BN::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'N1::A::virt_1' {{.*}}; did you mean 'N2::BN'? {{.*}}\n  // CHECK-FIXES:  int virt_1() override { return N2::BN::virt_1() + N2::BN::virt_1(); }\n  int virt_2() override { return N1::A::virt_1() + N2::BN::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'N1::A::virt_1' {{.*}}; did you mean 'N2::BN'? {{.*}}\n  // CHECK-FIXES:  int virt_2() override { return N2::BN::virt_1() + N2::BN::virt_1(); }\n};\n\n// Test multiple inheritance fixes\nclass AA {\npublic:\n  AA() = default;\n  virtual ~AA() = default;\n\n  virtual int virt_1() { return foo() + 1; }\n  virtual int virt_2() { return foo() + 2; }\n\n  int non_virt() { return foo() + 3; }\n  static int stat() { return foo() + 4; }\n};\n\nclass BB_1 : virtual public AA {\npublic:\n  BB_1() = default;\n\n  // Nothing to fix: calls to parent.\n  int virt_1() override { return AA::virt_1() + 3; }\n  int virt_2() override { return AA::virt_2() + 4; }\n};\n\nclass BB_2 : virtual public AA {\npublic:\n  BB_2() = default;\n  int virt_1() override { return AA::virt_1() + 3; }\n};\n\nclass CC : public BB_1, public BB_2 {\npublic:\n  int virt_1() override { return AA::virt_1() + 3; }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'AA::virt_1' refers to a member overridden in subclasses; did you mean 'BB_1' or 'BB_2'? {{.*}}\n  // No fix available due to multiple choice of parent class.\n};\n\n// Test that virtual method is not diagnosed as not overridden in parent.\nclass BI : public A {\npublic:\n  BI() = default;\n};\n\nclass CI : BI {\n  int virt_1() override { return A::virt_1(); }\n};\n\n// Test templated classes.\ntemplate <class F> class BF : public A {\npublic:\n  int virt_1() override { return A::virt_1() + 3; }\n};\n\n// Test templated parent class.\nclass CF : public BF<int> {\npublic:\n  int virt_1() override { return A::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'BF'? {{.*}}\n};\n\n// Test both templated class and its parent class.\ntemplate <class F> class DF : public BF<F> {\npublic:\n  DF() = default;\n  int virt_1() override { return A::virt_1(); }\n  // CHECK-MESSAGES: :[[@LINE-1]]:34: warning: qualified name 'A::virt_1' {{.*}}; did you mean 'BF'? {{.*}}\n};\n\n// Just to instantiate DF<F>.\nint bar() { return (new DF<int>())->virt_1(); }"
+    }
+  ]
+}

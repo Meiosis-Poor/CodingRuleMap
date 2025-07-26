@@ -1,0 +1,137 @@
+{
+  "name": "AppendCharacterWithChar",
+  "language": "java",
+  "description": "\nAvoid concatenating characters as strings in StringBuffer/StringBuilder.append methods.\n        ",
+  "example": "StringBuffer sb = new StringBuffer();\nsb.append(\"a\");     // avoid this\n\nStringBuffer sb = new StringBuffer();\nsb.append('a');     // use this instead",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 52,
+  "branches": 9,
+  "apis": 6,
+  "test": [
+    {
+      "description": "appending single character string, should fail",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"a\");\n    }\n}\n        "
+    },
+    {
+      "description": "appending single char, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append('a');\n    }\n}\n        "
+    },
+    {
+      "description": "appending single char escaped",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"\\n\");\n    }\n}\n        "
+    },
+    {
+      "description": "this is probably wrong, but shouldn't fail",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"a\" + \"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates a three character int",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(123);\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates a string explicitly set to 1 character, not explicitly checking right now",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        String str = \"a\";\n        sb.append(str);\n    }\n}\n        "
+    },
+    {
+      "description": "for statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        for(int ix = 0; ix < 100; ix++)\n            sb.append(\"a\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates an escaped character",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"\\t\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates all escaped characters",
+      "expected-problems": 8,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"\\n\");\n        sb.append(\"\\t\");\n        sb.append(\"\\b\");\n        sb.append(\"\\r\");\n        sb.append(\"\\f\");\n        sb.append(\"\\\\\");\n        sb.append(\"\\'\");\n        sb.append(\"\\\"\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates a single upper case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"A\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates a single number",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"3\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates a single character &",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"&\");\n    }\n}\n        "
+    },
+    {
+      "description": "concatenates two characters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"/t\");\n    }\n}\n        "
+    },
+    {
+      "description": "a single octal character",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"\\12\");\n        sb.append(\"\\123\");\n    }\n}\n        "
+    },
+    {
+      "description": "octal character in longer string",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb) {\n        sb.append(\"\\1234\");\n    }\n}\n        "
+    },
+    {
+      "description": "append a single character as part of an expression (#2275)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(StringBuffer sb, int length) {\n        sb.append(\"a\".repeat(length));\n    }\n}\n        "
+    },
+    {
+      "description": "append single character string in constructor chain",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuilder sb = new StringBuilder().append(\"a\");\n        sb = new StringBuilder().append(\"c\");\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with string as constructor arg in StringBuilder method chain",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String name = \"bar\";\n    public String toString() {\n        StringBuilder sb = new StringBuilder(\"#\").append(\"Foo\").append('#').append(this.name);\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "[java] StringBuilder/Buffer false negatives with typeres #2881",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package net.sourceforge.pmd.lang.java.types.testdata;\n\n            public class DummyCompiledClass {\n                public String toString() {\n                    StringBuilder sb = new StringBuilder();\n                    int start = sb.indexOf(\" \");\n                    if (start == -1) {\n                        sb.append(\"Bar\");\n                        sb.append(\" \"); // warning expected: Avoid appending characters as strings in StringBuffer.append.\n                    }\n                    return sb.toString();\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] StringBuilder/Buffer false negatives with typeres #2881 (countertest, no classpath)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class NoCompiledClass {\n                public String toString() {\n                    StringBuilder sb = new StringBuilder();\n                    int start = sb.indexOf(\" \");\n                    if (start == -1) {\n                        sb.append(\"Bar\");\n                        sb.append(\" \"); // warning expected: Avoid appending characters as strings in StringBuffer.append.\n                    }\n                    return sb.toString();\n                }\n            }\n            "
+    }
+  ]
+}

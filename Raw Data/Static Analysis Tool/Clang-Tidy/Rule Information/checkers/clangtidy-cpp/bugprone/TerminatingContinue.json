@@ -1,0 +1,27 @@
+{
+  "name": "TerminatingContinue",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-terminating-continue",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 44,
+  "branches": 1,
+  "apis": 29,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        6,
+        12,
+        18,
+        24,
+        32,
+        40
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-terminating-continue %t\n\nvoid f() {\n  do {\n    continue;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'continue' in loop with false condition is equivalent to 'break' [bugprone-terminating-continue]\n    // CHECK-FIXES: break;\n  } while(false);\n\n  do {\n    continue;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'continue' in loop with false condition is equivalent to 'break' [bugprone-terminating-continue]\n    // CHECK-FIXES: break;\n  } while(0);\n\n  do {\n    continue;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'continue' in loop with false condition is equivalent to 'break' [bugprone-terminating-continue]\n    // CHECK-FIXES: break;\n  } while(nullptr);\n\n  do {\n    continue;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'continue' in loop with false condition is equivalent to 'break' [bugprone-terminating-continue]\n    // CHECK-FIXES: break;\n  } while(__null);\n\n\n  do {\n    int x = 1;\n    if (x > 0) continue;\n    // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: 'continue' in loop with false condition is equivalent to 'break' [bugprone-terminating-continue]\n    // CHECK-FIXES: if (x > 0) break;\n  } while (false);\n\n  switch (2) {\n  case 2:\n    do {\n      continue; // LoopInSwitch\n      // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: 'continue' in loop with false condition is equivalent to 'break' [bugprone-terminating-continue]\n      // CHECK-FIXES: break; // LoopInSwitch\n    } while (0);\n  }\n}\n\nvoid g() {\n  do {\n    do {\n      continue;\n      int x = 1;\n    } while (1 == 1);\n  } while (false);\n\n  do {\n    for (int i = 0; i < 1; ++i) {\n      continue;\n      int x = 1;\n    }\n  } while (false);\n\n  do {\n    while (true) {\n      continue;\n      int x = 1;\n    }\n  } while (false);\n\n  int v[] = {1,2,3,34};\n  do {\n    for (int n : v) {\n      if (n>2) continue;\n    }\n  } while (false);\n\n  do {\n    switch (2) {\n    case 1:\n    case 2:\n      continue;\n    }\n  } while (false);\n}"
+    }
+  ]
+}

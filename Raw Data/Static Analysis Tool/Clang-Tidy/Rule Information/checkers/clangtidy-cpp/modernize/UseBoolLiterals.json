@@ -1,0 +1,45 @@
+{
+  "name": "UseBoolLiterals",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-use-bool-literals",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 74,
+  "branches": 4,
+  "apis": 55,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 24,
+      "expected-linenumbers": [
+        7,
+        11,
+        15,
+        19,
+        23,
+        27,
+        34,
+        43,
+        58,
+        62,
+        68,
+        71,
+        76,
+        79,
+        99,
+        105,
+        119,
+        127,
+        128,
+        135,
+        136,
+        143,
+        146,
+        149
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s modernize-use-bool-literals %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {modernize-use-bool-literals.IgnoreMacros: \\\n// RUN:                false}}\"\n\nbool IntToTrue = 1;\n// CHECK-MESSAGES: :[[@LINE-1]]:18: warning: converting integer literal to bool, use bool literal instead [modernize-use-bool-literals]\n// CHECK-FIXES: {{^}}bool IntToTrue = true;{{$}}\n\nbool IntToFalse(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:17: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool IntToFalse(false);{{$}}\n\nbool LongLongToTrue{0x1LL};\n// CHECK-MESSAGES: :[[@LINE-1]]:21: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool LongLongToTrue{true};{{$}}\n\nbool ExplicitCStyleIntToFalse = (bool)0;\n// CHECK-MESSAGES: :[[@LINE-1]]:33: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool ExplicitCStyleIntToFalse = false;{{$}}\n\nbool ExplicitFunctionalIntToFalse = bool(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:37: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool ExplicitFunctionalIntToFalse = false;{{$}}\n\nbool ExplicitStaticIntToFalse = static_cast<bool>(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:33: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool ExplicitStaticIntToFalse = false;{{$}}\n\n#define TRUE_MACRO 1\n// CHECK-FIXES: {{^}}#define TRUE_MACRO 1{{$}}\n\nbool MacroIntToTrue = TRUE_MACRO;\n// CHECK-MESSAGES: :[[@LINE-1]]:23: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool MacroIntToTrue = TRUE_MACRO;{{$}}\n\n#define FALSE_MACRO bool(0)\n// CHECK-FIXES: {{^}}#define FALSE_MACRO bool(0){{$}}\n\nbool TrueBool = true; // OK\n\nbool FalseBool = bool(FALSE_MACRO);\n// CHECK-MESSAGES: :[[@LINE-1]]:23: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool FalseBool = bool(FALSE_MACRO);{{$}}\n\nvoid boolFunction(bool bar) {\n\n}\n\nchar Character = 0; // OK\n\nunsigned long long LongInteger = 1; // OK\n\n#define MACRO_DEPENDENT_CAST(x) static_cast<bool>(x)\n// CHECK-FIXES: {{^}}#define MACRO_DEPENDENT_CAST(x) static_cast<bool>(x){{$}}\n\nbool MacroDependentBool = MACRO_DEPENDENT_CAST(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:27: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool MacroDependentBool = MACRO_DEPENDENT_CAST(0);{{$}}\n\nbool ManyMacrosDependent = MACRO_DEPENDENT_CAST(FALSE_MACRO);\n// CHECK-MESSAGES: :[[@LINE-1]]:49: warning: converting integer literal to bool\n// CHECK-FIXES: {{^}}bool ManyMacrosDependent = MACRO_DEPENDENT_CAST(FALSE_MACRO);{{$}}\n\nclass FooClass {\n  public:\n  FooClass() : JustBool(0) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}FooClass() : JustBool(false) {}{{$}}\n  FooClass(int) : JustBool{0} {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}FooClass(int) : JustBool{false} {}{{$}}\n  private:\n  bool JustBool;\n  bool BoolWithBraces{0};\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}bool BoolWithBraces{false};{{$}}\n  bool BoolFromInt = 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}bool BoolFromInt = false;{{$}}\n  bool SimpleBool = true; // OK\n};\n\ntemplate<typename type>\nvoid templateFunction(type) {\n  type TemplateType = 0;\n  // CHECK-FIXES: {{^ *}}type TemplateType = 0;{{$}}\n}\n\ntemplate<int c>\nvoid valueDependentTemplateFunction() {\n  bool Boolean = c;\n  // CHECK-FIXES: {{^ *}}bool Boolean = c;{{$}}\n}\n\ntemplate<typename type>\nvoid anotherTemplateFunction(type) {\n  bool JustBool = 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}bool JustBool = false;{{$}}\n}\n\nint main() {\n  boolFunction(1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}boolFunction(true);{{$}}\n\n  boolFunction(false);\n\n  templateFunction(0);\n\n  templateFunction(false);\n\n  valueDependentTemplateFunction<1>();\n\n  anotherTemplateFunction(1);\n\n  IntToTrue = 1;\n  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}IntToTrue = true;{{$}}\n}\n\nstatic int Value = 1;\n\nbool Function1() {\n  bool Result = Value == 1 ? 1 : 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:30: warning: converting integer literal to bool\n  // CHECK-MESSAGES: :[[@LINE-2]]:34: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}bool Result = Value == 1 ? true : false;{{$}}\n  return Result;\n}\n\nbool Function2() {\n  return Value == 1 ? 1 : 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: converting integer literal to bool\n  // CHECK-MESSAGES: :[[@LINE-2]]:27: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}return Value == 1 ? true : false;{{$}}\n}\n\nvoid foo() {\n  bool Result;\n  Result = Value == 1 ? true : 0;\n  // CHECK-MESSAGES: :[[@LINE-1]]:32: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}Result = Value == 1 ? true : false;{{$}}\n  Result = Value == 1 ? false : bool(0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:33: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}Result = Value == 1 ? false : false;{{$}}\n  Result = Value == 1 ? (bool)0 : false;\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: converting integer literal to bool\n  // CHECK-FIXES: {{^ *}}Result = Value == 1 ? false : false;{{$}}\n}"
+    }
+  ]
+}

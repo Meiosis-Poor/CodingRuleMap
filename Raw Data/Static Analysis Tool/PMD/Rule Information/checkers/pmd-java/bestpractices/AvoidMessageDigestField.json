@@ -1,0 +1,26 @@
+{
+  "name": "AvoidMessageDigestField",
+  "language": "java",
+  "description": "\n            Declaring a MessageDigest instance as a field make this instance directly available to multiple threads.\n            Such sharing of MessageDigest instances should be avoided if possible since it leads to wrong results\n            if the access is not synchronized correctly.\n            Just create a new instance and use it locally, where you need it.\n            Creating a new instance is easier than synchronizing access to a shared instance.\n        ",
+  "example": "import java.security.MessageDigest;\npublic class AvoidMessageDigestFieldExample {\n    private final MessageDigest sharedMd;\n    public AvoidMessageDigestFieldExample() throws Exception {\n        sharedMd = MessageDigest.getInstance(\"SHA-256\");\n    }\n    public byte[] calculateHashShared(byte[] data) {\n        // sharing a MessageDigest like this without synchronizing access\n        // might lead to wrong results\n        sharedMd.reset();\n        sharedMd.update(data);\n        return sharedMd.digest();\n    }\n\n    // better\n    public byte[] calculateHash(byte[] data) throws Exception {\n        MessageDigest md = MessageDigest.getInstance(\"SHA-256\");\n        md.update(data);\n        return md.digest();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Basic test case for AvoidStringBufferField",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.security.MessageDigest;\n\npublic class Foo {\n    private MessageDigest md;\n    private static MessageDigest staticMd;\n}\n        "
+    },
+    {
+      "description": "Valid MessageDigest usage example",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.security.MessageDigest;\n\npublic class Foo {\n    public byte[] calculateHash(byte[] data) throws Exception {\n        MessageDigest md = MessageDigest.getInstance(\"SHA-256\");\n        md.update(data);\n        return md.digest();\n    }\n}\n        "
+    }
+  ]
+}

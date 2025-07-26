@@ -1,0 +1,31 @@
+{
+  "name": "ShrinkToFit",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-shrink-to-fit",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 76,
+  "branches": 4,
+  "apis": 54,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        11,
+        16,
+        21,
+        29,
+        34,
+        42,
+        53,
+        71,
+        79,
+        85
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s modernize-shrink-to-fit %t\n\nnamespace std {\ntemplate <typename T> struct vector { void swap(vector &other); };\n}\n\nvoid f() {\n  std::vector<int> v;\n\n  std::vector<int>(v).swap(v);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should be used to reduce the capacity of a shrinkable container [modernize-shrink-to-fit]\n  // CHECK-FIXES: v.shrink_to_fit();\n\n  std::vector<int> &vref = v;\n  std::vector<int>(vref).swap(vref);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: vref.shrink_to_fit();\n\n  std::vector<int> *vptr = &v;\n  std::vector<int>(*vptr).swap(*vptr);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: vptr->shrink_to_fit();\n}\n\nstruct X {\n  std::vector<int> v;\n  void f() {\n    std::vector<int>(v).swap(v);\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: the shrink_to_fit method should\n    // CHECK-FIXES: v.shrink_to_fit();\n\n    std::vector<int> *vptr = &v;\n    std::vector<int>(*vptr).swap(*vptr);\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: the shrink_to_fit method should\n    // CHECK-FIXES: vptr->shrink_to_fit();\n  }\n};\n\ntemplate <typename T> void g() {\n  std::vector<int> v;\n  std::vector<int>(v).swap(v);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: v.shrink_to_fit();\n\n  std::vector<T> v2;\n  std::vector<T>(v2).swap(v2);\n  // CHECK-FIXES: std::vector<T>(v2).swap(v2);\n}\n\ntemplate <typename T> void g2() {\n  std::vector<int> v;\n  std::vector<int>(v).swap(v);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: v.shrink_to_fit();\n\n  T v3;\n  T(v3).swap(v3);\n  // CHECK-FIXES: T(v3).swap(v3);\n}\n\n#define COPY_AND_SWAP_INT_VEC(x) std::vector<int>(x).swap(x)\n// CHECK-FIXES: #define COPY_AND_SWAP_INT_VEC(x) std::vector<int>(x).swap(x)\n\nvoid h() {\n  g<int>();\n  g<double>();\n  g<bool>();\n  g2<std::vector<int>>();\n  std::vector<int> v;\n  COPY_AND_SWAP_INT_VEC(v);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: COPY_AND_SWAP_INT_VEC(v);\n}\n\nvoid PR38315() {\n  typedef std::vector<int> Vector;\n  Vector v;\n  Vector(v).swap(v);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: v.shrink_to_fit();\n\n  using Vector2 = std::vector<int>;\n  Vector2 v2;\n  Vector2(v2).swap(v2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: the shrink_to_fit method should\n  // CHECK-FIXES: v2.shrink_to_fit();\n}"
+    }
+  ]
+}

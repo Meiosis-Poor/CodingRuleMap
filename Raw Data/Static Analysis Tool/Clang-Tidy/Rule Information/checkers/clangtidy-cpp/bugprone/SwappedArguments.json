@@ -1,0 +1,32 @@
+{
+  "name": "SwappedArguments",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-swapped-arguments",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 131,
+  "branches": 18,
+  "apis": 76,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        11,
+        22,
+        29,
+        35,
+        50,
+        56,
+        60,
+        63,
+        66,
+        72,
+        76
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s bugprone-swapped-arguments %t\n\nvoid F(int, double);\n\nint SomeFunction();\n\ntemplate <typename T, typename U>\nvoid G(T a, U b) {\n  F(a, b); // no-warning\n  F(2.0, 4);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'int' followed by argument converted from 'int' to 'double', potentially swapped arguments.\n// CHECK-FIXES: F(4, 2.0)\n}\n\nvoid funShortFloat(short, float);\nvoid funFloatFloat(float, float);\nvoid funBoolShort(bool, short);\nvoid funBoolFloat(bool, float);\n\nvoid foo() {\n  F(1.0, 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'int' followed by argument converted from 'int' to 'double', potentially swapped arguments.\n// CHECK-FIXES: F(3, 1.0)\n\n#define M(x, y) x##y()\n\n  double b = 1.0;\n  F(b, M(Some, Function));\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'int' followed by argument converted from 'int' to 'double', potentially swapped arguments.\n// CHECK-FIXES: F(M(Some, Function), b);\n\n#define N F(b, SomeFunction())\n\n  N;\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'int' followed by argument converted from 'int' to 'double', potentially swapped arguments.\n// In macro, don't emit fixits.\n// CHECK-FIXES: #define N F(b, SomeFunction())\n\n  G(b, 3);\n  G(3, 1.0);\n  G(0, 0);\n\n  F(1.0, 1.0);    // no-warning\n  F(3, 1.0);      // no-warning\n  F(true, false); // no-warning\n  F(0, 'c');      // no-warning\n\n#define APPLY(f, x, y) f(x, y)\n  APPLY(F, 1.0, 3);\n// CHECK-MESSAGES: :[[@LINE-1]]:9: warning: argument with implicit conversion from 'double' to 'int' followed by argument converted from 'int' to 'double', potentially swapped arguments.\n// CHECK-FIXES: APPLY(F, 3, 1.0);\n\n#define PARAMS 1.0, 3\n#define CALL(P) F(P)\n  CALL(PARAMS);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'int' followed by argument converted from 'int' to 'double', potentially swapped arguments.\n// In macro, don't emit fixits.\n\n  funShortFloat(5.0, 1U);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'short' followed by argument converted from 'unsigned int' to 'float', potentially swapped arguments.\n  // CHECK-FIXES: funShortFloat(1U, 5.0);\n  funShortFloat(5.0, 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'short' followed by argument converted from 'int' to 'float', potentially swapped arguments.\n  // CHECK-FIXES: funShortFloat(1, 5.0);\n  funShortFloat(5.0f, 1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'float' to 'short' followed by argument converted from 'int' to 'float', potentially swapped arguments.\n  // CHECK-FIXES: funShortFloat(1, 5.0f);\n\n  funFloatFloat(1.0f, 2.0);\n\n  funBoolShort(1U, true);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'unsigned int' to 'bool' followed by argument converted from 'bool' to 'short', potentially swapped arguments.\n  // CHECK-FIXES: funBoolShort(true, 1U);\n\n  funBoolFloat(1.0, true);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: argument with implicit conversion from 'double' to 'bool' followed by argument converted from 'bool' to 'float', potentially swapped arguments.\n  // CHECK-FIXES: funBoolFloat(true, 1.0);\n}"
+    }
+  ]
+}

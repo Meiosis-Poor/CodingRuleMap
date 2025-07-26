@@ -1,0 +1,82 @@
+{
+  "name": "ShortVariable",
+  "language": "java",
+  "description": "\nFields, local variables, enum constant names or parameter names that are very short are not helpful to the reader.\n        ",
+  "example": "public class Something {\n    private int q = 15;                         // field - too short\n    public static void main( String as[] ) {    // formal arg - too short\n        int r = 20 + q;                         // local var - too short\n        for (int i = 0; i < 10; i++) {          // not a violation (inside 'for' loop)\n            r += q;\n        }\n        for (Integer i : numbers) {             // not a violation (inside 'for-each' loop)\n            r += q;\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "param",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void main(String a[]) { // a should trigger it.\n    }\n}\n        "
+    },
+    {
+      "description": "none",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void main(String args[]) {\n       int bugleDeWump = -1;\n    }\n}\n        "
+    },
+    {
+      "description": "local",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public static void main(String args[]) {\n       int ab = -1;\n       // Should trigger ShortVariable rule.\n    }\n}\n        "
+    },
+    {
+      "description": "for",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void main(String args[]) {\n       for (int i = 0; i < 10; i++) { } // Should NOT!! trigger.\n    }\n}\n        "
+    },
+    {
+      "description": "field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int qx; // Should cause a problem.\n}\n        "
+    },
+    {
+      "description": "catch(Exception e) is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n     try {} catch (Exception e) {}\n    }\n}\n        "
+    },
+    {
+      "description": "ShortVariable false positive with for-each loops",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for (Integer i : ints) {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "ShortVariable within for-each loops",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for (Integer i : ints) {\n            String s = \"a\";\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1361 ShortVariable configuration - 7 characters",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class ShortVariable {\n    public void bar() {\n        String thisIsOk = \"\";\n        String foobar = \"\"; // too short\n    }\n}\n        "
+    },
+    {
+      "description": "#1361 ShortVariable configuration - 1 characters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ShortVariable {\n    public void bar() {\n        String thisIsOk = \"\";\n        String foo = \"\"; // that's ok, too, now\n    }\n}\n        "
+    },
+    {
+      "description": "#720 Whitelist lambda parameters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ShortVariable {\n    public void bar() {\n        String thisIsOk = a -> foo();\n        String foo = (a, b) -> foo();\n        String bar = (String a, Boolean b) -> foo();\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,246 @@
+{
+  "name": "GuardLogStatement",
+  "language": "java",
+  "description": "\nWhenever using a log level, one should check if it is actually enabled, or\notherwise skip the associate String creation and manipulation, as well as any method calls.\n\nAn alternative to checking the log level are substituting parameters, formatters or lazy logging\nwith lambdas. The available alternatives depend on the actual logging framework.\n        ",
+  "example": "// Add this for performance - avoid manipulating strings if the logger may drop it\nif (log.isDebugEnabled()) {\n    log.debug(\"log something\" + param1 + \" and \" + param2 + \"concat strings\");\n}\n\n// Avoid the guarding if statement with substituting parameters\nlog.debug(\"log something {} and {}\", param1, param2);\n\n// Avoid the guarding if statement with formatters\nlog.debug(\"log something %s and %s\", param1, param2);\n\n// This is still an issue, method invocations may be expensive / have side-effects\nlog.debug(\"log something expensive: {}\", calculateExpensiveLoggingText());\n\n// Avoid the guarding if statement with lazy logging and lambdas\nlog.debug(\"log something expensive: {}\", () -> calculateExpensiveLoggingText());\n\n// … alternatively use method references\nlog.debug(\"log something expensive: {}\", this::calculateExpensiveLoggingText);",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 268,
+  "branches": 49,
+  "apis": 18,
+  "test": [
+    {
+      "description": "OK, guard is here - log4j",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class Foo {\n    private static final Logger logger = LogManager.getLogger(Foo.class);\n\n    private void foo() {\n        if ( logger.isDebugEnabled() )\n            logger.debug(\"Debug statement:\" + this);\n    }\n}\n        "
+    },
+    {
+      "description": "ok, no error expected - apache commons logging",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\n\npublic class Test {\n    private static final Log __log = LogFactory.getLog(Test.class);\n    public void test() {\n        // good:\n        if (__log.isDebugEnabled()) {\n        __log.debug(\"bla\" + this, e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Guarded call - OK - java util",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Level;\nimport java.util.logging.Logger;\n\npublic class Foo {\n\n    private void foo(Logger logger) {\n        if ( logger.isLoggable(Level.FINE) ) {\n            logger.fine(\"debug message: \" + this);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "KO, missing guard 1 - log4j",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class Foo {\n    private static final Logger logger = LogManager.getLogger(Foo.class);\n\n    private void foo() {\n        logger.debug(\"Debug statement: \" + this);\n    }\n}\n        "
+    },
+    {
+      "description": "KO, missing guard 2 - log4j",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class Foo {\n    private static final Logger logger = LogManager.getLogger(Foo.class);\n\n    private void foo() {\n        logger.debug(\"Debug statement: \" + this);\n    }\n\n    private void bar() {\n        logger.info(\"No guard, but'is OK with properties configuration: \" + this);\n    }\n}\n        "
+    },
+    {
+      "description": "Complex logging without guard - apache commons logging",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\n\npublic class Test {\n    private static final Log __log = LogFactory.getLog(Test.class);\n    public void test() {\n\n        // bad:\n        __log.debug(\"log something\" + this + \" and \" + \"concat strings\");\n\n        // bad:\n        __log.debug(\"log something\" + this + \" and \" + \"concat strings\", e);\n\n        // good:\n        if (__log.isDebugEnabled()) {\n        __log.debug(\"bla\" + this, e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Complex logging with misplaced guard - apache commons logging",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.loggong.Log;\n\npublic class Test {\n    private static final Log __log = LogFactory.getLog(Test.class);\n    public void test() {\n        if (true) {\n            // bad:\n            __log.debug(\"log something\" + this + \" and \" + \"concat strings\");\n            // this is useless:\n            __log.isDebugEnabled();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Unguarded call - KO - java util",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\n\npublic class Foo {\n\n    private void foo(Logger logger) {\n        logger.fine(\"debug message: \" + this);\n    }\n}\n        "
+    },
+    {
+      "description": "ok #1189 GuardLogStatementRule and GuardDebugLoggingRule broken for log4j2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\nimport org.apache.logging.log4j.Marker;\nimport org.apache.logging.log4j.MarkerManager;\n\npublic class Test {\n    public void test(String mymarker) {\n        final Logger logger = LogManager.getLogger(Test.class);\n        final Marker m = MarkerManager.getMarker(mymarker);\n        if (logger.isDebugEnabled(m)) {\n          logger.debug(m, message + \"\");\n        }\n        if (logger.isTraceEnabled(m)) {\n          logger.trace(m, message + \"\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation - wrong guard #1189 GuardLogStatementRule and GuardDebugLoggingRule broken for log4j2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        14
+      ],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\nimport org.apache.logging.log4j.Marker;\nimport org.apache.logging.log4j.MarkerManager;\n\npublic class Test {\n    public void test(String mymarker) {\n        final Logger logger = LogManager.getLogger(Test.class);\n        final Marker m = MarkerManager.getMarker(mymarker);\n        if (logger.isTraceEnabled(m)) { // should have been isDebugEnabled\n          logger.debug(m, message + \"\");\n        }\n        if (logger.isDebugEnabled(m)) { // should have been isTraceEnabled\n          logger.trace(m, message + \"\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation - no if #1189 GuardLogStatementRule and GuardDebugLoggingRule broken for log4j2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\nimport org.apache.logging.log4j.Marker;\nimport org.apache.logging.log4j.MarkerManager;\n\npublic class Test {\n    public void test(String mymarker) {\n        final Logger logger = LogManager.getLogger(Test.class);\n        final Marker m = MarkerManager.getMarker(mymarker);\n        logger.isDebugEnabled(m); // must be within an if\n        logger.debug(m, message + \"\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1224 GuardDebugLogging broken in 5.1.1 - missing additive statement check in log statement - apache commons logging",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\n\npublic class Test {\n    private static final Log __log = LogFactory.getLog(Test.class);\n    public void test() {\n        // okay:\n        __log.debug(\"log something\");\n\n        // okay:\n        __log.debug(\"log something with exception\", e);\n\n        // good:\n        if (__log.isDebugEnabled()) {\n        __log.debug(\"bla: \" + this, e);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1341 pmd:GuardDebugLogging violates LOGGER.debug with format \"{}\" - slf4j",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic class GuardDebugFalsePositive {\n    private static final Logger LOGGER = LoggerFactory.getLogger(\"GuardDebugFalsePositive\");\n    public void test() {\n        String tempSelector = \"a\";\n        LOGGER.debug(\"MessageSelector={}\" , tempSelector);\n    }\n}\n        "
+    },
+    {
+      "description": "#1203 GuardLogStatementJavaUtil issues warning for severe level not being specified as property",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\nimport java.util.logging.Level;\n\npublic class Foo {\n    Logger LOGGER;\n\n    public void foo() {\n        LOGGER.severe(\"This is a severe message\" + this + \" and concat\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1227 GuardLogStatementJavaUtil doesn't catch log(Level.FINE, \"msg\" + \" msg\") calls",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.logging.Logger;\nimport java.util.logging.Level;\n\npublic class Foo {\n    Logger LOGGER;\n\n    public void foo() {\n        LOGGER.log(Level.FINE, \"This is a severe message\" + this + \" and concat\"); // violation\n        if (LOGGER.isLoggable(Level.FINE)) {\n            LOGGER.log(Level.FINE, \"This is a severe message\" + this + \" and concat\"); // no violation\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1347 False positive for GuardLogStatementJavaUtil with slf4j",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.slf4j.Logger;\n\npublic class GuardLogTest {\n    Logger LOG;\n    public void foo() {\n        if (LOG.isInfoEnabled()) {\n            LOG.info(\"update: After spool map size: \" + 1);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1398 False positive for GuardLogStatementJavaUtil with Log4j",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.log4j.Logger;\n\npublic class GuardLogTest {\n    Logger LOG;\n    public void foo() {\n        if (LOG.isInfoEnabled()) {\n            LOG.info(\"update: After spool map size: \" + 2);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#783 [java] GuardLogStatement regression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.log4j.Logger;\n\npublic class GuardLogTest {\n    Logger LOGGER;\n    public void foo() {\n        if (!(exception instanceof IllegalArgumentException) && LOGGER.isErrorEnabled()) {\n            LOGGER.error(\"Some error \" + someObject, exception);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Wrong guard method for java util logging",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\nimport java.util.logging.Level;\n\npublic class Foo {\n    Logger LOGGER;\n\n    public void foo() {\n        if (LOGGER.isLoggable(Level.INFO)) { // should have been level FINE\n            LOGGER.log(Level.FINE, \"This is a severe message\" + this + \" and concat\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#370 rule not considering lambdas",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Level;\nimport java.util.logging.Logger;\nimport java.util.function.Supplier;\npublic class Logger {\n    private static final Logger LOGGER = new Logger();\n\n    public void bar() {\n        String msg;\n        msg = \"test\";\n        LOGGER.info(() -> \"Bla \" + msg + \" bla\"); // The lambda is free to do whatever it likes\n    }\n\n    @Override\n    public void info(Supplier<String> message) {\n        if (LOGGER.isInfoEnabled()) {\n            LOGGER.info(message.get());\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#869 [java] GuardLogStatement false positive with Math.log",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class GuardLogStatement {\n    public void foo() {\n        double confidence = 0.5;\n        int depth = (int) Math.ceil(-Math.log(1 - confidence) / Math.log(2));\n    }\n}\n        "
+    },
+    {
+      "description": "#869 [java] GuardLogStatement false positive with something.error on return",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.ThisIsNotALogger;\npublic class GuardLogStatement {\n    public String foo() {\n        return ThisIsNotALogger.error(\"message \" + this);\n    }\n}\n        "
+    },
+    {
+      "description": "#3155 False negatives with unguarded method calls",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        7,
+        8
+      ],
+      "code": "\nimport java.util.logging.Logger;\npublic class Logger {\n    private static final Logger LOGGER = new Logger();\n\n    public void bar() {\n        LOGGER.info(\"Message with param: {}\", expensiveOperation()); // bad, expensiveOperation is executed regardless\n        LOGGER.info(\"Message with param: %s\", this.expensiveOperation()); // bad, expensiveOperation is executed regardless\n        LOGGER.info(expensiveOperation()); // bad, expensiveOperation is executed regardless\n\n        if (LOGGER.isInfoEnabled()) {\n            LOGGER.info(\"Message with param: {}\", expensiveOperation());\n        }\n        if (LOGGER.isInfoEnabled()) {\n            LOGGER.info(\"Message with param: %s\", expensiveOperation());\n        }\n        if (LOGGER.isInfoEnabled()) {\n            LOGGER.info(expensiveOperation());\n        }\n\n        LOGGER.info(\"Message with param: {}\", () -> expensiveOperation());\n        LOGGER.info(\"Message with param: %s\", () -> expensiveOperation());\n        LOGGER.info(()-> expensiveOperation());\n    }\n\n    private String expensiveOperation() {\n        return \"...\";\n    }\n}\n        "
+    },
+    {
+      "description": "[java] GuardLogStatement: False positive with compile-time constant arguments #957",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Logger {\n    private static final Logger LOGGER = new Logger();\n    private static final String CONSTANT = \"a constant\";\n\n    public void case1() {\n        LOGGER.debug(\"log something\" + \" and \" + \"concat strings\"); // the same as \"log something and concat strings\"\n    }\n\n    public void case2() {\n        final String constantPrefix = \"log something\";\n        final String constantSuffix = \"concat strings\";\n        LOGGER.debug(constantPrefix + \" and \" + constantSuffix ); // the same as \"log something and concat strings\"\n    }\n\n    public void case3() {\n        LOGGER.debug(\"Prefix \" + CONSTANT);\n    }\n\n    public void case4() {\n        LOGGER.debug(\"Some long string that has been \" + \n            \"separated into two constants. Contains value: {}\", param);\n    }\n\n    private void log(int line, String key) {\n        System.out.println(line + \":\" + key);\n    }\n\n    public void case5(int line, String key) {\n        log(line, key);\n        LOGGER.debug(key);\n    }\n\n    private interface TestLambda {\n        void apply(String arg1, String arg2);\n    }\n    private void runTestLambda(TestLambda test) {\n        test.apply(\"one\", \"two\");\n    }\n}\n        "
+    },
+    {
+      "description": "false negative inside lambdas",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        19,
+        21
+      ],
+      "code": "\npublic class Logger {\n    private static final Logger LOGGER = new Logger();\n\n    private interface TestLambda {\n        void apply(String arg1, String arg2);\n    }\n    private void runTestLambda(TestLambda test) {\n        test.apply(\"one\", \"two\");\n    }\n\n    public void case1_no_violation() {\n        runTestLambda((String a, String b) -> {\n            LOGGER.debug(a);\n        });\n    }\n\n    public void case2_violation() {\n        runTestLambda((String a, String b) -> {\n            LOGGER.debug(a + b);\n        });\n        runTestLambda((s1, s2) -> {LOGGER.debug(s1 + s2);});\n    }\n}\n        "
+    },
+    {
+      "description": "NullPointerException applying rule GuardLogStatement (#3340)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Logger {\n    private static final Logger LOGGER = new Logger();\n\n    public void bar() {\n        LOGGER.debug();\n    }\n}\n        "
+    },
+    {
+      "description": "#4492 GuardLogStatement gives false positive when argument is a Java method reference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    static String foo() {\n        return \"foo\";\n    }\n\n    public void test() {\n        final Logger logger = LogManager.getLogger(GuardLogStatementTest.class);\n        logger.info(\"Some info: {}\", GuardLogStatementTest::foo);\n    }\n}\n        "
+    },
+    {
+      "description": "GuardLogStatement should flag method reference from method / constructor calls",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    String foo() {\n        return \"foo\";\n    }\n\n    private GuardLogStatementTest factory() {\n        return new GuardLogStatementTest();\n    }\n\n    public void test() {\n        final Logger logger = LogManager.getLogger(GuardLogStatementTest.class);\n        logger.info(\"Some info: {}\", new GuardLogStatementTest()::foo);\n        logger.info(\"Some info: {}\", factory()::foo);\n    }\n}\n        "
+    },
+    {
+      "description": "#5151 Field accesses do not require guards",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    private static final Logger LOG = LogManager.getLogger(GuardLogStatementTest.class);\n    private static final String MY_CONSTANT = \"\";\n    private String my_field = \"\";\n\n    public void test() {\n        LOG.info(\n            \"Some message here : foo={}\",\n            GuardLogStatementTest.MY_CONSTANT\n        );\n\n        LOG.info(\n            \"Some message here : foo={}\",\n            this.my_field\n        );\n    }\n}\n        "
+    },
+    {
+      "description": "#5151 Field accesses on method call returned values require guards",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    private static final Logger LOG = LogManager.getLogger(GuardLogStatementTest.class);\n    private String my_field = \"\";\n\n    public void test() {\n        LOG.info(\n            \"Some message here : foo={}\",\n            new GuardLogStatementTest().my_field\n        );\n\n        LOG.info(\n            \"Some message here : foo={}\",\n            factory().my_field\n        );\n    }\n\n    private GuardLogStatementTest factory() {\n        return new GuardLogStatementTest();\n    }\n}\n        "
+    },
+    {
+      "description": "#5152 \"this\" do not require guards",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    private static final Logger LOG = LogManager.getLogger(GuardLogStatementTest.class);\n\n    public void test() {\n        LOG.info(\n            \"Some message here : foo={}\",\n            this\n        );\n    }\n}\n        "
+    },
+    {
+      "description": "#5153 array access to constants do not require guards",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    private static final Logger LOG = LogManager.getLogger(GuardLogStatementTest.class);\n    private final String[] foo = { \"foo\" };\n\n    public void test() {\n        LOG.info(\n            \"Some message here : foo={}\",\n            foo[0]\n        );\n    }\n}\n        "
+    },
+    {
+      "description": "array access with computed keys require guards",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    private static final Logger LOG = LogManager.getLogger(GuardLogStatementTest.class);\n    private final String[] foo = { \"foo\" };\n\n    public void test() {\n        LOG.info(\n            \"Some message here : foo={}\",\n            foo[getFooIndex()]\n        );\n    }\n\n    public int getFooIndex() {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "#5153 array access to method returned values require guards",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\nimport org.apache.logging.log4j.LogManager;\n\npublic class GuardLogStatementTest {\n    private static final Logger LOG = LogManager.getLogger(GuardLogStatementTest.class);\n\n    public void test() {\n        LOG.info(\n            \"Some message here : foo={}\",\n            foo()[0]\n        );\n    }\n\n    private String[] foo() {\n        return new String[] { \"foo\" };\n    }\n}\n        "
+    },
+    {
+      "description": "#3602 False positive when compile-time constant is created from external constants",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.LogManager;\nimport org.apache.logging.log4j.Logger;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.GuardLogStatementTest;\n\npublic class MyClass {\n  private static final Logger logger = LogManager.getLogger();\n  public void doSomething() {\n     final Object arg = new Object();\n     logger.info(\"Problem message: {}. \" + GuardLogStatementTest.TERM_MSG, arg);\n  }\n}\n        "
+    },
+    {
+      "description": "#4703 [java] GuardLogStatement reports violation for Log4j parameterized logs",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport org.apache.logging.log4j.LogManager;\nimport org.apache.logging.log4j.Logger;\n\nclass Test {\n    private static final Logger LOGGER = LogManager.getLogger(Test.class);\n\n    public static void main() {\n        LOGGER.info(\"Info : {} : Request received\", LOGGER.getName()); // one violation here, because of LOGGER.getName() method call\n        String s = \"Hello World\";\n        LOGGER.debug(\"Logging string {}\", s); // this is ok\n    }\n}\n"
+    }
+  ]
+}

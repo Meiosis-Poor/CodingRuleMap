@@ -1,0 +1,38 @@
+{
+  "name": "SystemPrintln",
+  "language": "java",
+  "description": "\nReferences to System.(out|err).print are usually intended for debugging purposes and can remain in\nthe codebase even in production code. By using a logger one can enable/disable this behaviour at\nwill (and by priority) and avoid clogging the Standard out log.\n        ",
+  "example": "class Foo{\n    Logger log = Logger.getLogger(Foo.class.getName());\n    public void testA () {\n        System.out.println(\"Entering test\");\n        // Better use this\n        log.fine(\"Entering test\");\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "one",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void foo() {\n        System.out.println(\"debug message\");\n    }\n}\n        "
+    },
+    {
+      "description": "many",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void foo1() {\n        System.out.println(\"debug message\");\n    }\n    private void foo2() {\n        System.out.println(\"debug message\");\n        System.out.println(\"debug message\");\n    }\n}\n        "
+    },
+    {
+      "description": "none",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void foo() {\n        int x = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "#1217 SystemPrintln always says \"System.out.print is used\"",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestPrintLn {\n    public static void main(String args[]) {\n        System.out.print(\"Print out\");\n        System.out.println(\"Print out line\");\n        System.err.print(\"Print err\");\n        System.err.println(\"Print err line\");\n    }\n}\n        "
+    }
+  ]
+}

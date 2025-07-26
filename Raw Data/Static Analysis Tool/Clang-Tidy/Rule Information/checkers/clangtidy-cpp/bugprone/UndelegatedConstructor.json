@@ -1,0 +1,29 @@
+{
+  "name": "UndelegatedConstructor",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-undelegated-constructor",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 75,
+  "branches": 10,
+  "apis": 35,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        12,
+        14,
+        16,
+        23,
+        34,
+        36,
+        38,
+        46
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-undelegated-constructor %t\n\nstruct Ctor;\nCtor foo();\n\nstruct Ctor {\n  Ctor();\n  Ctor(int);\n  Ctor(int, int);\n  Ctor(Ctor *i) {\n    Ctor();\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: did you intend to call a delegated constructor? A temporary object is created here instead [bugprone-undelegated-constructor]\n    Ctor(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: did you intend to call a delegated constructor?\n    Ctor(1, 2);\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: did you intend to call a delegated constructor?\n    foo();\n  }\n};\n\nCtor::Ctor() {\n  Ctor(1);\n// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: did you intend to call a delegated constructor?\n}\n\nCtor::Ctor(int i) : Ctor(i, 1) {} // properly delegated.\n\nstruct Dtor {\n  Dtor();\n  Dtor(int);\n  Dtor(int, int);\n  Dtor(Ctor *i) {\n    Dtor();\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: did you intend to call a delegated constructor?\n    Dtor(0);\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: did you intend to call a delegated constructor?\n    Dtor(1, 2);\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: did you intend to call a delegated constructor?\n  }\n  ~Dtor();\n};\n\nstruct Base {};\nstruct Derived : public Base {\n  Derived() { Base(); }\n// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: did you intend to call a delegated constructor?\n};\n\ntemplate <typename T>\nstruct TDerived : public Base {\n  TDerived() { Base(); }\n};\n\nTDerived<int> t;"
+    }
+  ]
+}

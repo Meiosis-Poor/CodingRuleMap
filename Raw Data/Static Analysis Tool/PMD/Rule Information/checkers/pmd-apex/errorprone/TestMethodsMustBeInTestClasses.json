@@ -1,0 +1,42 @@
+{
+  "name": "TestMethodsMustBeInTestClasses",
+  "language": "apex",
+  "description": "\n      Test methods marked as a testMethod or annotated with @IsTest,\n      but not residing in a test class should be moved to a proper\n      class or have the @IsTest annotation added to the class.\n      \n      Support for tests inside functional classes was removed in Spring-13 (API Version 27.0),\n      making classes that violate this rule fail compile-time. This rule is mostly usable when\n      dealing with legacy code.\n    ",
+  "example": "// Violating\nprivate class TestClass {\n  @IsTest static void myTest() {\n    // Code here\n  }\n}\n\nprivate class TestClass {\n  static testMethod void myTest() {\n    // Code here\n  }\n}\n\n// Compliant\n@IsTest\nprivate class TestClass {\n  @IsTest static void myTest() {\n    // Code here\n  }\n}\n\n@IsTest\nprivate class TestClass {\n  static testMethod void myTest() {\n    // Code here\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Class without @IsTest, method with @IsTest",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nprivate class TestClass {\n    @IsTest static void myTest() {\n        // Code here\n    }\n}\n        "
+    },
+    {
+      "description": "Class without @IsTest, method with testMethod",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nprivate class TestClass {\n    static testMethod void myTest() {\n        // Code here\n    }\n}\n        "
+    },
+    {
+      "description": "Class with @IsTest, method with @IsTest",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@IsTest\nprivate class TestClass {\n    @IsTest static void myTest() {\n        // Code here\n    }\n}\n        "
+    },
+    {
+      "description": "Class with @IsTest, method with testMethod",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@IsTest\nprivate class TestClass {\n    static testMethod void myTest() {\n        // Code here\n    }\n}\n        "
+    }
+  ]
+}

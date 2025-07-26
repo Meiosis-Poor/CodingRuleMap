@@ -1,0 +1,290 @@
+{
+  "name": "VisibilityModifier",
+  "language": "java",
+  "description": "<div>\n Checks visibility of class members. Only static final, immutable or annotated\n by specified annotation members may be public;\n other class members must be private unless the property {@code protectedAllowed}\n or {@code packageAllowed} is set.\n </div>\n\n <p>\n Public members are not flagged if the name matches the public\n member regular expression (contains {@code \"^serialVersionUID$\"} by\n default).\n </p>\n\n <p>\n Note that Checkstyle 2 used to include {@code \"^f[A-Z][a-zA-Z0-9]*$\"} in the default pattern\n to allow names used in container-managed persistence for Enterprise JavaBeans (EJB) 1.1 with\n the default settings. With EJB 2.0 it is no longer necessary to have public access for\n persistent fields, so the default has been changed.\n </p>\n\n <p>\n Rationale: Enforce encapsulation.\n </p>\n\n <p>\n Check also has options making it less strict:\n </p>\n\n <p>\n <b>ignoreAnnotationCanonicalNames</b>- the list of annotations which ignore\n variables in consideration. If user want to provide short annotation name that\n type will match to any named the same type without consideration of package.\n </p>\n\n <p>\n <b>allowPublicFinalFields</b>- which allows public final fields.\n </p>\n\n <p>\n <b>allowPublicImmutableFields</b>- which allows immutable fields to be\n declared as public if defined in final class.\n </p>\n\n <p>\n Field is known to be immutable if:\n </p>\n <ul>\n <li>It's declared as final</li>\n <li>Has either a primitive type or instance of class user defined to be immutable\n (such as String, ImmutableCollection from Guava, etc.)</li>\n </ul>\n\n <p>\n Classes known to be immutable are listed in <b>immutableClassCanonicalNames</b>\n by their canonical names.\n </p>\n\n <p>\n Property Rationale: Forcing all fields of class to have private modifier by default is\n good in most cases, but in some cases it drawbacks in too much boilerplate get/set code.\n One of such cases are immutable classes.\n </p>\n\n <p>\n Restriction: Check doesn't check if class is immutable, there's no checking\n if accessory methods are missing and all fields are immutable, we only check\n if current field is immutable or final.\n Under the flag <b>allowPublicImmutableFields</b>, the enclosing class must\n also be final, to encourage immutability.\n Under the flag <b>allowPublicFinalFields</b>, the final modifier\n on the enclosing class is optional.\n </p>\n\n <p>\n Star imports are out of scope of this Check. So if one of type imported via\n star import collides with user specified one by its short name - there\n won't be Check's violation.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 345,
+  "branches": 50,
+  "apis": 72,
+  "test": [
+    {
+      "description": "Auto test from InputVisibilityModifierAnnotated.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        60,
+        63,
+        66,
+        67,
+        69,
+        70
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.annotations.VisibleForTesting;\nimport org.junit.ClassRule;\nimport org.junit.Rule;\nimport org.junit.rules.TemporaryFolder;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\nimport java.lang.annotation.Target;\npublic class InputVisibilityModifierAnnotated {\n    @Rule\n    public TemporaryFolder publicJUnitRule = new TemporaryFolder();\n    @org.junit.Rule\n    public TemporaryFolder fqPublicJUnitRule = new TemporaryFolder();\n    @VisibleForTesting\n    public String googleCommonsAnnotatedPublic;\n    @VisibleForTesting\n    String googleCommonsAnnotatedPackage;\n    @VisibleForTesting\n    protected String googleCommonsAnnotatedProtected;\n    @com.google.common.annotations.VisibleForTesting\n    public String fqGoogleCommonsAnnotatedPublic;\n    @com.google.common.annotations.VisibleForTesting\n    String fqGoogleCommonsAnnotatedPackage;\n    @com.google.common.annotations.VisibleForTesting\n    protected String fqGoogleCommonsAnnotatedProtected;\n    @CustomAnnotation\n    public String customAnnotatedPublic; \n    @CustomAnnotation\n    String customAnnotatedPackage; \n    @CustomAnnotation\n    protected String customAnnotatedProtected; \n    public String unannotatedPublic; \n    String unannotatedPackage; \n    protected String unannotatedProtected; \n    private String unannotatedPrivate;\n    @Retention(value=RetentionPolicy.RUNTIME)\n    @Target(value={ElementType.FIELD})\n    public @interface CustomAnnotation {\n    }\n    @ClassRule\n    public static TemporaryFolder publicJUnitClassRule = new TemporaryFolder();\n    @org.junit.ClassRule\n    public static TemporaryFolder fqPublicJUnitClassRule = new TemporaryFolder();\n    @CustomAnnotation @VisibleForTesting Integer initialCapacity;\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierAnnotated2.java",
+      "expected-problems": 13,
+      "expected-linenumbers": [
+        36,
+        39,
+        42,
+        45,
+        48,
+        51,
+        54,
+        57,
+        67,
+        69,
+        70,
+        79,
+        82
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.annotations.VisibleForTesting;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\nimport java.lang.annotation.Target;\nimport org.junit.ClassRule;\nimport org.junit.Rule;\nimport org.junit.rules.TemporaryFolder;\npublic class InputVisibilityModifierAnnotated2 {\n    @Rule\n    public TemporaryFolder publicJUnitRule = new TemporaryFolder(); \n    @Rule\n    public TemporaryFolder fqPublicJUnitRule = new TemporaryFolder(); \n    @VisibleForTesting\n    public String googleCommonsAnnotatedPublic; \n    @VisibleForTesting\n    String googleCommonsAnnotatedPackage; \n    @VisibleForTesting\n    protected String googleCommonsAnnotatedProtected; \n    @VisibleForTesting\n    public String fqGoogleCommonsAnnotatedPublic; \n    @VisibleForTesting\n    String fqGoogleCommonsAnnotatedPackage; \n    @VisibleForTesting\n    protected String fqGoogleCommonsAnnotatedProtected; \n    @CustomAnnotation\n    public String customAnnotatedPublic;\n    @CustomAnnotation\n    String customAnnotatedPackage;\n    @CustomAnnotation\n    protected String customAnnotatedProtected;\n    public String unannotatedPublic; \n    String unannotatedPackage; \n    protected String unannotatedProtected; \n    private String unannotatedPrivate;\n    @Retention(value=RetentionPolicy.RUNTIME)\n    @Target(value={ElementType.FIELD})\n    public @interface CustomAnnotation {\n    }\n    @ClassRule\n    public static TemporaryFolder publicJUnitClassRule = new TemporaryFolder(); \n    @ClassRule\n    public static TemporaryFolder fqPublicJUnitClassRule = new TemporaryFolder(); \n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierAnnotated3.java",
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        35,
+        38,
+        41,
+        44,
+        47,
+        50,
+        53,
+        56,
+        59,
+        62,
+        65,
+        66,
+        68,
+        69,
+        78,
+        81
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.annotations.VisibleForTesting;\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\nimport java.lang.annotation.Target;\nimport org.junit.ClassRule;\nimport org.junit.Rule;\nimport org.junit.rules.TemporaryFolder;\npublic class InputVisibilityModifierAnnotated3 {\n    @Rule\n    public TemporaryFolder publicJUnitRule = new TemporaryFolder(); \n    @Rule\n    public TemporaryFolder fqPublicJUnitRule = new TemporaryFolder(); \n    @VisibleForTesting\n    public String googleCommonsAnnotatedPublic; \n    @VisibleForTesting\n    String googleCommonsAnnotatedPackage; \n    @VisibleForTesting\n    protected String googleCommonsAnnotatedProtected; \n    @VisibleForTesting\n    public String fqGoogleCommonsAnnotatedPublic; \n    @VisibleForTesting\n    String fqGoogleCommonsAnnotatedPackage; \n    @VisibleForTesting\n    protected String fqGoogleCommonsAnnotatedProtected; \n    @CustomAnnotation\n    public String customAnnotatedPublic; \n    @CustomAnnotation\n    String customAnnotatedPackage; \n    @CustomAnnotation\n    protected String customAnnotatedProtected; \n    public String unannotatedPublic; \n    String unannotatedPackage; \n    protected String unannotatedProtected; \n    private String unannotatedPrivate;\n    @Retention(value=RetentionPolicy.RUNTIME)\n    @Target(value={ElementType.FIELD})\n    public @interface CustomAnnotation {\n    }\n    @ClassRule\n    public static TemporaryFolder publicJUnitClassRule = new TemporaryFolder(); \n    @ClassRule\n    public static TemporaryFolder fqPublicJUnitClassRule = new TemporaryFolder(); \n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierAnnotatedSameTypeName.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        32,
+        35
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport org.junit.ClassRule;\nimport org.junit.Rule;\nimport org.junit.rules.TemporaryFolder;\npublic class InputVisibilityModifierAnnotatedSameTypeName\n{\n    @Rule\n    public TemporaryFolder publicJUnitRule = new TemporaryFolder(); \n    @ClassRule\n    public TemporaryFolder publicJUnitClassRule = new TemporaryFolder(); \n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierGenerics.java",
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        30,
+        31,
+        32,
+        33,
+        35,
+        36,
+        37,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        47,
+        48,
+        49,
+        50,
+        53
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.math.BigDecimal;\nimport java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.Map;\nimport java.util.Optional;\nimport com.google.common.collect.ImmutableMap;\npublic final class InputVisibilityModifierGenerics {\n    public final String name;\n    public final Optional<String> keyword;\n    public final ImmutableMap<String, BigDecimal> uuidMap;\n    public final ImmutableMap<String, ArrayList<Long>> perfSeries; \n    public final ImmutableMap<java.lang.String, ArrayList<Long>> peopleMap; \n    public final ImmutableMap<String, java.util.ArrayList<Long>> someMap; \n    public final ImmutableMap<java.lang.String, java.util.ArrayList<Long>> newMap; \n    public final ImmutableMap<java.lang.String, java.math.BigDecimal> orders;\n    public final Optional<java.lang.Object> optionalOfObject; \n    public final Optional<Object> obj; \n    public String rqUID; \n    public Optional<String> rqTime; \n    public ImmutableMap<String, BigDecimal> rates; \n    public ImmutableMap<String, ArrayList<Long>> loans; \n    public ImmutableMap<java.lang.String, ArrayList<Long>> cards; \n    public ImmutableMap<String, java.util.ArrayList<Long>> values; \n    public ImmutableMap<java.lang.String, java.util.ArrayList<Long>> permissions; \n    public final Map<String, String> mapOfStrings; \n    public final java.util.Map<String, String> names; \n    public final java.util.Map<String, Object> links; \n    public final Map<String, Object> presentations; \n    public final Map<String, java.lang.Object> collection; \n    public final com.google.common.collect.ImmutableMap<String, BigDecimal> prices;\n    public final com.google.common.collect.ImmutableMap<String, Object> exceptions; \n    public InputVisibilityModifierGenerics() {\n        this.name = \"John Doe\";\n        this.keyword = Optional.empty();\n        this.perfSeries = ImmutableMap.of();\n        this.uuidMap = ImmutableMap.of();\n        this.peopleMap = ImmutableMap.of();\n        this.someMap = ImmutableMap.of();\n        this.newMap = ImmutableMap.of();\n        this.orders = ImmutableMap.of();\n        this.optionalOfObject = Optional.empty();\n        this.obj = Optional.empty();\n        this.mapOfStrings = new HashMap<>(1);\n        this.names = new HashMap<>(1);\n        this.links = new HashMap<>(1);\n        this.presentations = new HashMap<>(1);\n        this.collection = new HashMap<>(1);\n        this.prices = ImmutableMap.of();\n        this.exceptions =  ImmutableMap.of();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutable.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        32,
+        33,
+        36,
+        54,
+        56,
+        57,
+        61
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\nimport com.google.common.collect.ImmutableSet;\npublic final class InputVisibilityModifierImmutable\n{\n    public final int someIntValue;\n    public final ImmutableSet<String> includes; \n    public final ImmutableSet<String> excludes; \n    public final java.lang.String notes;\n    public final BigDecimal money;\n    public final List list; \n    public InputVisibilityModifierImmutable(Collection<String> includes,Collection<String> excludes,\n                                            BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.excludes = ImmutableSet.copyOf(excludes);\n        this.money = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n    final class Immutable\n    {\n        public final float f = 4;\n        public final boolean bool = false;\n        public final java.net.URI uri = null;\n        public final java.io.File file = null;\n        public int value = 42; \n        public final java.net.URL url = null;\n        public boolean bValue = false; \n        public java.lang.Long longValue = 1L; \n    }\n    class Example {\n        final int C_D_E = 0; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutable2.java",
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        27,
+        28,
+        30,
+        31,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        56
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.collect.ImmutableSet;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\npublic final class InputVisibilityModifierImmutable2\n{\n    public final int someIntValue;\n    public final ImmutableSet<String> includes; \n    public final ImmutableSet<String> excludes; \n    public final String notes;\n    public final BigDecimal money; \n    public final List list; \n    public InputVisibilityModifierImmutable2(Collection<String> includes,\n           Collection<String> excludes, BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.excludes = ImmutableSet.copyOf(excludes);\n        this.money = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n    final class Immutable\n    {\n        public final float f = 4;\n        public final boolean bool = false;\n        public final java.net.URI uri = null; \n        public final java.io.File file = null; \n        public int value = 42; \n        public final java.net.URL url = null; \n        public boolean bValue = false; \n        public Long longValue = 1L; \n    }\n    class Example {\n        final int C_D_E = 0; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutable3.java",
+      "expected-problems": 15,
+      "expected-linenumbers": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        61
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.collect.ImmutableSet;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\npublic final class InputVisibilityModifierImmutable3\n{\n    public final int someIntValue; \n    public final ImmutableSet<String> includes; \n    public final ImmutableSet<String> excludes; \n    public final String notes; \n    public final BigDecimal money; \n    public final List list; \n    public InputVisibilityModifierImmutable3(Collection<String> includes,\n           Collection<String> excludes, BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.excludes = ImmutableSet.copyOf(excludes);\n        this.money = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n    final class Immutable\n    {\n        public final float f = 4; \n        public final boolean bool = false; \n        public final java.net.URI uri = null; \n        public final java.io.File file = null; \n        public int value = 42; \n        public final java.net.URL url = null; \n        public boolean bValue = false; \n        public Long longValue = 1L; \n    }\n    class Example {\n        final int C_D_E = 0; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutable4.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        54,
+        56,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.collect.ImmutableSet;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\npublic final class InputVisibilityModifierImmutable4\n{\n    public final int someIntValue;\n    public final ImmutableSet<String> includes;\n    public final ImmutableSet<String> excludes;\n    public final String notes;\n    public final BigDecimal money;\n    public final List list;\n    public InputVisibilityModifierImmutable4(Collection<String> includes,\n           Collection<String> excludes, BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.excludes = ImmutableSet.copyOf(excludes);\n        this.money = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n    final class Immutable\n    {\n        public final float f = 4;\n        public final boolean bool = false;\n        public final java.net.URI uri = null;\n        public final java.io.File file = null;\n        public int value = 42; \n        public final java.net.URL url = null;\n        public boolean bValue = false; \n        public Long longValue = 1L; \n    }\n    class Example {\n        final int C_D_E = 0;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutable5.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        29,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        55
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.collect.ImmutableSet;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\npublic final class InputVisibilityModifierImmutable5\n{\n    public final int someIntValue;\n    public final ImmutableSet<String> includes;\n    public final ImmutableSet<String> excludes;\n    public final String notes;\n    public final BigDecimal money; \n    public final List list;\n    public InputVisibilityModifierImmutable5(Collection<String> includes,\n           Collection<String> excludes, BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.excludes = ImmutableSet.copyOf(excludes);\n        this.money = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n    final class Immutable\n    {\n        public final float f = 4;\n        public final boolean bool = false;\n        public final java.net.URI uri = null; \n        public final java.io.File file = null; \n        public int value = 42; \n        public final java.net.URL url = null; \n        public boolean bValue = false; \n        public Long longValue = 1L; \n    }\n    class Example {\n        final int C_D_E = 0; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutableSameTypeName.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        22,
+        25,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.net.InetSocketAddress;\npublic final class InputVisibilityModifierImmutableSameTypeName\n{\n    public final java.util.GregorianCalendar calendar = null; \n    public final InputVisibilityModifierGregorianCalendar calendar2 = null;\n    public final InputVisibilityModifierGregorianCalendar calendar3 = null;\n    public final InetSocketAddress address = null; \n    public final InetSocketAddress adr = null; \n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierImmutableSameTypeName2.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        27,
+        28,
+        29
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.net.InetSocketAddress;\npublic final class InputVisibilityModifierImmutableSameTypeName2\n{\n    public final java.util.GregorianCalendar calendar = null; \n    public final InputVisibilityModifierGregorianCalendar calendar2 = null; \n    public final InputVisibilityModifierGregorianCalendar calendar3 = null; \n    public final InetSocketAddress address = null;\n    public final InetSocketAddress adr = null;\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierInner.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        45,
+        47,
+        50,
+        55,
+        58,
+        91,
+        95
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nclass InputVisibilityModifierInner\n{\n    class InnerInner2\n    {\n        public int fData;\n    }\n    interface InnerInterface2\n    {\n        String data = \"zxzc\";\n        class InnerInterfaceInnerClass\n        {\n            public int rData; \n            protected int protectedVariable; \n            int packageVariable; \n        }\n    }\n    protected static Object sWeird = new Object(); \n    static Object sWeird2 = new Object(); \n    public interface Inter\n    {\n    }\n     public static void main()\n     {\n        Inter m = new Inter()\n        {\n            private static final int CDS = 1;\n            private int ABC;\n        };\n     }\n    @interface InnerAnnotation\n    {\n        String data = \"zxzc\";\n    }\n    enum InnerEnum\n    {\n        A,\n        B;\n        public int someValue; \n    }\n    float fSerialVersionUID = 0x1234567F; \n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierInner1.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        32,
+        91
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nclass InputVisibilityModifierInner1\n{\n    class InnerInner2\n    {\n        public int fData; \n    }\n    interface InnerInterface2\n    {\n        String data = \"zxzc\";\n        class InnerInterfaceInnerClass\n        {\n            public int rData;\n            protected int protectedVariable;\n            int packageVariable;\n        }\n    }\n    protected static Object sWeird = new Object();\n    static Object sWeird2 = new Object();\n    public interface Inter\n    {\n    }\n     public static void main()\n     {\n        Inter m = new Inter()\n        {\n            private static final int CDS = 1;\n            private int ABC;\n        };\n     }\n    @interface InnerAnnotation\n    {\n        String data = \"zxzc\";\n    }\n    enum InnerEnum\n    {\n        A,\n        B;\n        public int someValue; \n    }\n    float fSerialVersionUID = 0x1234567F;\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierPublicOnly.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        48,
+        49,
+        50
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\npublic class InputVisibilityModifierPublicOnly\n{\n    private interface InnerInterface\n    {\n        String CONST = \"InnerInterface\";\n        class InnerInnerClass\n        {\n            private int mData;\n            private InnerInnerClass()\n            {\n                final Runnable r = new Runnable() {\n                        public void run() {};\n                    };\n            }\n        }\n    }\n    private class InnerClass\n    {\n        private int mDiff;\n    }\n    private int mSize;\n    int mLen; \n    protected int mDeer; \n    public int aFreddo; \n    public String toString()\n    {\n        return super.toString();\n    }\n    @Deprecated @Override\n    public int hashCode()\n    {\n        return super.hashCode();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifiersEnumIsSealed.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\npublic enum InputVisibilityModifiersEnumIsSealed {\n    SOME_VALUE;\n    static class Hole {\n    }\n    public final int someField = Integer.MAX_VALUE;\n    public final Hole hole = null; \n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifierSimple.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        47,
+        53,
+        59,
+        61,
+        63,
+        66
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.io.*;\nfinal class InputVisibilityModifierSimple\n{\n    public static final int badConstant = 2;\n    public static final int MAX_ROWS = 2;\n    private static int badStatic = 2;\n    private static int sNumCreated = 0;\n    private int badMember = 2;\n    private int mNumCreated1 = 0;\n    protected int mNumCreated2 = 0; \n    private int[] mInts = new int[] {1,2, 3,\n                                     4};\n    public static int sTest1; \n    protected static int sTest3; \n    static int sTest2; \n    int mTest1; \n    public int mTest2; \n    int test1(int badFormat1,int badFormat2,\n              final int badFormat3)\n        throws java.lang.Exception\n    {\n        return 0;\n    }\n    private void localVariables()\n    {\n        int abc = 0;\n        int ABC = 0;\n        final int cde = 0;\n        final int CDE = 0;\n        for (int k = 0; k < 1; k++)\n        {\n            String innerBlockVariable = \"\";\n        }\n        for (int I = 0; I < 1; I++)\n        {\n            String InnerBlockVariable = \"\";\n        }\n    }\n    private static final int BAD__NAME = 3;\n}\nclass InputVisibilityModifierSimple2\n{\n    public void doSomething()\n    {\n        for (Object O : new java.util.ArrayList())\n        {\n        }\n    }\n}\nenum MyEnum1\n{\n    ABC,\n    XYZ;\n    private int someMember;\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifiersNullModifiers.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.io.*;\nimport java.util.*;\nclass InputVisibilityModifiersNullModifiers {\n    private final Set<Map.Entry<Integer,Integer>> s;\n    public InputVisibilityModifiersNullModifiers(Set<Map.Entry<Integer,Integer>> s) {this.s = s;}\n    public Iterator<Map.Entry<String,String>> iterator() {\n        return new Iterator<Map.Entry<String,String>>() {\n            Iterator<Map.Entry<Integer,Integer>> i = s.iterator(); \n            public boolean hasNext() {return i.hasNext();}\n            public Map.Entry<String,String> next() {\n                return null;\n            }\n            public void remove() {i.remove();}\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifiersPublicImmutable.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        30,
+        31,
+        32,
+        33,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\nimport com.google.common.collect.ImmutableSet;\npublic class InputVisibilityModifiersPublicImmutable {\n    public final int someIntValue; \n    public final ImmutableSet<String> includes; \n    public final java.lang.String notes; \n    public final BigDecimal value; \n    public final List list; \n    public InputVisibilityModifiersPublicImmutable(Collection<String> includes,\n                                            BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.value = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputVisibilityModifiersPublicImmutable2.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        30,
+        31,
+        32,
+        33,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.visibilitymodifier;\nimport com.google.common.collect.ImmutableSet;\nimport java.math.BigDecimal;\nimport java.util.Collection;\nimport java.util.List;\npublic class InputVisibilityModifiersPublicImmutable2 {\n    public final int someIntValue; \n    public final ImmutableSet<String> includes; \n    public final String notes; \n    public final BigDecimal value; \n    public final List list; \n    public InputVisibilityModifiersPublicImmutable2(Collection<String> includes,\n           BigDecimal value, String notes, int someValue, List l) {\n        this.includes = ImmutableSet.copyOf(includes);\n        this.value = value;\n        this.notes = notes;\n        this.someIntValue = someValue;\n        this.list = l;\n    }\n}"
+    }
+  ]
+}

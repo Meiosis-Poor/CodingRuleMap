@@ -1,0 +1,724 @@
+{
+  "name": "ApexCRUDViolation",
+  "language": "apex",
+  "description": "\nThe rule validates you are checking for access permissions before a SOQL/SOSL/DML operation.\nSince Apex runs by default in system mode not having proper permissions checks results in escalation of\nprivilege and may produce runtime errors. This check forces you to handle such scenarios.\n\nSince Winter '23 (API Version 56) you can enforce user mode for database operations by using\n`WITH USER_MODE` in SOQL. This makes Apex to respect Field-level security (FLS) and object\npermissions of the running user. When using user mode, no violation is reported by this rule.\n\nBy default, the rule allows access checks can be performed using system Apex provisions such as\n`DescribeSObjectResult.isAccessible/Createable/etc.`, the SOQL `WITH SECURITY_ENFORCED` clause,\nor using the open source [Force.com ESAPI](https://github.com/forcedotcom/force-dot-com-esapi)\nclass library. Because it is common to use authorization facades to assist with this task, the\nrule also allows configuration of regular expression-based patterns for the methods used to\nauthorize each type of CRUD operation. These pattern are configured via the following properties:\n\n* `createAuthMethodPattern`/`createAuthMethodTypeParamIndex` - a pattern for the method used\n  for create authorization and an optional 0-based index of the parameter passed to that method\n  that denotes the `SObjectType` being authorized for create.\n* `readAuthMethodPattern`/`readAuthMethodTypeParamIndex` - a pattern for the method used\n  for read authorization and an optional 0-based index of the parameter passed to that method\n  that denotes the `SObjectType` being authorized for read.\n* `updateAuthMethodPattern`/`updateAuthMethodTypeParamIndex` - a pattern for the method used\n  for update authorization and an optional 0-based index of the parameter passed to that method\n  that denotes the `SObjectType` being authorized for update.\n* `deleteAuthMethodPattern`/`deleteAuthMethodTypeParamIndex` - a pattern for the method used\n  for delete authorization and an optional 0-based index of the parameter passed to that method\n  that denotes the `SObjectType` being authorized for delete.\n* `undeleteAuthMethodPattern`/`undeleteAuthMethodTypeParamIndex` - a pattern for the method used\n  for undelete authorization and an optional 0-based index of the parameter passed to that method\n  that denotes the `SObjectType` being authorized for undelete.\n* `mergeAuthMethodPattern`/`mergeAuthMethodTypeParamIndex` - a pattern for the method used\n  for merge authorization and an optional 0-based index of the parameter passed to that method\n  that denotes the `SObjectType` being authorized for merge.\n\nThe following example shows how the rule can be configured for the\n[sirono-common](https://github.com/SCWells72/sirono-common)\n[`AuthorizationUtil`](https://github.com/SCWells72/sirono-common#authorization-utilities) class:\n\n```xml\n<rule ref=\"category/apex/security.xml/ApexCRUDViolation\" message=\"Validate CRUD permission before SOQL/DML operation\">\n    <priority>3</priority>\n    <properties>\n        <property name=\"createAuthMethodPattern\" value=\"AuthorizationUtil\\.(is|assert)(Createable|Upsertable)\"/>\n        <property name=\"readAuthMethodPattern\" value=\"AuthorizationUtil\\.(is|assert)Accessible\"/>\n        <property name=\"updateAuthMethodPattern\" value=\"AuthorizationUtil\\.(is|assert)(Updateable|Upsertable)\"/>\n        <property name=\"deleteAuthMethodPattern\" value=\"AuthorizationUtil\\.(is|assert)Deletable\"/>\n        <property name=\"undeleteAuthMethodPattern\" value=\"AuthorizationUtil\\.(is|assert)Undeletable\"/>\n        <property name=\"mergeAuthMethodPattern\" value=\"AuthorizationUtil\\.(is|assert)Mergeable\"/>\n    </properties>\n</rule>\n```\n\nNote: This rule will produce false positives for VF getter methods. In VF getters the access permission\ncheck happens automatically and is not needed explicitly. However, the rule can't reliably determine\nwhether a getter is a VF getter or not and reports a violation in any case. In such cases, the violation\nshould be [suppressed](pmd_userdocs_suppressing_warnings.html).\n\n        ",
+  "example": "public class Foo {\n    public Contact foo(String status, String ID) {\n\n        // validate you can actually query what you intend to retrieve\n        Contact c = [SELECT Status__c FROM Contact WHERE Id=:ID WITH SECURITY_ENFORCED];\n\n        // Make sure we can update the database before even trying\n        if (!Schema.sObjectType.Contact.fields.Status__c.isUpdateable()) {\n            return null;\n        }\n\n        c.Status__c = status;\n        update c;\n        return c;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 990,
+  "branches": 199,
+  "apis": 34,
+  "test": [
+    {
+      "description": "Scheduled classes don't need crud, run as system",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass FooBatchJob implements Database.Batchable < sObject > , Database.Stateful {\n    public void justGiveMeFoo() {\n         AggregateResult[] test = [SELECT Id FROM Opportunity];\n    }\n}\n        "
+    },
+    {
+      "description": "Complex SOQL",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic with sharing class configurationSettingControllerV1 {\n\n    List<FiscalYearSettings> lstfiscalsetting;\n\n    public configurationSettingControllerV1(){\n\n        if (Schema.sObjectType.OpportunityStage.fields.Id.isAccessible() && Schema.sObjectType.OpportunityStage.fields.APiName.isAccessible()\n        && Schema.sObjectType.OpportunityStage.fields.defaultProbability.isAccessible() && Schema.sObjectType.OpportunityStage.fields.ForecastCategoryName.isAccessible()\n        && Schema.sObjectType.OpportunityStage.fields.IsActive.isAccessible() && Schema.sObjectType.OpportunityStage.fields.MasterLabel.isAccessible()\n        && Schema.sObjectType.OpportunityStage.fields.SortOrder.isAccessible() ){\n\n            if (Schema.sObjectType.FiscalYearSettings.fields.Description.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.EndDate.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.IsStandardYear.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.Name.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.PeriodLabelScheme.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.PeriodPrefix.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.QuarterLabelScheme.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.QuarterPrefix.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.StartDate.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.WeekLabelScheme.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.WeekStartDay.isAccessible()\n                && Schema.sObjectType.FiscalYearSettings.fields.YearType.isAccessible()\n                && Schema.sObjectType.Period.fields.EndDate.isAccessible()\n                && Schema.sObjectType.Period.fields.FiscalYearSettingsId.isAccessible()\n                && Schema.sObjectType.Period.fields.IsForecastPeriod.isAccessible()\n                && Schema.sObjectType.Period.fields.Number.isAccessible()\n                && Schema.sObjectType.Period.fields.PeriodLabel.isAccessible()\n                && Schema.sObjectType.Period.fields.QuarterLabel.isAccessible()\n                && Schema.sObjectType.Period.fields.StartDate.isAccessible()\n                && Schema.sObjectType.Period.fields.Type.isAccessible()) {\n\n                    lstfiscalsetting = [select Description,EndDate,IsStandardYear,Name,(select EndDate,FiscalYearSettingsId,IsForecastPeriod,Number,PeriodLabel,QuarterLabel,StartDate,Type from Period ),PeriodLabelScheme,\n                                        PeriodPrefix,QuarterLabelScheme,QuarterPrefix,StartDate,WeekLabelScheme, WeekStartDay,YearType from FiscalYearSettings where name <> null  order by startdate limit 100 ];\n\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD checks for Aggregate Result",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void justGiveMeFoo() {\n        if (Opportunity.sObjectType.getDescribe().isAccessible()) {\n             return;\n         }\n         AggregateResult[] test = [SELECT Id FROM Opportunity];\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD checks for Aggregate Result return",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public AggregateResult[] justGiveMeFoo() {\n        if (Opportunity.sObjectType.getDescribe().isAccessible()) {\n             return null;\n         }\n         return [SELECT Id FROM Opportunity];\n    }\n}\n        "
+    },
+    {
+      "description": "Not a getter",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public Contact getFoo(ID tempID) {\n         Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n         return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS via upsert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isCreateable() && Contact.sObjectType.getDescribe().isUpdateable()) {\n            upsert new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check for inline upsert",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        upsert new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS via upsert with database class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isCreateable() && Contact.sObjectType.getDescribe().isUpdateable()) {\n            Database.upsert(new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414'));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check for inline upsert with database class",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Database.upsert(new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414'));\n    }\n}\n        "
+    },
+    {
+      "description": "VF built-in CRUD checks via getter, but cannot determine if is really VF",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        10
+      ],
+      "code": "\npublic class Foo {\n    public Contact getFoo() {\n        String tempID = 'someID';\n         Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n         return c;\n    }\n\n    public Contact getBaz() {\n        String tempID = 'someID';\n        return [SELECT Name FROM Contact WHERE Id=:tempID];\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD checks",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact justGiveMeFoo() {\n        String tempID = 'someID';\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n             return [SELECT Name FROM Contact WHERE Id=:tempID];\n         }\n         return null;\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS via sObject property",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public Contact contactProperty { get; set; }\n\n    public void foo(String tempID) {\n         contactProperty = [SELECT Name FROM Contact WHERE Id=:tempID];\n    }\n}\n        "
+    },
+    {
+      "description": "Proper FLS check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        List<String> fieldsToView = new List<String> { 'name' };\n        if (ESAPI.accessController().isAuthorizedToUpdate(Contact.sObject, fieldsToView)) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            c.Name = newName;\n            update c;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper FLS fall-through check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Schema.sObjectType.Contact.fields.Name.isUpdateable()) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            c.Name = newName;\n            update c;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Improper accessibility CRUD",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public Contact foo(String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=: tempID WITH SECURITY_ENFORCED];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED Line Break",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=: tempID\n        WITH SECURITY_ENFORCED];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED in a List",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public List<Contact> m() {\n        List<Contact> c = [SELECT Name FROM Contact WITH SECURITY_ENFORCED LIMIT 1];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED in a List Line Break",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public List<Contact> m() {\n        List<Contact> c = [SELECT Name FROM Contact\n        WITH SECURITY_ENFORCED LIMIT 1];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED with Case Insensitivity",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=: tempID WItH SECURITY_ENFORCED];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED with Case Insensitivity Line Break",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=: tempID\n        WItH SECURITY_ENFORCED];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED Not Secured",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public Contact foo() {\n        Contact c = [SELECT Name FROM Contact WHERE Id=: 'WITH SECURITY_ENFORCED'];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED Secured",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo() {\n        Contact c = [SELECT Name FROM Contact WHERE Name = 'WITH SECURITY_ENFORCED' WITH SECURITY_ENFORCED];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Accepts Closure SECURITY ENFORCED Secured Line Break",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo() {\n        Contact c = [SELECT Name FROM Contact WHERE Name = 'WITH SECURITY_ENFORCED'\n        WITH SECURITY_ENFORCED];\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "Flagged as Critical With No Mode",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class User {\n    public void coverAllCasesWithTest() {\n        Contact c;\n        c = [SELECT Name FROM Contact];\n    }\n}\n        "
+    },
+    {
+      "description": "User Mode",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class User {\n    public void coverAllCasesWithTest() {\n        Contact c;\n        c = [SELECT Name FROM Contact WITH USER_MODE];\n    }\n}\n        "
+    },
+    {
+      "description": "Explicit System Mode, gives no warning because it ignores CRUD but explicitly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class User {\n    public void coverAllCasesWithTest() {\n        Contact c;\n        c = [SELECT Name FROM Contact WITH SYSTEM_MODE];\n    }\n}\n        "
+    },
+    {
+      "description": "Explicit system Mode, no warning, because CRUD permissions are checked",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class User {\n    public void coverAllCasesWithTest() {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            Contact c;\n            c = [SELECT Name FROM Contact WITH SYSTEM_MODE];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper accessibility CRUD,FLS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String tempID) {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            return c;\n        }\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS via property",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact MyWriteOnlyProp { get; set; }\n\n    public void foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isCreateable()) {\n            MyWriteOnlyProp = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n            insert MyWriteOnlyProp;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS via sObject property, write is not protected",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    public Contact MyWriteOnlyProp { get; set; }\n\n    public void foo(String newName, String tempID) {\n            MyWriteOnlyProp = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n            insert MyWriteOnlyProp;\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS for List insertion",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    public List<Contact> MyWriteOnlyProp { get; set; }\n\n    public void foo(String newName, String tempID) {\n            MyWriteOnlyProp.add(new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414'));\n            insert MyWriteOnlyProp;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS for List insertion",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public List<Contact> MyWriteOnlyProp { get; set; }\n\n    public void foo(String newName, String tempID) {\n        MyWriteOnlyProp.add(new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414'));\n        if(Contact.sObjectType.getDescribe().isCreateable()) {\n            insert MyWriteOnlyProp;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS via String property",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public String nameProperty { get; set; }\n\n    public void foo(String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n        nameProperty = c.Name;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS via upsert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isCreateable() && Contact.sObjectType.getDescribe().isUpdateable()) {\n            Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n            upsert myCon;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Partial CRUD,FLS via upsert",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isUpdateable()) {\n            Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n            upsert myCon;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS via upsert",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        upsert myCon;\n    }\n}\n        "
+    },
+    {
+      "description": "Improper CRUD,FLS via ESAPI 1",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        9
+      ],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        // missing accessibility check\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n        List<String> fieldsToView = new List<String> { 'name' };\n        // wrong ESAPI check\n        if (ESAPI.accessController().isAuthorizedToView(Contact.sObject, fieldsToView)) {\n            c.Name = newName;\n            update c;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS via ESAPI",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        List<String> fieldsToView = new List<String> { 'name' };\n        if (ESAPI.accessController().isAuthorizedToView(Contact.sObject, fieldsToView)) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            if (ESAPI.accessController().isAuthorizedToUpdate(Contact.sObject, fieldsToView)) {\n                c.Name = newName;\n                update c;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Improper CRUD,FLS via ESAPI 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        9
+      ],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        // missing accessibility check\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n        List<String> fieldsToView = new List<String> { 'name' };\n        // wrong object check\n        if (ESAPI.accessController().isAuthorizedToView(Lead.sObject, fieldsToView)) {\n            c.Name = newName;\n            update c;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "CRUD,FLS check for update",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        List<String> fieldsToView = new List<String> { 'name' };\n        if (ESAPI.accessController().isAuthorizedToView(Contact.sObject, fieldsToView)) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            if(Schema.sObjectType.Contact.fields.Name.isUpdateable()) {\n                c.Name = newName;\n                update c;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS check for update",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n        c.Name = newName;\n        update c;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS check for update",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            if (!Schema.sObjectType.Contact.fields.Name.isUpdateable()){\n                return null;\n            }\n            c.Name = newName;\n        }\n        update c;\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS check for update with database class",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n        c.Name = newName;\n        Database.update(c);\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS check for update with database class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact foo(String newName, String tempID) {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            Contact c = [SELECT Name FROM Contact WHERE Id=:tempID];\n            if (!Schema.sObjectType.Contact.fields.Name.isUpdateable()){\n                return null;\n            }\n            c.Name = newName;\n        }\n        Database.update(c);\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check for insert",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        insert myCon;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check for insert",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (Contact.sObjectType.getDescribe().isCreateable()) {\n            Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n            insert myCon;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check for insert with database class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        Database.insert(myCon);\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check for insert with database class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (Contact.sObjectType.getDescribe().isCreateable()) {\n            Contact myCon = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n            Database.insert(myCon);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check for delete",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar(String contactId) {\n        Contact toDelete = [SELECT Id FROM Contact WHERE Id=: contactId];\n        delete toDelete;\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check for delete",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String contactId) {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            Contact toDelete = [SELECT Id FROM Contact WHERE Id=: contactId];\n            if (Contact.sObjectType.getDescribe().isDeletable()) {\n                delete toDelete;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check for delete with database class",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar(String contactId) {\n        Contact toDelete = [SELECT Id FROM Contact WHERE Id=: contactId];\n        Database.delete(toDelete);\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check for delete with database class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String contactId) {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            Contact toDelete = [SELECT Id FROM Contact WHERE Id=: contactId];\n            if (Contact.sObjectType.getDescribe().isDeletable()) {\n                Database.delete(toDelete);\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check for a list of sObject",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(String contactId) {\n        if (Contact.sObjectType.getDescribe().isAccessible()) {\n            List<Contact> contacts = [SELECT Id FROM Contact];\n            if (Contact.sObjectType.getDescribe().isDeletable()) {\n                delete contacts;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No issues found in test classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FooTest {\n    public void foo() {\n        upsert new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n    }\n}\n        "
+    },
+    {
+      "description": "Control flow based CRUD,FLS check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n            doChecks();\n            upsert new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n\n    }\n\n    public void doChecks() {\n        if (!Contact.sObjectType.getDescribe().isCreateable()\n        && !Contact.sObjectType.getDescribe().isUpdateable()) {\n            throw new NoAccessException();\n        }\n    }\n\n}\n        "
+    },
+    {
+      "description": "Control flow based CRUD,FLS check recursive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n            doChecks();\n            insert new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n    }\n\n    public void doChecks() {\n        anotherLevelHere('yolo');\n    }\n\n    private void anotherLevelHere(String s) {\n        if (!Contact.sObjectType.getDescribe().isCreateable()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Control flow constructor based CRUD,FLS check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n\n    public void foo(String newName, String tempID) {\n            upsert new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n\n    }\n\n    public Foo() {\n        if (!Contact.sObjectType.getDescribe().isCreateable() && !Contact.sObjectType.getDescribe().isUpdateable()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Control flow accessibility CRUD check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact justGiveMeFoo() {\n        checkPerms();\n\n        String tempID = 'someID';\n         return [SELECT Name FROM Contact WHERE Id=:tempID];\n    }\n\n    private void checkPerms() {\n        if (!Contact.sObjectType.getDescribe().isAccessible()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Control flow substitute CRUD check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Contact justGiveMeFoo() {\n        checkPerms();\n        String tempID = 'someID';\n         return [SELECT Name FROM Contact WHERE Id=:tempID];\n    }\n\n    private void checkPerms() {\n        if (!Contact.sObjectType.getDescribe().isCreateable()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Forgot to call the CRUD check",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public Contact justGiveMeFoo() {\n        String tempID = 'someID';\n        return [SELECT Name FROM Contact WHERE Id=:tempID];\n    }\n\n    private void checkPerms() {\n        if (!Contact.sObjectType.getDescribe().isCreateable()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Control flow substitute CRUD check should fail when check follows SOQL",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    private void bar() {\n        List<Profile> profiles = [SELECT Id FROM Profile WHERE Name = 'System Administrator'];\n        checkPerms();\n    }\n\n    private void checkPerms() {\n        if (!Profile.sObjectType.getDescribe().isCreateable()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Control flow with nested statements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        if (whatever()) {\n            checkPerms();\n            if (something()) {\n                List<Profile> profiles = [SELECT Id FROM Profile WHERE Name = 'System Administrator'];\n            }\n        }\n    }\n\n    private void checkPerms() {\n        if (!Profile.sObjectType.getDescribe().isCreateable()) {\n            throw new NoAccessException();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Count does expose data and CRUD checks are necessary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public Integer getBaz() {\n         return [SELECT count() FROM Contact];\n    }\n}\n        "
+    },
+    {
+      "description": "Count does leak data and CRUD checks are necessary",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void getBaz() {\n        Integer countAdmins = [SELECT count() FROM Profile WHERE Name = 'System Administrator'];\n    }\n}\n        "
+    },
+    {
+      "description": "Field detection",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class MyProfilePageController {\n    private User currentUser;\n\n    public MyProfilePageController() {\n        currentUser = [SELECT id FROM User WHERE id = :UserInfo.getUserId()];\n    }\n}\n        "
+    },
+    {
+      "description": "ClassCastException detection",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public list<A.B[]> bar;\n    public map<Id,A.B[]> baz;\n}\n        "
+    },
+    {
+      "description": "Regression issue #799 detection",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void chainedMethods() {\n        firstMethod().lastMethod();\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check in SOQL for-loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        for (Account a : [SELECT Id FROM Account]) {\n            // loop body\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD check inside for-each loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        Id[] accIds = new List<Id>();\n        for (Id accId : accIds) {\n            Account acc = [SELECT Id FROM Account WHERE Id = :accId];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check inside for-each loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        Id[] accIds = new List<Id>();\n        if (Account.sObjectType.getDescribe().isAccessible()) {\n            for (Id accId : accIds) {\n                Account a = [SELECT Id FROM Account WHERE Id = :accId];\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check in SOQL for-loop with security enforced",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        for (Account a : [SELECT Id FROM Account WITH SECURITY_ENFORCED]) {\n            // loop body\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD check in SOQL for-loop with explicit check",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        if (Account.sObjectType.getDescribe().isAccessible()) {\n            for (Account a : [SELECT Id FROM Account]) {\n                // loop body\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS for inline no-args object",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        insert new Account();\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS for inline no-args object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Account.sObjectType.getDescribe().isCreateable()) {\n            insert new Account();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS for inline literal list",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        insert new Account[]{new Account(Name = 'X')};\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS for inline literal list",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Account.sObjectType.getDescribe().isCreateable()) {\n            insert new Account[]{new Account(Name = 'X')};\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "No CRUD,FLS for inline initialized list",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        insert new List<Account>(new Account(Name = 'X'));\n    }\n}\n        "
+    },
+    {
+      "description": "Proper CRUD,FLS for inline initialized list",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String newName, String tempID) {\n        if (Account.sObjectType.getDescribe().isCreateable()) {\n            insert new List<Account>(new Account(Name = 'X'));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of createAuthMethodPattern, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        8
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isCreateable(Account.SObjectType)) {\n            insert new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertCreateable(Account.SObjectType);\n        Database.insert(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of createAuthMethodPattern, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isCreateable(Account.SObjectType)) {\n            insert new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertCreateable(Account.SObjectType);\n        Database.insert(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of readAuthMethodPattern, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        9
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isAccessible(Account.SObjectType)) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n\n        AuthorizationUtil.assertAccessible(Account.SObjectType);\n        // TODO: Evidently this rule doesn't check Database.query() yet\n        List<Account> accounts = [SELECT Id FROM Account];\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of readAuthMethodPattern, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isAccessible(Account.SObjectType)) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n\n        AuthorizationUtil.assertAccessible(Account.SObjectType);\n        // TODO: Evidently this rule doesn't check Database.query() yet\n        List<Account> accounts = [SELECT Id FROM Account];\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of updateAuthMethodPattern, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        8
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isUpdateable(Account.SObjectType)) {\n            update new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertUpdateable(Account.SObjectType);\n        Database.update(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of updateAuthMethodPattern, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isUpdateable(Account.SObjectType)) {\n            update new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertUpdateable(Account.SObjectType);\n        Database.update(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of createAuthMethodPattern and updateAuthMethodPattern for upsert, negative test",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        4,
+        8,
+        8
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isUpsertable(Account.SObjectType)) {\n            upsert new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertUpsertable(Account.SObjectType);\n        Database.upsert(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of createAuthMethodPattern and updateAuthMethodPattern for upsert, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isUpsertable(Account.SObjectType)) {\n            upsert new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertUpsertable(Account.SObjectType);\n        Database.upsert(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of deleteAuthMethodPattern, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        8
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isDeletable(Account.SObjectType)) {\n            delete new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertDeletable(Account.SObjectType);\n        Database.delete(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of deleteAuthMethodPattern, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isDeletable(Account.SObjectType)) {\n            delete new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertDeletable(Account.SObjectType);\n        Database.delete(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of undeleteAuthMethodPattern, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        8
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isUndeletable(Account.SObjectType)) {\n            undelete new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertUndeletable(Account.SObjectType);\n        Database.undelete(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of undeleteAuthMethodPattern, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (AuthorizationUtil.isUndeletable(Account.SObjectType)) {\n            undelete new List<Account>(new Account(Name = 'X'));\n        }\n\n        AuthorizationUtil.assertUndeletable(Account.SObjectType);\n        Database.undelete(new List<Account>(new Account(Name = 'X')));\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of mergeAuthMethodPattern, negative test",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        11
+      ],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Account masterAccount;\n        Account mergeAccount;\n\n        if (AuthorizationUtil.isMergeable(Account.SObjectType)) {\n            merge masterAccount mergeAccount;\n        }\n\n        AuthorizationUtil.assertMergeable(Account.SObjectType);\n        Database.merge(masterAccount, mergeAccount, false);\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of mergeAuthMethodPattern, positive test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        Account masterAccount;\n        Account mergeAccount;\n\n        if (AuthorizationUtil.isMergeable(Account.SObjectType)) {\n            merge masterAccount mergeAccount;\n        }\n\n        AuthorizationUtil.assertMergeable(Account.SObjectType);\n        Database.merge(masterAccount, mergeAccount, false);\n    }\n}\n        "
+    },
+    {
+      "description": "#3576 - Verify use of *AuthMethodTypeParamIndex",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (SomeAuthUtil.canCreateWithTypeAsSecondParam(param1, Account.SObjectType)) {\n            insert new List<Account>(new Account(Name = 'X'));\n        }\n\n        if (SomeAuthUtil.canReadWithTypeAsThirdParam(param1, param2, Account.SObjectType)) {\n            List<Account> accounts = [SELECT Id FROM Account];\n        }\n\n        if (SomeAuthUtil.canUpdateWithTypeAsFourthParam(param1, param2, param3, Account.SObjectType)) {\n            update new List<Account>(new Account(Name = 'X'));\n        }\n\n        if (SomeAuthUtil.canDeleteWithTypeAsFifthParam(param1, param2, param3, param4, Account.SObjectType)) {\n            delete new List<Account>(new Account(Name = 'X'));\n        }\n\n        if (SomeAuthUtil.canUndeleteWithTypeAsFirstParamExplicit(Account.SObjectType)) {\n            undelete new List<Account>(new Account(Name = 'X'));\n        }\n\n        Account masterAccount;\n        Account mergeAccount;\n        if (SomeAuthUtil.canMergeWithTypeAsFirstParamImplicit(Account.SObjectType)) {\n            merge masterAccount mergeAccount;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Demonstrate that authorization for sub-relation queries doesn't work properly #2775",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (Account.SObjectType.getDescribe().isAccessible() &&\n            // This check isn't working because it's checking against \"Contacts\" due to the nested FROM clause\n            // instead of \"Contact\" given that \"Contacts\" is of type \"List<Contact>\"\n            Contact.SObjectType.getDescribe().isAccessible()) {\n            List<Account> accounts = [\n                SELECT Id, (\n                    SELECT Id\n                    FROM Contacts\n                )\n                FROM Account\n            ];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Consider Database DML methods with AccessLevel parameter #4146",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        4,
+        12,
+        19,
+        19,
+        26,
+        33,
+        39
+      ],
+      "code": "\npublic class UserMode {\n    public void databaseDMLInsert() {\n        Contact contact = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        Database.insert(contact); // violation\n        Database.insert(contact, AccessLevel.USER_MODE); // ok\n        Database.insert(contact, AccessLevel.SYSTEM_MODE); // explicit system mode, ok\n    }\n\n    public void databaseDMLUpdate(String newName, String tempID) {\n        Contact c = [SELECT Name FROM Contact WHERE Id=:tempID WITH USER_MODE];\n        c.Name = newName;\n        Database.update(c); // violation\n        Database.update(c, true, AccessLevel.USER_MODE); // ok\n        Database.update(c, System.AccessLevel.SYSTEM_MODE); // explicit system mode, ok\n    }\n\n    public void databaseDMLUpsert() {\n        Contact c = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        Database.upsert(c); // 2 violations (create, update permissions)\n        Database.upsert(new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414'), AccessLevel.USER_MODE); // ok\n        Database.upsert(new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414'), AccessLevel.SYSTEM_MODE); // explicit system mode, ok\n    }\n\n    public void databaseDMLDelete(String contactId) {\n        Contact toDelete = [SELECT Id FROM Contact WHERE Id=: contactId WITH USER_MODE];\n        Database.deleteAsync(toDelete); // violation\n        Database.delete(toDelete, AccessLevel.USER_MODE); // ok\n        Database.delete(toDelete,  AccessLevel.SYSTEM_MODE); // explicit system mode, ok\n    }\n\n    public void databaseDMLUndelete() {\n        Contact c = new Contact(FirstName = 'First', LastName = 'Last', Phone = '414-414-4414');\n        Database.undelete(c); // violation\n        Database.undelete(c, AccessLevel.USER_MODE); // ok\n        Database.undelete(c, AccessLevel.SYSTEM_MODE); // explicit system mode, ok\n    }\n\n    public void databaseDMLMerge(Contact masterRecord, Contact duplicateRecord) {\n        Database.merge(masterRecord, duplicateRecord); // violation\n        Database.merge(masterRecord, duplicateRecord, AccessLevel.USER_MODE); // ok\n        Database.merge(masterRecord, duplicateRecord, AccessLevel.SYSTEM_MODE); // explicit system mode, ok\n    }\n}\n"
+    },
+    {
+      "description": "Consider \"insert as\" #4146 #3973",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\npublic class UserMode {\npublic void coverAllCasesWithTest() {\n    Contact c;\n    c = [SELECT Name FROM Contact WITH USER_MODE];\n\n    // Should be flagged a critical issue\n    Contact c2;\n    insert c2;\n\n    // Should be ignored\n    insert as user c2;\n\n    // Should be at best a warning because it ignores CRUD but explicitly\n    insert as system c2;\n\n    // Should be ignored\n    update as user c2;\n}\n}\n"
+    },
+    {
+      "description": "SOQL and Update within trigger (#5138)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        14
+      ],
+      "code": "\n// from https://github.com/certinia/orizuru-sample-app/blob/master/src/apex/force-app/main/default/triggers/DataGeneratorStepTrigger.trigger\ntrigger DataGeneratorStepTrigger on DataGeneratorStep__e (after insert) {\n\n    List<GenerateDataTask__c> tasks = new List<GenerateDataTask__c>();\n    for (DataGeneratorStep__e event : Trigger.New) {\n        GenerateDataTask__c task = [SELECT Id, TaskStatus__c FROM GenerateDataTask__c WHERE Id=:event.SObjectId__c LIMIT 1];\n\n        if (task.TaskStatus__c != 'CREATED_ORDERS') {\n            task.TaskStatus__c = event.Status__c;\n            tasks.add(task);\n        }\n    }\n\n    update tasks;\n}\n"
+    },
+    {
+      "description": "SOQL in trigger (#5138)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n// https://github.com/afawcett/dependencies-sample/blob/master/force-app/main/default/triggers/WidgetTrigger.trigger\ntrigger WidgetTrigger on Widget__c (before insert) {\n    Widget__c w = [select Id, SomeFieldOnWidget2__c from Widget__c];\n    String test = Label.Test;\n    Type c = MyTest.class;\n}\n"
+    },
+    {
+      "description": "#4897 [apex] ApexCRUDViolation incorrectly cleared when WITH SECURITY_ENFORCED is commented out",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public List<Account> myMethod2()\n    {\n        List<Account> accounts = [\n            SELECT Id, Name\n            FROM Account\n            // WITH SECURITY_ENFORCED\n        ];\n        return accounts;\n    }\n}\n"
+    }
+  ]
+}

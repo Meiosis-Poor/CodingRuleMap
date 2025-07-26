@@ -1,0 +1,27 @@
+{
+  "name": "UnusedLocalNonTrivialVariable",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-unused-local-non-trivial-variable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 100,
+  "branches": 2,
+  "apis": 70,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        72,
+        74,
+        77,
+        79,
+        89,
+        118
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++17-or-later %s bugprone-unused-local-non-trivial-variable %t -- \\\n// RUN:       -config=\"{CheckOptions: {bugprone-unused-local-non-trivial-variable.IncludeTypes: '::async::Future;::async::Foo.*', bugprone-unused-local-non-trivial-variable.ExcludeTypes: '::async::FooBar'}}\" \\\n// RUN:       -- -fexceptions\n\nnamespace async {\ntemplate <typename T>\nclass Ptr {\n  public:\n  explicit Ptr(T Arg) : Underlying(new T(Arg)) {}\n  T& operator->() {\n    return Underlying;\n  }\n  ~Ptr() {\n    delete Underlying;\n  }\n  private:\n    T* Underlying;\n};\n\ntemplate<typename T>\nclass Future {\npublic:\n    T get() {\n        return Pending;\n    }\n    ~Future();\nprivate:\n    T Pending;\n};\n\nclass FooBar {\n  public:\n    ~FooBar();\n  private:\n    Future<int> Fut;\n};\n\nclass FooQux {\n  public:\n    ~FooQux();\n  private:\n    Future<int> Fut;\n};\n\nclass FizzFoo {\n  public:\n    ~FizzFoo();\n  private:\n    Future<int> Fut;\n};\n\n} // namespace async\n\n// Warning is still emitted if there are type aliases.\nnamespace a {\ntemplate<typename T>\nusing Future = async::Future<T>;\n} // namespace a\n\nvoid releaseUnits();\nstruct Units {\n  ~Units() {\n    releaseUnits();\n  }\n};\na::Future<Units> acquireUnits();\n\ntemplate<typename T>\nT qux(T Generic) {\n    async::Future<Units> PendingA = acquireUnits();\n    auto PendingB = acquireUnits();\n    // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: unused local variable 'PendingB' of type 'a::Future<Units>' (aka 'Future<Units>') [bugprone-unused-local-non-trivial-variable]\n    async::Future<Units> MustBeUsed;\n    // CHECK-MESSAGES: :[[@LINE-1]]:26: warning: unused local variable 'MustBeUsed' of type 'async::Future<Units>' [bugprone-unused-local-non-trivial-variable]\n    PendingA.get();\n    async::Future<T> TemplateType;\n    // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: unused local variable 'TemplateType' of type 'async::Future<T>' [bugprone-unused-local-non-trivial-variable]\n    a::Future<T> AliasTemplateType;\n    // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: unused local variable 'AliasTemplateType' of type 'a::Future<T>' (aka 'Future<T>') [bugprone-unused-local-non-trivial-variable]\n    [[maybe_unused]] async::Future<Units> MaybeUnused;\n    return Generic;\n}\n\nasync::Future<int> Global;\n\nint bar(int Num) {\n    a::Future<Units> PendingA = acquireUnits();\n    a::Future<Units> PendingB = acquireUnits(); // not used at all, unused variable not fired because of destructor side effect\n    // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: unused local variable 'PendingB' of type 'a::Future<Units>' (aka 'Future<Units>') [bugprone-unused-local-non-trivial-variable]\n    auto Num2 = PendingA.get();\n    auto Num3 = qux(Num);\n    async::Ptr<a::Future<Units>> Shared = async::Ptr<a::Future<Units>>(acquireUnits());\n    static auto UnusedStatic = async::Future<Units>();\n    thread_local async::Future<Units> UnusedThreadLocal;\n    auto Captured = acquireUnits();\n    Num3 += [Captured]() {\n      return 1;\n    }();\n    a::Future<Units> Referenced = acquireUnits();\n    a::Future<Units>* Pointer = &Referenced;\n    a::Future<Units>& Reference = Referenced;\n    const a::Future<Units>& ConstReference = Referenced;\n    try {\n    } catch (a::Future<Units> Fut) {\n    }\n    struct Holder {\n      a::Future<Units> Fut;\n    };\n    Holder H;\n    auto [fut] = H;\n    return Num * Num3;\n}\n\nvoid exclusion() {\n  async::FizzFoo A;\n  async::FooBar B;\n  async::FooQux C;\n  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: unused local variable 'C' of type 'async::FooQux' [bugprone-unused-local-non-trivial-variable]\n}"
+    }
+  ]
+}

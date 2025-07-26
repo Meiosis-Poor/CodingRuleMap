@@ -1,0 +1,29 @@
+{
+  "name": "RedundantDeclaration",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-redundant-declaration",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 100,
+  "branches": 13,
+  "apis": 73,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        23,
+        29,
+        34,
+        39,
+        104,
+        115,
+        120,
+        127
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-redundant-declaration %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {readability-redundant-declaration.IgnoreMacros: \\\n// RUN:                false}}\"\n//\n// With -fms-compatibility and -DEXTERNINLINE, the extern inline shouldn't\n// produce additional diagnostics, so same check suffix as before:\n// RUN: %check_clang_tidy %s readability-redundant-declaration %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {readability-redundant-declaration.IgnoreMacros: \\\n// RUN:                false}}\" -- -fms-compatibility -DEXTERNINLINE\n//\n// With -fno-ms-compatibility, DEXTERNINLINE causes additional output.\n// (The leading ',' means \"default checks in addition to NOMSCOMPAT checks.)\n// RUN: %check_clang_tidy -check-suffix=,NOMSCOMPAT \\\n// RUN:   %s readability-redundant-declaration %t -- \\\n// RUN:   -config=\"{CheckOptions: \\\n// RUN:             {readability-redundant-declaration.IgnoreMacros: \\\n// RUN:                false}}\" -- -fno-ms-compatibility -DEXTERNINLINE\n\nextern int Xyz;\nextern int Xyz; // Xyz\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: redundant 'Xyz' declaration [readability-redundant-declaration]\n// CHECK-FIXES: {{^}}// Xyz{{$}}\nint Xyz = 123;\n\nextern int A;\nextern int A, B;\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: redundant 'A' declaration\n// CHECK-FIXES: {{^}}extern int A, B;{{$}}\n\nextern int Buf[10];\nextern int Buf[10]; // Buf[10]\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: redundant 'Buf' declaration\n// CHECK-FIXES: {{^}}// Buf[10]{{$}}\n\nstatic int f();\nstatic int f(); // f\n// CHECK-MESSAGES: :[[@LINE-1]]:12: warning: redundant 'f' declaration\n// CHECK-FIXES: {{^}}// f{{$}}\nstatic int f() { return 0; }\n\n// Original check crashed for the code below.\nnamespace std {\ntypedef decltype(sizeof(0)) size_t;\n}\nvoid *operator new(std::size_t) __attribute__((__externally_visible__));\nvoid *operator new[](std::size_t) __attribute__((__externally_visible__));\n\n// Don't warn about static member definition.\nstruct C {\n  static int I;\n};\nint C::I;\n\ntemplate <class T>\nstruct C2 {\n  C2();\n};\n\ntemplate <class T>\nC2<T>::C2() = default;\n\nvoid best_friend();\n\nstruct Friendly {\n  friend void best_friend();\n  friend void enemy();\n};\n\nvoid enemy();\n\ntemplate <typename>\nstruct TemplateFriendly {\n  template <typename T>\n  friend void generic_friend();\n};\n\ntemplate <typename T>\nvoid generic_friend() {}\n\nTemplateFriendly<int> template_friendly;\n\ntemplate <typename>\nstruct TemplateFriendly2 {\n  template <typename T>\n  friend void generic_friend2() {}\n};\n\ntemplate <typename T>\nvoid generic_friend2();\n\nvoid generic_friend_caller() {\n  TemplateFriendly2<int> f;\n  generic_friend2<int>();\n}\n\n\nnamespace macros {\n#define DECLARE(x) extern int x\n#define DEFINE(x) extern int x; int x = 42\nDECLARE(test);\nDEFINE(test);\n// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: redundant 'test' declaration\n// CHECK-FIXES: {{^}}#define DECLARE(x) extern int x{{$}}\n// CHECK-FIXES: {{^}}#define DEFINE(x) extern int x; int x = 42{{$}}\n// CHECK-FIXES: {{^}}DECLARE(test);{{$}}\n// CHECK-FIXES: {{^}}DEFINE(test);{{$}}\n\n} // namespace macros\n\ninline void g() {}\n\ninline void g(); // g\n// CHECK-MESSAGES: :[[@LINE-1]]:13: warning: redundant 'g' declaration\n// CHECK-FIXES: {{^}}// g{{$}}\n\n#if defined(EXTERNINLINE)\nextern inline void g(); // extern g\n// CHECK-MESSAGES-NOMSCOMPAT: :[[@LINE-1]]:20: warning: redundant 'g' declaration\n// CHECK-FIXES-NOMSCOMPAT: {{^}}// extern g{{$}}\n#endif\n\n// PR42068\nextern \"C\" int externX;\nint dummyBeforeBegin;extern \"C\" int externX;int dummyAfterEnd;\n// CHECK-MESSAGES: :[[@LINE-1]]:37: warning: redundant 'externX' declaration [readability-redundant-declaration]\n// CHECK-FIXES: {{^}}int dummyBeforeBegin;int dummyAfterEnd;{{$}}"
+    }
+  ]
+}

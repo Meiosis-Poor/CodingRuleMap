@@ -1,0 +1,35 @@
+{
+  "name": "StringBufferInstantiationWithChar",
+  "language": "java",
+  "description": "\nIndividual character values provided as initialization arguments will be converted into integers.\nThis can lead to internal buffer sizes that are larger than expected. Some examples:\n\n```\nnew StringBuffer()      //  16\nnew StringBuffer(6)     //  6\nnew StringBuffer(\"hello world\")  // 11 + 16 = 27\nnew StringBuffer('A')   //  chr(A) = 65\nnew StringBuffer(\"A\")   //  1 + 16 = 17\n\nnew StringBuilder()     //  16\nnew StringBuilder(6)    //  6\nnew StringBuilder(\"hello world\")  // 11 + 16 = 27\nnew StringBuilder('C')   //  chr(C) = 67\nnew StringBuilder(\"A\")   //  1 + 16 = 17\n```\n        ",
+  "example": "// misleading instantiation, these buffers\n// are actually sized to 99 characters long\nStringBuffer  sb1 = new StringBuffer('c');\nStringBuilder sb2 = new StringBuilder('c');\n\n// in these forms, just single characters are allocated\nStringBuffer  sb3 = new StringBuffer(\"c\");\nStringBuilder sb4 = new StringBuilder(\"c\");",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    StringBuffer sb = new StringBuffer(\"c\");\n}\n\npublic class Foo {\n    StringBuilder sb2 = new StringBuilder(\"c\");\n}\n        "
+    },
+    {
+      "description": "failure case",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        6
+      ],
+      "code": "\npublic class Foo {\n    StringBuffer sb = new StringBuffer('c');\n}\n\npublic class Foo2 {\n    StringBuilder sb = new StringBuilder('c');\n}\n        "
+    },
+    {
+      "description": "failure case (not a literal)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n\npublic class Foo2 {\n    public void foo(char ch) {\n        StringBuilder builder = new StringBuilder(ch);  // should report a warning in this line\n    }\n}\n        "
+    }
+  ]
+}

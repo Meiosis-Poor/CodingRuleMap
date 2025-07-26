@@ -1,0 +1,33 @@
+{
+  "name": "DurationSubtraction",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-duration-subtraction",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 58,
+  "branches": 3,
+  "apis": 33,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        10,
+        13,
+        16,
+        19,
+        22,
+        25,
+        28,
+        31,
+        37,
+        43,
+        48,
+        51
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s abseil-duration-subtraction %t -- -- -I %S/Inputs\n\n#include \"absl/time/time.h\"\n\nvoid f() {\n  double x;\n  absl::Duration d, d1, d2;\n\n  x = absl::ToDoubleSeconds(d) - 1.0;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleSeconds(d - absl::Seconds(1))\n  x = absl::ToDoubleSeconds(d) - absl::ToDoubleSeconds(d1);\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleSeconds(d - d1);\n  x = absl::ToDoubleSeconds(d) - 6.5 - 8.0;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleSeconds(d - absl::Seconds(6.5)) - 8.0;\n  x = absl::ToDoubleHours(d) - 1.0;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleHours(d - absl::Hours(1))\n  x = absl::ToDoubleMinutes(d) - 1;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleMinutes(d - absl::Minutes(1))\n  x = absl::ToDoubleMilliseconds(d) - 9;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleMilliseconds(d - absl::Milliseconds(9))\n  x = absl::ToDoubleMicroseconds(d) - 9;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleMicroseconds(d - absl::Microseconds(9))\n  x = absl::ToDoubleNanoseconds(d) - 42;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleNanoseconds(d - absl::Nanoseconds(42))\n\n  // We can rewrite the argument of the duration conversion\n#define THIRTY absl::Seconds(30)\n  x = absl::ToDoubleSeconds(THIRTY) - 1.0;\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleSeconds(THIRTY - absl::Seconds(1))\n#undef THIRTY\n\n  // Some other contexts\n  if (absl::ToDoubleSeconds(d) - 1.0 > 10) {}\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: if (absl::ToDoubleSeconds(d - absl::Seconds(1)) > 10) {}\n\n  // A nested occurrence\n  x = absl::ToDoubleSeconds(d) - absl::ToDoubleSeconds(absl::Seconds(5));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleSeconds(d - absl::Seconds(5))\n  x = absl::ToDoubleSeconds(d) - absl::ToDoubleSeconds(absl::Seconds(absl::ToDoubleSeconds(d1)));\n  // CHECK-MESSAGES: [[@LINE-1]]:7: warning: perform subtraction in the duration domain [abseil-duration-subtraction]\n  // CHECK-FIXES: absl::ToDoubleSeconds(d - absl::Seconds(absl::ToDoubleSeconds(d1)))\n\n  // These should not match\n  x = 5 - 6;\n  x = 4 - absl::ToDoubleSeconds(d) - 6.5 - 8.0;\n  x = absl::ToDoubleSeconds(d) + 1.0;\n  x = absl::ToDoubleSeconds(d) * 1.0;\n  x = absl::ToDoubleSeconds(d) / 1.0;\n\n#define MINUS_FIVE(z) absl::ToDoubleSeconds(z) - 5\n  x = MINUS_FIVE(d);\n#undef MINUS_FIVE\n}"
+    }
+  ]
+}

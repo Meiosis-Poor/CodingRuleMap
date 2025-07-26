@@ -1,0 +1,128 @@
+{
+  "name": "PrematureDeclaration",
+  "language": "java",
+  "description": "\nChecks for variables that are defined before they might be used. A declaration is\ndeemed to be premature if there are some statements that may return or throw an\nexception between the time the variable is declared and the time it is first read.\n\nSome variables cannot be declared close to their first usage because of side-effects\noccurring before they're first used. We try to avoid reporting those by considering\nmost method and constructor invocations to be impure. See the second example.\n\nNote that this rule is meant to improve code readability but is not an optimization.\nA smart JIT will not care whether the variable is declared prematurely or not, as it\ncan reorder code.\n        ",
+  "example": "public int getLength(String[] strings) {\n\n    int length = 0; // could be moved closer to the loop\n\n    if (strings == null || strings.length == 0) return 0;\n\n    for (String str : strings) {\n        length += str.length();\n    }\n\n    return length;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 134,
+  "branches": 20,
+  "apis": 17,
+  "test": [
+    {
+      "description": "premature declaration before unrelated test",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n    public int lengthSumOf(String[] strings) {\n\n        int sum = 0; // premature\n\n        if (strings == null || strings.length == 0) return 0;\n\n        for (int i = 0; i < strings.length; i++) {\n            sum += strings[i].length();\n        }\n\n        return sum;\n    }\n}\n            "
+    },
+    {
+      "description": "optimal var declaration position",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n\n    public int lengthSumOf(String[] strings) {\n\n        if (strings == null || strings.length == 0) return 0;\n\n        int sum = 0;    // optimal placement\n\n        for (int i=0; i<strings.length; i++) {\n            sum += strings[i].length();\n        }\n\n        return sum;\n    }\n}\n        "
+    },
+    {
+      "description": "Bug #1064 Exception running PrematureDeclaration",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Bar {\n    public int lengthSumOf(String[] strings) {\n\n        if (strings == null || strings.length == 0) return 0;\n\n        @SuppressWarnings(\"unchecked\") Integer sum = 0; // optimal placement\n\n        for (int i=0; i<strings.length; i++) {\n            sum += strings[i].length();\n        }\n\n        return sum;\n    }\n}\n        "
+    },
+    {
+      "description": "#1305 variable declaration inside switch causes ClassCastException",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PrematureDeclarationClassCastException {\n    public void bar() {\n        int switchvar = 0;\n        switch (switchvar) {\n            case 1:\n                boolean localvar;\n                break;\n            case 2:\n                localvar = false;\n                if (localvar) {\n                    //\n                }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1396 PrematureDeclaration lambda false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PrematureDeclarationLambda {\n    public int lengthSumOf() {\n        int sum = 0;\n        Runnable r = () -> { return; };\n        r.run();\n        return sum;\n    }\n}\n        "
+    },
+    {
+      "description": "PrematureDeclaration false negative with reference that is a suffix of the variable name",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class PrematureDeclarationLambda {\n    public int lengthSumOf(String[] foo) {\n\n        int snafoo = 0;\n\n        if (foo == null || foo.length == 0)\n            return 0;\n\n        for (String aFoo : foo) {\n            snafoo += aFoo.length();\n        }\n\n        return snafoo;\n    }\n}\n        "
+    },
+    {
+      "description": "#1067 PrematureDeclaration lambda closure false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\npublic class PrematureDeclarationLambda {\n    public boolean lengthSumOf() {\n        String foo = \"\";\n        return new ArrayList<String>().stream().anyMatch(bar -> foo.equals(bar));\n    }\n}\n        "
+    },
+    {
+      "description": "#1108 PrematureDeclaration lambda false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nimport java.util.stream.Stream;\nimport java.util.stream.Collectors;\nimport java.util.function.Supplier;\n\npublic class PrematureDeclarationLambda {\n    private static <T> Optional<T> ofRunnable(Supplier<T> sup) {return Optional.of(sup.get());}\n    private static String sign(String input) {return input.toLowerCase();}\n\n    public String lengthSumOf(String a, String b) {\n        String signingInput = Stream.of(a, b)\n                                    .filter(Objects::nonNull)\n                                    .map(String::valueOf)\n                                    .collect(Collectors.joining());\n\n        return ofRunnable(() -> sign(signingInput))\n                  .orElse(null);\n    }\n}\n        "
+    },
+    {
+      "description": "PrematureDeclaration with captured lambda var",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nimport java.util.stream.Stream;\nimport java.util.stream.Collectors;\nimport java.util.function.Supplier;\n\npublic class PrematureDeclarationLambda {\n    private static <T> Optional<T> ofRunnable(Supplier<T> sup) {return Optional.of(sup.get());}\n    private static <T> String sign(String input) {return input.toLowerCase();}\n\n    public String lengthSumOf(String a, String b) {\n        String signingInput = Stream.of(a, b)\n                                    .filter(Objects::nonNull)\n                                    .map(String::valueOf)\n                                    .collect(Collectors.joining());\n\n        return ofRunnable(() -> {\n            return sign(signingInput);\n        }).orElse(null);\n    }\n}\n            "
+    },
+    {
+      "description": "PrematureDeclaration with captured lambda var (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nimport java.util.stream.Stream;\nimport java.util.stream.Collectors;\nimport java.util.function.Supplier;\n\npublic class PrematureDeclarationLambda {\n    private static <T> Optional<T> ofRunnable(Supplier<T> sup) {return Optional.of(sup);}\n    private static String sign(String input) {return input.toLowerCase();}\n\n    public boolean lengthSumOf(boolean sign) {\n        String signingInput = Stream.of(a, b)\n                                    .filter(Objects::nonNull)\n                                    .map(String::valueOf)\n                                    .collect(Collectors.joining(EMPTY));\n        if (sign)\n            return ofRunnable(() -> {\n                return sign(signingInput); // this should be recognized as a usage\n            }).orElse(false);\n\n        return signingInput;\n    }\n}\n            "
+    },
+    {
+      "description": "PrematureDeclaration should also check inside lambdas",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nimport java.util.stream.Stream;\nimport java.util.stream.Collectors;\nimport java.util.function.Supplier;\n\npublic class PrematureDeclarationLambda {\n    private static <T> Optional<T> ofRunnable(Supplier<T> sup) {return Optional.of(sup);}\n    public boolean lengthSumOf(String[] strings) {\n\n        return ofRunnable(() -> {\n            // Inside that lambda *is* a premature declaration of `sum`\n            int sum = 0;\n\n            if (strings == null || strings.length == 0)\n                return 0;\n\n            for (int i = 0; i < strings.length; i++) {\n                sum += strings[i].length();\n            }\n\n            return sum;\n        }).isPresent();\n    }\n}\n        "
+    },
+    {
+      "description": "#1429 PrematureDeclaration should try to recognize side-effects",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            import java.util.concurrent.atomic.AtomicInteger;\n            import java.util.stream.Stream;\n            import java.util.stream.Collectors;\n            import java.util.function.Supplier;\n\n            public class PrematureDeclarationLambda {\n\n                final Map<String, String> cache = new HashMap<>();\n                final AtomicInteger ref = new AtomicInteger();\n\n                public String doSomeThing(String uri, String cachedPath, String ref) {\n                    var prior = cache.put(uri, cachedPath); // may side-effect\n\n                    if (ref == null) {\n                        return createRef(cachedPath, 1); // may side-effect\n                    }\n                    if (prior == null) {\n                        return ref.substring(1);\n                    }\n                    return ref;\n                }\n\n                static String createRef(String cachedPath, int refCount) {\n                    return \"\" + cachedPath + refCount;\n                }\n            }\n            "
+    },
+    {
+      "description": "#1429 PrematureDeclaration side-effect of time methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class PrematureDeclaration {\n\n                public String doSomeThing(String uri, String cachedPath, int times) {\n                    var prior = System.nanoTime(); // side effect here\n\n                    // isn't a side-effect as those look like a getter\n                    if (System.getProperties().isEmpty()) {\n                        return \"\";\n                    }\n\n                    return uri + prior;\n                }\n            }\n            "
+    },
+    {
+      "description": "#1429 PrematureDeclaration side-effect in initializer (control)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class PrematureDeclaration {\n\n                public String doSomeThing(String uri, String cachedPath, int times) {\n                    var prior = \"\";\n\n                    // isn't a side-effect as those look like a getter\n                    if (System.getProperties().isEmpty()) {\n                        return \"\";\n                    }\n\n                    return uri + prior;\n                }\n            }\n            "
+    },
+    {
+      "description": "FN with blank local declaration",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class PrematureDeclaration {\n\n                Class<?> scriptClass;\n                Object cachedResult;\n\n                private void doScript(Class<?> klass) {}\n\n                public Object getScriptedObject() {\n                    synchronized (this) {\n                        Class<?> scriptClassToExecute; // here\n\n                        if (this.cachedResult != null) {\n                            Object result = this.cachedResult;\n                            this.cachedResult = null;\n                            return result;\n                        }\n\n                        scriptClassToExecute = this.scriptClass; // here\n                        return doScript(scriptClassToExecute);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FN with exception ctor flagged as side-effect",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class PrematureDeclaration {\n\n                Class<?> scriptClass;\n                Object cachedResult;\n\n                private void doScript(Class<?> klass) {}\n\n\n                public String combine(String pattern1, String pattern2) {\n                    String ext1 = pattern1.substring(starDotPos1 + 1);\n                    int dotPos2 = pattern2.indexOf('.');\n                    String file2 = dotPos2 == -1 ? pattern2 : pattern2.substring(0, dotPos2);\n                    String ext2 = dotPos2 == -1 ? \"\" : pattern2.substring(dotPos2);\n                    boolean ext1All = ext1.equals(\".*\") || ext1.equals(\"\");\n                    boolean ext2All = ext2.equals(\".*\") || ext2.equals(\"\");\n                    if (!ext1All && !ext2All) {\n                        throw new IllegalArgumentException(\"Cannot combine patterns: \" + pattern1 + \" vs \" + pattern2);\n                    }\n                    String ext = ext1All ? ext2 : ext1;\n                    return file2 + ext;\n                }\n            }\n            "
+    },
+    {
+      "description": "FN with trivial initializers",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class PrematureDeclaration {\n                int pos;\n\n                void sideEffect(int pos) {\n\n                }\n\n                private void lexNumericLiteral(int start, char[] chars) {\n                    // initializer of isReal does not depend on any side-effects so it can be moved.\n                    boolean isReal = false;\n                    char ch = chars[start + 1];\n                    boolean isHex = ch == 'x' || ch == 'X';\n\n                    // do side effects\n                    if (isHex) {\n                        this.pos++;\n                        do {\n                            this.pos++;\n                        } while (advance());\n                        return;\n                    }\n\n                    // a '.' indicates this number is a real\n                    ch = chars[this.pos];\n                    if (ch == '.') {\n                        isReal = true;\n                        sideEffect(this.pos);\n                    }\n\n                    if (isReal) {\n                        this.pos++;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with references to fields in initializers",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class PrematureDeclaration {\n                int pos;\n\n                void sideEffect(int pos) {\n                    this.pos = pos + pos % 3;\n                }\n\n                private void lexNumericLiteral(int start, char[] chars) {\n                    // initializer of isReal does not depend on any side-effects so it can be moved.\n                    boolean isReal = this.pos;\n                    char ch = chars[start + 1];\n                    boolean isHex = ch == 'x' || ch == 'X';\n\n                    sideEffect(pos);\n\n                    // do side effects\n                    if (isHex) {\n                        return;\n                    }\n\n                    if (isReal) {\n                        this.pos++;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with local reassignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            public class PrematureDeclaration {\n                enum TestGroup {\n                    A\n                }\n\n                public static Set<TestGroup> parse(String value) throws IllegalArgumentException {\n                    if (!value.isEmpty()) {\n                        return Collections.emptySet();\n                    }\n                    // obviously this cannot be reordered\n                    // We should also track side effects on locals\n                    String originalValue = value;\n                    value = value.trim();\n                    if (\"ALL\".equalsIgnoreCase(value)) {\n                        return EnumSet.allOf(TestGroup.class);\n                    }\n                    if (value.toUpperCase().startsWith(\"ALL-\")) {\n                        Set<TestGroup> groups = EnumSet.allOf(TestGroup.class);\n                        groups.remove(TestGroup.A);\n                        return groups;\n                    }\n                    return parseGroups(originalValue, value);\n                }\n            }\n            "
+    }
+  ]
+}

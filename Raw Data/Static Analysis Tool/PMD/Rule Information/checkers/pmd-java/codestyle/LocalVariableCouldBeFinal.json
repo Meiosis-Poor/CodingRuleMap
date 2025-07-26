@@ -1,0 +1,194 @@
+{
+  "name": "LocalVariableCouldBeFinal",
+  "language": "java",
+  "description": "\nA local variable assigned only once can be declared final.\n        ",
+  "example": "public class Bar {\n    public void foo () {\n    String txtA = \"a\";          // if txtA will not be assigned again it is better to do this:\n    final String txtB = \"b\";\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 48,
+  "branches": 8,
+  "apis": 6,
+  "test": [
+    {
+      "description": "May be final",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        System.out.println(a); // a is used here\n    }\n}\n        "
+    },
+    {
+      "description": "Final local var",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        final int a = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "#4511 Unused, no violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "Assigned",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        a = 100;\n    }\n}\n        "
+    },
+    {
+      "description": "Compound assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        a += 100;\n    }\n}\n        "
+    },
+    {
+      "description": "Initialized local vars",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        int b = 0;\n        System.out.println(\"a=\" + a + \" b=\" + b);\n    }\n}\n        "
+    },
+    {
+      "description": "#3122 Blank uninitialized local var",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        int b = 0;\n        int c ;\n        c = a + b;\n    }\n}\n        "
+    },
+    {
+      "description": "Prefix increment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        ++a;\n    }\n}\n        "
+    },
+    {
+      "description": "TEST7",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        a+=1;\n    }\n}\n        "
+    },
+    {
+      "description": "Postfix increment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        a++;\n    }\n}\n        "
+    },
+    {
+      "description": "TEST9",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void test1() {\n        int a = 0;\n        int b = 0;\n        a++;\n        a+=b;\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 2614040 : false + if a += assignment operator is used inside a method call.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/**\n * See: https://sourceforge.net/tracker/?func=detail&aid=2614040&group_id=56262&atid=479921\n */\npublic class Foo {\n    public String bar() {\n        int count = 1;\n        final String wrong = String.valueOf( count += 2); // 'count' is used so it's a false +\n        return wrong;\n    }\n}\n        "
+    },
+    {
+      "description": "Bug #1047 False Positive in 'for' loops for LocalVariableCouldBeFinal in 5.0.1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for ( final String c : strings ) {\n            System.out.println(c); // use c\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Verify another case for Bug #1047 False Positive in 'for' loops for LocalVariableCouldBeFinal in 5.0.1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Assert;\npublic class Test {\n    public void bar(java.util.List<java.util.List<Integer>> result) {\n        for (final java.util.List<Integer> list : result) {\n            Assert.assertEquals( list.size() - 1, list.size() );\n        }\n    }\n}\n       "
+    },
+    {
+      "description": "Parameter to ignore non-final variables in for each loops (see #1513).",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for ( String c : strings ) {\n            System.out.println(c); // use c\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "By default, for-each loops should be flagged (see #1513).",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for ( String c : strings ) {\n            System.out.println(c); // use c\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Normal for-loops should not be flagged",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        for (int i = 0; i < 10; i++ ) {\n            System.out.println(i);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3266 False negative with default methods in interfaces",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic interface InterfaceWithDefaultMethod {\n    default void bar() {\n        String a = \"a\";\n        System.out.println(a);\n    }\n}\n        "
+    },
+    {
+      "description": "#3266 False negative with class inside interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic interface InterfaceWithClass {\n    class Inner {\n        void bar() {\n            String a = \"a\";\n            System.out.println(a);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#3266 False negative with anonymous classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class ClassWithAnon {\n    void method() {\n        final ClassWithAnon anon = new ClassWithAnon() {\n            void method() {\n                String a = \"a\";\n                System.out.println(a);\n            }\n        };\n        final Runnable runnable = new Runnable() {\n            public void run() {\n                int a = 0; //unused so no warning\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "#3266 False negative with lambdas",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class ClassWithLambda {\n    void method() {\n        final Runnable runnable = () -> {\n            int a = 0;\n            System.out.println(a);\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "#1619 FP with loop variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ClassWithLambda {\n    void method() {\n        for (int i = 0, size = loaders.size(); i < size; ++i);\n    }\n}\n        "
+    },
+    {
+      "description": "#3122 should consider blank variables",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        12,
+        24
+      ],
+      "code": "\npublic class ClassWithLambda {\n    void method() {\n        int a = 2; // nowarn\n        a = 4;\n        System.out.println(a);\n\n        int b; // nowarn\n        b = 1 + 2;\n        b = 4;\n        System.out.println(b);\n\n        int c; // warn\n        c = 1 + 2;\n        System.out.println(c);\n\n        int x;\n        if (getClass().isAnonymousClass()) {\n            x = 2;\n        } else {\n            x = 4;\n        }\n        // x is unused\n\n        int y; // warn\n        if (getClass().isAnonymousClass()) {\n            y = 2;\n        } else {\n            y = 4;\n        }\n        System.out.println(y);\n    }\n}\n        "
+    },
+    {
+      "description": "#3122 should consider blank variables",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class ClassWithLambda {\n\n    void expandKey(byte key[]) {\n        int octet;\n        byte ek[] = new byte[128];\n\n        octet = key[0];\n        if ((octet & 0x80) != 0) {\n            ek[104] |=  4; ek[122] |= 32;\n        }\n\n        octet = key[1];\n        if ((octet & 0x80) != 0) {\n            ek[  1] |=  8; ek[  8] |= 32; ek[ 17] |=  1;\n            ek[ 24] |= 16; ek[ 35] |=  4; ek[ 50] |=  1;\n            ek[ 57] |= 16; ek[ 67] |=  8; ek[ 83] |=  1;\n            ek[ 88] |=  1; ek[ 98] |=  4; ek[105] |= 32;\n            ek[114] |= 32; ek[123] |=  2;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": " [java] LocalVariableCouldBeFinal false positive with try/catch #5046 ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Optional;\nimport foo.FileWatcher;\npublic class ClassWithLambda {\n    private Optional<FileWatcher> createFileWatcher() {\n        Optional<FileWatcher> optionalFileWatcher;  // false positive in PMD 7.2.0, cannot be final\n        try {\n            optionalFileWatcher = Optional.of(new FileWatcher());\n        } catch (final IOException e) {\n            optionalFileWatcher = Optional.empty();\n        }\n        return optionalFileWatcher;\n    }\n\n}\n        "
+    },
+    {
+      "description": "[java] LocalVariableCouldBeFinal false-positive with lombok.val #5079",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.val;\npublic class Test {\n    private StringBuilder createFileWatcher() {\n        val tost = \"uaoleudaou\";\n        return new StringBuilder(tost);\n    }\n\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "name": "EmptyMethodInAbstractClassShouldBeAbstract",
+  "language": "java",
+  "description": "\nEmpty or auto-generated methods in an abstract class should be tagged as abstract. This helps to remove their inapproprate\nusage by developers who should be implementing their own versions in the concrete subclasses.\n        ",
+  "example": "public abstract class ShouldBeAbstract {\n    public Object couldBeAbstract() {\n        // Should be abstract method ?\n        return null;\n    }\n\n    public void couldBeAbstract() {\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "void return method, with no return statement.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public void couldBeAbstract()\n    {\n    }\n}\n        "
+    },
+    {
+      "description": "non-void return method, with just a, most likely, dummy return statement.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public Object couldBeAbstract()\n    {\n        // Should be abstract method ?\n        return null;\n   }\n}\n        "
+    },
+    {
+      "description": "A method with just a return statement, but a meaningful one.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public int isUseful(int i)\n    {\n        return (i +4 ) * 12;\n   }\n\n    public int anotherUseful(int i)\n    {\n        return i++;\n   }\n\n    public int anotherUseful(int i)\n    {\n        return i;\n   }\n}\n        "
+    },
+    {
+      "description": "Other valid methods.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public native int isUseful();\n\n    int i;\n\n    public int anotherUseful() {\n      i = i + 1;\n      return i;\n    }\n\n    public String anotherUseful(int j) {\n      i = j;\n      return null;\n   }\n}\n        "
+    },
+    {
+      "description": "nested abstract class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class NotAbstract\n{\n    public abstract class ShouldBeAbstract\n    {\n        public void couldBeAbstract()\n        {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "nested class in abstract class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public class NotAbstract\n    {\n        public void couldBeAbstract()\n        {\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1888967 : Detection of dummy method",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public int couldBeAbstract()\n    {\n        return 0;\n    }\n\n    public String couldBeAbstract()\n    {\n        return \"\";\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1888967 : Those methods should not be detected as a violation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public boolean notAbstract(String str)\n    {\n        return Boolean.valueOf(str);\n    }\n\n    public int neitherThisOne(int i)\n    {\n        return i + 3;\n    }\n\n    public int neitherThisOne(String str)\n    {\n        return Integer.valueOf(str);\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1888967 : This method should not be detected as a violation.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class ShouldBeAbstract\n{\n    public boolean couldBeAbstract(String str)\n    {\n        return Boolean.valueOf(str);\n    }\n}\n        "
+    },
+    {
+      "description": "Bug 1932242 : False +, returning a String does not count as an Empty Method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo\n{\n    protected String bar()\n    {\n        return \"A valid, not null, string\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1147 EmptyMethodInAbstractClassShouldBeAbstract false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    public boolean isVisible() {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Detect empty statements",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    public void isVisible() {\n        ;\n    }\n}\n        "
+    },
+    {
+      "description": "Dont flag default methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    default void isVisible() {\n\n    }\n}\n        "
+    }
+  ]
+}

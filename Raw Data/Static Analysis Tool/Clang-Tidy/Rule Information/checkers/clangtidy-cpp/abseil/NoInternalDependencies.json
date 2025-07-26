@@ -1,0 +1,29 @@
+{
+  "name": "NoInternalDependencies",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-no-internal-dependencies",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 46,
+  "branches": 2,
+  "apis": 19,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        13,
+        16,
+        21,
+        27,
+        47,
+        51,
+        55,
+        61
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s abseil-no-internal-dependencies %t,  -- -- -I %S/Inputs\n// RUN: clang-tidy -checks='-*, abseil-no-internal-dependencies' -header-filter='.*' %s -- -I %S/Inputs 2>&1 | FileCheck %s\n\n#include \"absl/strings/internal-file.h\"\n#include \"absl/flags/internal-file.h\"\n// CHECK-NOT: warning:\n\n#include \"absl/external-file.h\"\n// CHECK: absl/external-file.h:6:24: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil [abseil-no-internal-dependencies]\n\nvoid DirectAcess() {\n  absl::strings_internal::InternalFunction();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n\n  absl::strings_internal::InternalTemplateFunction<std::string>(\"a\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n}\n\nclass FriendUsage {\n  friend struct absl::container_internal::InternalStruct;\n  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n};\n\nnamespace absl {\nvoid OpeningNamespace() {\n  strings_internal::InternalFunction();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n}\n} // namespace absl\n\n// should not trigger warnings\nvoid CorrectUsage() {\n  std::string Str = absl::StringsFunction(\"a\");\n  absl::SomeContainer b;\n}\n\nnamespace absl {\nSomeContainer b;\nstd::string Str = absl::StringsFunction(\"a\");\n} // namespace absl\n\n#define USE_EXTERNAL(x) absl::strings_internal::Internal##x()\n\nvoid MacroUse() {\n  USE_INTERNAL(Function); // no-warning\n  USE_EXTERNAL(Function);\n  // CHECK-MESSAGES: :[[@LINE-5]]:25: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n}\n\nclass A : absl::container_internal::InternalStruct {};\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n\ntemplate <typename T>\nclass B : absl::container_internal::InternalTemplate<T> {};\n// CHECK-MESSAGES: :[[@LINE-1]]:11: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil\n\ntemplate <typename T> class C : absl::container_internal::InternalTemplate<T> {\npublic:\n  template <typename U> static C Make(U *p) { return C{}; }\n};\n// CHECK-MESSAGES: :[[@LINE-4]]:33: warning: do not reference any 'internal' namespaces; those implementation details are reserved to Abseil"
+    }
+  ]
+}

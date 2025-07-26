@@ -1,0 +1,43 @@
+{
+  "name": "CovariantEquals",
+  "language": "java",
+  "description": "<div>\n Checks that classes and records which define a covariant {@code equals()} method\n also override method {@code equals(Object)}.\n </div>\n\n <p>\n Covariant {@code equals()} - method that is similar to {@code equals(Object)},\n but with a covariant parameter type (any subtype of Object).\n </p>\n\n <p>\n <strong>Notice</strong>: the enums are also checked,\n even though they cannot override {@code equals(Object)}.\n The reason is to point out that implementing {@code equals()} in enums\n is considered an awful practice: it may cause having two different enum values\n that are equal using covariant enum method, and not equal when compared normally.\n </p>\n\n <p>\n Inspired by <a href=\"https://www.cs.jhu.edu/~daveho/pubs/oopsla2004.pdf\">\n Finding Bugs is Easy, chapter '4.5 Bad Covariant Definition of Equals (Eq)'</a>:\n </p>\n\n <p>\n Java classes and records may override the {@code equals(Object)} method to define\n a predicate for object equality. This method is used by many of the Java\n runtime library classes; for example, to implement generic containers.\n </p>\n\n <p>\n Programmers sometimes mistakenly use the type of their class {@code Foo}\n as the type of the parameter to {@code equals()}:\n </p>\n <pre>\n public boolean equals(Foo obj) {...}\n </pre>\n\n <p>\n This covariant version of {@code equals()} does not override the version in\n the {@code Object} class, and it may lead to unexpected behavior at runtime,\n especially if the class is used with one of the standard collection classes\n which expect that the standard {@code equals(Object)} method is overridden.\n </p>\n\n <p>\n This kind of bug is not obvious because it looks correct, and in circumstances\n where the class is accessed through the references of the class type (rather\n than a supertype), it will work correctly. However, the first time it is used\n in a container, the behavior might be mysterious. For these reasons, this type\n of bug can elude testing and code inspections.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 67,
+  "branches": 6,
+  "apis": 18,
+  "test": [
+    {
+      "description": "Auto test from InputCovariantEqualsOne.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        16,
+        34,
+        69,
+        83
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.covariantequals;\npublic class InputCovariantEqualsOne\n{\n    private class Inner\n    {\n        public boolean equals(Inner aInner) \n        {\n            return false;\n        }\n    }\n    private class Inner2\n    {\n        public boolean equals(Inner2 aInner2)\n        {\n            return false;\n        }\n        public boolean equals(Object aObj)\n        {\n            return false;\n        }\n    }\n    public boolean equals(InputCovariantEqualsOne obj) \n    {\n        return false;\n    }\n}\nclass InputCovariant2\n{\n    public boolean equals(InputCovariant2 aInputCovariant2)\n    {\n        return false;\n    }\n    public boolean equals(Object aObject)\n    {\n        return false;\n    }\n}\nclass InputCovariant3\n{\n    public boolean equals(InputCovariant3 aInputCovariant3)\n    {\n        return false;\n    }\n    public boolean equals(java.lang.Object aObject)\n    {\n        return false;\n    }\n}\nclass InputCovariant4\n{\n    public boolean equals(int i) \n    {\n        return false;\n    }\n}\nclass InputAnonymousIC\n{\n    Comparable comp = new Comparable()\n        {\n            public int compareTo(Object aObject)\n            {\n                return 0;\n            }\n            public boolean equals(String aString) \n            {\n                return false;\n            }\n        };\n    public boolean equals(Object aObject)\n    {\n        return false;\n    }\n    public void method()\n    {\n        Double d = new Double(1);\n    }\n}\nabstract class InputCovariant5\n{\n    public abstract boolean equals(InputCovariant4 aInputCovariant4);\n}\ninterface InputCovariant6\n{\n    public boolean equals(InputCovariant5 aInputCovariant5);\n}"
+    },
+    {
+      "description": "Auto test from InputCovariantEqualsRecords.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        12,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.covariantequals;\npublic class InputCovariantEqualsRecords {\n    public record MyRecord1() {\n        public boolean equals(String str) { \n            return str.equals(this);\n        }\n    }\n    public record MyRecord2() {\n        public boolean equals(String str) {\n            return str.equals(this);\n        }\n        public boolean equals(Object obj) {\n            return false;\n        }\n    }\n    public record MyRecord3() {\n        record MyInnerRecord() {\n            public boolean equals(String str) { \n                return str.equals(this);\n            }\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputCovariantEqualsTwo.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        39,
+        43
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.covariantequals;\npublic class InputCovariantEqualsTwo {\n  class InputGenericCovariant7 {\n    public <A> boolean equals(InputGenericCovariant7 aInputCovariant7)\n    {\n        return true;\n    }\n    public boolean equals(Object aObject)\n    {\n        return false;\n    }\n  }\n  class InputGenericCovariant8 {\n    public <A> boolean equals(InputGenericCovariant8 aInputCovariant8)\n    {\n        return true;\n    }\n    public boolean equals(Object aObject)\n    {\n        return false;\n    }\n  }\n  enum InputEnumCovariant {\n    EQUALS;\n    public boolean equals(InputEnumCovariant obj) { \n        return false;\n    }\n    int equals(Integer integer) { \n        return 0;\n    }\n  }\n}"
+    }
+  ]
+}

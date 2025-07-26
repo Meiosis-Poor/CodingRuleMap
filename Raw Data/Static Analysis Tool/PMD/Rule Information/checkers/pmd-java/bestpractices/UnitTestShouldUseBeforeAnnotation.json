@@ -1,0 +1,104 @@
+{
+  "name": "UnitTestShouldUseBeforeAnnotation",
+  "language": "java",
+  "description": "\nThis rule detects methods called `setUp()` that are not properly annotated as a setup method.\nThis is primarily intended to assist in upgrading from JUnit 3, where setup methods were required to be called `setUp()`.\nTo a lesser extent, this may help detect omissions even under newer JUnit versions or under TestNG,\nas long as you are following this convention to name the methods.\n\n* JUnit 4 will only execute methods annotated with `@Before` before all tests.\n* JUnit 5 introduced `@BeforeEach` and `@BeforeAll` annotations to execute methods before each test or before all\n  tests in the class, respectively.\n* TestNG provides the annotations `@BeforeMethod` and `@BeforeClass` to execute methods before each test or before\n  tests in the class, respectively.\n\nNote: This rule was named JUnit4TestShouldUseBeforeAnnotation before PMD 7.7.0.\n        ",
+  "example": "public class MyTest {\n    public void setUp() {\n        bad();\n    }\n}\npublic class MyTest2 {\n    @Before public void setUp() {\n        good();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "JUnit4 Test class contains setUp",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport org.junit.Test;\npublic class Foo {\n    public void setUp() {\n    }\n    @Test\n    public void foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit4 Test class with Before is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Before;\nimport org.junit.Test;\npublic class Foo {\n    @Before\n    public void setUp() {\n    }\n    @Test\n    public void foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "JUnit4 Test class with renamed setup using Before is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Before;\nimport org.junit.Test;\npublic class Foo {\n    @Before\n    public void configure() {\n    }\n    @Test\n    public void foo() {\n    }\n}\n        "
+    },
+    {
+      "description": "#1400 False positive with JUnit4TestShouldUseBeforeAnnotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Before;\nimport org.junit.Test;\nimport my.EsSetup;\npublic class Foo {\n    EsSetup esSetup;\n    @Before(\"@ResetEsSetup\")\n    public void setUp() {\n        esSetup.execute(EsSetup.deleteAll());\n    }\n    @Test\n    public void someTest() {}\n}\n        "
+    },
+    {
+      "description": "Contains setUp, not a JUnit 4/5/TestNG test",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void setUp() {}\n    public void foo() {}\n}\n"
+    },
+    {
+      "description": "JUnit4 Test class contains setUp with different signature is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.Test;\n\npublic class Foo {\n    public void setUp(int something) {}\n\n    @Test\n    public void foo() {}\n}\n"
+    },
+    {
+      "description": "[java] JUnit4TestShouldUseBeforeAnnotation false positive when overriding setUp #1592",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.UnitTestShouldUseBeforeAnnotationTest.BaseTest;\n\npublic class AReallyCoolFeatureTest extends BaseTest {\n    @Override\n    public void setUp() {\n        super.setUp();\n    }\n\n    @Override\n    public void tearDown() {\n        super.tearDown();\n    }\n}\n        "
+    },
+    {
+      "description": "TestNG class contains setUp",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.testng.annotations.Test;\n\npublic class MyTestCase {\n    public void setUp() {} // violation expected here\n\n    @Test\n    public void myTest() {}\n}\n"
+    },
+    {
+      "description": "TestNG class contains setUp with different signature is ok (#1446)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.Test;\nimport java.lang.reflect.Method;\n\npublic class Foo {\n    public void setUp(Method m) {}\n\n    @Test\n    public void foo() {}\n}\n"
+    },
+    {
+      "description": "TestNG with @BeforeMethod is ok (#1446)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.BeforeMethod;\nimport org.testng.annotations.Test;\n\npublic class MyTestCase {\n    @BeforeMethod\n    public void setUp() {}\n\n    @Test\n    public void myTest() {}\n}\n"
+    },
+    {
+      "description": "TestNG with @BeforeClass is ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.BeforeClass;\nimport org.testng.annotations.Test;\n\npublic class MyTestCase {\n    @BeforeClass\n    public void setUp() {}\n\n    @Test\n    public void myTest() {}\n}\n"
+    },
+    {
+      "description": "JUnit5 Test class contains setUp",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.junit.jupiter.api.Test;\n\npublic class MyTestCase {\n    public void setUp() {} // violation expected\n\n    @Test\n    public void myTest() {}\n}\n"
+    },
+    {
+      "description": "JUnit5 Test class with BeforeEach is ok (#940)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.BeforeEach;\nimport org.junit.jupiter.api.Test;\n\npublic class MyTestCase {\n    @BeforeEach\n    public void setUp() {}\n\n    @Test\n    public void myTest() {}\n}\n"
+    },
+    {
+      "description": "JUnit5 Test class with BeforeAll is ok (#940)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.BeforeAll;\nimport org.junit.jupiter.api.Test;\n\npublic class MyTestCase {\n    @BeforeAll\n    public void setUp() {}\n\n    @Test\n    public void myTest() {}\n}\n"
+    }
+  ]
+}

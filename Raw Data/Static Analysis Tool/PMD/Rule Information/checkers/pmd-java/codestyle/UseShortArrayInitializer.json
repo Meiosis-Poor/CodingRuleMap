@@ -1,0 +1,71 @@
+{
+  "name": "UseShortArrayInitializer",
+  "language": "java",
+  "description": "\n\nWhen declaring and initializing array fields or variables, it is not necessary to explicitly create a new array\nusing `new`. Instead one can simply define the initial content of the array as a expression in curly braces.\n\nE.g. `int[] x = new int[] { 1, 2, 3 };` can be written as `int[] x = { 1, 2, 3 };`.\n\n        ",
+  "example": "Foo[] x = new Foo[] { ... }; // Overly verbose\nFoo[] x = { ... }; //Equivalent to above line",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "simple failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class UseShortArrayExample {\n    void foo() {\n        int[] x = new int[] {1,2,3};\n    }\n}\n        "
+    },
+    {
+      "description": "case with two initializers",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        3
+      ],
+      "code": "\npublic class UseShortArrayExample {\n    void foo() {\n        int ar[] = new int[] { 1,2,3}, foo[] = new int[] { 4, 5, 6 };\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseShortArrayExample {\n    void foo() {\n        int[] x = {1,2,3};\n    }\n}\n        "
+    },
+    {
+      "description": "assignment needs to use new",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseShortArrayExample {\n    void foo() {\n        int[] a = { 1 };\n        a = new int[] { 2 }; // can't be replaced\n    }\n}\n        "
+    },
+    {
+      "description": "empty array initialization",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseShortArrayExample {\n    public void foo() {\n        int[] a = new int[3]; // no violation\n    }\n}\n        "
+    },
+    {
+      "description": "array initialization with fields",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        3,
+        3
+      ],
+      "code": "\npublic class UseShortArrayExample {\n    private int[] f1 = new int[] {1,2,3};\n    private int[] f2 = new int[] {1,2,3}, f3 = new int[] { 4,5,6 };\n\n    private int[] good = { 1,2,3 };\n}\n        "
+    },
+    {
+      "description": "array initialization with var",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseShortArrayExample {\n    public void foo() {\n        var ar1 = new int[] { 1, 2 };\n        //var ar2 = { 1, 2 }; // this is actually a compile-time error and is forbidden. See JLS 14.4.\n    }\n}\n        "
+    },
+    {
+      "description": "array initialization with Object LHS type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseShortArrayExample {\n    public void foo() {\n        Object ar1 = new int[] { 1, 2 };\n    }\n}\n        "
+    }
+  ]
+}

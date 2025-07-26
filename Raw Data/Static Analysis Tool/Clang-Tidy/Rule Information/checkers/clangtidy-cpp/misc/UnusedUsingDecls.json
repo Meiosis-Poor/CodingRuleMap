@@ -1,0 +1,30 @@
+{
+  "name": "UnusedUsingDecls",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-unused-using-decls",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 231,
+  "branches": 39,
+  "apis": 174,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        83,
+        84,
+        90,
+        105,
+        108,
+        122,
+        157,
+        159,
+        173
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-unused-using-decls %t -- --fix-notes -- -fno-delayed-template-parsing -isystem %S/Inputs\n\n// ----- Definitions -----\ntemplate <typename T> class vector {};\nnamespace n {\nclass A;\nclass B;\nclass C;\nclass D;\nclass D { public: static int i; };\ntemplate <typename T> class E {};\ntemplate <typename T> class F {};\nclass G { public: static void func() {} };\nclass H { public: static int i; };\nclass I {\n public:\n  static int ii;\n};\ntemplate <typename T> class J {};\nclass G;\nclass H;\n\ntemplate <typename T> class K {};\ntemplate <template <typename> class S>\nclass L {};\n\ntemplate <typename T> class M {};\nclass N {};\n\ntemplate <int T> class P {};\nconst int Constant = 0;\n\ntemplate <typename T> class Q {};\n\nclass Base {\n public:\n  void f();\n};\n\nD UsedInstance;\nD UnusedInstance;\n\nint UsedFunc() { return 1; }\nint UnusedFunc() { return 1; }\ntemplate <typename T> int UsedTemplateFunc() { return 1; }\ntemplate <typename T> int UnusedTemplateFunc() { return 1; }\ntemplate <typename T> int UsedInTemplateFunc() { return 1; }\nvoid OverloadFunc(int);\nvoid OverloadFunc(double);\nint FuncUsedByUsingDeclInMacro() { return 1; }\nlong double operator\"\"_w(long double);\n\nclass ostream {\npublic:\n  ostream &operator<<(ostream &(*PF)(ostream &));\n};\nextern ostream cout;\nostream &endl(ostream &os);\n\nenum Color1 { Green };\n\nenum Color2 { Red };\n\nenum Color3 { Yellow };\n\nenum Color4 { Blue };\n\n}  // namespace n\n\n#include \"unused-using-decls.h\"\nnamespace ns {\ntemplate <typename T>\nclass AA {\n  T t;\n};\ntemplate <typename T>\nT ff() { T t; return t; }\n} // namespace ns\n\n// ----- Using declarations -----\n// eol-comments aren't removed (yet)\nusing n::A; // A\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'A' is unused\n// CHECK-MESSAGES: :[[@LINE-2]]:10: note: remove the using\n// CHECK-FIXES: // A\nusing n::B;\nusing n::C;\nusing n::D;\nusing n::E; // E\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'E' is unused\n// CHECK-FIXES: // E\nusing n::F;\nusing n::G;\nusing n::H;\nusing n::I;\nint I::ii = 1;\nclass Derived : public n::Base {\n public:\n  using Base::f;\n};\nusing n::UsedInstance;\nusing n::UsedFunc;\nusing n::UsedTemplateFunc;\nusing n::UnusedInstance; // UnusedInstance\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'UnusedInstance' is unused\n// CHECK-FIXES: // UnusedInstance\nusing n::UnusedFunc; // UnusedFunc\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'UnusedFunc' is unused\n// CHECK-FIXES: // UnusedFunc\nusing n::operator\"\"_w;\nusing n::cout;\nusing n::endl;\n\nusing n::UsedInTemplateFunc;\nusing n::J;\ntemplate <typename T> void Callee() {\n  J<T> j;\n  UsedInTemplateFunc<T>();\n}\n\nusing n::OverloadFunc; // OverloadFunc\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'OverloadFunc' is unused\n// CHECK-FIXES: // OverloadFunc\n\n#define DEFINE_INT(name)        \\\n  namespace INT {               \\\n  static const int _##name = 1; \\\n  }                             \\\n  using INT::_##name\nDEFINE_INT(test);\n#undef DEFIND_INT\n\n#define USING_FUNC \\\n  using n::FuncUsedByUsingDeclInMacro;\nUSING_FUNC\n#undef USING_FUNC\n\nnamespace N1 {\n// n::G is used in namespace N2.\n// Currently, the check doesn't support multiple scopes. All the relevant\n// using-decls will be marked as used once we see an usage even the usage is in\n// other scope.\nusing n::G;\n}\n\nnamespace N2 {\nusing n::G;\nvoid f(G g);\n}\n\nvoid IgnoreFunctionScope() {\n// Using-decls defined in function scope will be ignored.\nusing n::H;\n}\n\nusing n::Color1;\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'Color1' is unused\nusing n::Green;\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'Green' is unused\nusing n::Color2;\nusing n::Color3;\nusing n::Blue;\n\nusing ns::AA;\nusing ns::ff;\n\nusing n::K;\n\nusing n::N;\n\n// FIXME: Currently non-type template arguments are not supported.\nusing n::Constant;\n// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: using decl 'Constant' is unused\n\nusing n::Q;\n\n// ----- Usages -----\nvoid f(B b);\nvoid g() {\n  vector<C> data;\n  D::i = 1;\n  F<int> f;\n  void (*func)() = &G::func;\n  int *i = &H::i;\n  UsedInstance.i;\n  UsedFunc();\n  UsedTemplateFunc<int>();\n  1.5_w;\n  cout << endl;\n  Color2 color2;\n  int t1 = Color3::Yellow;\n  int t2 = Blue;\n\n  MyClass a;\n  int t3 = 0;\n  a.func1<AA>(&t3);\n  a.func2<int, ff>(t3);\n\n  n::L<K> l;\n}\n\ntemplate<class T>\nvoid h(n::M<T>* t) {}\n// n::N is used the explicit template instantiation.\ntemplate void h(n::M<N>* t);\n\n// Test on Non-type template arguments.\ntemplate <int T>\nvoid i(n::P<T>* t) {}\ntemplate void i(n::P<Constant>* t);\n\ntemplate <typename T, template <typename> class U> class Bar {};\n// We used to report Q unsued, because we only checked the first template\n// argument.\nBar<int, Q> *bar;\n\nnamespace gh69714 {\nstruct StructGH69714_1 {};\nstruct StructGH69714_2 {};\n} // namespace gh69714\nusing gh69714::StructGH69714_1;\nusing gh69714::StructGH69714_2;\nstruct StructGH69714_1 a;\nstruct StructGH69714_2 *b;\n\nnamespace gh53444 {\nnamespace my_literals {\n  template <char... Ts>\n  int operator\"\"_r() {\n    return {};\n  }\n}\n\nusing my_literals::operator\"\" _r;\n\nint foo() {\n  auto x2 = 123_r;\n}\n\n}"
+    }
+  ]
+}

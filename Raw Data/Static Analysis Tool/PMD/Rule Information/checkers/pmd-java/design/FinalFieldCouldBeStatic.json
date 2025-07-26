@@ -1,0 +1,207 @@
+{
+  "name": "FinalFieldCouldBeStatic",
+  "language": "java",
+  "description": "\nIf a final field is assigned to a compile-time constant, it could be made static, thus saving overhead\nin each object at runtime.\n        ",
+  "example": "public class Foo {\n  public final int BAR = 42; // this could be static and save some space\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 102,
+  "branches": 36,
+  "apis": 22,
+  "test": [
+    {
+      "description": "simple failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    public final int BAR = 42;\n}\n        "
+    },
+    {
+      "description": "already static, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static final int BAR = 42;\n}\n        "
+    },
+    {
+      "description": "non-final, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int BAR = 42;\n}\n        "
+    },
+    {
+      "description": "non-primitive failure case - only works for String",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    public final String BAR = \"42\";\n}\n        "
+    },
+    {
+      "description": "final field that's a thread, OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public final Thread BAR = new Thread();\n}\n        "
+    },
+    {
+      "description": "don't flag interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Foo {\n    public final int BAR = 42;\n}\n        "
+    },
+    {
+      "description": "bug #1002 False +: FinalFieldCouldBeStatic on inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd;\n\npublic class FinalFieldCouldBeStaticTest {\n\n    public void foo() {\n        final Test t = new Test() {\n            // the rule was triggered for \"foo\" - which could be indeed a final static String constant\n            private final byte[] b = \"foo\".getBytes();\n\n            @Override\n            public byte[] bar() {\n                return b;\n            }\n        };\n        t.bar();\n    }\n}\n\ninterface Test {\n    byte[] bar();\n}\n        "
+    },
+    {
+      "description": "#275 - False positive in @interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface MetricType {\n    int CHECKBOX = 0, COUNTER = 1, SPINNER = 2, NOTE = 3, STOPWATCH = 4, HEADER = 5;\n}\n        "
+    },
+    {
+      "description": "#2708 - False positive with lombok @Builder.Default fields",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.example;\n\nimport lombok.Builder;\nimport lombok.Data;\n\n@Data\n@Builder\npublic class ExampleClass {\n\n    @Builder.Default\n    private final long exampleField = 0L;\n}\n        "
+    },
+    {
+      "description": "#2708 - Should trigger with non-lombok @Builder.Default fields",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\npackage com.example;\n\nimport not.lombok.Builder;\nimport lombok.Data;\n\n@Data\n@Builder\npublic class ExampleClass {\n\n    @Builder.Default // that's not a lombok Builder!!\n    private final long exampleField = 0L;\n}\n        "
+    },
+    {
+      "description": "Should trigger multiple times for fields declared on one line",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        5
+      ],
+      "code": "\npackage com.example;\n\npublic class ExampleClass {\n\n    private final String one = \"one\", two = \"two\";\n}\n        "
+    },
+    {
+      "description": "#3679 - False-negative on initializing with another object",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Clazz {\n  public static final int a = 10;\n  public final int b = a;  // should report a warning here\n}\n        "
+    },
+    {
+      "description": "[OK] initializing with a method invocation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Clazz {\n  public final int a = getValue();\n}\n        "
+    },
+    {
+      "description": "\n            #3724 - the rule should be triggered only if the referenced name is static\n        ",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Foo {\n    private int nonStaticPrivate = 1;                   //no violation cause non-final\n    private final int nonStatic = nonStaticPrivate;     //no violation cause referenced name is non-static\n\n    //private static final int staticFinal = nonStatic; //noncompliant: Non-static field 'nonStatic' cannot be referenced from a static context\n    private static int staticNonFinal = 1;              //no violation cause non-final\n    private final int nonStatic2 = staticNonFinal;      //violation because it could be static\n}\n        "
+    },
+    {
+      "description": "#3949 - FinalFieldCouldBeStatic false negative with unnecessary parenthesis",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        5,
+        8,
+        9
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    public final int BAR = (42);\n\n    // these empty arrays could theoretically be shared and therefore be static\n    private final Object[] argsObjs1 = new Object[0];\n    private final Object[] argsObjs2 = new Object[(0)];\n\n    // not flagging anonymous class instantiation\n    private final StringBuffer mFilter = new StringBuffer(new CharSequence() {\n        @Override public char charAt(int index) { return 'A'; }\n        @Override public int length() { return 1; }\n        @Override public CharSequence subSequence(int start, int end) { return this; }\n        @Override public String toString() { return \"Foo\"; }\n    });\n\n    // not flagging any instantiation in order to avoid false positives\n    // especially for lists one could still require a separate list for each instance...\n    public final List<String> mList = new ArrayList<>();\n\n    // not flagging instantiation of boxed types - would be a different rule\n    // this is to keep this rule simple\n    public final Integer DefaultInit = new Integer(27);\n    private final String mString = new String(\"Foo\");\n\n    // not flagging array creation. Same reasoning as for lists:\n    // one could still require a separate array for each instance...\n    private final int[] p = new int[42];\n}\n        "
+    },
+    {
+      "description": "[java] FinalFieldCouldBeStatic false positive with non-static synchronized block (regression in 6.48, worked with 6.47) #4090",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nclass foo {\n    private final Object[] lock = new Object[0];\n    private final Object[] lock2 = new Object[0];\n    private final Object[] o = new Object[0];\n\n\n    void init() {\n        synchronized (lock) {\n            // do init stuff\n        }\n    }\n\n    public void close() {\n        synchronized (this.lock2) {\n           // do close stuff\n        }\n    }\n\n    void foo() {\n        System.out.println(o);\n    }\n}\n"
+    },
+    {
+      "description": "[java] FinalFieldCouldBeStatic: false positive with lombok's @UtilityClass #4456",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.UtilityClass;\n@UtilityClass\npublic class Test {\n    public final String BAR = \"42\";  //  false positive warning\n}\n"
+    },
+    {
+      "description": "FN when the right side of the assignment is a constant expression #2440",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    private final double HALF_PI = Math.PI * 0.5; // false-negative\n}\n"
+    },
+    {
+      "description": "null literals should be flagged",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    private final Object HALF_PI = null; // false-negative\n}\n"
+    },
+    {
+      "description": "#5018 issue with super field reference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Super {\n    int foo;\n}\npublic class Test extends Super {\n    int foo;\n    class Inner {\n        private final int field = Test.super.foo;\n    }\n    class Inner2 {\n        private final int field = Test.this.foo;\n    }\n}\n"
+    },
+    {
+      "description": "Class literal",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        5
+      ],
+      "code": "\npublic class MyClass {\n    private final Class<MyClass> clazz = MyClass.class;\n}\nclass OtherToplevelClass {\n    private final Class<OtherToplevelClass> clazz = OtherToplevelClass.class;\n}\n"
+    },
+    {
+      "description": "Literals with constant expressions",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "code": "\npublic class MyLiterals {\n    final int one = 1 + 1 - 1;\n    final double zero = -0.0;\n    final float otherZero = 0.0f;\n    final long unknown = -1;\n    final byte mask = (byte)0x1;\n    final short entries = (short)10;\n}\nclass Literals {\n    final int one = 2 - 1;\n    final double zero = -0.0;\n    final float otherZero = 0.0f;\n    final long unknown = -1;\n    final byte mask = (byte)0x1;\n    final short entries = (short)10;\n}\n"
+    },
+    {
+      "description": "Static array property length",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        5
+      ],
+      "code": "\nclass ArrayLength {\n    private static final int[] myArray = { 1, 2, 3 };\n    public final int myArrayLength = myArray.length;\n\n    private final int[] nonStaticArray = { 1, 2, 3 };\n    public final int nonStaticArrayLength = nonStaticArray.length; // can't be made static, unless nonStaticArray is static as well\n\n    private static final int[] emptyArray = {};\n}\n"
+    },
+    {
+      "description": "constant via static ondemand import",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport static java.math.BigInteger.*;\nclass MyConstants {\n    public final BigInteger myZero = ZERO;\n}\n"
+    },
+    {
+      "description": "Nonstatic",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\nclass MyConstants {\n    private final byte BITARRAYMASK = (byte)0x1;\n    private final int  BYTEPOWER = 3;\n    private final int  BYTEMASK = (1 << BYTEPOWER) - 1; //this one cannot\n}\n"
+    }
+  ]
+}

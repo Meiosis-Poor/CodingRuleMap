@@ -1,0 +1,38 @@
+{
+  "name": "AmbiguousResolution",
+  "language": "modelica",
+  "description": "\n            There is multiple candidates for this type resolution. While generally this is not an error,\n            this may indicate a bug.\n        ",
+  "example": "package Test\n  package Inc1\n    model X\n    end X;\n    model Y\n    end Y;\n  end Inc1;\n  package Inc2\n    model Y\n    end Y;\n    model Z\n    end Z;\n  end Inc2;\n  model B\n    import Test.Inc1.*;\n    import Test.Inc2.*;\n    Y y; // Class Y is imported twice\n  end B;\nend Test;",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 28,
+  "branches": 3,
+  "apis": 4,
+  "test": [
+    {
+      "description": "Valid example",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    package Inc\n        model X\n        end X;\n        model Y\n        end Y;\n    end Inc;\n    model A\n        model Y\n        end Y;\n    end A;\n    model B\n        extends A;\n        import Inc.*;\n        X x;\n    end B;\nend Test;\n        "
+    },
+    {
+      "description": "Valid example #2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    model X\n        model X\n        end X;\n        Test.X.X mdl;\n    end X;\nend Test;\n        "
+    },
+    {
+      "description": "Invalid example: class Y is imported twice",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    model Inc1\n        model X\n        end X;\n        model Y\n        end Y;\n    end Inc1;\n    model Inc2\n        model Y\n        end Y;\n        model Z\n        end Z;\n    end Inc2;\n    model B\n        import Inc1.*;\n        import Inc2.*;\n        Y y;\n    end B;\nend Test;\n        "
+    },
+    {
+      "description": "Invalid example: suspicious reference to X",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage Test\n    model X\n        model X\n        end X;\n        X mdl;\n    end X;\nend Test;\n        "
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "UniquePtrArrayMismatch",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-unique-ptr-array-mismatch",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 33,
+  "branches": 1,
+  "apis": 24,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        34,
+        38,
+        42,
+        45,
+        55,
+        62,
+        69,
+        70,
+        76,
+        78,
+        80,
+        87,
+        92,
+        98,
+        109,
+        121,
+        123,
+        126
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-unique-ptr-array-mismatch %t\n\nnamespace std {\n\ntemplate<class T> struct default_delete {};\ntemplate<class T> struct default_delete<T[]> {};\n\ntemplate<class T, class Deleter = std::default_delete<T>>\nclass unique_ptr {\npublic:\n  explicit unique_ptr(T* p) noexcept;\n  unique_ptr(T* p, Deleter d1 ) noexcept;\n};\n\ntemplate <class T, class Deleter>\nclass unique_ptr<T[], Deleter> {\npublic:\n  template<class U>\n  explicit unique_ptr(U p) noexcept;\n  template<class U>\n  unique_ptr(U p, Deleter d1) noexcept;\n};\n\n} // namespace std\n\nstruct A {};\n\nusing PtrT = std::unique_ptr<A>;\nusing PtrTArr = std::unique_ptr<A[]>;\n\nvoid f1() {\n  std::unique_ptr<int> P1{new int};\n  std::unique_ptr<int> P2{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-FIXES: std::unique_ptr<int[]> P2{new int[10]};\n  // clang-format off\n  std::unique_ptr<  int  > P3{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-FIXES: std::unique_ptr<  int[]  > P3{new int[10]};\n  // clang-format on\n  std::unique_ptr<int> P4(new int[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-FIXES: std::unique_ptr<int[]> P4(new int[10]);\n  new std::unique_ptr<int>(new int[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  std::unique_ptr<int[]> P5(new int[10]);\n\n  A deleter;\n  std::unique_ptr<int, A> P6(new int[10], deleter);\n  std::unique_ptr<int, A> P7(new int[10]);\n  std::default_delete<int[]> def_del;\n  std::unique_ptr<int, std::default_delete<int[]>> P8(new int[10], def_del);\n\n  new PtrT(new A[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  new PtrTArr(new A[10]);\n}\n\nvoid f2() {\n  std::unique_ptr<A> P1(new A);\n  std::unique_ptr<A> P2(new A[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-FIXES: std::unique_ptr<A[]> P2(new A[10]);\n  std::unique_ptr<A[]> P3(new A[10]);\n}\n\nvoid f3() {\n  std::unique_ptr<int> P1{new int}, P2{new int[10]}, P3{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:40: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-MESSAGES: :[[@LINE-2]]:57: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n}\n\nstruct S {\n  std::unique_ptr<int> P1;\n  std::unique_ptr<int> P2{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:27: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  std::unique_ptr<int> P3{new int}, P4{new int[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:40: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  S() : P1{new int[10]} {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n};\n\nvoid f_parm(std::unique_ptr<int>);\n\nvoid f4() {\n  f_parm(std::unique_ptr<int>{new int[10]});\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n}\n\nstd::unique_ptr<int> f_ret() {\n  return std::unique_ptr<int>(new int[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n}\n\ntemplate <class T>\nvoid f_tmpl() {\n  std::unique_ptr<T> P1{new T[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-FIXES: std::unique_ptr<T[]> P1{new T[10]};\n}\n\nvoid f5() {\n  f_tmpl<char>();\n}\n\ntemplate <class T>\nvoid f_tmpl_1() {\n  std::unique_ptr<T> P1{new T[10]};\n  // FIXME_CHECK-MESSAGES: :[[@LINE-1]]:25: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // FIXME_CHECK-FIXES: std::unique_ptr<T[]> P1{new T[10]};\n}\n\n#define CHAR_PTR_TYPE std::unique_ptr<char>\n#define CHAR_PTR_VAR(X) \\\n  X { new char[10] }\n#define CHAR_PTR_INIT(X, Y) \\\n  std::unique_ptr<char> X { Y }\n\nvoid f6() {\n  CHAR_PTR_TYPE P1{new char[10]};\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  std::unique_ptr<char> CHAR_PTR_VAR(P2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n  // CHECK-FIXES: std::unique_ptr<char[]> CHAR_PTR_VAR(P2);\n  CHAR_PTR_INIT(P3, new char[10]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: unique pointer to non-array is initialized with array [bugprone-unique-ptr-array-mismatch]\n}"
+    }
+  ]
+}

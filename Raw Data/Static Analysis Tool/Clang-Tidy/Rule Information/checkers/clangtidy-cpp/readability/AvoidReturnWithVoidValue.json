@@ -1,0 +1,39 @@
+{
+  "name": "AvoidReturnWithVoidValue",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-avoid-return-with-void-value",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 82,
+  "branches": 7,
+  "apis": 52,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        13,
+        14,
+        20,
+        24,
+        25,
+        35,
+        36,
+        49,
+        50,
+        59,
+        76,
+        77,
+        85,
+        86,
+        94,
+        95,
+        103,
+        107
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-avoid-return-with-void-value %t\n// RUN: %check_clang_tidy -check-suffixes=,INCLUDE-MACROS %s readability-avoid-return-with-void-value %t \\\n// RUN:     -- -config=\"{CheckOptions: [{key: readability-avoid-return-with-void-value.IgnoreMacros, value: false}]}\" \\\n// RUN:     --\n// RUN: %check_clang_tidy -check-suffixes=LENIENT %s readability-avoid-return-with-void-value %t \\\n// RUN:     -- -config=\"{CheckOptions: [{key: readability-avoid-return-with-void-value.StrictMode, value: false}]}\" \\\n// RUN:     --\n\nvoid f1();\n\nvoid f2() {\n    return f1();\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: f1();\n}\n\nvoid f3(bool b) {\n    if (b) return f1();\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: if (b)  { f1(); return;\n    // CHECK-NEXT: }\n    return f2();\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: f2();\n    // CHECK-FIXES-LENIENT: f2();\n}\n\ntemplate<class T>\nT f4() {}\n\nvoid f5() {\n    { return f4<void>(); }\n    // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:7: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: { f4<void>(); return; }\n    // CHECK-FIXES-LENIENT: { f4<void>(); return; }\n}\n\nvoid f6() { return; }\n\nint f7() { return 1; }\n\nint f8() { return f7(); }\n\nvoid f9() {\n    return (void)f7();\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: (void)f7();\n    // CHECK-FIXES-LENIENT: (void)f7();\n}\n\n#define RETURN_VOID return (void)1\n\nvoid f10() {\n    RETURN_VOID;\n    // CHECK-MESSAGES-INCLUDE-MACROS: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n}\n\ntemplate <typename A>\nstruct C {\n  C(A) {}\n};\n\ntemplate <class T>\nC<T> f11() { return {}; }\n\nusing VOID = void;\n\nVOID f12();\n\nVOID f13() {\n    return f12();\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: f12(); return;\n    // CHECK-FIXES-LENIENT: f12(); return;\n    (void)1;\n}\n\nvoid f14() {\n    return /* comment */  f1()  /* comment */  ;\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: /* comment */  f1()  /* comment */  ; return;\n    // CHECK-FIXES-LENIENT: /* comment */  f1()  /* comment */  ; return;\n    (void)1;\n}\n\nvoid f15() {\n    return/*comment*/f1()/*comment*/;//comment\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-MESSAGES-LENIENT: :[[@LINE-2]]:5: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: /*comment*/f1()/*comment*/; return;//comment\n    // CHECK-FIXES-LENIENT: /*comment*/f1()/*comment*/; return;//comment\n    (void)1;\n}\n\nvoid f16(bool b) {\n    if (b) return f1();\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: if (b)  { f1(); return;\n    // CHECK-NEXT: }\n    else return f2();\n    // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: return statement within a void function should not have a specified return value [readability-avoid-return-with-void-value]\n    // CHECK-FIXES: else  { f2(); return;\n    // CHECK-NEXT: }\n}"
+    }
+  ]
+}

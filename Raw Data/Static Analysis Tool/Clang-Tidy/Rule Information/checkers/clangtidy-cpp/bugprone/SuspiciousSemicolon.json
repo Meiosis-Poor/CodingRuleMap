@@ -1,0 +1,28 @@
+{
+  "name": "SuspiciousSemicolon",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-suspicious-semicolon",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 73,
+  "branches": 6,
+  "apis": 62,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        29,
+        37,
+        47,
+        67,
+        75,
+        84,
+        91
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-suspicious-semicolon %t\n\nint x = 5;\n\nvoid nop();\n\nvoid correct1()\n{\n\tif(x < 5) nop();\n}\n\nvoid correct2()\n{\n\tif(x == 5)\n\t\tnop();\n}\n\nvoid correct3()\n{\n\tif(x > 5)\n\t{\n\t\tnop();\n\t}\n}\n\nvoid fail1()\n{\n  if(x > 5); nop();\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: potentially unintended semicolon [bugprone-suspicious-semicolon]\n  // CHECK-FIXES: if(x > 5) nop();\n}\n\nvoid fail2()\n{\n\tif(x == 5);\n\t\tnop();\n  // CHECK-MESSAGES: :[[@LINE-2]]:12: warning: potentially unintended semicolon [bugprone-suspicious-semicolon]\n  // CHECK-FIXES: if(x == 5){{$}}\n}\n\nvoid fail3()\n{\n\tif(x < 5);\n\t{\n\t\tnop();\n\t}\n  // CHECK-MESSAGES: :[[@LINE-4]]:11: warning: potentially unintended semicolon\n  // CHECK-FIXES: if(x < 5){{$}}\n}\n\nvoid correct4()\n{\n  while(x % 5 == 1);\n  nop();\n}\n\nvoid correct5()\n{\n\tfor(int i = 0; i < x; ++i)\n\t\t;\n}\n\nvoid fail4()\n{\n\tfor(int i = 0; i < x; ++i);\n\t\tnop();\n  // CHECK-MESSAGES: :[[@LINE-2]]:28: warning: potentially unintended semicolon\n  // CHECK-FIXES: for(int i = 0; i < x; ++i){{$}}\n}\n\nvoid fail5()\n{\n\tif(x % 5 == 1);\n\t  nop();\n  // CHECK-MESSAGES: :[[@LINE-2]]:16: warning: potentially unintended semicolon\n  // CHECK-FIXES: if(x % 5 == 1){{$}}\n}\n\nvoid fail6() {\n  int a = 0;\n  if (a != 0) {\n  } else if (a != 1);\n    a = 2;\n  // CHECK-MESSAGES: :[[@LINE-2]]:21: warning: potentially unintended semicolon\n  // CHECK-FIXES: } else if (a != 1){{$}}\n}\n\nvoid fail7() {\n  if (true)\n    ;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: potentially unintended semicolon\n}\n\nvoid correct6()\n{\n\tdo; while(false);\n}\n\nint correct7()\n{\n  int t_num = 0;\n  char c = 'b';\n  char *s = \"a\";\n  if (s == \"(\" || s != \"'\" || c == '\"') {\n    t_num += 3;\n    return (c == ')' && c == '\\'');\n  }\n\n  return 0;\n}\n\nvoid correct8() {\n  if (true)\n    ;\n  else {\n  }\n}"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "CloexecSocket",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-socket",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 28,
+  "branches": 1,
+  "apis": 18,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        19,
+        22,
+        25,
+        28,
+        34,
+        37
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s android-cloexec-socket %t\n\n#define SOCK_STREAM 1\n#define SOCK_DGRAM 2\n#define __O_CLOEXEC 3\n#define SOCK_CLOEXEC __O_CLOEXEC\n#define TEMP_FAILURE_RETRY(exp) \\\n  ({                            \\\n    int _rc;                    \\\n    do {                        \\\n      _rc = (exp);              \\\n    } while (_rc == -1);        \\\n  })\n\nextern \"C\" int socket(int domain, int type, int protocol);\n\nvoid a() {\n  socket(0, SOCK_STREAM, 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:24: warning: 'socket' should use SOCK_CLOEXEC where possible [android-cloexec-socket]\n  // CHECK-FIXES: socket(0, SOCK_STREAM | SOCK_CLOEXEC, 0)\n  TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM, 0));\n  // CHECK-MESSAGES: :[[@LINE-1]]:43: warning: 'socket'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_CLOEXEC, 0))\n  socket(0, SOCK_STREAM | SOCK_DGRAM, 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'socket'\n  // CHECK-FIXES: socket(0, SOCK_STREAM | SOCK_DGRAM | SOCK_CLOEXEC, 0)\n  TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_DGRAM, 0));\n  // CHECK-MESSAGES: :[[@LINE-1]]:56: warning: 'socket'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_DGRAM | SOCK_CLOEXEC, 0))\n}\n\nvoid f() {\n  socket(0, 3, 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: 'socket'\n  // CHECK-FIXES: socket(0, 3 | SOCK_CLOEXEC, 0)\n  TEMP_FAILURE_RETRY(socket(0, 3, 0));\n  // CHECK-MESSAGES: :[[@LINE-1]]:33: warning: 'socket'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(socket(0, 3 | SOCK_CLOEXEC, 0))\n\n  int flag = 3;\n  socket(0, flag, 0);\n  TEMP_FAILURE_RETRY(socket(0, flag, 0));\n}\n\nnamespace i {\nint socket(int domain, int type, int protocol);\n\nvoid d() {\n  socket(0, SOCK_STREAM, 0);\n  TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM, 0));\n  socket(0, SOCK_STREAM | SOCK_DGRAM, 0);\n  TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_DGRAM, 0));\n}\n\n} // namespace i\n\nvoid e() {\n  socket(0, SOCK_CLOEXEC, 0);\n  TEMP_FAILURE_RETRY(socket(0, SOCK_CLOEXEC, 0));\n  socket(0, SOCK_STREAM | SOCK_CLOEXEC, 0);\n  TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_CLOEXEC, 0));\n  socket(0, SOCK_STREAM | SOCK_CLOEXEC | SOCK_DGRAM, 0);\n  TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_CLOEXEC | SOCK_DGRAM, 0));\n}\n\nclass G {\npublic:\n  int socket(int domain, int type, int protocol);\n  void d() {\n    socket(0, SOCK_STREAM, 0);\n    TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM, 0));\n    socket(0, SOCK_STREAM | SOCK_DGRAM, 0);\n    TEMP_FAILURE_RETRY(socket(0, SOCK_STREAM | SOCK_DGRAM, 0));\n  }\n};"
+    }
+  ]
+}

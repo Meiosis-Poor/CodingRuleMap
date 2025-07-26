@@ -1,0 +1,30 @@
+{
+  "name": "UseTransparentFunctors",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-use-transparent-functors",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 124,
+  "branches": 12,
+  "apis": 85,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        77,
+        80,
+        83,
+        88,
+        92,
+        95,
+        98,
+        103,
+        108
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++14-or-later %s modernize-use-transparent-functors %t\n\nnamespace std {\ntemplate<class T>\nstruct remove_reference;\n\ntemplate <class T>\nconstexpr T &&forward(typename std::remove_reference<T>::type &t);\n\ntemplate <class T>\nconstexpr T &&forward(typename std::remove_reference<T>::type &&t);\n\ntemplate <typename T = void>\nstruct plus {\n  constexpr T operator()(const T &Lhs, const T &Rhs) const;\n};\n\ntemplate <>\nstruct plus<void> {\n  template <typename T, typename U>\n  constexpr auto operator()(T &&Lhs, U &&Rhs) const ->\n    decltype(forward<T>(Lhs) + forward<U>(Rhs));\n};\n\ntemplate <typename T = void>\nstruct less {\n  constexpr bool operator()(const T &Lhs, const T &Rhs) const;\n};\n\ntemplate <>\nstruct less<void> {\n  template <typename T, typename U>\n  constexpr bool operator()(T &&Lhs, U &&Rhs) const;\n};\n\ntemplate <typename T = void>\nstruct logical_not {\n  constexpr bool operator()(const T &Arg) const;\n};\n\ntemplate <>\nstruct logical_not<void> {\n  template <typename T>\n  constexpr bool operator()(T &&Arg) const;\n};\n\ntemplate <typename T>\nclass allocator;\n\ntemplate <\n    class Key,\n    class Compare = std::less<>,\n    class Allocator = std::allocator<Key>>\nclass set {};\n\ntemplate <\n    class Key,\n    class Compare = std::less<Key>,\n    class Allocator = std::allocator<Key>>\nclass set2 {};\n\ntemplate <class InputIt, class UnaryPredicate>\nInputIt find_if(InputIt first, InputIt last,\n                UnaryPredicate p);\n\ntemplate <class RandomIt, class Compare>\nvoid sort(RandomIt first, RandomIt last, Compare comp);\n\nclass iterator {};\nclass string {};\n}\n\nint main() {\n  using std::set;\n  using std::less;\n  std::set<int, std::less<int>> s;\n  // CHECK-MESSAGES: :[[@LINE-1]]:17: warning: prefer transparent functors 'less<>' [modernize-use-transparent-functors]\n  // CHECK-FIXES: std::set<int, std::less<>> s;\n  set<int, std::less<int>> s2;\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: prefer transparent functors\n  // CHECK-FIXES: set<int, std::less<>> s2;\n  set<int, less<int>> s3;\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: prefer transparent functors\n  // CHECK-FIXES: set<int, less<>> s3;\n  std::set<int, std::less<>> s4;\n  std::set<char *, std::less<std::string>> s5;\n  std::set<set<int, less<int>>, std::less<>> s6;\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: prefer transparent functors\n  // CHECK-FIXES: std::set<set<int, less<>>, std::less<>> s6;\n  std::iterator begin, end;\n  sort(begin, end, std::less<int>());\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: prefer transparent functors\n  std::sort(begin, end, std::less<>());\n  find_if(begin, end, std::logical_not<bool>());\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: prefer transparent functors\n  std::find_if(begin, end, std::logical_not<>());\n  using my_set = std::set<int, std::less<int>>;\n  // CHECK-MESSAGES: :[[@LINE-1]]:32: warning: prefer transparent functors\n  // CHECK-FIXES: using my_set = std::set<int, std::less<>>;\n  using my_set2 = std::set<char*, std::less<std::string>>;\n  using my_less = std::less<std::string>;\n  find_if(begin, end, my_less());\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: prefer transparent functors\n  std::set2<int> control;\n}\n\nstruct ImplicitTypeLoc : std::set2<std::less<int>> {\n  // CHECK-MESSAGES: :[[@LINE-1]]:36: warning: prefer transparent functors\n  ImplicitTypeLoc() {}\n};"
+    }
+  ]
+}

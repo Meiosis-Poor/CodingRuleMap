@@ -1,0 +1,350 @@
+{
+  "name": "VfUnescapeEl",
+  "language": "visualforce",
+  "description": "\nAvoid unescaped user controlled content in EL as it results in XSS.\n        ",
+  "example": "<apex:outputText value=\"Potential XSS is {! here }\" escape=\"false\" />",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 312,
+  "branches": 78,
+  "apis": 11,
+  "test": [
+    {
+      "description": "apex:iframe with src pointing to VFEL",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:iframe src=\"{!iframeSource}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "html iframe with src pointing to VFEL",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <iframe src=\"{!iframeSource}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "html link with src pointing to VFEL",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <a src=\"{!iframeSource}\">Link me</a>\n</apex:page>\n        "
+    },
+    {
+      "description": "Safe escaped value in repeat",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputPanel>\n        <input type=\"radio\"\n               onclick=\"invokeDoSelectFormat('{!editFormat.recordType.Id}');\">\n        </input>\n    </apex:outputPanel>\n</apex:page>\n        "
+    },
+    {
+      "description": "Safe escaped value in repeat",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:repeat value=\"{!emailTemplates}\" var=\"template\">\n        emailTemplates.push({\n            id: '{!template.id}',\n            name: \"{!JSENCODE(HTMLENCODE(template.name))}\"\n        });\n    </apex:repeat>\n</apex:page>\n        "
+    },
+    {
+      "description": "Safe case id in script",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        window.parent.opener.location.href = '/apex/FSINT_BRAZIL_CaseViewPage?Id={!case.Id}&isdtp=vw';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Safely escaped case in script context",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        window.parent.opener.location.href = '{!JSINHTMLENCODE(case)}';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Id in the EL means no XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <a onclick=\"ShowUnregisterWindow('{!item.id}')\">foo</a>\n</apex:page>\n        "
+    },
+    {
+      "description": "User Id is safe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        $Lightning.createComponent(\"c:RE_TasksListComp\",{\"loginUserId\":\"{!$User.Id}\"});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "No XSS in safe script commands quoted context",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        window.location.href = '{!URLFOR($Action.zqu__Quote__c.Submit, QuoteId, [retURL=QuoteId])}';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Unquoted EL in script tag is an XSS",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = {!hereComesXSS};\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Quoted EL in script tag is an XSS",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = '{!hereComesXSS}';\n        var y = 'aha{!hereComesXSS}';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Quoted and escaped EL in script tag is an XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = '{!JSENCODE(containedXSSvector)}';\n        var y = 'text{!JSENCODE(containedXSSvector)}';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Quoted and escaped EL in script tag is an XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = \"{!JSENCODE(hereComesXSS)}\";\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Has multiple resources but starts with a safe one",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"{!$Resource.SDEFExtJS}/{!anotherRes}\" id=\"ext-all-css\"/>\n</apex:page>\n        "
+    },
+    {
+      "description": "Starts with Resource",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"{!$Resource.SDEFExtJS}/resources/css/ext-all.css\" id=\"ext-all-css\"/>\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS on-event handler - stored XSS",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <div onclick=\"{!XSSHere(bah)}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS on-event handler - stored XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <div onclick=\"{!JSENCODE(NoXSSHere)}\" />\n    <div onclick=\"{!JSINHTMLENCODE(NoXSSHere)}\" />\n    <div onclick=\"{!JSENCODE(NoXSSHere)}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in img JS src handler - no XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <img src=\"{!XSSHere}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS src handler - stored XSS",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <iframe src=\"{!XSSHere}\" />\n    <a href=\"{!XSSHere}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS src handler containing '/' literal - no stored XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <iframe src=\"{!'/foo' + XSSHere}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS src handler prepended by starting with '/' literal - no stored XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <iframe src=\"/{!XSSHere}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS src handler - stored XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <iframe src=\"{!URLENCODE(XSSHere)}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "EL in JS src handler - stored XSS",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <iframe src=\"{!XSSHere}\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "Default escaped EL - no XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    {!NoXSSHere(bah)}\n</apex:page>\n        "
+    },
+    {
+      "description": "EL that is properly escaped should be no XSS",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value=' XSS is not {! here }' />\n</apex:page>\n        "
+    },
+    {
+      "description": "XSS via EL identifier and no escaping",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value='XSS might be {! here }' escape=\"false\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "XSS via EL literal and no escaping",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value='XSS might be {! 'here' }' escape=\"false\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "XSS via EL boolean and no escaping",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value='XSS might be {! false }' escape=\"false\" />\n</apex:page>\n        "
+    },
+    {
+      "description": "XSS via EL via param binding",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value='{0}' escape=\"false\">\n        <apex:param value='{! here }' />\n    </apex:outputText>\n</apex:page>\n        "
+    },
+    {
+      "description": "Escaped EL via param binding",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value='{0}' escape=\"false\">\n        <apex:param value='{! HTMLENCODE(here) }' />\n    </apex:outputText>\n</apex:page>\n        "
+    },
+    {
+      "description": "No XSS via EL via param binding",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value=\"{0}\" escape=\"false\">\n        <apex:param value=\"something\" />\n    </apex:outputText>\n</apex:page>\n        "
+    },
+    {
+      "description": "XSS via item value",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:form>\n        <apex:selectList value=\"{!string}\" size=\"1\">\n            <apex:selectOption itemValue='{!XSS}' itemLabel=\"Red\" itemEscaped=\"false\"/>\n            <apex:selectOption itemValue={!XSS} itemLabel=\"Blue\" itemEscaped=\"false\"/>\n            <apex:selectOption itemValue=\"{!XSS}\" itemLabel=\"Green\" itemEscaped=\"false\"/>\n        </apex:selectList>\n    </apex:form>\n</apex:page>\n        "
+    },
+    {
+      "description": "XSS via item value",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:form>\n        <apex:selectList value=\"{!string}\" size=\"1\">\n            <apex:selectOption itemValue='{!HTMLENCODE(XSS)}' itemLabel=\"Red\" itemEscaped=\"false\"/>\n        </apex:selectList>\n    </apex:form>\n</apex:page>\n        "
+    },
+    {
+      "description": "No XSS with escaped EL",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <apex:outputText value=\" {!HTMLENCODE(myTextField) }\" escape=\"false\"/>\n</apex:page>\n        "
+    },
+    {
+      "description": "Quotes following quotes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        sforce.console.setTabTitle('TabName' + ': {!JSENCODE(tabName)}');\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Escaped followed by safe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n          Comps.method('{!JSENCODE($CurrentPage.parameters.someParamName)}', '{!$User.Id}');\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Safe unquoted followed by safe quoted",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n          Comps.tasks({!JSENCODE(case.Id)}, '{!JSENCODE($User.Id)}', caseSubject)\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "IF() with literals in returns is safe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!IF(SomeObj.Field=='1', '2', '3')});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "IF() with escaped XSS in returns is safe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!IF(SomeObj.Field=='1', JSENCODE(SomeObj.Text__c), '2')});\n        console.log({!IF(SomeObj.Field=='1', 'foo', JSENCODE(SomeObj.Text__c))});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "IF() with unescaped XSS in returns is unsafe",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!IF(SomeObj.Field=='1', SomeObj.Text__c, '2')});\n        console.log({!IF(SomeObj.Field=='1', 'foo', SomeObj.Text__c)});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "CASE() with XSS in conditions is safe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!CASE(SomeObj.Name, SomeObj.text__c, 'res1', SomeObj.Text2__c, 'res2', 'else-res')});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "CASE() with escaped XSS in results is safe",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!CASE(SomeObj.Name, 'val1', JSENCODE(SomeObj.Text__c), JSENCODE(SomeObj.Text2__c))});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "CASE() with unescaped XSS in results is unsafe",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!CASE(SomeObj.Name, 'val1', SomeObj.Text__c, SomeObj.Text2__c)});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "LPAD() is not inherently safe",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!LPAD(SomeObj.Text__c, 100)});\n        console.log({!LPAD(SomeObj.Text__c, 100, JSENCODE(SomeObj.OtherText__c))});\n        console.log({!LPAD(JSENCODE(SomeObj.Text__c), 100, SomeObj.OtherText__c)});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "Escaped LPAD() call is fine",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        console.log({!JSENCODE(LPAD(SomeObj.Text__c, 100))});\n        console.log({!LPAD(JSENCODE(SomeObj.Text__c), 100)});\n        console.log({!LPAD(JSENCODE(SomeObj.Text__c), 100, JSENCODE(SomeObj.OtherText__c))});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "NOT, ISBLANK, BEGINS evaluate to safe booleans",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        if({!NOT(yes)}) { maskFormEls(); }\n        if({!NOT foo(yes)}) { maskFormEls(); }\n        console.log({!ISBLANK(safeXss)});\n        console.log({!BEGINS(safeXss, 'foo')});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "JSON.parse method evaluates quoted EL to unsafe XSS",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = JSON.parse('{!yes}');\n        jQuery.parseJSON('{!yes}');\n        $.parseJSON('{!yes}');\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "JSON.parse method evaluates non quoted EL to unsafe XSS",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = JSON.parse({!yes});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "JSON.parse method evaluates escaped EL to safe JSON",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var x = JSON.parse({!JSENCODE(yes)});\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "$RemoteAction safe call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var caseId = '{!$RemoteAction.getCaseId}';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "NOW() is a safe call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<apex:page>\n    <script>\n        var caseId = '{!NOW()}';\n    </script>\n</apex:page>\n        "
+    },
+    {
+      "description": "URLENCODE is ignored as valid escape method #1100",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<a onclick=\"openTab('/apex/Download?redirectUrl={!URLENCODE(downloadURL)}', 'test');\">\n        "
+    },
+    {
+      "description": "a onclick snippet should be escaped #1100",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n<a onclick=\"openTab('/apex/Download?redirectUrl={!downloadURL}', 'test');\">\n        "
+    },
+    {
+      "description": "ensure all encoding methods are considered valid #1100",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<a onclick=\"openTab('/apex/Download?redirectUrl={!URLENCODE(downloadURL)}', 'test');\">\n<a onclick=\"openTab({!JSENCODE('/apex/Download?redirectUrl=' + downloadURL)}', 'test');\">\n<a onclick=\"openTab({!JSINHTMLENCODE('/apex/Download?redirectUrl=' + downloadURL)}', 'test');\">\n<a onclick=\"openTab({!HTMLENCODE('/apex/Download?redirectUrl=' + downloadURL)}', 'test');\">\n        "
+    },
+    {
+      "description": "Support new message channel feature #2620",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n<script type=\"text/javascript\">\n    // Binding message channel to variable accessible to static resource.\n    window.util = {\n        messageChannel: '{!$MessageChannel.Record_Selected__c}'\n    };\n</script>\n        "
+    }
+  ]
+}

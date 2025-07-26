@@ -1,0 +1,26 @@
+{
+  "name": "ProTypeVararg",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-pro-type-vararg",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 197,
+  "branches": 19,
+  "apis": 92,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        16,
+        18,
+        42,
+        45,
+        48
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-pro-type-vararg %t\n\nvoid f(int i);\nvoid f_vararg(int i, ...);\n\nstruct C {\n  void g_vararg(...);\n  void g(const char*);\n} c;\n\ntemplate<typename... P>\nvoid cpp_vararg(P... p);\n\nvoid check() {\n  f_vararg(1, 7, 9);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not call c-style vararg functions [cppcoreguidelines-pro-type-vararg]\n  c.g_vararg(\"foo\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: do not call c-style vararg functions\n\n  f(3); // OK\n  c.g(\"foo\"); // OK\n  cpp_vararg(1, 7, 9); // OK\n}\n\n// ... as a parameter is allowed (e.g. for SFINAE)\ntemplate <typename T>\nvoid CallFooIfAvailableImpl(T& t, ...) {\n  // nothing\n}\ntemplate <typename T>\nvoid CallFooIfAvailableImpl(T& t, decltype(t.foo())*) {\n  t.foo();\n}\ntemplate <typename T>\nvoid CallFooIfAvailable(T& t) {\n  CallFooIfAvailableImpl(t, 0); // OK to call variadic function when the argument is a literal 0\n}\n\n#include <stdarg.h>\nvoid my_printf(const char* format, ...) {\n  va_list ap;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not declare variables of type va_list; use variadic templates instead\n  va_start(ap, format);\n  va_list n;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not declare variables of type va_list; use variadic templates instead\n  va_copy(n, ap);\n  int i = va_arg(ap, int);\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: do not use va_arg to define c-style vararg functions; use variadic templates instead\n  va_end(ap);\n}\n\nint my_vprintf(const char* format, va_list arg ); // OK to declare function taking va_list\n\nvoid ignoredBuiltinsTest(void *ptr) {\n  (void)__builtin_assume_aligned(ptr, 8);\n  (void)__builtin_constant_p(0);\n  (void)__builtin_fpclassify(0, 0, 0, 0, 0, 0.f);\n  (void)__builtin_isinf_sign(0.f);\n  (void)__builtin_prefetch(nullptr);\n}\n\n// Some implementations of __builtin_va_list and __builtin_ms_va_list desugared\n// as 'char *' or 'void *'. This test checks whether we are handling this case\n// correctly and not generating false positives.\nvoid no_false_positive_desugar_va_list(char *in) {\n  char *tmp1 = in;\n  void *tmp2 = in;\n}\n\nnamespace PR30542 {\n  struct X;\n  template <typename T>\n  char IsNullConstant(X*);\n  template <typename T>\n  char (&IsNullConstant(...))[2];\n\n  static_assert(sizeof(IsNullConstant<int>(0)) == 1, \"\");\n  static_assert(sizeof(IsNullConstant<int>(17)) == 2, \"\");\n\n  using Type = decltype(IsNullConstant<int>(17));\n}"
+    }
+  ]
+}

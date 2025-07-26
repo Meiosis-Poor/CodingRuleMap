@@ -1,0 +1,62 @@
+{
+  "name": "UselessQualifiedThis",
+  "language": "java",
+  "description": "\n            Reports qualified this usages in the same class.\n        ",
+  "example": "public class Foo {\n    final Foo otherFoo = Foo.this;  // use \"this\" directly\n\n    public void doSomething() {\n         final Foo anotherFoo = Foo.this;  // use \"this\" directly\n    }\n\n    private ActionListener returnListener() {\n        return new ActionListener() {\n            @Override\n            public void actionPerformed(ActionEvent e) {\n                doSomethingWithQualifiedThis(Foo.this);  // This is fine\n            }\n        };\n    }\n\n    private class Foo3 {\n        final Foo myFoo = Foo.this;  // This is fine\n    }\n\n    private class Foo2 {\n        final Foo2 myFoo2 = Foo2.this;  // Use \"this\" direclty\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Qualified this as field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    final Foo otherFoo = Foo.this;\n}\n        "
+    },
+    {
+      "description": "Qualified this in a method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void doSomething() {\n         final Foo anotherFoo = Foo.this;\n    }\n}\n        "
+    },
+    {
+      "description": "Qualified this in a Inner Class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    interface ActionListener { void actionPerformed(); }\n    private ActionListener returnListener() {\n        return new ActionListener() {\n            @Override\n            public void actionPerformed() {\n                doSomethingWithQualifiedThis(Foo.this);\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "Qualified this in a Nested Class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private class Foo3 {\n        final Foo myFoo = Foo.this;\n    }\n}\n        "
+    },
+    {
+      "description": "Qualified this in a Nested Class part 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private class Foo2 {\n        final Foo2 myFoo2 = Foo2.this;\n    }\n}\n        "
+    },
+    {
+      "description": "Qualified this all in one",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    final Foo otherFoo = Foo.this;\n\n    public void doSomething() {\n         final Foo anotherFoo = Foo.this;\n    }\n\n    private ActionListener returnListener() {\n        return new ActionListener() {\n            @Override\n            public void actionPerformed() {\n                doSomethingWithQualifiedThis(Foo.this);\n            }\n        };\n    }\n\n    private class Foo3 {\n        final Foo myFoo = Foo.this;\n    }\n\n    private class Foo2 {\n        final Foo2 myFoo2 = Foo2.this;\n    }\n\n    interface ActionListener { void actionPerformed(); }\n}\n        "
+    },
+    {
+      "description": "#1422 UselessQualifiedThis: False positive with Java 8 Function",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Optional;\nimport java.util.List;\nimport java.util.stream.Collectors;\npublic class ApiExceptionCtrlAdvice {\n    public final List<ApiError> handleApiAggregateException(final ApiError e) {\n        return e.getCauses().stream().map(\n            ApiExceptionCtrlAdvice::toApiError\n        ).collect(Collectors.toList());\n    }\n    private static ApiError toApiError(final Throwable e) {\n        return new ApiError()\n                .withException(e.getClass().getName())\n                .withCause(Optional.ofNullable(e.getCause()).map(Throwable::getClass).map(Class::getName).orElse(\"\"))\n                .withMessage(Optional.ofNullable(e.getMessage()).orElse(\"\"));\n    }\n    class ApiError {\n        List<Throwable> getCauses() {return List.of(); }\n        ApiError withException(String s) { return this; }\n        ApiError withCause(String s) { return this; }\n        ApiError withMessage(String s) { return this; }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive for UselessQualifiedThis #1372",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Board {\n    private int[] Board;\n\n\n    public Board(int[] b) {\n        for (int i = 0; i < b.length; i++)\n            Board[i] = b[i];\n    }\n\n\n    public int size() {\n        return Board.length;\n    }\n}\n        "
+    }
+  ]
+}

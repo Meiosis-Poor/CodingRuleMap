@@ -1,0 +1,25 @@
+{
+  "name": "CloexecMemfdCreate",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-memfd-create",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 27,
+  "branches": 1,
+  "apis": 16,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        19,
+        22,
+        28,
+        31
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s android-cloexec-memfd-create %t\n\n#define MFD_ALLOW_SEALING 1\n#define __O_CLOEXEC 3\n#define MFD_CLOEXEC __O_CLOEXEC\n#define TEMP_FAILURE_RETRY(exp) \\\n  ({                            \\\n    int _rc;                    \\\n    do {                        \\\n      _rc = (exp);              \\\n    } while (_rc == -1);        \\\n  })\n#define NULL 0\n\nextern \"C\" int memfd_create(const char *name, unsigned int flags);\n\nvoid a() {\n  memfd_create(NULL, MFD_ALLOW_SEALING);\n  // CHECK-MESSAGES: :[[@LINE-1]]:39: warning: 'memfd_create' should use MFD_CLOEXEC where possible [android-cloexec-memfd-create]\n  // CHECK-FIXES: memfd_create(NULL, MFD_ALLOW_SEALING | MFD_CLOEXEC)\n  TEMP_FAILURE_RETRY(memfd_create(NULL, MFD_ALLOW_SEALING));\n  // CHECK-MESSAGES: :[[@LINE-1]]:58: warning: 'memfd_create'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(memfd_create(NULL, MFD_ALLOW_SEALING | MFD_CLOEXEC))\n}\n\nvoid f() {\n  memfd_create(NULL, 3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 'memfd_create'\n  // CHECK-FIXES: memfd_create(NULL, 3 | MFD_CLOEXEC)\n  TEMP_FAILURE_RETRY(memfd_create(NULL, 3));\n  // CHECK-MESSAGES: :[[@LINE-1]]:42: warning: 'memfd_create'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(memfd_create(NULL, 3 | MFD_CLOEXEC))\n\n  int flag = 3;\n  memfd_create(NULL, flag);\n  TEMP_FAILURE_RETRY(memfd_create(NULL, flag));\n}\n\nnamespace i {\nint memfd_create(const char *name, unsigned int flags);\n\nvoid d() {\n  memfd_create(NULL, MFD_ALLOW_SEALING);\n  TEMP_FAILURE_RETRY(memfd_create(NULL, MFD_ALLOW_SEALING));\n}\n\n} // namespace i\n\nvoid e() {\n  memfd_create(NULL, MFD_CLOEXEC);\n  TEMP_FAILURE_RETRY(memfd_create(NULL, MFD_CLOEXEC));\n  memfd_create(NULL, MFD_ALLOW_SEALING | MFD_CLOEXEC);\n  TEMP_FAILURE_RETRY(memfd_create(NULL, MFD_ALLOW_SEALING | MFD_CLOEXEC));\n}\n\nclass G {\npublic:\n  int memfd_create(const char *name, unsigned int flags);\n  void d() {\n    memfd_create(NULL, MFD_ALLOW_SEALING);\n    TEMP_FAILURE_RETRY(memfd_create(NULL, MFD_ALLOW_SEALING));\n  }\n};"
+    }
+  ]
+}

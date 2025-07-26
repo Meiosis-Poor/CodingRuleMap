@@ -1,0 +1,25 @@
+{
+  "name": "CloexecInotifyInit1",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-inotify-init1",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 26,
+  "branches": 1,
+  "apis": 11,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        18,
+        21,
+        27,
+        30
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-inotify-init1 %t\n\n#define IN_NONBLOCK 1\n#define __O_CLOEXEC 3\n#define IN_CLOEXEC __O_CLOEXEC\n#define TEMP_FAILURE_RETRY(exp) \\\n  ({                            \\\n    int _rc;                    \\\n    do {                        \\\n      _rc = (exp);              \\\n    } while (_rc == -1);        \\\n  })\n\nextern \"C\" int inotify_init1(int flags);\n\nvoid a() {\n  inotify_init1(IN_NONBLOCK);\n  // CHECK-MESSAGES: :[[@LINE-1]]:28: warning: 'inotify_init1' should use IN_CLOEXEC where possible [android-cloexec-inotify-init1]\n  // CHECK-FIXES: inotify_init1(IN_NONBLOCK | IN_CLOEXEC);\n  TEMP_FAILURE_RETRY(inotify_init1(IN_NONBLOCK));\n  // CHECK-MESSAGES: :[[@LINE-1]]:47: warning: 'inotify_init1'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(inotify_init1(IN_NONBLOCK | IN_CLOEXEC));\n}\n\nvoid f() {\n  inotify_init1(0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'inotify_init1'\n  // CHECK-FIXES: inotify_init1(IN_CLOEXEC);\n  TEMP_FAILURE_RETRY(inotify_init1(0));\n  // CHECK-MESSAGES: :[[@LINE-1]]:37: warning: 'inotify_init1'\n  // CHECK-FIXES: TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));\n\n  int flag = 1;\n  inotify_init1(flag);\n  TEMP_FAILURE_RETRY(inotify_init1(flag));\n}\n\nnamespace i {\nint inotify_init1(int flags);\n\nvoid d() {\n  inotify_init1(IN_NONBLOCK);\n  TEMP_FAILURE_RETRY(inotify_init1(IN_NONBLOCK));\n}\n\n} // namespace i\n\nvoid e() {\n  inotify_init1(IN_CLOEXEC);\n  TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));\n  inotify_init1(IN_NONBLOCK | IN_CLOEXEC);\n  TEMP_FAILURE_RETRY(inotify_init1(IN_NONBLOCK | IN_CLOEXEC));\n}\n\nclass G {\npublic:\n  int inotify_init1(int flags);\n  void d() {\n    inotify_init1(IN_CLOEXEC);\n    TEMP_FAILURE_RETRY(inotify_init1(IN_CLOEXEC));\n    inotify_init1(IN_NONBLOCK | IN_CLOEXEC);\n    TEMP_FAILURE_RETRY(inotify_init1(IN_NONBLOCK | IN_CLOEXEC));\n  }\n};"
+    }
+  ]
+}

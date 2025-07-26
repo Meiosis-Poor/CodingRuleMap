@@ -1,0 +1,60 @@
+{
+  "name": "CheckSkipResult",
+  "language": "java",
+  "description": "\nThe skip() method may skip a smaller number of bytes than requested. Check the returned value to find out if it was the case or not.\n        ",
+  "example": "public class Foo {\n\n   private FileInputStream _s = new FileInputStream(\"file\");\n\n   public void skip(int n) throws IOException {\n      _s.skip(n); // You are not sure that exactly n bytes are skipped\n   }\n\n   public void skipExactly(int n) throws IOException {\n      while (n != 0) {\n         long skipped = _s.skip(n);\n         if (skipped == 0)\n            throw new EOFException();\n         n -= skipped;\n      }\n   }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 32,
+  "branches": 5,
+  "apis": 4,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.IOException;\n\npublic class Foo {\n\n    private FileInputStream _s = new FileInputStream(\"file\");\n\n    public void skip(int n) throws IOException {\n        _s.skip(n); // You are not sure that exactly n bytes are skipped\n    }\n}\n        "
+    },
+    {
+      "description": "failure case but obfuscated",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.IOException;\n\npublic class Foo {\n\n    private FileInputStream _s = new FileInputStream(\"file\");\n\n    public void skip(int n) throws IOException {\n        (_s.skip(n));\n    }\n}\n        "
+    },
+    {
+      "description": "return value is assigned to a variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.IOException;\nimport java.io.EOFException;\n\npublic class Foo {\n\n    private FileInputStream _s = new FileInputStream(\"file\");\n\n    public void skip(int n) throws IOException {\n        while (n != 0) {\n            long skipped = _s.skip(n);\n            if (skipped == 0)\n                throw new EOFException();\n            n -= skipped;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "return value is used in a function",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.IOException;\n\npublic class Foo {\n\n    private FileInputStream _s = new FileInputStream(\"file\");\n\n    public void skip(int n) throws IOException {\n        System.out.println(_s.skip(n));\n    }\n}\n        "
+    },
+    {
+      "description": "return value is returned",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.IOException;\n\npublic class Foo {\n\n    private FileInputStream _s = new FileInputStream(\"file\");\n\n    public int skip(int n) throws IOException {\n        return _s.skip(n);\n   }\n}\n        "
+    },
+    {
+      "description": "NPE when using Pattern matching variables #3169",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.InputStream;\n\n            public class Foo {\n                public void service(Object servletRequest) {\n                    if (servletRequest instanceof InputStream nanoRequest) {\n                        // ...\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#5207 FP with skip overload on custom FileInputStream class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.IOException;\n\npublic class Foo extends FileInputStream {\n    public void bar() {\n        skip(1);\n    }\n\n    public void skip(int n) throws IOException {\n    }\n}\n        "
+    }
+  ]
+}

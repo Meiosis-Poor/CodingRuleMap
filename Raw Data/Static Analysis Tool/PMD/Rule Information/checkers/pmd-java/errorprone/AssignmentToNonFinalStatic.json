@@ -1,0 +1,60 @@
+{
+  "name": "AssignmentToNonFinalStatic",
+  "language": "java",
+  "description": "\nIdentifies a possible unsafe usage of a static field.\n        ",
+  "example": "public class StaticField {\n   static int x;\n   public FinalFields(int y) {\n    x = y; // unsafe\n   }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 57,
+  "branches": 11,
+  "apis": 8,
+  "test": [
+    {
+      "description": "clear rule violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    static int x;\n    Foo(int y) {\n        x = y;\n    }\n}\n        "
+    },
+    {
+      "description": "clear rule violation with this",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    static int x;\n    Foo(int y) {\n        this.x = y;\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static final int x;\n    Foo(int y) {\n        x = y;\n    }\n}\n        "
+    },
+    {
+      "description": "rule violated twice",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    static int x;\n    Foo(int y) {\n        x = y;\n        x = y;\n    }\n}\n        "
+    },
+    {
+      "description": "legitimate case - assignment in a regular method instead of constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static int counter;\n    public void increment() {\n        counter++;\n    }\n    public void clear() {\n        counter = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "violation with increments",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        7
+      ],
+      "code": "\npublic class Foo {\n    static int counter;\n    private final int id1;\n    private final int id2;\n    Foo() {\n        id1 = ++counter;\n        id2 = counter++;\n    }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "name": "NonSerializableClass",
+  "language": "java",
+  "description": "\nIf a class is marked as `Serializable`, then all fields need to be serializable as well. In order to exclude\na field, it can be marked as transient. Static fields are not considered.\n\nThis rule reports all fields, that are not serializable.\n\nIf a class implements the methods to perform manual serialization (`writeObject`, `readObject`) or uses\na replacement object (`writeReplace`, `readResolve`) then this class is ignored.\n\nNote: This rule has been revamped with PMD 6.52.0. It was previously called \"BeanMembersShouldSerialize\".\nThe property `prefix` has been deprecated, since in a serializable class all fields have to be\nserializable regardless of the name.\n        ",
+  "example": "class Buzz implements java.io.Serializable {\n    private static final long serialVersionUID = 1L;\n\n    private transient int someFoo;          // good, it's transient\n    private static int otherFoo;            // also OK, it's static\n    private java.io.FileInputStream stream; // bad - FileInputStream is not serializable\n\n    public void setStream(FileInputStream stream) {\n        this.stream = stream;\n    }\n\n    public int getSomeFoo() {\n          return this.someFoo;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 228,
+  "branches": 65,
+  "apis": 25,
+  "test": [
+    {
+      "description": "Example code",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nclass Buzz implements java.io.Serializable {\n    private static final long serialVersionUID = 1L;\n\n    private transient int someFoo;          // good, it's transient\n    private static int otherFoo;            // also OK, it's static\n    private java.io.FileInputStream stream; // bad - FileInputStream is not serializable\n\n    public void setStream(FileInputStream stream) {\n        this.stream = stream;\n    }\n\n    public int getSomeFoo() {\n          return this.someFoo;\n    }\n}\n"
+    },
+    {
+      "description": "String, no accessor, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.Serializable;\npublic class Foo implements Serializable {\n    private String foo;\n    private String bar = foo;\n}\n        "
+    },
+    {
+      "description": "private static FileInputStream",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.Serializable;\npublic class Foo implements Serializable {\n    private static FileInputStream foo;\n}\n        "
+    },
+    {
+      "description": "private transient FileInputStream",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.Serializable;\npublic class Foo implements Serializable {\n    private transient FileInputStream foo;\n}\n        "
+    },
+    {
+      "description": "InputStream in a non-serializable class is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\npublic class Foo {\n    private FileInputStream foo;\n}\n"
+    },
+    {
+      "description": "interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.Serializable;\npublic interface Foo extends Serializable {\n    public FileInputStream getFoo();\n}\n        "
+    },
+    {
+      "description": "@SuppressWarnings(\"serial\")",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.Serializable;\n@SuppressWarnings(\"serial\")\npublic class Foo implements Serializable {\n    private FileInputStream foo;\n}\n        "
+    },
+    {
+      "description": "ClassCastException on generic method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic abstract class List<A> implements Iterable<A> {\n    public static <A> F<List<A>, Boolean> isEmpty() {\n        return null;\n    }\n}\nclass F<X, Y> {}\n        "
+    },
+    {
+      "description": "Ignore Externalizable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.Externalizable;\nimport java.io.FileInputStream;\nimport java.io.IOException;\nimport java.io.ObjectOutput;\nimport java.io.ObjectInput;\nclass Foo implements Externalizable {\n    private FileInputStream foo;\n    void writeExternal(ObjectOutput out) throws IOException {}\n    void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {}\n}\n"
+    },
+    {
+      "description": "Ignore manual serialization",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.Serializable;\nimport java.io.IOException;\nimport java.io.ObjectStreamException;\nclass Foo implements Serializable {\n    private FileInputStream foo; // no violation, because writeObject/readObject is present\n    private void writeObject(java.io.ObjectOutputStream out) throws IOException {}\n    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {}\n    private void readObjectNoData() throws ObjectStreamException {}\n}\n"
+    },
+    {
+      "description": "Ignore manual serialization with replacement object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.Serializable;\nimport java.io.ObjectStreamException;\nclass Foo implements Serializable {\n    private FileInputStream foo; // no violation, because writeReplace/readResolve is present\n    private Object writeReplace() throws ObjectStreamException {}\n    private Object readResolve() throws ObjectStreamException {}\n}\n"
+    },
+    {
+      "description": "Enum is serializable by default",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npackage sample;\nclass OuterClass {\n    enum InnerEnum {\n        A;\n\n        private java.io.FileInputStream nonSerializableMember;\n    }\n}\n"
+    },
+    {
+      "description": "Ignore fields that are interfaces or abstract classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.AbstractList;\nimport java.util.ArrayList;\nimport java.util.List;\npublic class Foo<T> implements java.io.Serializable {\n    private List<String> names = new ArrayList<>();\n    private AbstractList<String> anotherList;\n    private T someData;\n    private Object canBeAnything;\n}\n"
+    },
+    {
+      "description": "Check fields that are interfaces or abstract classes",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "code": "\nimport java.util.AbstractList;\nimport java.util.ArrayList;\nimport java.util.List;\npublic class Foo<T> implements java.io.Serializable {\n    private List<String> names = new ArrayList<>();\n    private AbstractList<String> anotherList;\n    private T someData;\n    private Object canBeAnything;\n}\n"
+    },
+    {
+      "description": "Take serialPersistentFields into account - variant 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    private static final long serialVersionUID = 1L;\n    private static final ObjectStreamField[] serialPersistentFields = { new ObjectStreamField(\"name\", String.class) };\n\n    private FileInputStream stream; // not serializable, but that's ok, because it is not among the persistent fields\n    private String name;\n}\n"
+    },
+    {
+      "description": "Take serialPersistentFields into account - variant 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    public static final ObjectStreamField[] FIELDS = { new ObjectStreamField(\"name\", String.class) };\n\n    private static final long serialVersionUID = 1L;\n    private static final ObjectStreamField[] serialPersistentFields = FIELDS;\n\n    private FileInputStream stream; // not serializable, but that's ok, because it is not among the persistent fields\n    private String name;\n}\n"
+    },
+    {
+      "description": "Take serialPersistentFields into account - variant 3",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    public static final ObjectStreamField[] FIELDS = {\n        new ObjectStreamField(\"name\", String.class),\n        new ObjectStreamField(\"stream\", FileInputStream.class),\n     };\n\n    private static final long serialVersionUID = 1L;\n    private static final ObjectStreamField[] serialPersistentFields = FIELDS;\n\n    private FileInputStream stream; // not serializable\n    private String name;\n}\n"
+    },
+    {
+      "description": "Take serialPersistentFields into account - variant 4",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    public static final ObjectStreamField[] NO_FIELDS = new ObjectStreamField[0];\n\n    private static final long serialVersionUID = 1L;\n    private static final ObjectStreamField[] serialPersistentFields = NO_FIELDS;\n\n    private FileInputStream stream; // not serializable, but that's ok, because it is not among the persistent fields\n    private String name;\n}\n"
+    },
+    {
+      "description": "Take serialPersistentFields into account - variant 5",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    private static final long serialVersionUID = 1L;\n    private static final ObjectStreamField[] serialPersistentFields = {\n        new ObjectStreamField(\"name\", String.class),\n        new ObjectStreamField(\"stream\", FileInputStream.class),\n    };\n\n    private FileInputStream stream; // not serializable\n    private String name;\n}\n"
+    },
+    {
+      "description": "Take serialPersistentFields into account - variant 6",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        9
+      ],
+      "code": "\nimport java.io.FileInputStream;\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    private static final long serialVersionUID = 1L;\n    // wrong modifiers for serialPersistentFields: not final, not private, not static\n    ObjectStreamField[] serialPersistentFields = { new ObjectStreamField(\"name\", String.class) };\n\n    private FileInputStream stream; // not serializable\n    private String name;\n}\n"
+    },
+    {
+      "description": "NPE with empty array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.ObjectStreamField;\nimport java.io.Serializable;\nclass Buzz implements Serializable {\n    private static final ObjectStreamField[] serialPersistentFields =\n        new ObjectStreamField[0];\n}\n"
+    },
+    {
+      "description": "Explicitly ignore unresolved types (missing in auxclasspath)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Buzz implements java.io.Serializable {\n    private static final long serialVersionUID = 1L;\n\n    private FileInputStream stream; // bad - FileInputStream is not serializable, but: it is not imported, so\n    // the type is unresolved\n\n    public void setStream(FileInputStream stream) {\n        this.stream = stream;\n    }\n}\n"
+    }
+  ]
+}

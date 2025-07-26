@@ -1,0 +1,29 @@
+{
+  "name": "UseEnumClass",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-use-enum-class",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 42,
+  "branches": 1,
+  "apis": 21,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        11,
+        19,
+        25,
+        32,
+        38,
+        44,
+        50,
+        58
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++11-or-later -check-suffix=ALL,DEFAULT %s \\\n// RUN: cppcoreguidelines-use-enum-class %t --\n\n// RUN: %check_clang_tidy -std=c++11-or-later -check-suffix=ALL %s \\\n// RUN: cppcoreguidelines-use-enum-class %t -- \\\n// RUN: -config=\"{CheckOptions: { \\\n// RUN: cppcoreguidelines-use-enum-class.IgnoreUnscopedEnumsInClasses: true \\\n// RUN: }}\" --\n\nenum E {};\n// CHECK-MESSAGES-ALL: :[[@LINE-1]]:6: warning: enum 'E' is unscoped, use 'enum class' instead\n\nenum class EC {};\n\nenum struct ES {};\n\nstruct S {\n  enum E {};\n  // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:8: warning: enum 'E' is unscoped, use 'enum class' instead\n  enum class EC {};\n};\n\nclass C {\n  enum E {};\n  // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:8: warning: enum 'E' is unscoped, use 'enum class' instead\n  enum class EC {};\n};\n\ntemplate<class T>\nclass TC {\n  enum E {};\n  // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:8: warning: enum 'E' is unscoped, use 'enum class' instead\n  enum class EC {};\n};\n\nunion U {\n  enum E {};\n  // CHECK-MESSAGES-DEFAULT: :[[@LINE-1]]:8: warning: enum 'E' is unscoped, use 'enum class' instead\n  enum class EC {};\n};\n\nnamespace {\nenum E {};\n// CHECK-MESSAGES-ALL: :[[@LINE-1]]:6: warning: enum 'E' is unscoped, use 'enum class' instead\nenum class EC {};\n} // namespace\n\nnamespace N {\nenum E {};\n// CHECK-MESSAGES-ALL: :[[@LINE-1]]:6: warning: enum 'E' is unscoped, use 'enum class' instead\nenum class EC {};\n} // namespace N\n\ntemplate<enum ::EC>\nstatic void foo();\n\nenum ForwardE : int;\n// CHECK-MESSAGES-ALL: :[[@LINE-1]]:6: warning: enum 'ForwardE' is unscoped, use 'enum class' instead\n\nenum class ForwardEC : int;\n\nenum struct ForwardES : int;"
+    }
+  ]
+}

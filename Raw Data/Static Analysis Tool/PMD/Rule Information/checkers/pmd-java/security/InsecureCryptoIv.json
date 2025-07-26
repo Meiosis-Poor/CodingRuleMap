@@ -1,0 +1,71 @@
+{
+  "name": "InsecureCryptoIv",
+  "language": "java",
+  "description": "\nDo not use hard coded initialization vector in cryptographic operations. Please use a randomly generated IV.\n        ",
+  "example": "public class Foo {\n    void good() {\n        SecureRandom random = new SecureRandom();\n        byte iv[] = new byte[16];\n        random.nextBytes(bytes);\n    }\n\n    void bad() {\n        byte[] iv = new byte[] { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, };\n    }\n\n    void alsoBad() {\n        byte[] iv = \"secret iv in here\".getBytes();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 29,
+  "branches": 1,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Hard coded inline IvSpec, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\nimport javax.crypto.Cipher;\n\npublic class Foo {\n\n    void outOfScope() {\n        byte[] ivBytes = new byte[16];\n    }\n    byte[] ivBytes = new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, };\n\n    void encrypt() {\n        Cipher cipher = Cipher.getInstance(\"AES/CBC/PKCS5Padding\");\n        cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(ivBytes));\n    }\n}\n        "
+    },
+    {
+      "description": "Randomly generated IV, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\nimport javax.crypto.spec.SecretKeySpec;\nimport my.Util;\n\npublic class Foo {\n\n    void encrypt(SecretKeySpec key) {\n        byte[] ivBytes = new byte[key.getEncoded().length];\n        Util.getSecureRandom().nextBytes(ivBytes);\n        IvParameterSpec iv = new IvParameterSpec(ivBytes);\n    }\n}\n        "
+    },
+    {
+      "description": "Hard coded Iv from string, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\n\npublic class Foo {\n\n    void encrypt() {\n        byte[] staticIv = \"ALL_ZEROS_HERE\".getBytes();\n        IvParameterSpec iv = new IvParameterSpec(staticIv);\n    }\n}\n     "
+    },
+    {
+      "description": "Hard coded Iv field, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\n\npublic class Foo {\n\n    byte[] ivBytes = new byte[] { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, };\n\n    void encrypt() {\n        IvParameterSpec iv = new IvParameterSpec(ivBytes);\n    }\n}\n     "
+    },
+    {
+      "description": "Hard coded Iv local var, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\n\npublic class Foo {\n\n    void encrypt() {\n        byte[] ivBytes = new byte[] { 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, };\n        IvParameterSpec iv = new IvParameterSpec(ivBytes);\n    }\n}\n        "
+    },
+    {
+      "description": "Random IV, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\nimport java.security.SecureRandom;\n\npublic class Foo {\n    void encrypt() {\n        byte[] ivBytes = new byte[16];\n        SecureRandom sprng = new SecureRandom();\n        sprng.nextBytes(ivBytes);\n        IvParameterSpec ivs = new IvParameterSpec(ivBytes);\n    }\n}\n     "
+    },
+    {
+      "description": "Inline IvSpec Random IV, good",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\nimport java.security.SecureRandom;\nimport javax.crypto.Cipher;\n\npublic class Foo {\n    void encrypt() {\n        byte[] iv = new byte[16];\n        SecureRandom sprng = new SecureRandom();\n        sprng.nextBytes(iv);\n        Cipher cipher = Cipher.getInstance(\"AES/CBC/PKCS5Padding\");\n        cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(iv));\n    }\n}\n     "
+    },
+    {
+      "description": "NPE when byte array is not initialized directly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\nimport java.security.SecureRandom;\nimport javax.crypto.Cipher;\n\npublic class Foo {\n    void encrypt() {\n        byte[] iv; // no direct initialization\n        iv = new byte[16];\n        SecureRandom sprng = new SecureRandom();\n        sprng.nextBytes(iv);\n        Cipher cipher = Cipher.getInstance(\"AES/CBC/PKCS5Padding\");\n        cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(iv));\n    }\n}\n        "
+    },
+    {
+      "description": "#3456 #3803 [java] A false negative about InsecureCryptoIv",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        19
+      ],
+      "code": "\nimport javax.crypto.spec.IvParameterSpec;\nimport javax.crypto.Cipher;\n\npublic class Foo {\n    public void func(SecretKeySpec key) {\n        try {\n            byte[] ivBytes, ivs;\n            ivs = \"hardcoded initial vector\".getBytes();\n            final IvParameterSpec iv = new IvParameterSpec(ivs); // should report a warning about this line\n            final Cipher cipher = Cipher.getInstance(\"AES/CBC/NoPadding\");\n            // .......\n        } catch (Exception e) {\n            e.printStackTrace();\n        }\n    }\n\n    public void func2(SecretKeySpec key) {\n        try {\n            byte[] ivBytes, ivs = \"hardcoded initial vector\".getBytes();  // can be detected\n            final IvParameterSpec iv = new IvParameterSpec(ivs);\n            final Cipher cipher = Cipher.getInstance(\"AES/CBC/NoPadding\");\n            // .......\n        } catch (Exception e) {\n            e.printStackTrace();\n        }\n    }\n}\n"
+    }
+  ]
+}

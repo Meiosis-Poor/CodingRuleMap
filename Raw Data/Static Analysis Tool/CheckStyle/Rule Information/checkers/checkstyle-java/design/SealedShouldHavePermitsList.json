@@ -1,0 +1,56 @@
+{
+  "name": "SealedShouldHavePermitsList",
+  "language": "java",
+  "description": "<div>\n Checks that sealed classes and interfaces have a permits list.\n </div>\n\n <p>\n     Rationale: When a permits clause is omitted from a sealed class,\n     any class within the same compilation unit can extend it. This differs\n     from other sealed classes where permitted subclasses are explicitly\n     declared, making them readily visible to the reader. Without a permits\n     clause, identifying potential subclasses requires searching the entire\n     compilation unit, which can be challenging, especially in large files\n     with complex class hierarchies.\n </p>\n\n <p>\n See the <a href=\"https://docs.oracle.com/javase/specs/jls/se22/html/jls-13.html#jls-13.4.2\">\n Java Language Specification</a> for more information about sealed classes.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 33,
+  "branches": 3,
+  "apis": 7,
+  "test": [
+    {
+      "description": "Auto test from InputSealedShouldHavePermitsListInnerClass.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        15
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.sealedshouldhavepermitslist;\npublic class InputSealedShouldHavePermitsListInnerClass {\n    sealed class A {}\n    final class B extends A {}\n    final class C extends A {}\n    final class D { } \n    non-sealed class F extends A {}\n    sealed class G extends A {}\n    final class I extends G {}\n    enum E {}\n    record R(int x) {}\n}\nclass InputSealedShouldHavePermitsListInnerClassCorrected {\n    sealed class A permits B, C, F, G { } \n    final class B extends A { }\n    final class C extends A { }\n    final class D { }    \n    non-sealed class F extends A {}\n    sealed class G extends A permits I {}\n    final class I extends G {}\n    enum E {}\n    record R(int x) {}\n}"
+    },
+    {
+      "description": "Auto test from InputSealedShouldHavePermitsListInnerInterface.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.sealedshouldhavepermitslist;\npublic class InputSealedShouldHavePermitsListInnerInterface {\n    sealed interface A {}\n    final class B implements A {}\n    final class C implements A {}\n    final class D { } \n    non-sealed class F implements A {}\n    static final class G {}\n    record R(int x) implements A {}\n    enum E implements A {}\n}\nclass InputSealedShouldHavePermitsListInnerInterfaceCorrected {\n    sealed interface A permits B, C, F, R, E {} \n    final class B implements A { }\n    final class C implements A { }\n    final class D { }    \n    non-sealed class F implements A {}\n    static final class G {}\n    record R(int x) implements A {}\n    enum E implements A {}\n}"
+    },
+    {
+      "description": "Auto test from InputSealedShouldHavePermitsListJepExample.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        21
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.sealedshouldhavepermitslist;\npublic sealed class InputSealedShouldHavePermitsListJepExample\n{ }\nfinal class Circle extends InputSealedShouldHavePermitsListJepExample {\n    float radius;\n}\nnon-sealed class Square extends InputSealedShouldHavePermitsListJepExample {\n    float side;\n}\nsealed class Rectangle extends InputSealedShouldHavePermitsListJepExample {\n    float length, width;\n}\nfinal class FilledRectangle extends Rectangle {\n    int red, green, blue;\n}"
+    },
+    {
+      "description": "Auto test from InputSealedShouldHavePermitsListTopLevelSealedClass.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.sealedshouldhavepermitslist;\npublic sealed class InputSealedShouldHavePermitsListTopLevelSealedClass {\n    final class B extends InputSealedShouldHavePermitsListTopLevelSealedClass {}\n    final class C extends InputSealedShouldHavePermitsListTopLevelSealedClass {}\n    final class D { }\n    record R(int x) {}\n    enum E {}\n    static final class F extends InputSealedShouldHavePermitsListTopLevelSealedClass {}\n}\nsealed class InputSealedShouldHavePermitsListTopLevelSealedClassCorrected\n        permits InputSealedShouldHavePermitsListTopLevelSealedClassCorrected.B,\n                InputSealedShouldHavePermitsListTopLevelSealedClassCorrected.C,\n                InputSealedShouldHavePermitsListTopLevelSealedClassCorrected.F {\n    final class B extends InputSealedShouldHavePermitsListTopLevelSealedClassCorrected { }\n    final class C extends InputSealedShouldHavePermitsListTopLevelSealedClassCorrected { }\n    final class D { }\n    record R(int x) {}\n    enum E {}\n    static final class F extends InputSealedShouldHavePermitsListTopLevelSealedClassCorrected {}\n}"
+    },
+    {
+      "description": "Auto test from InputSealedShouldHavePermitsListTopLevelSealedInterface.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.design.sealedshouldhavepermitslist;\npublic sealed interface InputSealedShouldHavePermitsListTopLevelSealedInterface {\n    final class B implements InputSealedShouldHavePermitsListTopLevelSealedInterface {}\n    final class C implements InputSealedShouldHavePermitsListTopLevelSealedInterface {}\n    final class D { }\n    record R(int x) implements InputSealedShouldHavePermitsListTopLevelSealedInterface {}\n    enum E implements InputSealedShouldHavePermitsListTopLevelSealedInterface {}\n    static non-sealed class S implements InputSealedShouldHavePermitsListTopLevelSealedInterface {}\n}\nsealed interface InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected\n        permits InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected.B,\n                InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected.C,\n                InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected.R,\n                InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected.E,\n                InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected.S {\n    final class B implements InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected { }\n    final class C implements InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected { }\n    final class D { }\n    record R(int x) implements InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected {}\n    enum E implements InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected {}\n    static non-sealed class S implements\n            InputSealedShouldHavePermitsListTopLevelSealedInterfaceCorrected {}\n}"
+    }
+  ]
+}

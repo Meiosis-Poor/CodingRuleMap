@@ -1,0 +1,80 @@
+{
+  "name": "MoreThanOneLogger",
+  "language": "java",
+  "description": "\nNormally only one logger is used in each class. This rule supports slf4j, log4j, Java Util Logging and\nlog4j2 (since 6.19.0).\n        ",
+  "example": "public class Foo {\n    Logger log = Logger.getLogger(Foo.class.getName());\n    // It is very rare to see two loggers on a class, normally\n    // log information is multiplexed by levels\n    Logger log2= Logger.getLogger(Foo.class.getName());\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.log4j.Logger;\npublic class Foo {\n    Logger log;\n}\n        "
+    },
+    {
+      "description": "two loggers",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport org.apache.log4j.Logger;\npublic class Foo {\n    Logger log;\n    Logger log2;\n}\n        "
+    },
+    {
+      "description": "different logger for inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.log4j.Logger;\npublic class Foo {\n    Logger log;\n    class Bar {\n        Logger log2;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, fixing NPE bug",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic @interface Foo {\n    String FOO = \"foo\";\n}\n        "
+    },
+    {
+      "description": "https://github.com/pmd/pmd/pull/42: Add SLF4j Logger type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.slf4j.Logger;\npublic class Foo {\n    Logger log;\n}\n        "
+    },
+    {
+      "description": "https://github.com/pmd/pmd/pull/42: Add SLF4j Logger type: Two Loggers",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport org.slf4j.Logger;\npublic class Foo {\n    Logger log;\n    Logger log2;\n}\n        "
+    },
+    {
+      "description": "Add log4j2 Logger type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.logging.log4j.Logger;\npublic class Foo {\n    Logger log;\n}\n        "
+    },
+    {
+      "description": "Logger type log4j2: Two Loggers",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\nimport org.apache.logging.log4j.Logger;\npublic class Foo {\n    Logger log;\n    Logger log2;\n}\n        "
+    },
+    {
+      "description": "issue 3304 - rule robustness",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic record Reproducer(List<String> smsIds) {\n\n  public Reproducer createMe(final String smsId) {\n    final List<String> newList = new ArrayList<>(smsIds);\n    newList.add(smsId);\n    return new Reproducer(newList);\n  }\n}\n        "
+    },
+    {
+      "description": "#3860 [java] MoreThanOneLogger is reported on mocked Logger field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.kodekonveyor.authentication;\n\nimport org.mockito.Mockito;\nimport org.slf4j.Logger;\n\nclass PMDErrorDemonstrationTestBase {\n  Logger loggerService = Mockito.mock(Logger.class);\n}\n"
+    }
+  ]
+}

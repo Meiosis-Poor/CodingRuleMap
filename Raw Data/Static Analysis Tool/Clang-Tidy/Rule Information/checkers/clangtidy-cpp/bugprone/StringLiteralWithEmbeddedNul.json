@@ -1,0 +1,39 @@
+{
+  "name": "StringLiteralWithEmbeddedNul",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-string-literal-with-embedded-nul",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 81,
+  "branches": 8,
+  "apis": 53,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 18,
+      "expected-linenumbers": [
+        28,
+        31,
+        33,
+        39,
+        45,
+        52,
+        56,
+        58,
+        60,
+        62,
+        66,
+        68,
+        71,
+        73,
+        78,
+        80,
+        82,
+        84
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-string-literal-with-embedded-nul %t\n\nnamespace std {\ntemplate <typename T>\nclass allocator {};\ntemplate <typename T>\nclass char_traits {};\ntemplate <typename C, typename T, typename A>\nstruct basic_string {\n  typedef basic_string<C, T, A> _Type;\n  basic_string();\n  basic_string(const C *p, const A &a = A());\n\n  _Type& operator+=(const C* s);\n  _Type& operator=(const C* s);\n};\n\ntypedef basic_string<char, std::char_traits<char>, std::allocator<char>> string;\ntypedef basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t>> wstring;\n}\n\nbool operator==(const std::string&, const char*);\nbool operator==(const char*, const std::string&);\n\n\nconst char Valid[] = \"This is valid \\x12.\";\nconst char Strange[] = \"This is strange \\0x12 and must be fixed\";\n// CHECK-MESSAGES: :[[@LINE-1]]:24: warning: suspicious embedded NUL character [bugprone-string-literal-with-embedded-nul]\n\nconst char textA[] = \"\\0x01\\0x02\\0x03\\0x04\";\n// CHECK-MESSAGES: :[[@LINE-1]]:22: warning: suspicious embedded NUL character\nconst wchar_t textW[] = L\"\\0x01\\0x02\\0x03\\0x04\";\n// CHECK-MESSAGES: :[[@LINE-1]]:25: warning: suspicious embedded NUL character\n\nconst char A[] = \"\\0\";\nconst char B[] = \"\\0x\";\nconst char C[] = \"\\0x1\";\nconst char D[] = \"\\0x11\";\n// CHECK-MESSAGES: :[[@LINE-1]]:18: warning: suspicious embedded NUL character\n\nconst wchar_t E[] = L\"\\0\";\nconst wchar_t F[] = L\"\\0x\";\nconst wchar_t G[] = L\"\\0x1\";\nconst wchar_t H[] = L\"\\0x11\";\n// CHECK-MESSAGES: :[[@LINE-1]]:21: warning: suspicious embedded NUL character\n\nconst char I[] = \"\\000\\000\\000\\000\";\nconst char J[] = \"\\0\\0\\0\\0\\0\\0\";\nconst char K[] = \"\";\n\nconst char L[] = \"\\0x12\" \"\\0x12\" \"\\0x12\" \"\\0x12\";\n// CHECK-MESSAGES: :[[@LINE-1]]:18: warning: suspicious embedded NUL character\n\nvoid TestA() {\n  std::string str1 = \"abc\\0def\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: truncated string literal\n  std::string str2 = \"\\0\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: truncated string literal\n  std::string str3(\"\\0\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: truncated string literal\n  std::string str4{\"\\x00\\x01\\x02\\x03\"};\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: truncated string literal\n\n  std::string str;\n  str += \"abc\\0def\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: truncated string literal\n  str = \"abc\\0def\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:9: warning: truncated string literal\n\n  if (str == \"abc\\0def\") return;\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: truncated string literal\n  if (\"abc\\0def\" == str) return;\n  // CHECK-MESSAGES: :[[@LINE-1]]:7: warning: truncated string literal\n}\n\nvoid TestW() {\n  std::wstring str1 = L\"abc\\0def\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: truncated string literal\n  std::wstring str2 = L\"\\0\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: truncated string literal\n  std::wstring str3(L\"\\0\");\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: truncated string literal\n  std::wstring str4{L\"\\x00\\x01\\x02\\x03\"};\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: truncated string literal\n}"
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "UseRanges",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - boost-use-ranges",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 374,
+  "branches": 5,
+  "apis": 90,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 16,
+      "expected-linenumbers": [
+        26,
+        30,
+        34,
+        38,
+        42,
+        46,
+        50,
+        54,
+        58,
+        62,
+        66,
+        70,
+        74,
+        81,
+        85,
+        89
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++14 %s boost-use-ranges %t  -- -- -I %S/Inputs/use-ranges/\n// RUN: %check_clang_tidy -std=c++17 %s boost-use-ranges %t -check-suffixes=,CPP17 -- -I %S/Inputs/use-ranges/\n\n// CHECK-FIXES: #include <boost/range/algorithm/find.hpp>\n// CHECK-FIXES: #include <boost/range/algorithm/reverse.hpp>\n// CHECK-FIXES: #include <boost/range/algorithm/set_algorithm.hpp>\n// CHECK-FIXES: #include <boost/range/algorithm/equal.hpp>\n// CHECK-FIXES: #include <boost/range/algorithm/permutation.hpp>\n// CHECK-FIXES: #include <boost/range/algorithm/heap_algorithm.hpp>\n// CHECK-FIXES: #include <boost/algorithm/cxx11/copy_if.hpp>\n// CHECK-FIXES: #include <boost/algorithm/cxx11/is_sorted.hpp>\n// CHECK-FIXES-CPP17: #include <boost/algorithm/cxx17/reduce.hpp>\n// CHECK-FIXES: #include <boost/range/adaptor/reversed.hpp>\n// CHECK-FIXES: #include <boost/range/numeric.hpp>\n\n#include \"fake_boost.h\"\n#include \"fake_std.h\"\n\nbool returnTrue(int val) {\n  return true;\n}\n\nvoid stdLib() {\n  std::vector<int> I, J;\n  std::find(I.begin(), I.end(), 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::find(I, 0);\n\n  std::reverse(I.cbegin(), I.cend());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::reverse(I);\n\n  std::includes(I.begin(), I.end(), std::begin(J), std::end(J));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::includes(I, J);\n\n  std::equal(std::cbegin(I), std::cend(I), J.begin(), J.end());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::equal(I, J);\n\n  std::next_permutation(I.begin(), I.end());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::next_permutation(I);\n\n  std::push_heap(I.begin(), I.end());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::push_heap(I);\n\n  std::copy_if(I.begin(), I.end(), J.begin(), &returnTrue);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::algorithm::copy_if(I, J.begin(), &returnTrue);\n\n  std::is_sorted_until(I.begin(), I.end());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::algorithm::is_sorted_until(I);\n\n  std::reduce(I.begin(), I.end());\n  // CHECK-MESSAGES-CPP17: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES-CPP17: boost::algorithm::reduce(I);\n\n  std::reduce(I.begin(), I.end(), 2);\n  // CHECK-MESSAGES-CPP17: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES-CPP17: boost::algorithm::reduce(I, 2);\n\n  std::reduce(I.begin(), I.end(), 0, [](int a, int b){ return a + b; });\n  // CHECK-MESSAGES-CPP17: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES-CPP17: boost::algorithm::reduce(I, 0, [](int a, int b){ return a + b; });\n\n  std::equal(boost::rbegin(I), boost::rend(I), J.begin(), J.end());\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::range::equal(boost::adaptors::reverse(I), J);\n\n  std::accumulate(I.begin(), I.end(), 0);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a boost version of this algorithm\n  // CHECK-FIXES: boost::accumulate(I, 0);\n}\n\nvoid boostLib() {\n  std::vector<int> I;\n  boost::algorithm::reduce(I.begin(), I.end(), 0, [](int a, int b){ return a + b; });\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a ranged version of this algorithm\n  // CHECK-FIXES: boost::algorithm::reduce(I, 0, [](int a, int b){ return a + b; });\n\n  boost::algorithm::reduce(boost::begin(I), boost::end(I), 1, [](int a, int b){ return a + b; });\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a ranged version of this algorithm\n  // CHECK-FIXES: boost::algorithm::reduce(I, 1, [](int a, int b){ return a + b; });\n\n  boost::algorithm::reduce(boost::const_begin(I), boost::const_end(I), 2, [](int a, int b){ return a + b; });\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use a ranged version of this algorithm\n  // CHECK-FIXES: boost::algorithm::reduce(I, 2, [](int a, int b){ return a + b; });\n}"
+    }
+  ]
+}

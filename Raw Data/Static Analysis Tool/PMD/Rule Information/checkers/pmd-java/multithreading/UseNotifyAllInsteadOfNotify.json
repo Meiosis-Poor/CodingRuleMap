@@ -1,0 +1,62 @@
+{
+  "name": "UseNotifyAllInsteadOfNotify",
+  "language": "java",
+  "description": "\nThread.notify() awakens a thread monitoring the object. If more than one thread is monitoring, then only\none is chosen.  The thread chosen is arbitrary; thus it's usually safer to call notifyAll() instead.\n        ",
+  "example": "void bar() {\n    x.notify();\n    // If many threads are monitoring x, only one (and you won't know which) will be notified.\n    // use instead:\n    x.notifyAll();\n  }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "TEST1",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object foo;\n    void foo () {\n        foo.notify();\n    }\n}\n        "
+    },
+    {
+      "description": "TEST2",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object foo;\n\n    void foo () {\n        foo.notify();\n        foo.notify();\n    }\n}\n        "
+    },
+    {
+      "description": "TEST3",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo () {\n        notify();\n    }\n}\n        "
+    },
+    {
+      "description": "TEST4",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo () {\n        super.notify();\n    }\n}\n        "
+    },
+    {
+      "description": "TEST5",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo () {\n        new Object().notify();\n    }\n}\n        "
+    },
+    {
+      "description": "notify() with params is OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Object foo;\n    void foo (int x) {\n        foo.notify(x);\n    }\n}\n        "
+    },
+    {
+      "description": "#1438 UseNotifyAllInsteadOfNotify gives false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FlasePositive {\n    public static void main(String[] args) {\n        boolean notify;\n        notify = true;\n    }\n}\n        "
+    },
+    {
+      "description": "[java]UseNotifyAllInsteadOfNotify falsely detect a special case with argument: foo.notify(bar) #2577",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FalsePositive {\n    void notify(String s, String x) {\n\n    }\n    public static void main(FalsePositive injector) {\n        // unresolved method\n        injector.notify(\"\", \"e.getMessage()\");\n    }\n}\n        "
+    }
+  ]
+}

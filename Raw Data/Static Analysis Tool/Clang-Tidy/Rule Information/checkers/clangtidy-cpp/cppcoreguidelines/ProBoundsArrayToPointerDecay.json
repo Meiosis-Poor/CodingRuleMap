@@ -1,0 +1,26 @@
+{
+  "name": "ProBoundsArrayToPointerDecay",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-pro-bounds-array-to-pointer-decay",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 82,
+  "branches": 9,
+  "apis": 55,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        21,
+        24,
+        27,
+        62,
+        64
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-pro-bounds-array-to-pointer-decay %t\n#include <stddef.h>\n\nnamespace gsl {\ntemplate <class T>\nclass array_view {\npublic:\n  template <class U, size_t N>\n  array_view(U (&arr)[N]);\n};\n}\n\nvoid pointerfun(int *p);\nvoid arrayfun(int p[]);\nvoid arrayviewfun(gsl::array_view<int> &p);\nsize_t s();\n\nvoid f() {\n  int a[5];\n  pointerfun(a);\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not implicitly decay an array into a pointer; consider using gsl::array_view or an explicit cast instead [cppcoreguidelines-pro-bounds-array-to-pointer-decay]\n  pointerfun((int *)a); // OK, explicit cast\n  arrayfun(a);\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: do not implicitly decay an array into a pointer\n\n  pointerfun(a + s() - 10); // Convert to &a[g() - 10];\n  // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: do not implicitly decay an array into a pointer\n\n  gsl::array_view<int> av(a);\n  arrayviewfun(av); // OK\n\n  int i = a[0];      // OK\n  int j = a[(1 + 2)];// OK\n  pointerfun(&a[0]); // OK\n\n  for (auto &e : a) // OK, iteration internally decays array to pointer\n    e = 1;\n}\n\nconst char *g() {\n  return \"clang\"; // OK, decay string literal to pointer\n}\nconst char *g2() {\n    return (\"clang\"); // OK, ParenExpr hides the literal-pointer decay\n}\nconst char *g3() {\n    return __func__; // OK, don't diagnose PredefinedExpr\n}\n\nvoid f2(void *const *);\nvoid bug25362() {\n  void *a[2];\n  f2(static_cast<void *const*>(a)); // OK, explicit cast\n}\n\nvoid issue31155(int i) {\n  const char *a = i ? \"foo\" : \"bar\";    // OK, decay string literal to pointer\n  const char *b = i ? \"foo\" : \"foobar\"; // OK, decay string literal to pointer\n\n  char arr[1];\n  const char *c = i ? arr : \"bar\";\n  // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: do not implicitly decay an array into a pointer\n  const char *d = i ? \"foo\" : arr;\n  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: do not implicitly decay an array into a pointer\n}"
+    }
+  ]
+}

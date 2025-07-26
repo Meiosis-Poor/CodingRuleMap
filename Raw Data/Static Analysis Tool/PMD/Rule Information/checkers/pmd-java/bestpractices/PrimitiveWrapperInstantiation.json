@@ -1,0 +1,230 @@
+{
+  "name": "PrimitiveWrapperInstantiation",
+  "language": "java",
+  "description": "\n            Reports usages of primitive wrapper constructors. They are deprecated\n            since Java 9 and should not be used. Even before Java 9, they can\n            be replaced with usage of the corresponding static `valueOf` factory method\n            (which may be automatically inserted by the compiler since Java 1.5).\n            This has the advantage that it may reuse common instances instead of creating\n            a new instance each time.\n\n            Note that for `Boolean`, the named constants `Boolean.TRUE` and `Boolean.FALSE`\n            are preferred instead of `Boolean.valueOf`.\n        ",
+  "example": "public class Foo {\n                private Integer ZERO = new Integer(0);      // violation\n                private Integer ZERO1 = Integer.valueOf(0); // better\n                private Integer ZERO1 = 0;                  // even better\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 111,
+  "branches": 29,
+  "apis": 11,
+  "test": [
+    {
+      "description": "simple failure case",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\npublic class Foo {\n    Boolean b1 = new Boolean(\"true\");\n    Boolean b2 = new Boolean(\"false\");\n}\n        "
+    },
+    {
+      "description": "new java.lang.Boolean",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Boolean b = new java.lang.Boolean(\"true\");\n}\n        "
+    },
+    {
+      "description": "ok with Boolean.TRUE constant",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Boolean b = Boolean.TRUE;\n}\n        "
+    },
+    {
+      "description": "Boolean.valueOf - not constructors",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        3
+      ],
+      "code": "\npublic class Foo {\n    Boolean b = Boolean.valueOf(true); // Boolean.TRUE\n    Boolean b1 = Boolean.valueOf(false); // Boolean.FALSE\n}\n        "
+    },
+    {
+      "description": "Boolean.valueOf() with variable is fine",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    boolean x;\n    Boolean b = Boolean.valueOf(x);\n}\n        "
+    },
+    {
+      "description": "don't use Boolean.valueOf() with string literal",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Boolean b = Boolean.valueOf(\"true\");\n}\n        "
+    },
+    {
+      "description": "don't use new Boolean() in method call",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void go(){\n        foo(new Boolean(\"true\"));\n    }\n    private void foo(Boolean b) { }\n}\n        "
+    },
+    {
+      "description": "don't use Boolean.valueOf() in method call",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    public void go(){\n        foo(Boolean.valueOf(\"true\"));\n    }\n    private void foo(Boolean b) { }\n}\n        "
+    },
+    {
+      "description": "ok, Boolean.TRUE and Boolean.FALSE as method arguments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void go() {\n        foo(Boolean.TRUE);\n    }\n    static {\n        foo(Boolean.TRUE);\n    }\n    private static void foo(Boolean b) {}\n}\n        "
+    },
+    {
+      "description": "don't use Boolean.valueOf() or new Boolean() in static block",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    static {\n        foo(Boolean.valueOf(\"true\"));\n        foo(new Boolean(\"false\"));\n    }\n    private static void foo(Boolean b) {}\n}\n        "
+    },
+    {
+      "description": "Bug 1744065, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.own.Boolean;\n\npublic class Foo {\n    public void Bar() {\n        Boolean b = new Boolean(\"true\"); // not java.lang.Boolean!!\n    }\n}\n        "
+    },
+    {
+      "description": "Test for failure after rule with custom Boolean, should report failure if rule reset done correctly",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    Boolean b = Boolean.valueOf(\"true\");\n}\n        "
+    },
+    {
+      "description": "#1533 [java] BooleanInstantiation: ClassCastException with Annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        Object o = new @Interned MyObject();\n    }\n}\n\n@interface Interned { }\nclass MyObject { }\n        "
+    },
+    {
+      "description": "Arrays are ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Boolean[] a = new Boolean[]{};\n}\n        "
+    },
+    {
+      "description": "new Short(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void f(short b){\n                    Short i = new Short(b);\n                }\n            }\n            "
+    },
+    {
+      "description": "Short.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void f(short b){\n                    Short i = Short.valueOf(b);\n                }\n            }\n            "
+    },
+    {
+      "description": "new Integer(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            public class Foo {\n                Integer i = new Integer(42);\n            }\n            "
+    },
+    {
+      "description": "Integer.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                Integer i1 = Integer.valueOf(\"42\");\n                Integer i2 = Integer.valueOf(42);\n            }\n            "
+    },
+    {
+      "description": "new Long(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void f(long l){\n                    Long i = new Long(l);\n                }\n            }\n            "
+    },
+    {
+      "description": "Long.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void f(long l){\n                    Long i = Long.valueOf(l);\n                }\n            }\n            "
+    },
+    {
+      "description": "new Double(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void f(double d){\n                    Double i = new Double(d);\n                }\n            }\n            "
+    },
+    {
+      "description": "Double.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void f(double d){\n                    Double i = Double.valueOf(d);\n                }\n            }\n            "
+    },
+    {
+      "description": "new Float(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void f(float f){\n                    Float i = new Float(f);\n                }\n            }\n            "
+    },
+    {
+      "description": "Float.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void f(float f){\n                    Float i = Float.valueOf(f);\n                }\n            }\n            "
+    },
+    {
+      "description": "new Byte(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void f(byte b){\n                    Byte i = new Byte(b);\n                }\n            }\n            "
+    },
+    {
+      "description": "Byte.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void f(byte b){\n                    Byte i = Byte.valueOf(b);\n                }\n            }\n            "
+    },
+    {
+      "description": "new Character(), bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public void f(char c){\n                    Character i = new Character(c);\n                }\n            }\n            "
+    },
+    {
+      "description": "Character.valueOf(), ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                public void f(char c){\n                    Character i = Character.valueOf(c);\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] PrimitiveWrapperInstantiation: no violation on 'new Boolean(val)' #3595",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\npublic class SomeClass {\n      private Boolean bar;\n\n      public void method(String s) {\n            this.bar = new Boolean(s);      //violation for the BooleanInstantiation\n            this.bar = new Boolean(\"some arbitrary string is just false\"); //violation\n            this.bar = Boolean.valueOf(s);  //use this instead of Boolean#new\n      }\n}\n        "
+    },
+    {
+      "description": "[java] Instantiation rules cannot tell apart java.lang primitive wrappers and shadowed classes #1548",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Integer {\n    private static Integer instance = new Integer(42);\n\n    public Integer(int x) {}\n}\n        "
+    }
+  ]
+}

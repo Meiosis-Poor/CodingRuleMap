@@ -1,0 +1,31 @@
+{
+  "name": "Slicing",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - cppcoreguidelines-slicing",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 135,
+  "branches": 16,
+  "apis": 89,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        34,
+        36,
+        38,
+        42,
+        45,
+        51,
+        53,
+        55,
+        59,
+        99
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s cppcoreguidelines-slicing %t\n\nclass Base {\n  int i;\n  void f() {}\n  virtual void g() {}\n};\n\nclass DerivedWithMemberVariables : public Base {\n  void f();\n  int j;\n};\n\nclass TwiceDerivedWithNoMemberVariables : public DerivedWithMemberVariables {\n  void f();\n};\n\nclass DerivedWithOverride : public Base {\n  void f();\n  void g() override {}\n};\n\nclass TwiceDerivedWithNoOverride : public DerivedWithOverride {\n  void f();\n};\n\nvoid TakesBaseByValue(Base base);\n\nDerivedWithMemberVariables ReturnsDerived();\n\nvoid positivesWithMemberVariables() {\n  DerivedWithMemberVariables b;\n  Base a{b};\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: slicing object from type 'DerivedWithMemberVariables' to 'Base' discards {{[0-9]*}} bytes of state [cppcoreguidelines-slicing]\n  a = b;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: slicing object from type 'DerivedWithMemberVariables' to 'Base' discards {{[0-9]*}} bytes of state\n  TakesBaseByValue(b);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: slicing object from type 'DerivedWithMemberVariables' to 'Base' discards {{[0-9]*}} bytes of state\n\n  TwiceDerivedWithNoMemberVariables c;\n  a = c;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: slicing object from type 'TwiceDerivedWithNoMemberVariables' to 'Base' discards {{[0-9]*}} bytes of state\n\n  a = ReturnsDerived();\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: slicing object from type 'DerivedWithMemberVariables' to 'Base' discards {{[0-9]*}} bytes of state\n}\n\nvoid positivesWithOverride() {\n  DerivedWithOverride b;\n  Base a{b};\n  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: slicing object from type 'DerivedWithOverride' to 'Base' discards override 'g'\n  a = b;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: slicing object from type 'DerivedWithOverride' to 'Base' discards override 'g'\n  TakesBaseByValue(b);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: slicing object from type 'DerivedWithOverride' to 'Base' discards override 'g'\n\n  TwiceDerivedWithNoOverride c;\n  a = c;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: slicing object from type 'DerivedWithOverride' to 'Base' discards override 'g'\n}\n\nvoid TakesBaseByReference(Base &base);\n\nclass DerivedThatAddsVirtualH : public Base {\n  virtual void h();\n};\n\nclass DerivedThatOverridesH : public DerivedThatAddsVirtualH {\n  void h() override;\n};\n\nvoid negatives() {\n  // OK, simple copying from the same type.\n  Base a;\n  TakesBaseByValue(a);\n  DerivedWithMemberVariables b;\n  DerivedWithMemberVariables c{b};\n  b = c;\n\n  // OK, derived type does not have extra state.\n  TwiceDerivedWithNoMemberVariables d;\n  DerivedWithMemberVariables e{d};\n  e = d;\n\n  // OK, derived does not override any method.\n  TwiceDerivedWithNoOverride f;\n  DerivedWithOverride g{f};\n  g = f;\n\n  // OK, no copying.\n  TakesBaseByReference(d);\n  TakesBaseByReference(f);\n\n  // Derived type overrides methods, but these methods are not in the base type,\n  // so cannot be called accidentally. Right now this triggers, but we might\n  // want to allow it.\n  DerivedThatOverridesH h;\n  a = h;\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: slicing object from type 'DerivedThatOverridesH' to 'Base' discards override 'h'\n}\n\nnamespace PR31187 {\n// Don't warn when calling constructor of base virtual class, from\n// initialization list of derived class constructor.\n\nstruct BaseA {\nvirtual ~BaseA() {}\nvirtual void foo() {}\n\nint i;\n};\n\nstruct BaseB : virtual BaseA {\nvirtual void foo() {}\n};\n\nstruct ClassWithVirtualBases : BaseB {\n  ClassWithVirtualBases(const BaseB& other) : BaseA(other), BaseB(other) {}\n  ClassWithVirtualBases(const ClassWithVirtualBases& other) : BaseA(other), BaseB(other) {}\n};\n\n}"
+    }
+  ]
+}

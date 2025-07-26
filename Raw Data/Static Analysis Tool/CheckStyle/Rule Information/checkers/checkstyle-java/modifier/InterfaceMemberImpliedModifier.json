@@ -1,0 +1,165 @@
+{
+  "name": "InterfaceMemberImpliedModifier",
+  "language": "java",
+  "description": "<div>\n Checks for implicit modifiers on interface members and nested types.\n </div>\n\n <p>\n This check is effectively the opposite of\n <a href=\"https://checkstyle.org/checks/modifier/redundantmodifier.html#RedundantModifier\">\n RedundantModifier</a>.\n It checks the modifiers on interface members, ensuring that certain modifiers are explicitly\n specified even though they are actually redundant.\n </p>\n\n <p>\n Methods in interfaces are {@code public} by default, however from Java 9 they can also be\n {@code private}. This check provides the ability to enforce that {@code public} is explicitly\n coded and not implicitly added by the compiler.\n </p>\n\n <p>\n From Java 8, there are three types of methods in interfaces - static methods marked with\n {@code static}, default methods marked with {@code default} and abstract methods which do not\n have to be marked with anything. From Java 9, there are also private methods marked with\n {@code private}. This check provides the ability to enforce that {@code abstract} is\n explicitly coded and not implicitly added by the compiler.\n </p>\n\n <p>\n Fields in interfaces are always {@code public static final} and as such the compiler does not\n require these modifiers. This check provides the ability to enforce that these modifiers are\n explicitly coded and not implicitly added by the compiler.\n </p>\n\n <p>\n Nested types within an interface are always {@code public static} and as such the compiler\n does not require the {@code public static} modifiers. This check provides the ability to\n enforce that the {@code public} and {@code static} modifiers are explicitly coded and not\n implicitly added by the compiler.\n </p>\n <pre>\n public interface AddressFactory {\n   // check enforces code contains \"public static final\"\n   public static final String UNKNOWN = \"Unknown\";\n\n   String OTHER = \"Other\";  // violation\n\n   // check enforces code contains \"public\" or \"private\"\n   public static AddressFactory instance();\n\n   // check enforces code contains \"public abstract\"\n   public abstract Address createAddress(String addressLine, String city);\n\n   List&lt;Address&gt; findAddresses(String city);  // violation\n\n   // check enforces default methods are explicitly declared \"public\"\n   public default Address createAddress(String city) {\n     return createAddress(UNKNOWN, city);\n   }\n\n   default Address createOtherAddress() {  // violation\n     return createAddress(OTHER, OTHER);\n   }\n }\n </pre>\n\n <p>\n Rationale for this check: Methods, fields and nested types are treated differently\n depending on whether they are part of an interface or part of a class. For example, by\n default methods are package-scoped on classes, but public in interfaces. However, from\n Java 8 onwards, interfaces have changed to be much more like abstract classes.\n Interfaces now have static and instance methods with code. Developers should not have to\n remember which modifiers are required and which are implied. This check allows the simpler\n alternative approach to be adopted where the implied modifiers must always be coded explicitly.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 122,
+  "branches": 31,
+  "apis": 23,
+  "test": [
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierFieldsOnInterface.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        18,
+        20,
+        24
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierFieldsOnInterface {\n    public static final int fieldPublicStaticFinal = 1;\n    public static int fieldPublicStatic = 1; \n    public final int fieldPublicFinal = 1; \n    public int fieldPublic = 1; \n    static final int fieldStaticFinal = 1; \n    static int fieldStatic = 1; \n    final int fieldFinal = 1; \n    int field = 1; \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierFieldsOnInterface2.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        20,
+        22,
+        24,
+        26
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierFieldsOnInterface2 {\n    public static final int fieldPublicStaticFinal = 1;\n    public static int fieldPublicStatic = 1;\n    public final int fieldPublicFinal = 1; \n    public int fieldPublic = 1; \n    static final int fieldStaticFinal = 1; \n    static int fieldStatic = 1; \n    final int fieldFinal = 1; \n    int field = 1; \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierFieldsOnInterface3.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        18,
+        22,
+        24,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierFieldsOnInterface3 {\n    public static final int fieldPublicStaticFinal = 1;\n    public static int fieldPublicStatic = 1; \n    public final int fieldPublicFinal = 1;\n    public int fieldPublic = 1; \n    static final int fieldStaticFinal = 1; \n    static int fieldStatic = 1; \n    final int fieldFinal = 1; \n    int field = 1; \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierFieldsOnInterface4.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        18,
+        20,
+        26,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierFieldsOnInterface4 {\n    public static final int fieldPublicStaticFinal = 1;\n    public static int fieldPublicStatic = 1; \n    public final int fieldPublicFinal = 1; \n    public int fieldPublic = 1; \n    static final int fieldStaticFinal = 1;\n    static int fieldStatic = 1; \n    final int fieldFinal = 1; \n    int field = 1; \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierMethodsOnClassNested.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        21,
+        27,
+        32,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic class InputInterfaceMemberImpliedModifierMethodsOnClassNested {\n    public static interface NestedInterface {\n        public static void methodPublicStatic() {\n        }\n        static void methodStatic() { \n        }\n        public default void methodPublicDefault() {\n        }\n        default void methodDefault() { \n        }\n        public abstract void methodPublicAbstract();\n        abstract void methodAbstract(); \n        public void methodPublic(); \n        void method(); \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierMethodsOnInterface.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        19,
+        25,
+        32,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierMethodsOnInterface {\n    public static void methodPublicStatic() {\n    }\n    static void methodStatic() { \n    }\n    public default void methodPublicDefault() {\n    }\n    default int methodDefault() { \n        int foo = 6;\n        return foo;\n    }\n    public abstract void methodPublicAbstract();\n    abstract void methodAbstract(); \n    public void methodPublic(); \n    void method(); \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierMethodsOnInterface2.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        34,
+        36
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierMethodsOnInterface2 {\n    public static void methodPublicStatic() {\n    }\n    static void methodStatic() {\n    }\n    public default void methodPublicDefault() {\n    }\n    default int methodDefault() {\n        int foo = 6;\n        return foo;\n    }\n    public abstract void methodPublicAbstract();\n    abstract void methodAbstract();\n    public void methodPublic(); \n    void method(); \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierMethodsOnInterface3.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        19,
+        25,
+        32,
+        36
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierMethodsOnInterface3 {\n    public static void methodPublicStatic() {\n    }\n    static void methodStatic() { \n    }\n    public default void methodPublicDefault() {\n    }\n    default int methodDefault() { \n        int foo = 6;\n        return foo;\n    }\n    public abstract void methodPublicAbstract();\n    abstract void methodAbstract(); \n    public void methodPublic();\n    void method(); \n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierMethodsOnInterfaceNested.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        21,
+        27,
+        32,
+        34
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierMethodsOnInterfaceNested {\n    public static interface NestedInterface {\n        public static void methodPublicStatic() {\n        }\n        static void methodStatic() { \n        }\n        public default void methodPublicDefault() {\n        }\n        default void methodDefault() { \n        }\n        public abstract void methodPublicAbstract();\n        abstract void methodAbstract(); \n        public void methodPublic(); \n        void method(); \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierNestedOnInterface.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        19,
+        22,
+        33,
+        38,
+        51,
+        54
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierNestedOnInterface {\n    public static interface NestedInterfacePublicStatic {\n    }\n    public interface NestedInterfacePublic { \n    }\n    static interface NestedInterfaceStatic { \n    }\n    interface NestedInterface { \n    }\n    public static enum NestedEnumPublicStatic {\n        TRUE,\n        FALSE\n    }\n    public enum NestedEnumPublic { \n        TRUE,\n        FALSE\n    }\n    static enum NestedEnumStatic { \n        TRUE,\n        FALSE\n    }\n    enum NestedEnum { \n        TRUE,\n        FALSE\n    }\n    public static class NestedClassPublicStatic {\n    }\n    public class NestedClassPublic { \n    }\n    static class NestedClassStatic { \n    }\n    class NestedClass { \n    }\n    public default boolean methodWithLocalClass(String input) {\n        class LocalClass {\n            public boolean test(String str) {\n                return str.isEmpty();\n            }\n        }\n        LocalClass foo = new LocalClass();\n        return foo.test(input);\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierNestedOnInterface2.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        19,
+        25,
+        33,
+        43,
+        51,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierNestedOnInterface2 {\n    public static interface NestedInterfacePublicStatic {\n    }\n    public interface NestedInterfacePublic { \n    }\n    static interface NestedInterfaceStatic {\n    }\n    interface NestedInterface { \n    }\n    public static enum NestedEnumPublicStatic {\n        TRUE,\n        FALSE\n    }\n    public enum NestedEnumPublic { \n        TRUE,\n        FALSE\n    }\n    static enum NestedEnumStatic {\n        TRUE,\n        FALSE\n    }\n    enum NestedEnum { \n        TRUE,\n        FALSE\n    }\n    public static class NestedClassPublicStatic {\n    }\n    public class NestedClassPublic { \n    }\n    static class NestedClassStatic {\n    }\n    class NestedClass { \n    }\n    public default boolean methodWithLocalClass(String input) {\n        class LocalClass {\n            public boolean test(String str) {\n                return str.isEmpty();\n            }\n        }\n        LocalClass foo = new LocalClass();\n        return foo.test(input);\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierNestedOnInterface3.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        22,
+        25,
+        38,
+        43,
+        54,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\npublic interface InputInterfaceMemberImpliedModifierNestedOnInterface3 {\n    public static interface NestedInterfacePublicStatic {\n    }\n    public interface NestedInterfacePublic {\n    }\n    static interface NestedInterfaceStatic { \n    }\n    interface NestedInterface { \n    }\n    public static enum NestedEnumPublicStatic {\n        TRUE,\n        FALSE\n    }\n    public enum NestedEnumPublic {\n        TRUE,\n        FALSE\n    }\n    static enum NestedEnumStatic { \n        TRUE,\n        FALSE\n    }\n    enum NestedEnum { \n        TRUE,\n        FALSE\n    }\n    public static class NestedClassPublicStatic {\n    }\n    public class NestedClassPublic {\n    }\n    static class NestedClassStatic { \n    }\n    class NestedClass { \n    }\n    public default boolean methodWithLocalClass(String input) {\n        class LocalClass {\n            public boolean test(String str) {\n                return str.isEmpty();\n            }\n        }\n        LocalClass foo = new LocalClass();\n        return foo.test(input);\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputInterfaceMemberImpliedModifierPackageScopeInterface.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        18,
+        20,
+        24,
+        35,
+        41,
+        46,
+        48,
+        55,
+        58
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.modifier.interfacememberimpliedmodifier;\ninterface InputInterfaceMemberImpliedModifierPackageScopeInterface {\n    public static final int fieldPublicStaticFinal = 1;\n    public static int fieldPublicStatic = 1; \n    public final int fieldPublicFinal = 1; \n    public int fieldPublic = 1; \n    static final int fieldStaticFinal = 1; \n    static int fieldStatic = 1; \n    final int fieldFinal = 1; \n    int field = 1; \n    public static void methodPublicStatic() {\n    }\n    static void methodStatic() { \n    }\n    public default void methodPublicDefault() {\n    }\n    default void methodDefault() { \n    }\n    public abstract void methodPublicAbstract();\n    abstract void methodAbstract(); \n    public void methodPublic(); \n    void method(); \n    public static interface NestedInterfacePublicStatic {\n    }\n    public interface NestedInterfacePublic { \n    }\n    static interface NestedInterfaceStatic { \n    }\n    interface NestedInterface { \n    }\n}"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "CloexecDup",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-dup",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 32,
+  "branches": 1,
+  "apis": 18,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        10
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-dup %t\n\nextern \"C\" int dup(int oldfd);\nvoid f() {\n  dup(1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer fcntl() to dup() because fcntl() allows F_DUPFD_CLOEXEC [android-cloexec-dup]\n  // CHECK-FIXES: fcntl(1, F_DUPFD_CLOEXEC);\n  int oldfd = 0;\n  dup(oldfd);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer\n  // CHECK-FIXES: fcntl(oldfd, F_DUPFD_CLOEXEC);\n}\n\nnamespace i {\nint dup(int oldfd);\nvoid g() {\n  dup(0);\n  int oldfd = 1;\n  dup(oldfd);\n}\n} // namespace i\n\nclass C {\npublic:\n  int dup(int oldfd);\n  void h() {\n    dup(0);\n    int oldfd = 1;\n    dup(oldfd);\n  }\n};"
+    }
+  ]
+}

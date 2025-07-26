@@ -1,0 +1,89 @@
+{
+  "name": "MisplacedNullCheck",
+  "language": "java",
+  "description": "\nThe null check here is misplaced. If the variable is null a `NullPointerException` will be thrown.\nEither the check is useless (the variable will never be `null`) or it is incorrect.\n        ",
+  "example": "public class Foo {\n    void bar() {\n        if (a.equals(baz) && a != null) {} // a could be null, misplaced null check\n\n        if (a != null && a.equals(baz)) {} // correct null check\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "null check after method invocation with conditional AND and !=",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "code": "\npublic class Foo {\n    void bar(Object a, Object baz) {\n        if (a.equals(baz) && a != null) {} // a could be null, misplaced null check\n        if (a.equals(baz) || a == null) {} // a could be null, misplaced null check\n\n        if (a.equals(baz) && null != a) {} // a could be null, misplaced null check\n        if (a.equals(baz) || null == a) {} // a could be null, misplaced null check\n\n        if (a != null && a.equals(baz)) {} // correct null check\n        if (a == null || a.equals(baz)) {} // correct null check\n    }\n}\n        "
+    },
+    {
+      "description": "null check after nested method invocation",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        4,
+        6,
+        7
+      ],
+      "code": "\npublic class Foo {\n    void bar(Object a, Foo baz) {\n        if (a.equals(baz.foo()) && baz != null) {} // baz could be null, misplaced null check\n        if (a.equals(baz.foo()) || baz == null) {} // baz could be null, misplaced null check\n\n        if (a.equals(baz.foo()) && null != baz) {} // baz could be null, misplaced null check\n        if (a.equals(baz.foo()) || null == baz) {} // baz could be null, misplaced null check\n\n        if (baz != null && a.equals(baz.foo())) {} // correct null check\n        if (baz == null || a.equals(baz.foo())) {} // correct null check\n    }\n\n    public Object foo() { return null; }\n}\n        "
+    },
+    {
+      "description": "null check before nested method invocation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(Object a) {\n        if (a != null && a.equals(foo())) {}\n    }\n\n    public Object foo() { return null; }\n}\n        "
+    },
+    {
+      "description": "1610730: null check after method invocation with conditional OR and ==",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    void bar(Object a, Object baz) {\n        if (a.equals(baz) || a == null) {}\n    }\n}\n        "
+    },
+    {
+      "description": "3372128: False positive: ArrayIsStoredDirectly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\nimport java.util.List;\npublic class Foo {\n    private List<String> excludeStatus;\n    public final void setExcludeStatus(String[] excludeStatus) {\n        if (excludeStatus != null) {\n            this.excludeStatus = Arrays.asList(excludeStatus.clone());\n        } else {\n            this.excludeStatus = null;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#977 MisplacedNullCheck makes false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public void method(final String value,final String oldValue) {\n        if ((value != null && !value.equals(oldValue)) || value == null) {\n            // Do something\n        }\n\n        if ((value == null || !value.equals(oldValue)) && value != null) {}\n    }\n}\n        "
+    },
+    {
+      "description": "#2242 False-positive MisplacedNullCheck reported (1)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    String field;\n\n    Test(String f) { field = f; }\n\n    public boolean method(final String value) {\n        boolean c = value != null\n             && ((field != null && !value.equals(field.toString())) || field == null);\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "#2242 False-positive MisplacedNullCheck reported (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    String field;\n\n    Test(String f) { field = f; }\n\n    public boolean method(final String value) {\n        boolean c = value != null\n             && (field == null || (field != null && !value.equals(field.toString())));\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "False-positive/negative with multiple conditions",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        9
+      ],
+      "code": "\nimport java.util.Map;\npublic class Test {\n    public void method(String annotationType, Map<String, Object> attributes) {\n        boolean isStereotype = annotationType.equals(\"javax.inject.Named\");\n        if (isStereotype && attributes != null && attributes.containsKey(\"value\")) {}\n        if (isStereotype || attributes == null || attributes.containsKey(\"value\")) {}\n\n        if (isStereotype && attributes.containsKey(\"value\") && attributes != null) {}\n        if (isStereotype || attributes.containsKey(\"value\") || attributes == null) {}\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with no dereferencing variable access",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(Object a, Object b, boolean aMustBePresent) {\n        if (a == b || a == null) { } // there is no NPE happening here\n        int aUndefined = (a == b || a == null) ? 1 : 0;\n        if (a != b && a != null) { }\n        if (a == this || a == null) { }\n        for (Object p = a; p != b && p != null; p = p.prev) {}\n        if (a != this &&\n            a != null && b.equals(a.toString())) { } // potential NPE for b.equals, but that's not the point here\n        if (a == b || a == null || (b == null && !aMustBePresent)) { }\n        if ((a instanceof Foo) || (a == null)) { }\n        while (Object.class != a && a != null) { }\n    }\n}\n        "
+    }
+  ]
+}

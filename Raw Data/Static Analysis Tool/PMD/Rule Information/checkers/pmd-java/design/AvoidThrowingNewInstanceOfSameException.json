@@ -1,0 +1,68 @@
+{
+  "name": "AvoidThrowingNewInstanceOfSameException",
+  "language": "java",
+  "description": "\nCatch blocks that merely rethrow a caught exception wrapped inside a new instance of the same type only add to\ncode size and runtime complexity.\n        ",
+  "example": "public void bar() {\n    try {\n        // do something\n    } catch (SomeException se) {\n        // harmless comment\n        throw new SomeException(se);\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "basic failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            throw new SomeException(se);\n        }\n    }\n}\nclass SomeException extends Exception {}\n        "
+    },
+    {
+      "description": "do something else before throwing a new instance of the same exception, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            System.out.println(\"something interesting\");\n            throw new SomeException(se);\n        }\n    }\n}\nclass SomeException extends Exception {}\n        "
+    },
+    {
+      "description": "repackage cause as an instance of the same exception, failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            throw new SomeException(se.getCause());\n        }\n    }\n}\nclass SomeException extends Exception {}\n        "
+    },
+    {
+      "description": "throw new instance of the same exception with a different message, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            throw new SomeException(\"new exception message\", se);\n        }\n    }\n}\nclass SomeException extends Exception {}\n        "
+    },
+    {
+      "description": "throw new instance of the same exception with the same message, failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            throw new SomeException(se.getMessage());\n        }\n    }\n}\nclass SomeException extends Exception {}\n        "
+    },
+    {
+      "description": "throws a new instance of the same exception without any arguments, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            throw new SomeException();\n        }\n    }\n}\nclass SomeException extends Exception {}\n        "
+    },
+    {
+      "description": "throws a new instance of the same exception from a nested try/catch block, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            try {\n            } catch (OtherException oe) {\n                throw new SomeException();\n            }\n        }\n    }\n}\nclass SomeException extends Exception {}\nclass OtherException extends Exception {}\n        "
+    },
+    {
+      "description": "wraps the exception in a new instance of the same exception from a nested try/catch block, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        try {\n        } catch (SomeException se) {\n            try {\n            } catch (OtherException oe) {\n                throw new SomeException(se);\n            }\n        }\n    }\n}\nclass SomeException extends Exception {}\nclass OtherException extends Exception {}\n        "
+    }
+  ]
+}

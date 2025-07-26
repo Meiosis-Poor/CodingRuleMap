@@ -1,0 +1,36 @@
+{
+  "name": "VirtualNearMiss",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-virtual-near-miss",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 268,
+  "branches": 48,
+  "apis": 153,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 15,
+      "expected-linenumbers": [
+        18,
+        22,
+        30,
+        47,
+        48,
+        63,
+        67,
+        96,
+        102,
+        108,
+        112,
+        116,
+        120,
+        126,
+        131
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-virtual-near-miss %t\n\nclass NoDefinedClass1;\nclass NoDefinedClass2;\n\nstruct Base {\n  virtual void func();\n  virtual void gunk();\n  virtual ~Base();\n  virtual Base &operator=(const Base &);\n  virtual NoDefinedClass1 *f();\n};\n\nstruct Derived : Base {\n  // Should not warn \"do you want to override 'gunk'?\", because gunk is already\n  // overriden by this class.\n  virtual void funk();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Derived::funk' has a similar name and the same signature as virtual method 'Base::func'; did you mean to override it? [bugprone-virtual-near-miss]\n  // CHECK-FIXES: virtual void func();\n\n  void func2();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Derived::func2' has {{.*}} 'Base::func'\n  // CHECK-FIXES: void func();\n\n  void func22(); // Should not warn.\n\n  void gunk(); // Should not warn: gunk is override.\n\n  void fun();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Derived::fun' has {{.*}} 'Base::func'\n  // CHECK-FIXES: void func();\n\n  Derived &operator==(const Base &); // Should not warn: operators are ignored.\n\n  virtual NoDefinedClass2 *f1(); // Should not crash: non-defined class return type is ignored.\n};\n\ntemplate <typename T>\nstruct TBase {\n  virtual void tfunc(T t);\n};\n\ntemplate <typename T>\nstruct TDerived : TBase<T> {\n  virtual void tfunk(T t);\n  // Should not apply fix for template.\n  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: method 'TDerived<double>::tfunk' has {{.*}} 'TBase<double>::tfunc'\n  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: method 'TDerived<int>::tfunk' has {{.*}} 'TBase<int>::tfunc'\n  // CHECK-FIXES: virtual void tfunk(T t);\n};\n\nTDerived<int> T1;\nTDerived<double> T2;\n\n// Should not fix macro definition\n#define MACRO1 void funcM()\n// CHECK-FIXES: #define MACRO1 void funcM()\n#define MACRO2(m) void m()\n// CHECK-FIXES: #define MACRO2(m) void m()\n\nstruct DerivedMacro : Base {\n  MACRO1;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'DerivedMacro::funcM' has {{.*}} 'Base::func'\n  // CHECK-FIXES: MACRO1;\n\n  MACRO2(func3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'DerivedMacro::func3' has {{.*}} 'Base::func'\n  // CHECK-FIXES: MACRO2(func);\n};\n\ntypedef Derived derived_type;\n\nclass Father {\npublic:\n  Father();\n  virtual void func();\n  virtual Father *create(int i);\n  virtual Base &&generate();\n  virtual Base *canonical(Derived D);\n};\n\nclass Mother {\npublic:\n  Mother();\n  static void method();\n  virtual int method(int argc, const char **argv);\n  virtual int method(int argc) const;\n  virtual int decay(const char *str);\n};\n\nclass Child : private Father, private Mother {\npublic:\n  Child();\n\n  virtual void func2();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::func2' has {{.*}} 'Father::func'\n  // CHECK-FIXES: virtual void func();\n\n  int methoe(int x, char **strs); // Should not warn: parameter types don't match.\n\n  int methoe(int x);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::methoe' has {{.*}} 'Mother::method'\n  // CHECK-FIXES: int method(int x);\n\n  void methof(int x, const char **strs); // Should not warn: return types don't match.\n\n  int methoh(int x, const char **strs);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::methoh' has {{.*}} 'Mother::method'\n  // CHECK-FIXES: int method(int x, const char **strs);\n\n  virtual Child *creat(int i);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::creat' has {{.*}} 'Father::create'\n  // CHECK-FIXES: virtual Child *create(int i);\n\n  virtual Derived &&generat();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::generat' has {{.*}} 'Father::generate'\n  // CHECK-FIXES: virtual Derived &&generate();\n\n  int decaz(const char str[]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::decaz' has {{.*}} 'Mother::decay'\n  // CHECK-FIXES: int decay(const char str[]);\n\n  operator bool();\n\n  derived_type *canonica(derived_type D);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::canonica' has {{.*}} 'Father::canonical'\n  // CHECK-FIXES: derived_type *canonical(derived_type D);\n\nprivate:\n  void funk();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: method 'Child::funk' has {{.*}} 'Father::func'\n  // CHECK-FIXES: void func();\n};"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "name": "TemplateVirtualMemberFunction",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - portability-template-virtual-member-function",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 44,
+  "branches": 1,
+  "apis": 22,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        9,
+        16,
+        29,
+        30,
+        35,
+        36,
+        51,
+        52,
+        73,
+        74,
+        94,
+        95,
+        146,
+        147
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s portability-template-virtual-member-function %t\nnamespace UninstantiatedVirtualMember {\ntemplate<typename T>\nstruct CrossPlatformError {\n    virtual ~CrossPlatformError() = default;\n\n    static void used() {}\n\n    // CHECK-MESSAGES: [[#@LINE+1]]:18: warning: unspecified virtual member function instantiation\n    virtual void unused() {\n        T MSVCError = this;\n    };\n};\n\nint main() {\n    // CHECK-MESSAGES: [[#@LINE+1]]:5: note: template instantiated here\n    CrossPlatformError<int>::used();\n    return 0;\n}\n} // namespace UninstantiatedVirtualMember\n\nnamespace UninstantiatedVirtualMembers {\ntemplate<typename T>\nstruct CrossPlatformError {\n    virtual ~CrossPlatformError() = default;\n\n    static void used() {}\n\n    // CHECK-MESSAGES: [[#@LINE+2]]:18: warning: unspecified virtual member function instantiation\n    // CHECK-MESSAGES: [[#@LINE+13]]:5: note: template instantiated here\n    virtual void unused() {\n        T MSVCError = this;\n    };\n\n    // CHECK-MESSAGES: [[#@LINE+2]]:18: warning: unspecified virtual member function instantiation\n    // CHECK-MESSAGES: [[#@LINE+7]]:5: note: template instantiated here\n    virtual void unused2() {\n        T MSVCError = this;\n    };\n};\n\nint main() {\n    CrossPlatformError<int>::used();\n    return 0;\n}\n} // namespace UninstantiatedVirtualMembers\n\nnamespace UninstantiatedVirtualDestructor {\ntemplate<typename T>\nstruct CrossPlatformError {\n    // CHECK-MESSAGES: [[#@LINE+2]]:13: warning: unspecified virtual member function instantiation\n    // CHECK-MESSAGES: [[#@LINE+9]]:5: note: template instantiated here\n    virtual ~CrossPlatformError() {\n        T MSVCError = this;\n    };\n\n    static void used() {}\n};\n\nint main() {\n    CrossPlatformError<int>::used();\n    return 0;\n}\n} // namespace UninstantiatedVirtualDestructor\n\nnamespace MultipleImplicitInstantiations {\ntemplate<typename T>\nstruct CrossPlatformError {\n    virtual ~CrossPlatformError() = default;\n\n    static void used() {}\n\n    // CHECK-MESSAGES: [[#@LINE+2]]:18: warning: unspecified virtual member function instantiation\n    // CHECK-MESSAGES: [[#@LINE+7]]:5: note: template instantiated here\n    virtual void unused() {\n        T MSVCError = this;\n    };\n};\n\nint main() {\n    CrossPlatformError<int>::used();\n    CrossPlatformError<float>::used();\n    CrossPlatformError<long>::used();\n    return 0;\n}\n} // namespace MultipleImplicitInstantiations\n\nnamespace SomeImplicitInstantiationError {\ntemplate <typename T> struct CrossPlatformError {\n    virtual ~CrossPlatformError() = default;\n\n    static void used() {}\n\n    // CHECK-MESSAGES: [[#@LINE+2]]:18: warning: unspecified virtual member function instantiation\n    // CHECK-MESSAGES: [[#@LINE+5]]:5: note: template instantiated here\n    virtual void unused(){};\n};\n\nint main() {\n    CrossPlatformError<int>::used();\n    CrossPlatformError<float> NoError;\n    return 0;\n}\n} // namespace SomeImplicitInstantiationError\n\nnamespace InstantiatedVirtualMemberFunctions {\ntemplate<typename T>\nstruct NoError {\n    virtual ~NoError() {};\n    virtual void unused() {};\n    virtual void unused2() {};\n    virtual void unused3() {};\n};\n\nint main() {\n    NoError<int> Ne;\n    return 0;\n}\n} // namespace InstantiatedVirtualMemberFunctions\n\nnamespace UninstantiatedNonVirtualMemberFunctions {\ntemplate<typename T>\nstruct NoError {\n    static void used() {};\n    void unused() {};\n    void unused2() {};\n    void unused3() {};\n};\n\nint main() {\n    NoError<int>::used();\n    return 0;\n}\n} // namespace UninstantiatedNonVirtualMemberFunctions\n\nnamespace PartialSpecializationError {\ntemplate<typename T, typename U>\nstruct CrossPlatformError {};\n\ntemplate<typename U>\nstruct CrossPlatformError<int, U>{\n    virtual ~CrossPlatformError() = default;\n\n    static void used() {}\n\n    // CHECK-MESSAGES: [[#@LINE+2]]:18: warning: unspecified virtual member function instantiation\n    // CHECK-MESSAGES: [[#@LINE+7]]:5: note: template instantiated here\n    virtual void unused() {\n        U MSVCError = this;\n    };\n};\n\nint main() {\n    CrossPlatformError<int, float>::used();\n    return 0;\n}\n} // namespace PartialSpecializationError\n\nnamespace PartialSpecializationNoInstantiation {\ntemplate<typename T, typename U>\nstruct NoInstantiation {};\n\ntemplate<typename U>\nstruct NoInstantiation<int, U>{\n    virtual ~NoInstantiation() = default;\n\n    static void used() {}\n\n    virtual void unused() {\n        U MSVCError = this;\n    };\n};\n} // namespace PartialSpecializationNoInstantiation"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "ExceptionEscape",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - openmp-exception-escape",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 67,
+  "branches": 2,
+  "apis": 34,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        16,
+        60,
+        70,
+        71,
+        86,
+        100,
+        114
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s openmp-exception-escape %t -- -extra-arg=-fopenmp=libomp -extra-arg=-fexceptions -config=\"{CheckOptions: {openmp-exception-escape.IgnoredExceptions: 'ignored, ignored2'}}\" --\n\nint thrower() {\n  throw 42;\n}\n\nclass ignored {};\nclass ignored2 {};\nnamespace std {\nclass bad_alloc {};\n} // namespace std\n\nvoid parallel() {\n#pragma omp parallel\n  thrower();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: an exception thrown inside of the OpenMP 'parallel' region is not caught in that same region\n}\n\nvoid ignore() {\n#pragma omp parallel\n  throw ignored();\n}\n\nvoid ignore2() {\n#pragma omp parallel\n  throw ignored2();\n}\n\nvoid standalone_directive() {\n#pragma omp taskwait\n  throw ignored(); // not structured block\n}\n\nvoid ignore_alloc() {\n#pragma omp parallel\n  throw std::bad_alloc();\n}\n\nvoid parallel_caught() {\n#pragma omp parallel\n  {\n    try {\n      thrower();\n    } catch (...) {\n    }\n  }\n}\n\nvoid for_header(const int a) {\n  // Only the body of the loop counts.\n#pragma omp for\n  for (int i = 0; i < thrower(); i++)\n    ;\n}\n\nvoid forloop(const int a) {\n#pragma omp for\n  for (int i = 0; i < a; i++)\n    thrower();\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: an exception thrown inside of the OpenMP 'for' region is not caught in that same region\n}\n\nvoid parallel_forloop(const int a) {\n#pragma omp parallel\n  {\n#pragma omp for\n    for (int i = 0; i < a; i++)\n      thrower();\n    thrower();\n    // CHECK-MESSAGES: :[[@LINE-5]]:3: warning: an exception thrown inside of the OpenMP 'parallel' region is not caught in that same region\n    // CHECK-MESSAGES: :[[@LINE-3]]:7: warning: an exception thrown inside of the OpenMP 'for' region is not caught in that same region\n  }\n}\n\nvoid parallel_forloop_caught(const int a) {\n#pragma omp parallel\n  {\n#pragma omp for\n    for (int i = 0; i < a; i++) {\n      try {\n        thrower();\n      } catch (...) {\n      }\n    }\n    thrower();\n    // CHECK-MESSAGES: :[[@LINE-9]]:3: warning: an exception thrown inside of the OpenMP 'parallel' region is not caught in that same region\n  }\n}\n\nvoid parallel_caught_forloop(const int a) {\n#pragma omp parallel\n  {\n#pragma omp for\n    for (int i = 0; i < a; i++)\n      thrower();\n    try {\n      thrower();\n    } catch (...) {\n    }\n    // CHECK-MESSAGES: :[[@LINE-5]]:7: warning: an exception thrown inside of the OpenMP 'for' region is not caught in that same region\n  }\n}\n\nvoid parallel_outercaught_forloop(const int a) {\n#pragma omp parallel\n  {\n    try {\n#pragma omp for\n      for (int i = 0; i < a; i++)\n        thrower();\n      thrower();\n    } catch (...) {\n    }\n    // CHECK-MESSAGES: :[[@LINE-4]]:9: warning: an exception thrown inside of the OpenMP 'for' region is not caught in that same region\n  }\n}\n\nvoid parallel_outercaught_forloop_caught(const int a) {\n#pragma omp parallel\n  {\n    try {\n#pragma omp for\n      for (int i = 0; i < a; i++) {\n        try {\n          thrower();\n        } catch (...) {\n        }\n      }\n    } catch (...) {\n    }\n  }\n}"
+    }
+  ]
+}

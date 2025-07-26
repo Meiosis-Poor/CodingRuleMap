@@ -1,0 +1,31 @@
+{
+  "name": "IgnoredRemoveResult",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - hicpp-ignored-remove-result",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 30,
+  "branches": 2,
+  "apis": 6,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        33,
+        34,
+        35,
+        38,
+        39,
+        40,
+        43,
+        44,
+        45,
+        51
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s hicpp-ignored-remove-result %t\n// RUN: %check_clang_tidy -check-suffixes=NOCAST %s hicpp-ignored-remove-result %t -- -config='{CheckOptions: {hicpp-ignored-remove-result.AllowCastToVoid: false}}'\n\nnamespace std {\n\ntemplate <typename ForwardIt, typename T>\nForwardIt remove(ForwardIt, ForwardIt, const T &);\n\ntemplate <typename ForwardIt, typename UnaryPredicate>\nForwardIt remove_if(ForwardIt, ForwardIt, UnaryPredicate);\n\ntemplate <typename ForwardIt>\nForwardIt unique(ForwardIt, ForwardIt);\n\ntemplate <class InputIt, class T>\nInputIt find(InputIt, InputIt, const T&);\n\nstruct unique_disposable {\n  void* release();\n};\n\nclass error_code {\n};\n\n} // namespace std\n\nstd::error_code errorFunc() {\n  return std::error_code();\n}\n\nvoid warning() {\n  std::remove(nullptr, nullptr, 1);\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n  // CHECK-MESSAGES: [[@LINE-2]]:3: note: cast the expression to void to silence this warning\n  // CHECK-MESSAGES-NOCAST: [[@LINE-3]]:3: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n\n  std::remove_if(nullptr, nullptr, nullptr);\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n  // CHECK-MESSAGES: [[@LINE-2]]:3: note: cast the expression to void to silence this warning\n  // CHECK-MESSAGES-NOCAST: [[@LINE-3]]:3: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n\n  std::unique(nullptr, nullptr);\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n  // CHECK-MESSAGES: [[@LINE-2]]:3: note: cast the expression to void to silence this warning\n  // CHECK-MESSAGES-NOCAST: [[@LINE-3]]:3: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n}\n\nvoid optionalWarning() {\n  // No warning unless AllowCastToVoid=false\n  (void)std::remove(nullptr, nullptr, 1);\n  // CHECK-MESSAGES-NOCAST: [[@LINE-1]]:9: warning: the value returned by this function should not be disregarded; neglecting it may lead to errors\n}\n\nvoid noWarning() {\n\n  auto RemoveRetval = std::remove(nullptr, nullptr, 1);\n\n  auto RemoveIfRetval = std::remove_if(nullptr, nullptr, nullptr);\n\n  auto UniqueRetval = std::unique(nullptr, nullptr);\n\n  // Verify that other checks in the baseclass are not used.\n  // - no warning on std::find since the checker overrides\n  //   bugprone-unused-return-value's checked functions.\n  std::find(nullptr, nullptr, 1);\n  // - no warning on return types since the checker disable\n  //   bugprone-unused-return-value's checked return types.\n  errorFunc();\n  (void) errorFunc();\n\n  std::unique_disposable{}.release();\n}"
+    }
+  ]
+}

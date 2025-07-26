@@ -1,0 +1,56 @@
+{
+  "name": "NcssMethodCount",
+  "language": "apex",
+  "description": "\nThis rule uses the NCSS (Non-Commenting Source Statements) algorithm to determine the number of lines\nof code for a given method. NCSS ignores comments, and counts actual statements. Using this algorithm,\nlines of code that are split are counted as one.\n        ",
+  "example": "public class Foo extends Bar {\n    //this method only has 1 NCSS lines\n    public Integer method() {\n        super.method();\n\n\n\n        return 1;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 38,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "short",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        bar();\n    }\n}\n        "
+    },
+    {
+      "description": "lots of comments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        //nothing to see here\n        //nothing to see here\n        //nothing to see here\n        //nothing to see here\n        bar();\n        //nothing to see here\n        //nothing to see here\n        //nothing to see here\n        //nothing to see here\n        foo();\n    }\n}\n        "
+    },
+    {
+      "description": "long method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "long method - changed minimum",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "ignores constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n        bar();\n    }\n}\n        "
+    },
+    {
+      "description": "Github issue #183 - lines are counted properly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\nprivate class AcceptanceTests_Test {\n\n    @isTest\n    private static void test() {\n        // Setup\n        Opportunity o1 = new Opportunity()\n                                    .add(new Contact().foo(1)  .bar(1).year(2012)  .bar(1).price(5)  .vol(100))\n                                    .add(new Contact().foo(1)  .bar(2).year(2013)  .bar(1).price(5)  .vol(110))\n                                    .add(new Contact().foo(1)  .bar(3).year(2014)  .bar(1).price(5)  .vol(120))\n                                    .add(new Contact().foo(1)  .bar(4).year(2015)  .bar(1).price(5)  .vol(130))\n                                    .persist();\n\n        // Verify\n        System.assert(attribute());\n    }\n}\n        "
+    },
+    {
+      "description": "#1396 Method with comment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/**\n * Class comment\n */\npublic class SomeClass {\n    /**\n     * Comment\n     */\n    public void doSomething() {\n        System.debug('hello world');\n    }\n\n    /** Field comment */\n    private String field;\n}\n        "
+    }
+  ]
+}

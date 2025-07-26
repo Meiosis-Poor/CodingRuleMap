@@ -1,0 +1,363 @@
+{
+  "name": "SingularField",
+  "language": "java",
+  "description": "\nReports fields which may be converted to a local variable. This is so because\nin every method where the field is used, it is assigned before it is first read.\nHence, the value that the field had before the method call may not be observed,\nso it might as well not be stored in the enclosing object.\n\nLimitations:\n* We can only check private fields for now.\n* The rule is not aware of threading, so it may cause false positives in concurrent code.\nSuch FPs are best handled by suppression (see also the `ignoredAnnotations` property).\n        ",
+  "example": "public class Foo {\n    private int x; // this will be reported\n\n    public int foo(int y) {\n       x = y + 5; // assigned before any read\n       return x;\n    }\n\n    public int fooOk(int y) {\n       int z = y + 5; // might as well be a local like here\n       return z;\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 179,
+  "branches": 30,
+  "apis": 18,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n\n    private int x;\n\n    int bar(int y) {\n        x = y + 5;\n        return x;\n    }\n}\n            "
+    },
+    {
+      "description": "Ok, used for control flow",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    int bar(int y) {\n        if (y == 5)\n            x = y + 5;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void setX(int x) {\n        this.x = x;\n    }\n    int getX() {\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "second method uses 'this'",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void setX(int x) {\n        this.x = x;\n    }\n    int getX() {\n        return this.x;\n    }\n}\n        "
+    },
+    {
+      "description": "skip publics",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int x;\n    int bar(int y) {\n        x = y + 5;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "#3694 dont skip statics",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static int x;\n    int bar(int y) {\n        x = y + 5;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "unused fields shouldn't show up",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int a = 3;\n    int b = 3;\n    void bar() {\n        foo(b);\n    }\n}\n        "
+    },
+    {
+      "description": "inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int a;\n    void bar() {\n        Object o = new FooAdapter() {\n            public void bar(Event e) {\n                a = e.GetInt();\n            }\n        };\n    }\n    int baz() {\n        return a;\n    }\n}\n        "
+    },
+    {
+      "description": "initialized in constructor, but the field is useless",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    public Foo(int y) {\n        x = y;\n    }\n    int bar(int y) {\n        x = y + 5;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "ok case with Object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Integer x = null;\n    private Integer getFoo() {\n        if (x == null) {\n            x = new Integer(1);\n        }\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, shouldn't catch unused variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void bar(int y) {\n    }\n}\n        "
+    },
+    {
+      "description": "ok case with self-instantiation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Integer x = new Integer(1);\n    private Integer getFoo() {\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, field has no read access",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Integer x = new Integer(1);\n    public Foo(Integer x) {\n    }\n    private void getFoo(Integer x) {\n        this.x = x;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, instantiates own self internally",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    int bar(int y) {\n        x = y + 5;\n        return x;\n    }\n    private void bar() {\n        Foo foo = new Foo();\n        foo.x = new Integer(5);\n    }\n}\n        "
+    },
+    {
+      "description": "ok, variable accessed twice in same method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Map map = new SomeMap();\n    private boolean bar(Object o) {\n        boolean ret = true;\n        if(super.isTrue) {\n            if(map.get(o) != null) {\n                ret = false;\n            } else {\n                map.put(o,o);\n            }\n        }\n        return ret;\n    }\n}\n        "
+    },
+    {
+      "description": "ok, static is ignored",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static int x;\n    static {\n        x = 5;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, field has no read access (shadowing)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    void setX(int x) {\n        this.x = x;\n    }\n    int doX() {\n        int x = 5;\n        return x*3;\n    }\n}\n        "
+    },
+    {
+      "description": "initialized in static initialization block",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static Foo FOO = new Foo();\n    private int x;\n    static {\n        FOO.x = 5;\n    }\n    int bar(int y) {\n        x = y + 5;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "1409944, fields used to synchronize should not trigger",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final Object oSync = new Object();\n\n    public void foo() {\n        synchronized (oSync) {\n            bar();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "1409944, fields not used to synchronize should trigger",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    private final Object sync = new Object();\n    private Object noSync;\n\n    public void foo() {\n        synchronized (sync) {\n            noSync = new String(\"test\");\n            call(noSync);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "1409944, field is used to change the flow of different calls",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private boolean bar = false;\n\n    public void foo() {\n        if (!bar) {\n            onlyOnce();\n            bar = true;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, used in outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private class Bar {\n        private int bar;\n\n        private Bar(int barry) {\n            bar = barry;\n        }\n    }\n\n    public int foo() {\n        Bar bart = new Bar(5);\n        return bart.bar;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, field is used by outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private class Bar {\n        private int bar;\n\n        private Bar(int barry) {\n            bar = barry;\n        }\n    }\n\n    public int foo() {\n        Bar bart = new Bar(5);\n        return bart.bar;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, violation with first usage != non-assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    int bar(int y) {\n        if (x > y) x = y + 5;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, field used to aggregate values",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int x;\n    int bar(int y) {\n        x = x + y;\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "Ok, the field is unused",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Person p = new Person();\n\n    //ctor\n    public Foo(String name) {\n        p.name = name;\n    }\n\n    public void foo(String name) {\n        p.name = name;\n    }\n\n}\n        "
+    },
+    {
+      "description": "violation, in ctor it's used only once",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Person p = new Person();\n\n    //ctor\n    public Foo(String name) {\n        p.name = name;\n    }\n\n}\n        "
+    },
+    {
+      "description": "multiple fields on same line",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    private int x, foo;\n    int bar(int y) {\n        foo = y + 5;\n        return foo;\n    }\n    void setX(int x) {\n        this.x = x;\n    }\n    int getX() {\n        return x;\n    }\n}\n        "
+    },
+    {
+      "description": "field in inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private final Object bufferFilter = new Object() {\n        public String toString() {\n            final Object[] candidates;\n            candidates = new Object[2];\n            return null;\n        }\n    };\n}\n        "
+    },
+    {
+      "description": "bug 3574133 - false + with enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum MyEnum {\n    A(\"a\"),\n    B(\"b\");\n\n    private final String description; // <-- SingularField reported\n\n    private MyEnum(String description) {\n        this.description = description;\n    }\n\n    public static MyEnum byDescription(String description) {\n        for (MyEnum myEnum : values()) {\n            if (myEnum.description.equals(description)) { // <--- USED HERE\n            return myEnum;\n            }\n        }\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "#1307 False positive: SingularField and lambda-expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.foo;\n\nimport java.util.Optional;\n\npublic enum Supplier {\n    bar(\"Bar\");\n\n    private final String supplierName;\n\n    private Supplier(String supplierName) {\n        this.supplierName = supplierName;\n    }\n\n    public static String getSupplierNameIfPresent(String supplier) {\n        return Optional.ofNullable(supplier).map(foo -> valueOf(supplier).supplierName).orElse(\"\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1494 [java] SingularField: lombok.Data false positive - part1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Data;\n\n@Data\npublic class MyClass {\n\n    private String field1;\n\n    public MyClass(String field1) {\n        this.field1 = field1;\n    }\n}\n        "
+    },
+    {
+      "description": "#1494 [java] SingularField: lombok.Data false positive - part2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\n\npublic class MyClass {\n\n    @Getter\n    private String field1;\n\n    public MyClass(String field1) {\n        this.field1 = field1;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] SingularField: Lombok false positive with inner class and annotated outer class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Data;\n\n@Data\npublic class Outer {\n    public class Inner {\n        private String innerField;\n    }\n\n    private String outerField;\n\n    public Outer(String outerField) {\n        this.outerField = outerField;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] SingularField: Lombok false positive with annotated inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\nimport lombok.Data;\n\npublic class Outer {\n    @Data\n    public class Inner {\n        private String innerField;\n    }\n\n    private String outerField;\n\n    public Outer(String outerField) {\n        this.outerField = outerField;\n    }\n\n    void useField() {\n        outerField = \"\";\n        System.out.println(outerField);\n    }\n}\n        "
+    },
+    {
+      "description": "#177 [java] SingularField with lambdas as final fields",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/** Dummy class. */\npublic final class Test {\n    private Timer timer1;\n    private Timer timer2;\n\n    /** Dummy constructor. */\n    public Timer() {\n        this.timer1 = new Timer(0, e -> {\n            // do nothing for now\n        });\n        this.timer2 = new Timer(0, e -> {\n            // do nothing for now\n        });\n    }\n\n    /** Use a lambda expression to reference timer1 -- triggers SingularField error. */\n    private final Runnable play1 = () -> {\n        this.timer1.start();\n    };\n\n    /** Use an anonymous class to reference timer2 -- no error. */\n    private final Runnable play2 = new Runnable() {\n        @Override\n        public void run() {\n            timer2.start();\n        }\n    };\n}\n        "
+    },
+    {
+      "description": "#527 [java] Lombok getter annotation on enum is not recognized correctly",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Getter;\n\n@Getter\npublic enum Foo {\n    BAR(1);\n\n    private final int number;\n\n    Foo(final int number) {\n        this.number = number;\n    }\n}\n        "
+    },
+    {
+      "description": "#1056 [java] Property ignoredAnnotations does not work for SingularField and ImmutableField",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Source {\n    @Deprecated\n    private Object o; //violation!\n\n    Object m() {\n        o = new Object();\n        return o;\n    }\n}\n        "
+    },
+    {
+      "description": "#1703 SingularField: False-positive with @Delegate",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.experimental.Delegate;\n\npublic class Foo {\n    @Delegate private String bar;\n\n    public void set(String s) {\n        bar = s;\n    }\n}\n        "
+    },
+    {
+      "description": "#2673 SingularField false positive with lombok annotation EqualsAndHashCode",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.EqualsAndHashCode;\n\n@EqualsAndHashCode\npublic class Foo {\n    private String bar;\n\n    public void set(String s) {\n        bar = s;\n    }\n}\n        "
+    },
+    {
+      "description": "#3006 [java] NPE in SingularFieldRule with concise resource syntax",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package oo;\n\n            public class IPA {\n\n                private final LocalModel model;\n\n                public InternalAggregation reduce(String s) {\n                    try (model) {\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#3303 [java] NPE Exception applying rule SingularField on file",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package net.sourceforge.pmd.lang.java.rule.design.singularfield;\n\n            public class Issue3303 {\n\n                // \"private\" is a must for reproducing the problem\n                private final NoThrowingCloseable first;\n\n                Issue3303(NoThrowingCloseable first) {\n                    this.first = first;\n                }\n\n                public void performClosing() {\n                    try (first) {\n                        // this block can be empty or not\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "failure case with anonymous class",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        13,
+        20,
+        23
+      ],
+      "code": "\npublic class Foo {\n    void myMethod() {\n        Object o = new Object() {\n            private int x;\n\n            int bar(int y) {\n                x = y + 5;\n                return x;\n            }\n        };\n    }\n    Object field = new Object() {\n        private int x;\n\n        int bar(int y) {\n            x = y + 5;\n            return x;\n        }\n    };\n    private Object doubleSingular;\n    Object doBar(final int y) {\n        doubleSingular = new Object() {\n            private int x;\n\n            int bar() {\n                x = y + 5;\n                return x;\n            }\n        };\n        return doubleSingular;\n    }\n}\n            "
+    },
+    {
+      "description": "#3754: failure case with field used in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class SingularFieldFP {\n                public Object case1() {\n                    return new Object() {\n                        private int field; // <---------- false positive\n                        public boolean foo() {\n                            while (field++ < 10);\n                            return false;\n                        }\n                    };\n                }\n                public Object case2() {\n                    return new Object() {\n                        private int field; // <---------- false positive\n                        public boolean foo() {\n                            while (field < 10) {\n                                field++;\n                            }\n                            return false;\n                        }\n                    };\n                }\n                public Object case3() {\n                    return new Object() {\n                        private int field;\n                        public boolean foo() {\n                            if (field < 10) {\n                                field++;\n                            }\n                            while (field < 10) {\n                                field++;\n                            }\n                            return false;\n                        }\n                    };\n                }\n                public Object case4() {\n                    return new Object() {\n                        private int field;\n                        public boolean foo() {\n                            if (field > 10) {\n                                return true;\n                            }\n                            field++;\n                            return false;\n                        }\n                    };\n                }\n            }\n            "
+    },
+    {
+      "description": "#174 [java] SingularField false positive with switch in method that both assigns and reads field",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npackage sample;\n\npublic class Sample implements Listener {\n    private Timer timer; // false positive #174\n    private String singularField; // correct case\n\n    public void onEvent(int type) {\n        singularField = \"test\";\n        System.out.println(singularField);\n\n        switch (type) {\n            case 0: // START\n                timer = new Timer();\n                break;\n            case 1: // FINISHED\n                if (timer != null) {\n                    timer.logDuration();\n                }\n        }\n    }\n}\n\nclass Timer {\n    private long start = System.currentTimeMillis();\n\n    public void logDuration() {\n        long duration = System.currentTimeMillis() - start;\n        System.out.printf(\"Duration: %d%n\", (duration / 1000));\n    }\n}\n\ninterface Listener {\n    void onEvent(int type);\n}\n        "
+    },
+    {
+      "description": " [java] SingularField false positive with non static inner classes #1688 ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class A {\n\n                private String value;\n                private String derivedValue;\n\n                public A(String value) {\n                    this.value = value;\n                    this.derivedValue = this.value + \"-more\";\n                }\n\n                private void run() {\n                    final B b = new B();\n                    b.useA();\n                }\n\n                public static void main(String[] args) {\n                    new A(\"\").run();\n                }\n\n                public class B {\n\n                    public void useA() {\n                        final String field = A.this.value;\n                        System.out.println(field);\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "#3694 singularfield ignores static variables",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\n            class Impl {\n                static private int var2 = 10;\n                public int foo(int y) {\n                    var2 = y + 5;\n                    return var2;\n                }\n            }\n            "
+    },
+    {
+      "description": "#3694 singularfield should ignore static final vars",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Impl {\n                private static final int var2 = 10;\n                public int foo(int y) {\n                    return var2;\n                }\n            }\n            "
+    },
+    {
+      "description": "Should not report when definition reaches usage",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Impl {\n                private int var2 = 10;\n                public int foo(int y) {\n                    dosomething();\n                    return var2;\n                }\n                void dosomething() {}\n            }\n            "
+    },
+    {
+      "description": "Should not ignore when definition reaches usage (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Impl {\n                private int var2 = 10;\n                public int foo(int y) {\n                    dosomething();\n                    if (var2 < 0)\n                        var2 = 0;\n                    return var2;\n                }\n                void dosomething() {}\n            }\n            "
+    },
+    {
+      "description": "Static field incremented in ctor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class PrintStream {\n                private static int gid;\n                private final int id;\n                public PrintStream() {\n                    this.id = gid++;\n                }\n            }\n            "
+    },
+    {
+      "description": "Static field used in field initializers",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class PrintStream {\n                private static Object[] EMPTY = {};\n                private Object[] field = EMPTY;\n                public PrintStream() {\n                }\n            }\n            "
+    },
+    {
+      "description": "#4616 SingularField false-positive with field used concurrently",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.IOException;\nimport java.nio.ByteBuffer;\nimport java.util.concurrent.atomic.AtomicBoolean;\n\n// AFTIPCTopologyWatcher.java\npublic class AFTIPCTopologyWatcher {\n\n    private Channel channel;\n    private Selector selector;\n    private boolean doLoop;\n    private final AtomicBoolean running = new AtomicBoolean(false);\n\n\n    public final void runLoop() throws IOException {\n        if (!running.compareAndSet(false, true)) {\n            throw new IllegalStateException(\"Already running\");\n        }\n\n        ByteBuffer buf = ByteBuffer.allocate(64);\n\n        try {\n            doLoop = true;\n            while (!Thread.interrupted() && doLoop) {\n                int n = selector.select();\n                if (!doLoop) {\n                    break;\n                }\n                if (n > 0) {\n                    channel.receive(buf);\n                    Event event = readFromBuffer((ByteBuffer) buf.flip());\n                    onEvent(event);\n                    buf.clear();\n                }\n            }\n        } finally {\n            running.set(false);\n        }\n    }\n\n    static Event readFromBuffer(ByteBuffer b) { }\n\n    protected void onEvent(Event event) throws IOException {\n    }\n\n\n    public final void stopLoop() {\n        doLoop = false;\n        selector.wakeup();\n    }\n\n    interface Event { }\n\n    interface Channel {\n\n        void receive(ByteBuffer buf);\n    }\n    interface Selector {\n        int select();\n        void wakeup();\n    }\n}\n            "
+    },
+    {
+      "description": "[java] False-positive for SingularField when preceded by a synchronized block #5162 ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            import java.util.List;\n\n            public class PmdBug {\n\n                private List<String> sessions;\n\n                public PmdBug(List<String> sessions) {\n                    this.sessions = sessions;\n                }\n\n                public void doStuff() {\n                    synchronized (this) {\n\n                    }\n\n                    sessions.stream().forEach(System.out::println);\n                }\n\n            }\n            "
+    },
+    {
+      "description": "[java] Make SingularField consider nested classes by default #3629",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Tester {\n  class nestedClass {\n      private int a;\n      public int func(int b) {\n          a = b + 5;\n          return a;\n      }\n  }\n}\n"
+    }
+  ]
+}

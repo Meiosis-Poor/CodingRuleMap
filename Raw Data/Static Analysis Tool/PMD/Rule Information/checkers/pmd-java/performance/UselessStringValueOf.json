@@ -1,0 +1,105 @@
+{
+  "name": "UselessStringValueOf",
+  "language": "java",
+  "description": "\nNo need to call String.valueOf to append to a string; just use the valueOf() argument directly.\n        ",
+  "example": "public String convert(int i) {\n    String s;\n    s = \"a\" + String.valueOf(i);    // not required\n    s = \"a\" + i;                    // preferred approach\n    return s;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 61,
+  "branches": 14,
+  "apis": 6,
+  "test": [
+    {
+      "description": "valueOf in concatenation",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        String s = \"abc\" + String.valueOf(i);\n    }\n}\n        "
+    },
+    {
+      "description": "valueOf in String conversion",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(Object o) {\n        String s = String.valueOf(o);\n    }\n}\n        "
+    },
+    {
+      "description": "valueOf as first expression in concatenation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(int i) {\n        char c = 'A';\n        char low = 'B';\n        String s = String.valueOf(c) + low;\n    }\n}\n        "
+    },
+    {
+      "description": "valueOf as first/last expression in concatenation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public static String bar25(int n) {\n        return String.valueOf(n) + n\n                + String.valueOf(n); // no - yes\n    }\n}\n        "
+    },
+    {
+      "description": "valueOf as first/last expression in concatenation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static String bar17(int n) {\n        return n + String.valueOf(n) + \"n\"; // no\n    }\n}\n        "
+    },
+    {
+      "description": "Double valueOf call, only second is reported",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public static String bar17(int n) {\n        return String.valueOf(n)\n                + String.valueOf(n);\n    }\n}\n        "
+    },
+    {
+      "description": "valueOf a string (both are reported)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    public static String bar17(String n) {\n        return String.valueOf(n)\n                + String.valueOf(n);\n    }\n}\n        "
+    },
+    {
+      "description": "[ 1977438 ] False positive for UselessStringValueOf",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String getMessage(Object pPassedValue) {\n        return \"someString\" + (pPassedValue == null ? \"null\" : '\\'' + String.valueOf(pPassedValue) + '\\'') + \"end of my string\";\n    }\n}\n        "
+    },
+    {
+      "description": "#976 False positive for UselessStringValueOf",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass TestClass {\n\n    public void testMethod() {\n        char[] idFormat = {'0', '0', '0', '0', '0'};\n        String abc = \"1\" + String.valueOf(idFormat);\n        System.out.println(abc); // Output 100000\n    }\n}\n        "
+    },
+    {
+      "description": "#1084 NPE at UselessStringValueOfRule.java:36",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport android.os.Build;\n\npublic class Test {\n\n    public String test() {\n        print(String.valueOf(Build.TIME));\n        print(String.valueOf(Build.VERSION.SDK_INT));\n    }\n\n    private void print(String s) {\n        System.out.println(s);\n    }\n}\n        "
+    },
+    {
+      "description": "FP with char array valueOf",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    private char[] text;\n    public String test() {\n        // if we remove the valueOf, then the toString of the array would be printed\n        return \"Literal(\" + String.valueOf(this.text) + \")\";\n    }\n}\n        "
+    },
+    {
+      "description": "#3492 False positive for UselessStringValueOf, when there is no initial String to append to",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    private short getPrefix(long id) {\n        return 0;\n    }\n    private short getTimestamp(long id) {\n        return 0;\n    }\n    private short getCounter(long id) {\n        return 0;\n    }\n    public String toShortString(long id) {\n        return String.valueOf(getPrefix(id)) + getTimestamp(id) + getCounter(id); // (12)\n    }\n}\n        "
+    },
+    {
+      "description": "#3491 False positive for UselessStringValueOf when valueOf(char [], int, int) is used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public String test(char buf[], int offset, int len) {\n        print(\"XML Parser characters: \" + String.valueOf(buf, offset, len));\n    }\n}\n        "
+    },
+    {
+      "description": "#3491 False positive for UselessStringValueOf when valueOf(char [], int, int) is used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public String test(char[] buf, int offset, int len) {\n        print(\"XML Parser characters: \" + String.valueOf(buf, offset, len));\n    }\n}\n        "
+    }
+  ]
+}

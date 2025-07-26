@@ -1,0 +1,347 @@
+{
+  "name": "SuppressWarnings",
+  "language": "java",
+  "description": "<div>\n Allows to specify what warnings that\n {@code @SuppressWarnings} is not allowed to suppress.\n You can also specify a list of TokenTypes that\n the configured warning(s) cannot be suppressed on.\n </div>\n\n <p>\n Limitations:  This check does not consider conditionals\n inside the &#64;SuppressWarnings annotation.\n </p>\n\n <p>\n For example:\n {@code @SuppressWarnings((false) ? (true) ? \"unchecked\" : \"foo\" : \"unused\")}.\n According to the above example, the \"unused\" warning is being suppressed\n not the \"unchecked\" or \"foo\" warnings.  All of these warnings will be\n considered and matched against regardless of what the conditional\n evaluates to.\n The check also does not support code like {@code @SuppressWarnings(\"un\" + \"used\")},\n {@code @SuppressWarnings((String) \"unused\")} or\n {@code @SuppressWarnings({('u' + (char)'n') + (\"\"+(\"used\" + (String)\"\")),})}.\n </p>\n\n <p>\n By default, any warning specified will be disallowed on\n all legal TokenTypes unless otherwise specified via\n the tokens property.\n </p>\n\n <p>\n Also, by default warnings that are empty strings or all\n whitespace (regex: ^$|^\\s+$) are flagged.  By specifying,\n the format property these defaults no longer apply.\n </p>\n\n <p>This check can be configured so that the \"unchecked\"\n and \"unused\" warnings cannot be suppressed on\n anything but variable and parameter declarations.\n See below of an example.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 132,
+  "branches": 14,
+  "apis": 32,
+  "test": [
+    {
+      "description": "Auto test from InputSuppressWarningsCompact1.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        17,
+        20,
+        56,
+        64
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"})\npublic class InputSuppressWarningsCompact1\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact1() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsCompact2.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        17,
+        26,
+        35,
+        42,
+        49,
+        59,
+        67,
+        71,
+        77
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsCompact2\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"}) \n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"}) \n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact2() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"}) \n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsCompact3.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        13,
+        20,
+        41,
+        67,
+        73
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"})\npublic class InputSuppressWarningsCompact3\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact3() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsCompact4.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"})\npublic class InputSuppressWarningsCompact4\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact4() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsCompact5.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        19,
+        26,
+        30,
+        36,
+        43,
+        60,
+        70,
+        76
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsCompact5\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact5() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsCompact6.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        19,
+        26,
+        35,
+        42,
+        59,
+        69,
+        75
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsCompact6\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact6() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsCompact7.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        17,
+        26,
+        35,
+        42,
+        49,
+        59,
+        67,
+        71,
+        77
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings({\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsCompact7\n{\n    @SuppressWarnings({\"   \"})\n    class Empty {\n        @SuppressWarnings({\"unchecked\", \"\"}) \n        public Empty() {\n        }\n    }\n    @SuppressWarnings({\"unused\"})\n    enum Duh {\n        @SuppressWarnings({\"unforgiven\", \"    un\"}) \n        D;\n        public static void foo() {\n            @SuppressWarnings({\"unused\"})\n            Object o = new InputSuppressWarningsCompact7() {\n                @Override\n                @SuppressWarnings({\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings({\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings({})\n    @interface MoreSweetness {\n        @SuppressWarnings({\"unused\", \"bleh\"}) \n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings({})\n        int a = 1;\n        @SuppressWarnings({\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings({\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded1.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        17,
+        20,
+        56,
+        64
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"})\npublic class InputSuppressWarningsExpanded1\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded1() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded2.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        17,
+        26,
+        35,
+        42,
+        49,
+        59,
+        67,
+        71,
+        77
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsExpanded2\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"}) \n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"}) \n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded2() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"}) \n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded3.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        13,
+        20,
+        41,
+        67,
+        73
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"})\npublic class InputSuppressWarningsExpanded3\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded3() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded4.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"})\npublic class InputSuppressWarningsExpanded4\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded4() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded5.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        19,
+        26,
+        30,
+        36,
+        43,
+        60,
+        70,
+        76
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsExpanded5\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded5() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded6.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        19,
+        26,
+        35,
+        42,
+        59,
+        69,
+        75
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsExpanded6\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"})\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"})\n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded6() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"})\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsExpanded7.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        17,
+        26,
+        35,
+        42,
+        49,
+        59,
+        67,
+        71,
+        77
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value={\"unchecked\", \"unused\"}) \npublic class InputSuppressWarningsExpanded7\n{\n    @SuppressWarnings(value={\"   \"})\n    class Empty {\n        @SuppressWarnings(value={\"unchecked\", \"\"}) \n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value={\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value={\"unforgiven\", \"    un\"}) \n        D;\n        public static void foo() {\n            @SuppressWarnings(value={\"unused\"})\n            Object o = new InputSuppressWarningsExpanded7() {\n                @Override\n                @SuppressWarnings(value={\"unchecked\"})\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(value={\"abcun\"})\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value={})\n    @interface MoreSweetness {\n        @SuppressWarnings(value={\"unused\", \"bleh\"}) \n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(value={})\n        int a = 1;\n        @SuppressWarnings(value={\"unchecked\"})\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(value={\"unchecked\"})String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsHolder.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        29,
+        36,
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\npublic class InputSuppressWarningsHolder {\n    static final String UN_U = \"UN_U\";\n    @SuppressWarnings(UN_U)\n    int a;\n    @SuppressWarnings(InputSuppressWarningsHolder.UN_U)\n    int b;\n    @SuppressWarnings(\ncom.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings.InputSuppressWarningsHolder.UN_U)\n    int c;\n    @SuppressWarnings(value = UN_U)\n    int d;\n    @SuppressWarnings(value = InputSuppressWarningsHolder.UN_U)\n    int e;\n    @SuppressWarnings(value =\ncom.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings.InputSuppressWarningsHolder.UN_U)\n    int f;\n    @SuppressWarnings((1 != 1) ? \"\" : \"UN_U\")\n    int g;\n    @SuppressWarnings(\"un\" + \"used\")\n    int h;\n    @SuppressWarnings((String) \"UN_U\")\n    int i;\n    @SuppressWarnings({})\n    int j;\n    @SuppressWarnings({UN_U})\n    int k;\n}\nclass CustomSuppressWarnings {\n    @SuppressWarnings\n    private @interface SuppressWarnings {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsRecords.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        28,
+        37,
+        48,
+        53,
+        63,
+        71,
+        75,
+        80
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(value = {\"unchecked\", \"unused\"}) \npublic record InputSuppressWarningsRecords\n        (String x) {\n    @SuppressWarnings(value = {\"unchecked\", \"\"}) \n    public InputSuppressWarningsRecords{}\n    @SuppressWarnings(value = {\"   \"})\n    class Empty {\n        @SuppressWarnings(value = {\"unchecked\", \"\"}) \n        public Empty() {\n        }\n    }\n    @SuppressWarnings(value = {\"unused\"})\n    enum Duh {\n        @SuppressWarnings(value = {\"unforgiven\", \"    un\"}) \n        D;\n        public static void foo() {\n            Object myHashMap;\n            @SuppressWarnings(value = {\"unused\"}) int x = 42;\n        }\n    }\n    @SuppressWarnings(value = {\"abcun\"})\n    @Documented\n    @interface inter {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(value = {})\n    @interface MoreSweetness {\n        @SuppressWarnings(value = {\"unused\", \"something else\"}) \n        int cool();\n    }\n    public record MyRecord() {\n        @SuppressWarnings(value = {})\n        static int a = 1;\n        @SuppressWarnings(value = {\"unchecked\"})\n        @Deprecated\n        static int b = 1;\n        void doFoo(String s, @SuppressWarnings(value = {\"unchecked\"}) String y) {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle1.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        17,
+        20,
+        63,
+        75,
+        79,
+        85,
+        91
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle1\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle1() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\")\n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\")\n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\")\n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\")\n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\") \n        public void seriously() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle2.java",
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        13,
+        18,
+        21,
+        28,
+        32,
+        38,
+        44,
+        52,
+        62,
+        64,
+        71,
+        75,
+        81,
+        102
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle2\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle2() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\") \n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\") \n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\") \n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\") \n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\") \n        public void seriously() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle3.java",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        13,
+        40,
+        66,
+        72,
+        76,
+        80,
+        86,
+        92,
+        98
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle3\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle3() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\")\n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\")\n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\")\n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\")\n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\")\n        public void seriously() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle4.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        11,
+        38,
+        72,
+        81,
+        87,
+        93
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle4\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle4() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\")\n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\")\n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\")\n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\")\n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\")\n        public void seriously() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle5.java",
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        13,
+        26,
+        30,
+        36,
+        43,
+        50,
+        60,
+        62,
+        72,
+        78,
+        82,
+        86,
+        102,
+        106
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle5\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle5() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\")\n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\")\n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\") \n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\") \n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\")\n        public void seriously() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle6.java",
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        13,
+        26,
+        35,
+        42,
+        59,
+        69,
+        75,
+        79,
+        83,
+        99,
+        103
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle6\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle6() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\")\n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\")\n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\") \n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\") \n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\")\n        public void seriously() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputSuppressWarningsSingle7.java",
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        13,
+        18,
+        21,
+        28,
+        32,
+        38,
+        45,
+        52,
+        62,
+        64,
+        71,
+        75,
+        81,
+        103
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.annotation.suppresswarnings;\nimport java.lang.annotation.Documented;\n@SuppressWarnings(\"unchecked\")\npublic class InputSuppressWarningsSingle7\n{\n    @SuppressWarnings(\"   \")\n    class Empty {\n        @SuppressWarnings(\"\")\n        public Empty() {\n        }\n    }\n    @SuppressWarnings(\"unused\")\n    enum Duh {\n        @SuppressWarnings(\"unforgiven\")\n        D;\n        public static void foo() {\n            @SuppressWarnings(\"unused\")\n            Object o = new InputSuppressWarningsSingle7() {\n                @Override\n                @SuppressWarnings(\"unchecked\")\n                public String toString() {\n                    return \"\";\n                }\n            };\n        }\n    }\n    @SuppressWarnings(\"abcun\")\n    @Documented\n    @interface Sweet {\n        int cool();\n    }\n    @Documented\n    @SuppressWarnings(\"abcun\")\n    @interface MoreSweetness {\n        @SuppressWarnings(\"unused\")\n        int cool();\n    }\n    public class Junk {\n        @SuppressWarnings(\"\")\n        int a = 1;\n        @SuppressWarnings(\"unchecked\")\n        @Deprecated\n        int b = 1;\n        void doFoo(String s, @SuppressWarnings(\"unchecked\")String y) {\n        }\n    }\n    @SuppressWarnings((false) ? \"unchecked\" : \"\") \n    class Cond {\n        @SuppressWarnings((false) ? \"\" : \"unchecked\") \n        public Cond() {\n        }\n        @SuppressWarnings((false) ? (true) ? \"   \" : \"unused\" : \"unchecked\") \n        public void aCond1() {\n        }\n        @SuppressWarnings((false) ? \"unchecked\" : (true) ? \"   \" : \"unused\") \n        public void aCond2() {\n        }\n        @java.lang.SuppressWarnings((false) ? \"unchecked\" :\n                (\"\" == \"\") ? (false) ? (true) ? \"\" : \"foo\" : \"    \" : \"unused\") \n        public void seriously() {\n        }\n    }\n}"
+    }
+  ]
+}

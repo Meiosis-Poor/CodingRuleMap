@@ -1,0 +1,26 @@
+{
+  "name": "ReplaceDisallowCopyAndAssignMacro",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-replace-disallow-copy-and-assign-macro",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 89,
+  "branches": 6,
+  "apis": 39,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        35,
+        45,
+        60,
+        70,
+        79
+      ],
+      "code": "\n// RUN: %check_clang_tidy -format-style=LLVM -check-suffix=DEFAULT %s \\\n// RUN:   modernize-replace-disallow-copy-and-assign-macro %t\n\n// RUN: %check_clang_tidy -format-style=LLVM -check-suffix=DIFFERENT-NAME %s \\\n// RUN:  modernize-replace-disallow-copy-and-assign-macro %t \\\n// RUN:  -config=\"{CheckOptions: { \\\n// RUN:   modernize-replace-disallow-copy-and-assign-macro.MacroName: \\\n// RUN:     MY_MACRO_NAME}}\"\n\n// RUN: %check_clang_tidy -format-style=LLVM -check-suffix=FINALIZE %s \\\n// RUN:  modernize-replace-disallow-copy-and-assign-macro %t \\\n// RUN:  -config=\"{CheckOptions: { \\\n// RUN:   modernize-replace-disallow-copy-and-assign-macro.MacroName: \\\n// RUN:     DISALLOW_COPY_AND_ASSIGN_FINALIZE}}\"\n\n// RUN: clang-tidy %s -checks=\"-*,modernize-replace-disallow-copy-and-assign-macro\" \\\n// RUN:  -config=\"{CheckOptions: { \\\n// RUN:    modernize-replace-disallow-copy-and-assign-macro.MacroName: \\\n// RUN:      DISALLOW_COPY_AND_ASSIGN_MORE_AGUMENTS}}\" -- -Wno-extra-semi | count 0\n\n// RUN: clang-tidy %s -checks=\"-*,modernize-replace-disallow-copy-and-assign-macro\" \\\n// RUN:  -config=\"{CheckOptions: { \\\n// RUN:    modernize-replace-disallow-copy-and-assign-macro.MacroName: \\\n// RUN:      DISALLOW_COPY_AND_ASSIGN_NEEDS_PREEXPANSION}}\" -- -Wno-extra-semi | count 0\n\n// Note: the last two tests expect no diagnostics, but FileCheck cannot handle\n// that, hence the use of | count 0.\n\n#define DISALLOW_COPY_AND_ASSIGN(TypeName)\n\nclass TestClass1 {\nprivate:\n  DISALLOW_COPY_AND_ASSIGN(TestClass1);\n};\n// CHECK-MESSAGES-DEFAULT: :[[@LINE-2]]:3: warning: prefer deleting copy constructor and assignment operator over using macro 'DISALLOW_COPY_AND_ASSIGN' [modernize-replace-disallow-copy-and-assign-macro]\n// CHECK-FIXES-DEFAULT:      {{^}}  TestClass1(const TestClass1 &) = delete;{{$}}\n// CHECK-FIXES-DEFAULT-NEXT: {{^}}  const TestClass1 &operator=(const TestClass1 &) = delete;{{$}}\n\n#define MY_MACRO_NAME(TypeName)\n\nclass TestClass2 {\nprivate:\n  MY_MACRO_NAME(TestClass2);\n};\n// CHECK-MESSAGES-DIFFERENT-NAME: :[[@LINE-2]]:3: warning: prefer deleting copy constructor and assignment operator over using macro 'MY_MACRO_NAME' [modernize-replace-disallow-copy-and-assign-macro]\n// CHECK-FIXES-DIFFERENT-NAME:      {{^}}  TestClass2(const TestClass2 &) = delete;{{$}}\n// CHECK-FIXES-DIFFERENT-NAME-NEXT: {{^}}  const TestClass2 &operator=(const TestClass2 &) = delete;{{$}}\n\n#define DISALLOW_COPY_AND_ASSIGN_FINALIZE(TypeName) \\\n  TypeName(const TypeName &) = delete;              \\\n  const TypeName &operator=(const TypeName &) = delete;\n\nclass TestClass3 {\nprivate:\n  // Notice, that the macro allows to be used without a semicolon because the\n  // macro definition already contains one above. Therefore our replacement must\n  // contain a semicolon at the end.\n  DISALLOW_COPY_AND_ASSIGN_FINALIZE(TestClass3)\n};\n// CHECK-MESSAGES-FINALIZE: :[[@LINE-2]]:3: warning: prefer deleting copy constructor and assignment operator over using macro 'DISALLOW_COPY_AND_ASSIGN_FINALIZE' [modernize-replace-disallow-copy-and-assign-macro]\n// CHECK-FIXES-FINALIZE:      {{^}}  TestClass3(const TestClass3 &) = delete;{{$}}\n// CHECK-FIXES-FINALIZE-NEXT: {{^}}  const TestClass3 &operator=(const TestClass3 &) = delete;{{$}}\n\n#define DISALLOW_COPY_AND_ASSIGN_MORE_AGUMENTS(A, B)\n\nclass TestClass4 {\nprivate:\n  DISALLOW_COPY_AND_ASSIGN_MORE_AGUMENTS(TestClass4, TestClass4);\n};\n// CHECK-MESSAGES-MORE-ARGUMENTS-NOT: warning: prefer deleting copy constructor and assignment operator over using macro 'DISALLOW_COPY_AND_ASSIGN_MORE_AGUMENTS'\n\n#define DISALLOW_COPY_AND_ASSIGN_NEEDS_PREEXPANSION(A)\n#define TESTCLASS TestClass5\n\nclass TestClass5 {\nprivate:\n  DISALLOW_COPY_AND_ASSIGN_NEEDS_PREEXPANSION(TESTCLASS);\n};\n// CHECK-MESSAGES-MORE-ARGUMENTS-NOT: warning: prefer deleting copy constructor and assignment operator over using macro 'DISALLOW_COPY_AND_ASSIGN_NEEDS_PREEXPANSION'"
+    }
+  ]
+}

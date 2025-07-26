@@ -1,0 +1,22 @@
+{
+  "name": "MisplacedConst",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - misc-misplaced-const",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 75,
+  "branches": 6,
+  "apis": 51,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s misc-misplaced-const %t -- -- -DUSING\n// RUN: %check_clang_tidy %s misc-misplaced-const %t -- -- -DTYPEDEF\n\n#ifdef TYPEDEF\ntypedef int int_;\ntypedef int *ptr_to_int;\ntypedef const int *ptr_to_const_int;\n#endif\n#ifdef USING\nusing int_ = int;\nusing ptr_to_int = int *;\nusing ptr_to_const_int = const int *;\n#endif\n\nvoid const_pointers() {\n  if (const int *i = 0) {\n    i = 0;\n    // *i = 0;\n  }\n\n  if (const int_ *i = 0) {\n    i = 0;\n    // *i = 0;\n  }\n\n  if (const ptr_to_const_int i = 0) {\n    // i = 0;\n    // *i = 0;\n  }\n\n  // Potentially quite unexpectedly the int can be modified here\n  // CHECK-MESSAGES: :[[@LINE+1]]:24: warning: 'i' declared with a const-qualified {{.*}}; results in the type being 'int *const' instead of 'const int *'\n  if (const ptr_to_int i = 0) {\n    //i = 0;\n\n    *i = 0;\n  }\n}\n\ntemplate <typename Ty>\nstruct S {\n  const Ty *i;\n  const Ty &i2;\n};\n\ntemplate struct S<int>;\ntemplate struct S<ptr_to_int>; // ok\ntemplate struct S<ptr_to_const_int>;\n\ntemplate <typename Ty>\nstruct U {\n  const Ty *i;\n  const Ty &i2;\n};\n\ntemplate struct U<int *>; // ok\n\nstruct T {\n  typedef void (T::*PMF)();\n\n  void f() {\n    const PMF val = &T::f; // ok\n  }\n};"
+    }
+  ]
+}

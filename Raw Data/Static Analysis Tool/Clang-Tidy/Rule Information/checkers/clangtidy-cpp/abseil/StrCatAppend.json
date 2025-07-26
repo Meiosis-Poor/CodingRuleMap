@@ -1,0 +1,26 @@
+{
+  "name": "StrCatAppend",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - abseil-str-cat-append",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 98,
+  "branches": 9,
+  "apis": 75,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        97,
+        99,
+        105,
+        119,
+        127
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s abseil-str-cat-append %t\n\ntypedef unsigned __INT16_TYPE__ char16;\ntypedef unsigned __INT32_TYPE__ char32;\ntypedef __SIZE_TYPE__ size;\n\nnamespace std {\ntemplate <typename T>\nclass allocator {};\ntemplate <typename T>\nclass char_traits {};\ntemplate <typename C, typename T, typename A>\nstruct basic_string {\n  typedef basic_string<C, T, A> _Type;\n  basic_string();\n  basic_string(const C* p, const A& a = A());\n\n  const C* c_str() const;\n  const C* data() const;\n\n  _Type& append(const C* s);\n  _Type& append(const C* s, size n);\n  _Type& assign(const C* s);\n  _Type& assign(const C* s, size n);\n\n  int compare(const _Type&) const;\n  int compare(const C* s) const;\n  int compare(size pos, size len, const _Type&) const;\n  int compare(size pos, size len, const C* s) const;\n\n  size find(const _Type& str, size pos = 0) const;\n  size find(const C* s, size pos = 0) const;\n  size find(const C* s, size pos, size n) const;\n\n  _Type& insert(size pos, const _Type& str);\n  _Type& insert(size pos, const C* s);\n  _Type& insert(size pos, const C* s, size n);\n\n  _Type& operator+=(const _Type& str);\n  _Type& operator+=(const C* s);\n  _Type& operator=(const _Type& str);\n  _Type& operator=(const C* s);\n};\n\ntypedef basic_string<char, std::char_traits<char>, std::allocator<char>> string;\ntypedef basic_string<wchar_t, std::char_traits<wchar_t>,\n                     std::allocator<wchar_t>>\n    wstring;\ntypedef basic_string<char16, std::char_traits<char16>, std::allocator<char16>>\n    u16string;\ntypedef basic_string<char32, std::char_traits<char32>, std::allocator<char32>>\n    u32string;\n}  // namespace std\n\nstd::string operator+(const std::string&, const std::string&);\nstd::string operator+(const std::string&, const char*);\nstd::string operator+(const char*, const std::string&);\n\nbool operator==(const std::string&, const std::string&);\nbool operator==(const std::string&, const char*);\nbool operator==(const char*, const std::string&);\n\nnamespace llvm {\nstruct StringRef {\n  StringRef(const char* p);\n  StringRef(const std::string&);\n};\n}  // namespace llvm\n\nnamespace absl {\n\nstruct AlphaNum {\n  AlphaNum(int i);\n  AlphaNum(double f);\n  AlphaNum(const char* c_str);\n  AlphaNum(const std::string& str);\n\n private:\n  AlphaNum(const AlphaNum&);\n  AlphaNum& operator=(const AlphaNum&);\n};\n\nstd::string StrCat(const AlphaNum& A);\nstd::string StrCat(const AlphaNum& A, const AlphaNum& B);\n\ntemplate <typename A>\nvoid Foo(A& a) {\n  a = StrCat(a);\n}\n\nvoid Bar() {\n  std::string A, B;\n  Foo<std::string>(A);\n\n  std::string C = StrCat(A);\n  A = StrCat(A);\n  // CHECK-MESSAGES: [[@LINE-1]]:3: warning: call to 'absl::StrCat' has no effect\n  A = StrCat(A, B);\n// CHECK-MESSAGES: [[@LINE-1]]:3: warning: call 'absl::StrAppend' instead of 'absl::StrCat' when appending to a string to avoid a performance penalty\n// CHECK-FIXES: {{^}}  absl::StrAppend(&A, B);\n  B = StrCat(A, B);\n\n#define M(X) X = StrCat(X, A)\n  M(B);\n// CHECK-MESSAGES: [[@LINE-1]]:5: warning: call 'absl::StrAppend' instead of 'absl::StrCat' when appending to a string to avoid a performance penalty\n// CHECK-FIXES: #define M(X) X = StrCat(X, A)\n}\n\nvoid Regression_SelfAppend() {\n  std::string A;\n  A = StrCat(A, A);\n}\n\n}  // namespace absl\n\nvoid OutsideAbsl() {\n  std::string A, B;\n  A = absl::StrCat(A, B);\n// CHECK-MESSAGES: [[@LINE-1]]:3: warning: call 'absl::StrAppend' instead of 'absl::StrCat' when appending to a string to avoid a performance penalty\n// CHECK-FIXES: {{^}}  absl::StrAppend(&A, B);\n}\n\nvoid OutsideUsingAbsl() {\n  std::string A, B;\n  using absl::StrCat;\n  A = StrCat(A, B);\n// CHECK-MESSAGES: [[@LINE-1]]:3: warning: call 'absl::StrAppend' instead of 'absl::StrCat' when appending to a string to avoid a performance penalty\n// CHECK-FIXES: {{^}}  absl::StrAppend(&A, B);\n}"
+    }
+  ]
+}

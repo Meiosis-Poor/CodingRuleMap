@@ -1,0 +1,56 @@
+{
+  "name": "ApexAssertionsShouldIncludeMessage",
+  "language": "apex",
+  "description": "\nThe second parameter of System.assert/third parameter of System.assertEquals/System.assertNotEquals is a message.\nHaving a second/third parameter provides more information and makes it easier to debug the test failure and\nimproves the readability of test output.\n        ",
+  "example": "@isTest\npublic class Foo {\n    @isTest\n    static void methodATest() {\n        System.assertNotEquals('123', o.StageName); // not good\n        System.assertEquals('123', o.StageName, 'Opportunity stageName is wrong.'); // good\n        System.assert(o.isClosed); // not good\n        System.assert(o.isClosed, 'Opportunity is not closed.'); // good\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 55,
+  "branches": 16,
+  "apis": 1,
+  "test": [
+    {
+      "description": "Problematic apex unit test assert statements - assert should have 2/3 params",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        7
+      ],
+      "code": "\n@isTest\npublic class Foo {\n     @isTest\n    static void methodATest() {\n        System.assertNotEquals('123', o.StageName); // not good\n        System.assertEquals('123', o.StageName, 'Opportunity stageName is wrong.'); // good\n        System.assert(o.isClosed); // not good\n        System.assert(o.isClosed, 'Opportunity is not closed.'); // good\n    }\n}\n        "
+    },
+    {
+      "description\": \"[apex] assert should have 2 param and assertEquals should have 3 param.\",\n      \"expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\npublic class Foo {\n     @isTest\n    static void methodATest() {\n        System.assertEquals('Test opportunity', o.Name, 'Opportunity Name' + o.Name + 'is wrong.'); // good\n        System.assert(o.isClosed, 'Opportunity is not closed.'); // good\n    }\n}\n        "
+    },
+    {
+      "description": "[apex] Avoid false positive in non test classes.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static void methodA() {\n        System.assertEquals('Test opportunity', o.Name);\n        System.assert(o.isClosed);\n    }\n}\n        "
+    },
+    {
+      "description": "[apex] Support new Assert class (Apex v56.0) #4097",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@isTest\npublic class Foo {\n    @isTest\n    static void testAreEqual() {\n        String sub = 'abcde'.substring(2);\n        Assert.areEqual('cde', sub, 'Expected characters after first two');\n   }\n\n    @isTest\n    static void testAreNotEqual() {\n        String sub = 'abcde'.substring(2);\n        Assert.areNotEqual('xyz', sub, 'Characters not expected after first two');\n   }\n\n    @isTest\n    static void testFail() {\n        try {\n            SomeClass.methodUnderTest();\n            Assert.fail('DmlException Expected');\n        } catch (DmlException ex) {\n            // Add assertions here about the expected exception\n        }\n   }\n\n    @isTest\n    static void testIsFalse() {\n        Boolean containsCode = 'Salesforce'.contains('code');\n        Assert.isFalse(containsCode, 'No code');\n   }\n\n    @isTest\n    static void testIsInstanceOf() {\n        Account o = new Account();\n        Assert.isInstanceOfType(o, Account.class, 'Wrong instance');\n   }\n\n    @isTest\n    static void testIsNotInstanceOf() {\n        Contact con = new Contact();\n        Assert.isNotInstanceOfType(con, Account.class, 'Not expected type');\n   }\n\n    @isTest\n    static void testIsNotNull() {\n        String myString = 'value';\n        Assert.isNotNull(myString, 'myString should not be null');\n   }\n\n    @isTest\n    static void testIsNull() {\n        String myString = null;\n        Assert.isNull(myString, 'String should be null');\n   }\n\n    @isTest\n    static void testIsTrue() {\n        Boolean containsForce = 'Salesforce'.contains('force');\n        Assert.isTrue(containsForce, 'Contains force');\n   }\n}\n        "
+    },
+    {
+      "description": "[apex] Support new Assert class (Apex v56.0) - negative test case #4097",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        6,
+        12,
+        19,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "code": "\n@isTest\npublic class Foo {\n    @isTest\n    static void testAreEqual() {\n        String sub = 'abcde'.substring(2);\n        Assert.areEqual('cde', sub);\n   }\n\n    @isTest\n    static void testAreNotEqual() {\n        String sub = 'abcde'.substring(2);\n        Assert.areNotEqual('xyz', sub);\n   }\n\n    @isTest\n    static void testFail() {\n        try {\n            SomeClass.methodUnderTest();\n            Assert.fail();\n        } catch (DmlException ex) {\n            // Add assertions here about the expected exception\n        }\n   }\n\n    @isTest\n    static void testIsFalse() {\n        Boolean containsCode = 'Salesforce'.contains('code');\n        Assert.isFalse(containsCode);\n   }\n\n    @isTest\n    static void testIsInstanceOf() {\n        Account o = new Account();\n        Assert.isInstanceOfType(o, Account.class);\n   }\n\n    @isTest\n    static void testIsNotInstanceOf() {\n        Contact con = new Contact();\n        Assert.isNotInstanceOfType(con, Account.class);\n   }\n\n    @isTest\n    static void testIsNotNull() {\n        String myString = 'value';\n        Assert.isNotNull(myString);\n   }\n\n    @isTest\n    static void testIsNull() {\n        String myString = null;\n        Assert.isNull(myString);\n   }\n\n    @isTest\n    static void testIsTrue() {\n        Boolean containsForce = 'Salesforce'.contains('force');\n        Assert.isTrue(containsForce);\n   }\n}\n        "
+    }
+  ]
+}

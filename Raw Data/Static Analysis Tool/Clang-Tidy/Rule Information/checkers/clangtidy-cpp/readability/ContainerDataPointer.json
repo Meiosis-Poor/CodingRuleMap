@@ -1,0 +1,35 @@
+{
+  "name": "ContainerDataPointer",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-container-data-pointer",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 126,
+  "branches": 9,
+  "apis": 105,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 14,
+      "expected-linenumbers": [
+        48,
+        55,
+        57,
+        61,
+        63,
+        71,
+        79,
+        85,
+        92,
+        98,
+        117,
+        127,
+        133,
+        144
+      ],
+      "code": "\n// RUN: %check_clang_tidy -check-suffixes=,CLASSIC %s readability-container-data-pointer %t -- -- -isystem %clang_tidy_headers -fno-delayed-template-parsing\n// RUN: %check_clang_tidy -check-suffixes=,WITH-CONFIG %s readability-container-data-pointer %t -- -config=\"{CheckOptions: {readability-container-data-pointer.IgnoredContainers: '::std::basic_string'}}\" -- -isystem %clang_tidy_headers -fno-delayed-template-parsing\n\n#include <string>\n\ntypedef __SIZE_TYPE__ size_t;\n\nnamespace std {\ntemplate <typename T>\nstruct vector {\n  using size_type = size_t;\n\n  vector();\n  explicit vector(size_type);\n\n  T *data();\n  const T *data() const;\n\n  T &operator[](size_type);\n  const T &operator[](size_type) const;\n};\n\ntemplate <typename T>\nstruct is_integral;\n\ntemplate <>\nstruct is_integral<size_t> {\n  static const bool value = true;\n};\n\ntemplate <bool, typename T = void>\nstruct enable_if { };\n\ntemplate <typename T>\nstruct enable_if<true, T> {\n  typedef T type;\n};\n}\n\ntemplate <typename T>\nvoid f(const T *);\n\n#define z (0)\n\nvoid g(size_t s) {\n  std::vector<unsigned char> b(s);\n  f(&((b)[(z)]));\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}f(b.data());{{$}}\n}\n\nvoid h() {\n  std::string s;\n  f(&((s).operator[]((z))));\n  // CHECK-MESSAGES-CLASSIC: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES-CLASSIC: {{^  }}f(s.data());{{$}}\n  // CHECK-MESSAGES-WITH-CONFIG-NOT: :[[@LINE-3]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n\n  std::wstring w;\n  f(&((&(w))->operator[]((z))));\n  // CHECK-MESSAGES-CLASSIC: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES-CLASSIC: {{^  }}f(w.data());{{$}}\n  // CHECK-MESSAGES-WITH-CONFIG-NOT: :[[@LINE-3]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n}\n\ntemplate <typename T, typename U,\n          typename = typename std::enable_if<std::is_integral<U>::value>::type>\nvoid i(U s) {\n  std::vector<T> b(s);\n  f(&b[0]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}f(b.data());{{$}}\n}\n\ntemplate void i<unsigned char, size_t>(size_t);\n\nvoid j(std::vector<unsigned char> * const v) {\n  f(&(*v)[0]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}f(v->data());{{$}}\n}\n\nvoid k(const std::vector<unsigned char> &v) {\n  f(&v[0]);\n  // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}f(v.data());{{$}}\n}\n\nvoid l() {\n  unsigned char b[32];\n  f(&b[0]);\n  // CHECK-MESSAGES-NOT: :[[@LINE-1]]:5: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n}\n\ntemplate <typename T>\nvoid m(const std::vector<T> &v) {\n  return &v[0];\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}return v.data();{{$}}\n}\n\ntemplate <typename T>\nstruct container_without_data {\n  using size_type = size_t;\n  T &operator[](size_type);\n  const T &operator[](size_type) const;\n};\n\ntemplate <typename T>\nconst T *n(const container_without_data<T> &c) {\n  // c has no \"data\" member function, so there should not be a warning here:\n  return &c[0];\n}\n\nconst int *o(const std::vector<std::vector<std::vector<int>>> &v, const size_t idx1, const size_t idx2) {\n  return &v[idx1][idx2][0];\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}return v[idx1][idx2].data();{{$}}\n}\n\nstd::vector<int> &select(std::vector<int> &u, std::vector<int> &v) {\n  return v;\n}\n\nint *p(std::vector<int> &v1, std::vector<int> &v2) {\n  return &select(*&v1, v2)[0];\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}return select(*&v1, v2).data();{{$}}\n}\n\nint *q(std::vector<int> ***v) {\n  return &(***v)[0];\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}return (**v)->data();{{$}}\n}\n\nstruct VectorHolder {\n  std::vector<int> v;\n};\n\nint *r() {\n  VectorHolder holder;\n  return &holder.v[0];\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: 'data' should be used for accessing the data pointer instead of taking the address of the 0-th element [readability-container-data-pointer]\n  // CHECK-FIXES: {{^  }}return holder.v.data();{{$}}\n}"
+    }
+  ]
+}

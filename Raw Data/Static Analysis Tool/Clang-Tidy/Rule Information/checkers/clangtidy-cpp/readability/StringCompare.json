@@ -1,0 +1,38 @@
+{
+  "name": "StringCompare",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-string-compare",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 95,
+  "branches": 10,
+  "apis": 60,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 17,
+      "expected-linenumbers": [
+        17,
+        20,
+        23,
+        27,
+        31,
+        35,
+        39,
+        42,
+        45,
+        50,
+        53,
+        57,
+        61,
+        65,
+        69,
+        75,
+        84
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-string-compare %t -- -- -isystem %clang_tidy_headers\n#include <string>\n\nvoid func(bool b);\n\nstd::string comp() {\n  std::string str(\"a\", 1);\n  return str;\n}\n\nvoid Test() {\n  std::string str1(\"a\", 1);\n  std::string str2(\"b\", 1);\n\n  if (str1.compare(str2)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings; use the string equality operator instead [readability-string-compare]\n  if (!str1.compare(str2)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:8: warning: do not use 'compare' to test equality of strings; use the string equality operator instead [readability-string-compare]\n  if (str1.compare(str2) == 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str1 == str2) {\n  if (str1.compare(str2) != 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str1 != str2) {\n  if (str1.compare(\"foo\") == 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str1 == \"foo\") {\n  if (0 == str1.compare(str2)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str2 == str1) {\n  if (0 != str1.compare(str2)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str2 != str1) {\n  func(str1.compare(str2));\n  // CHECK-MESSAGES: [[@LINE-1]]:8: warning: do not use 'compare' to test equality of strings;\n  if (str2.empty() || str1.compare(str2) != 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:23: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str2.empty() || str1 != str2) {\n  std::string *str3 = &str1;\n  if (str3->compare(str2)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  if (str3->compare(str2) == 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (*str3 == str2) {\n  if (str2.compare(*str3) == 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str2 == *str3) {\n  if (comp().compare(str1) == 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (comp() == str1) {\n  if (str1.compare(comp()) == 0) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n  // CHECK-FIXES: if (str1 == comp()) {\n  if (str1.compare(comp())) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings;\n\n  std::string_view sv1(\"a\");\n  std::string_view sv2(\"b\");\n  if (sv1.compare(sv2)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings; use the string equality operator instead [readability-string-compare]\n}\n\nstruct DerivedFromStdString : std::string {};\n\nvoid TestDerivedClass() {\n  DerivedFromStdString derived;\n  if (derived.compare(derived)) {\n  }\n  // CHECK-MESSAGES: [[@LINE-2]]:7: warning: do not use 'compare' to test equality of strings; use the string equality operator instead [readability-string-compare]\n}\n\nvoid Valid() {\n  std::string str1(\"a\", 1);\n  std::string str2(\"b\", 1);\n\n  if (str1 == str2) {\n  }\n  if (str1 != str2) {\n  }\n  if (str1.compare(str2) == str1.compare(str2)) {\n  }\n  if (0 == 0) {\n  }\n  if (str1.compare(str2) > 0) {\n  }\n  if (str1.compare(1, 3, str2)) {\n  }\n  if (str1.compare(str2) > 0) {\n  }\n  if (str1.compare(str2) < 0) {\n  }\n  if (str1.compare(str2) == 2) {\n  }\n  if (str1.compare(str2) == -3) {\n  }\n  if (str1.compare(str2) == 1) {\n  }\n  if (str1.compare(str2) == -1) {\n  }\n\n  std::string_view sv1(\"a\");\n  std::string_view sv2(\"b\");\n  if (sv1 == sv2) {\n  }\n  if (sv1.compare(sv2) > 0) {\n  }\n}"
+    }
+  ]
+}

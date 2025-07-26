@@ -1,0 +1,50 @@
+{
+  "name": "CouplingBetweenObjects",
+  "language": "java",
+  "description": "\nThis rule counts the number of unique attributes, local variables, and return types within an object.\nA number higher than the specified threshold can indicate a high degree of coupling.\n        ",
+  "example": "import com.Blah;\nimport org.Bar;\nimport org.Bardo;\n\npublic class Foo {\n    private Blah var1;\n    private Bar var2;\n\n    //followed by many imports of unique objects\n    ObjectC doWork() {\n        Bardo var55;\n        ObjectA var44;\n        ObjectZ var93;\n        return something();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 141,
+  "branches": 19,
+  "apis": 13,
+  "test": [
+    {
+      "description": "lots of coupling",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    public List foo() {return null;}\n    public ArrayList foo() {return null;}\n    public Vector foo() {return null;}\n}\n        "
+    },
+    {
+      "description": "no coupling",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n}\n        "
+    },
+    {
+      "description": "skip interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.Vector;\n\npublic interface Foo {\n    List foo();\n    ArrayList foo();\n    Vector foo();\n}\n        "
+    },
+    {
+      "description": "lots of coupling in inner class in interfaces",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nimport java.util.*;\npublic interface Foo {\n    class Inner {\n        public List foo() {return null;}\n        public ArrayList foo() {return null;}\n        public Vector foo() {return null;}\n    }\n}\n        "
+    },
+    {
+      "description": "[java] CouplingBetweenObjectsRule does not count attribute and local variable couplings properly #2818",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.Vector;\nimport org.A;\nimport org.B;\n\npublic class Foo {\n\n  public static final ArrayList arrayList = new ArrayList();\n  public static final Vector vector = new Vector();\n\n  public void doWork() {\n    A a = new A();\n    B b = new B();\n  }\n\n}\n"
+    }
+  ]
+}

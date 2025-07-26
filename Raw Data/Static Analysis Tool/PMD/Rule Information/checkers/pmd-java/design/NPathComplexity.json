@@ -1,0 +1,74 @@
+{
+  "name": "NPathComplexity",
+  "language": "java",
+  "description": "\nThe NPath complexity of a method is the number of acyclic execution paths through that method.\nWhile cyclomatic complexity counts the number of decision points in a method, NPath counts the number of\nfull paths from the beginning to the end of the block of the method. That metric grows exponentially, as\nit multiplies the complexity of statements in the same block. For more details on the calculation, see the\ndocumentation {% jdoc java::lang.java.metrics.JavaMetrics#NPATH %}.\n\nA threshold of 200 is generally considered the point where measures should be taken to reduce\ncomplexity and increase readability.\n        ",
+  "example": "public class Foo {\n  public static void bar() { // Ncss = 252: reported!\n    boolean a, b = true;\n    try { // 2 * 2 + 2 = 6\n      if (true) { // 2\n        List buz = new ArrayList();\n      }\n\n      for(int i = 0; i < 19; i++) { // * 2\n        List buz = new ArrayList();\n      }\n    } catch(Exception e) {\n      if (true) { // 2\n        e.printStackTrace();\n      }\n    }\n\n    while (j++ < 20) { //  * 2\n      List buz = new ArrayList();\n    }\n\n    switch(j) { // * 7\n      case 1:\n      case 2: break;\n      case 3: j = 5; break;\n      case 4: if (b && a) { bar(); } break;\n      default: break;\n    }\n\n    do { // * 3\n        List buz = new ArrayList();\n    } while (a && j++ < 30);\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 6,
+  "apis": 10,
+  "test": [
+    {
+      "description": "Full example",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Test default report level - report 200",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static void bar() {\n        boolean a, b = true;\n        int j = 0;\n\n        switch (j) { // 5\n        case 0: case 1: case 2: case 3: case 4: break;\n        }\n\n        switch (j) { // 5\n        case 0: case 1: case 2: case 3: case 4: break;\n        }\n\n        if (true || a && b); // * 4\n        while (j++ < 20);    // * 2\n    }\n}\n        "
+    },
+    {
+      "description": "Test default report level - ignore 199",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    void bar() {\n        boolean a, b;\n        try {\n            switch(j) { // 7\n            case 1:\n            case 2: break;\n            case 3: j = 5; break;\n            case 4: if (b && a) { bar(); } break;\n            default: break;\n            }\n\n            switch(j) { // * 7\n            case 1:\n            case 2: break;\n            case 3: j = 5; break;\n            case 4: if (b && a) { bar(); } break;\n            default: break;\n            }\n\n            if (true || a || b); // * 4\n\n        } catch (Exception e) {\n            if (true || a); // + 3\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Boolean operators",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    void bar() {\n        if (a && b || c);\n    }\n}\n        "
+    },
+    {
+      "description": "Switch stmt",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    void bar() {\n        switch (j) { // 5\n        case 0:\n        case 1:\n        case 3: if (a || b) {} break;\n        }\n\n    }\n}\n        "
+    },
+    {
+      "description": "test case for bug 3484404 (Invalid NPath calculation in return statement)",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "NPath supports constructors",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    Foo() {\n        boolean a, b;\n        int j = 23;\n        switch(j) {\n            case 1:\n            case 2: break;\n            case 3: j = 5; break;\n            case 4: if (b && a) { bar(); } break;\n            default: break;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Switch arrow branch (#2625)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Product {\n    Product buildProduct(String title, Language language) {\n        if (title.length() > 100 || title.length() == 0) {\n            throw new IllegalArgumentException(\"Invalid title length (1-100 chars): \" + title);\n        }\n        var product = new Product();\n        var description = new MultiLangString();\n        switch (language) {\n            case FR -> description.set1(title);\n            case IT -> description.set1(title);\n            case EN -> description.set2(title);\n            default -> description.set2(title);\n        }\n        product.setDescription(description);\n        product.setMagicNumber(3);\n        return product;\n    }\n    void setDescription(MultiLangString s) {}\n    void setMagicNumber(int s) {}\n    enum Language {FR,IT,EN}\n    class MultiLangString { void set1(String s) {} void set2(String s) {}}\n}\n        "
+    },
+    {
+      "description": "Switch expressions (#2625)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Product {\n    Product buildProduct(String title, Language language) {\n        if (title.length() > 100 || title.length() == 0) {\n            throw new IllegalArgumentException(\"Invalid title length (1-100 chars): \" + title);\n        }\n        var product = new Product();\n        var description = switch (language) {\n            case FR -> new Description.Fr(title);\n            case IT -> new Description.Fr(title);\n            case EN -> new Description.En(title);\n            default -> new Description.En(title);\n        };\n        product.setDescription(description);\n        product.setMagicNumber(3);\n        return product;\n    }\n    void setDescription(Description s) {}\n    void setMagicNumber(int s) {}\n    enum Language {FR,IT,EN}\n    static class Description { static class Fr{ Fr(String s){} } static class En{ En(String s){} }}\n}\n        "
+    },
+    {
+      "description": "Switch expressions (#5568)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Product {\n    static byte toByte(final Register8 r) {\n        return switch (r) {\n            case AL, R8B -> (byte) 0x00;\n            case CL, R9B -> (byte) 0x01;\n            case DL, R10B -> (byte) 0x02;\n            case BL, R11B -> (byte) 0x03;\n            case AH, SPL, R12B -> (byte) 0x04;\n            case CH, BPL, R13B -> (byte) 0x05;\n            case DH, SIL, R14B -> (byte) 0x06;\n            case BH, DIL, R15B -> (byte) 0x07;\n        };\n    }\n    enum Register8 {\n    AL, R8B, CL, R9B, DL, R10B, BL, R11B, AH, SPL, R12B, CH, BPL, R13B, DH, SIL, R14B, BH, DIL, R15B\n    }\n}\n        "
+    }
+  ]
+}

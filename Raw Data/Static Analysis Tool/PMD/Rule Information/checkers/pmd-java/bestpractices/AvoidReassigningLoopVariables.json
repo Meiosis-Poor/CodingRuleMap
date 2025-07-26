@@ -1,0 +1,388 @@
+{
+  "name": "AvoidReassigningLoopVariables",
+  "language": "java",
+  "description": "\nReassigning loop variables can lead to hard-to-find bugs. Prevent or limit how these variables can be changed.\n\nIn foreach-loops, configured by the `foreachReassign` property:\n- `deny`: Report any reassignment of the loop variable in the loop body. _This is the default._\n- `allow`: Don't check the loop variable.\n- `firstOnly`: Report any reassignments of the loop variable, except as the first statement in the loop body.\n            _This is useful if some kind of normalization or clean-up of the value before using is permitted, but any other change of the variable is not._\n\nIn for-loops, configured by the `forReassign` property:\n- `deny`: Report any reassignment of the control variable in the loop body. _This is the default._\n- `allow`: Don't check the control variable.\n- `skip`: Report any reassignments of the control variable, except conditional increments/decrements (`++`, `--`, `+=`, `-=`).\n            _This prevents accidental reassignments or unconditional increments of the control variable._\n        ",
+  "example": "public class Foo {\n  private void foo() {\n    for (String s : listOfStrings()) {\n      s = s.trim(); // OK, when foreachReassign is \"firstOnly\" or \"allow\"\n      doSomethingWith(s);\n\n      s = s.toUpper(); // OK, when foreachReassign is \"allow\"\n      doSomethingElseWith(s);\n    }\n\n    for (int i=0; i < 10; i++) {\n      if (check(i)) {\n        i++; // OK, when forReassign is \"skip\" or \"allow\"\n      }\n\n      i = 5;  // OK, when forReassign is \"allow\"\n\n      doSomethingWith(i);\n    }\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 274,
+  "branches": 45,
+  "apis": 24,
+  "test": [
+    {
+      "description": "violation: reassigned 'for' loop variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i = 5; // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i++; // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: assign to/increment array using variable as index",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private int[] array = new int[10];\n\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            this.array[i] = 5;\n            array[i] = 5;\n            this.array[i]++;\n            array[i]++;\n            ++this.array[i];\n            ++array[i];\n            this.array[i] += 1;\n            array[i] += 1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: accessing array elements or fields of the loop variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        for(String[] bar : bars()) {\n            bar[0] = \"foo\";\n            bar.length = 5; // let's assume that array.length is writable...\n            this.bar = 5;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: assign to array using changed variable as index",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "code": "\npublic class Foo {\n    private String[] array = new String[10];\n\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            this.array[i++] = \"Number \" + i;\n            this.array[++i] = \"Number \" + i;\n            this.array[i = 5] = \"Number \" + i;\n            array[i++] = \"Number \" + i;\n            array[++i] = \"Number \" + i;\n            array[i = 5] = \"Number \" + i;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable, inline",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i++);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented other variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            x++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented own field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            this.i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented other field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int i;\n    void foo(int bar, Foo otherObject) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            otherObject.i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: add to 'for' loop variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i += 1; // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: unconditionally incremented 'for' loop variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i++; // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: unconditionally incremented 'for' loop variable, inline",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i++); // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: unconditionally incremented 'for' loop variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        if (foo()) {\n            for (int i=0; i < 10; i++) {\n                doSomethingWith(i);\n                i++; // not OK\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: assign-increment 'for' loop variable inside if",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            if (foo()) i += 1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inside if",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            if (foo()) i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inline inside if",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            if (foo())\n                doSomethingWith(i++);\n            else if (bar())\n                doSomethingElseWith(i--);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable in if condition",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        6
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            if (foo(i++))\n                doSomething();\n            else if (bar(i++))\n                doSomethingElse();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inside switch-case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            switch (foo()) {\n                case 1: i++;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: break inside switch case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            switch (foo()) {\n                case 1: break; //breaks the switch, not the loop\n            }\n            i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: continue inside switch case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            switch (foo()) {\n                case 1: continue;\n            }\n            i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable inside switch expression",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            switch (foo(i++)) {\n                case 1: doSomething();\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inside while",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            while (foo()) i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable inside while condition",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            while (foo(i++)) doSomething();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inside do-while",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            do i++; while(foo());\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable inside do-while condition",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            do doSomething(); while(foo(i++));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inside nested for",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            for (int j=0; j < foo(); j++) i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable after nested for with break",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            for (int j=0; j < foo(); j++) break;\n            i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable after nested for with labeled break",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        outer:\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            for (int j=0; j < foo(); j++) break outer;\n            i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable inside nested for",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n\n                void foo(int bar) {\n                    for (int i = 0; i < 10; i++) {\n                        doSomethingWith(i);\n                        for (int j = 0; j < foo(); j++) {\n                            if (j > 4) {\n                                break;\n                            }\n                            i++;\n                        }\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable inside nested for declaration",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            for (int j=i++; j < foo(); j++) doSomething();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable inside nested for expression",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            for (int j=0; j < foo(i++); j++) doSomething();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable inside nested for update",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            for (int j=0; j < foo(); j=i++) doSomething();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: incremented 'for' loop variable after continue",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            if (foo()) continue;\n            i++;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: incremented 'for' loop variable before continue",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            i++;\n            if (foo()) continue;\n            doSomethingWith(i);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: reassign 'for' loop variable, only skip allowed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            if (foo()) i += 1;\n            if (foo()) i = 5;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: inline-reassign 'for' loop variable, only skip allowed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i += 1);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: reassign 'for' loop variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i += 1;\n            i = 5;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: various reassignments of 'for' loop variable",
+      "expected-problems": 9,
+      "expected-linenumbers": [
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i++; // not OK\n            i--; // not OK\n            ++i; // not OK\n            --i; // not OK\n            i += 1; // not OK\n            i -= 1; // not OK\n            i *= 1; // not OK\n            i /= 1; // not OK\n            i = 5; // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#4500 violation: various conditional reassignments of 'for' loop variable, skip allowed",
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            if (foo()) {\n                i++;\n                i--;\n                ++i;\n                --i;\n                i += 1;\n                i -= 1;\n                doSomethingWith(i++);\n                i += 2;    // not OK (line 13)\n                i -= 2;    // not OK (line 14)\n                i &= 1;    // not OK (line 15)\n                i |= 1;    // not OK (line 16)\n                i *= 1;    // not OK - is not reported anymore (line 17)\n                i /= 1;    // not OK - is not reported anymore (line 18)\n                i = i + 1; // not OK - is reported with 7.0.0-rc1 (line 19)\n                i = i - 1; // not OK - is reported with 7.0.0-rc1 (line 20)\n                i = 5;     // not OK - is reported with 7.0.0-rc1 (line 21)\n                doSomethingWith(i = 5); // not OK - is reported with 7.0.0-rc1 (line 22)\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: reassigned 'foreach' loop variable",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        String[] strings = getStrings();\n        for(String s : strings) {\n            doSomethingWith(s);\n            s = s.toUpper(); // not OK\n            doSomethingElseWith(s);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: reassign 'foreach' loop variable, but not as first statement",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        String[] strings = getStrings();\n        for(String s : strings) {\n            doSomethingWith(s);\n            s = s.toUpper(); // not OK\n            doSomethingElseWith(s);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: reassign 'foreach' loop variable as first statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        String[] strings = getStrings();\n        for(String s : strings) {\n            s = s.trim();\n            doSomethingWith(s);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "violation: reassign 'foreach' loop variable multiple times, only first statement is allowed",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        String[] strings = getStrings();\n        for(String s : strings) {\n            s = s.trim();\n            doSomethingWith(s);\n            s = s.toUpper(); // not OK\n            doSomethingElseWith(s);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: reassign 'foreach' loop variable multiple times",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo(int bar) {\n        String[] strings = getStrings();\n        for(String s : strings) {\n            s = s.trim();\n            doSomethingWith(s);\n            s = s.toUpper(); // not OK\n            doSomethingElseWith(s);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "AvoidReassigningLoopVariables detects some harmless reassigning of loop variables in foreach #2595",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    void foo(int bar, int httpMethods, int large, int len) {\n        String[] strings = getStrings();\n        List<String> lines = new ArrayList<>();\n        for (String g : strings) {\n            g = g.substring(0,g.lastIndexOf(\":\"));\n            g = g + \": 1;\"; // here\n            System.out.println(g);\n        }\n        for (String item : strings) {\n            item = item.trim();\n            httpMethods = httpMethods | getHttpMethod(item);\n        }\n        for (String message : strings) {\n            message = escape(message);\n            lines.add(String.format(large ? \"  %s  \" : \" %s \", message));\n            len = Math.max(length(message) + (large ? 4 : 2), len);\n        }\n\n\n    }\n}\n        "
+    },
+    {
+      "description": "Consider also default methods in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic interface InterfaceWithDefaultMethod {\n    default void foo(int bar) {\n        for (int i=0; i < 10; i++) {\n            doSomethingWith(i);\n            i = 5; // not OK\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Consider also classes in interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic interface InterfaceWithClass {\n    class Inner {\n        void foo(int bar) {\n            for (int i=0; i < 10; i++) {\n                doSomethingWith(i);\n                i = 5; // not OK\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Consider also anonymous classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class ClassWithAnon {\n    void bar() {\n        ClassWithAnon anon = new ClassWithAnon() {\n            void foo(int bar) {\n                for (int i=0; i < 10; i++) {\n                    doSomethingWith(i);\n                    i = 5; // not OK\n                }\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "New fns after implementing pattern binding scope",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        17,
+        17
+      ],
+      "code": "\npublic class CompletableFuture<T> {\n    private T result;\n\n    private CompletableFuture() {\n\n    }\n    private CompletableFuture(T o) {\n\n    }\n\n    public static CompletableFuture<Object> anyOf(CompletableFuture<?>... cfs) {\n        cfs = cfs.clone();\n        CompletableFuture<Object> d = new CompletableFuture<>();\n        if (d.result != null)\n            for (int i = 0, len = cfs.length; i < len; i++)\n                if (cfs[i].result != null)\n                    for (i++; i < len; i++) // here\n                        if (cfs[i].result == null)\n                            cfs[i].cleanStack();\n        return d;\n    }\n}\n        "
+    }
+  ]
+}

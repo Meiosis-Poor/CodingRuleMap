@@ -1,0 +1,99 @@
+{
+  "name": "FieldNamingConventions",
+  "language": "apex",
+  "description": "\n            Configurable naming conventions for field declarations. This rule reports variable declarations\n            which do not match the regex that applies to their specific kind ---e.g. constants (static final),\n            static field, final field. Each regex can be configured through properties.\n\n            By default this rule uses the standard Apex naming convention (Camel case).\n        ",
+  "example": "public class Foo {\n    Integer instanceField; // This is in camel case, so it's ok\n\n    Integer INSTANCE_FIELD; // This will be reported unless you change the regex\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 89,
+  "branches": 12,
+  "apis": 7,
+  "test": [
+    {
+      "description": "all is well",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    final static Integer CONSTANT_FIELD;\n    final Integer finalField;\n    static Integer staticField;\n    Integer instanceField;\n    enum FooEnum {\n        DEFAULT\n    }\n}\n        "
+    },
+    {
+      "description": "default is all caps for constants, camel case for others",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    final static Integer constantField;\n    final Integer FINAL_FIELD;\n    static Integer STATIC_FIELD;\n    Integer INSTANCE_FIELD;\n}\n        "
+    },
+    {
+      "description": "enum default is all caps and underscores",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    enum FooEnum {\n        default\n    }\n}\n        "
+    },
+    {
+      "description": "ignores properties",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Integer BAR { get; set; }\n}\n        "
+    },
+    {
+      "description": "custom enum constant pattern",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    enum FooEnum {\n        default\n    }\n}\n        "
+    },
+    {
+      "description": "custom constant pattern",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    final static Integer constantField;\n    final Integer FINAL_FIELD;\n    static Integer STATIC_FIELD;\n    Integer INSTANCE_FIELD;\n}\n        "
+    },
+    {
+      "description": "custom final pattern",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    final static Integer constantField;\n    final Integer FINAL_FIELD;\n    static Integer STATIC_FIELD;\n    Integer INSTANCE_FIELD;\n}\n        "
+    },
+    {
+      "description": "custom static pattern",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        3,
+        5
+      ],
+      "code": "\npublic class Foo {\n    final static Integer constantField;\n    final Integer FINAL_FIELD;\n    static Integer STATIC_FIELD;\n    Integer INSTANCE_FIELD;\n}\n        "
+    },
+    {
+      "description": "custom instance pattern",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    final static Integer constantField;\n    final Integer FINAL_FIELD;\n    static Integer STATIC_FIELD;\n    Integer INSTANCE_FIELD;\n}\n        "
+    },
+    {
+      "description": "field declaration and initialization separated",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    final static Integer constantField =\n        1;\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "name": "UseIOStreamsWithApacheCommonsFileItem",
+  "language": "java",
+  "description": "\nProblem: Use of [FileItem.get()](https://javadoc.io/static/commons-fileupload/commons-fileupload/1.5/org/apache/commons/fileupload/FileItem.html#get--)\nand [FileItem.getString()](https://javadoc.io/static/commons-fileupload/commons-fileupload/1.5/org/apache/commons/fileupload/FileItem.html#getString--)\ncould exhaust memory since they load the entire file into memory.\n\nSolution: Use [FileItem.getInputStream()](https://javadoc.io/static/commons-fileupload/commons-fileupload/1.5/org/apache/commons/fileupload/FileItem.html#getInputStream--)\nand buffering.\n        ",
+  "example": "import org.apache.commons.fileupload.FileItem;\n\npublic class FileStuff {\n   private String bad(FileItem fileItem) {\n        return fileItem.getString();\n   }\n\n   private InputStream good(FileItem fileItem) {\n        return fileItem.getInputStream();\n   }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "violation: FileItem get() used",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        7,
+        12,
+        16
+      ],
+      "code": "\nimport org.apache.commons.fileupload.FileItem;\npublic class Foo {\n\n    private FileItem globalFileItem;\n\n    private byte[] get(final FileItem fileItem) {\n        return fileItem.get(); // bad\n    }\n\n    private byte[] get(final FileItem fileItem) {\n        FileItem sameFileItem = fileItem;\n        return sameFileItem.get(); // bad\n    }\n\n    private byte[] get() {\n        globalFileItem.get(); // bad\n    }\n}\n        "
+    },
+    {
+      "description": "violation: FileItem get() used with fully qualified class reference",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        11,
+        15
+      ],
+      "code": "\npublic class Foo {\n\n    private org.apache.commons.fileupload.FileItem globalFileItem;\n\n    private byte[] get(final org.apache.commons.fileupload.FileItem fileItem) {\n        return fileItem.get(); // bad\n    }\n\n    private byte[] get(final org.apache.commons.fileupload.FileItem fileItem) {\n        org.apache.commons.fileupload.FileItem sameFileItem = fileItem;\n        return sameFileItem.get(); // bad\n    }\n\n    private byte[] get() {\n        globalFileItem.get(); // bad\n    }\n}\n        "
+    },
+    {
+      "description": "violation: FileItem getString() used",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        7,
+        12,
+        12,
+        16
+      ],
+      "code": "\nimport org.apache.commons.fileupload.FileItem;\npublic class Foo {\n\n    private FileItem globalFileItem;\n\n    private String getString(final FileItem fileItem) {\n        return fileItem.getString(); // bad\n    }\n\n    private String getString(final FileItem fileItem) {\n        FileItem sameFileItem = fileItem;\n        return fileItem.getString() + sameFileItem.getString(); // bad (2x)\n    }\n\n    private String getString() {\n        globalFileItem.getString(); // bad\n    }\n}\n        "
+    },
+    {
+      "description": "violation: FileItem getString() used with fully qualified class reference",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        6,
+        11,
+        11,
+        15
+      ],
+      "code": "\npublic class Foo {\n\n    private org.apache.commons.fileupload.FileItem globalFileItem;\n\n    private String getString(final org.apache.commons.fileupload.FileItem fileItem) {\n        return fileItem.getString(); // bad\n    }\n\n    private String getString(final org.apache.commons.fileupload.FileItem fileItem) {\n        org.apache.commons.fileupload.FileItem sameFileItem = fileItem;\n        return fileItem.getString() + sameFileItem.getString(); // bad (2x)\n    }\n\n    private String getString() {\n        globalFileItem.getString(); // bad\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: harmless get methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String getString(final HarmlessClass harmless) {\n        return harmless.get(); // harmless\n    }\n\n    private class HarmlessClass {\n        public byte[] get() {\n            return new byte[0];\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Harmless getString methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String getString(final HarmlessClass harmless) {\n        return harmless.getString(); // harmless\n    }\n\n    private class HarmlessClass {\n        public String getString() {\n            return \"\";\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False negative with method call returning file item",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.fileupload.FileItem;\npublic class Foo {\n\n    private String getString() {\n        return getItem().getString();\n    }\n\n    private FileItem getItem() { return null; }\n}\n        "
+    }
+  ]
+}

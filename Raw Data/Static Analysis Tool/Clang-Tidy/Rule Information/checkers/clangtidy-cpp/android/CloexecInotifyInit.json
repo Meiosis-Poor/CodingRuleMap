@@ -1,0 +1,22 @@
+{
+  "name": "CloexecInotifyInit",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-inotify-init",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 28,
+  "branches": 1,
+  "apis": 12,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-inotify-init %t\n\nextern \"C\" int inotify_init();\n\nvoid f() {\n  inotify_init();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer inotify_init() to inotify_init1() because inotify_init1() allows IN_CLOEXEC [android-cloexec-inotify-init]\n  // CHECK-FIXES: inotify_init1(IN_CLOEXEC);\n}\n\nnamespace i {\nint inotify_init();\nvoid g() {\n  inotify_init();\n}\n} // namespace i\n\nclass C {\npublic:\n  int inotify_init();\n  void h() {\n    inotify_init();\n  }\n};"
+    }
+  ]
+}

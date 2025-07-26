@@ -1,0 +1,37 @@
+{
+  "name": "BooleanExpressionComplexity",
+  "language": "java",
+  "description": "<div>\n Restricts the number of boolean operators ({@code &amp;&amp;}, {@code ||},\n {@code &amp;}, {@code |} and {@code ^}) in an expression.\n </div>\n\n <p>\n Rationale: Too many conditions leads to code that is difficult to read\n and hence debug and maintain.\n </p>\n\n <p>\n Note that the operators {@code &amp;} and {@code |} are not only integer bitwise\n operators, they are also the\n <a href=\"https://docs.oracle.com/javase/specs/jls/se11/html/jls-15.html#jls-15.22.2\">\n non-shortcut versions</a> of the boolean operators {@code &amp;&amp;} and {@code ||}.\n </p>\n\n <p>\n Note that {@code &amp;}, {@code |} and {@code ^} are not checked if they are part\n of constructor or method call because they can be applied to non-boolean\n variables and Checkstyle does not know types of methods from different classes.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 144,
+  "branches": 18,
+  "apis": 26,
+  "test": [
+    {
+      "description": "Auto test from InputBooleanExpressionComplexity.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        19,
+        37,
+        47,
+        53,
+        55
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.metrics.booleanexpressioncomplexity;\npublic class InputBooleanExpressionComplexity {\n    private boolean _a = false; \n    private boolean _b = false;\n    private boolean _c = false;\n    private boolean _d = false;\n    public void foo() {\n        if (_a && _b || _c ^ _d) {\n        }\n        if (((_a && (_b & _c)) || (_c ^ _d))) { \n        }\n        if (_a && _b && _c) {\n        }\n        if (_a & _b) {\n        }\n        if (_a) {\n        }\n    }\n    public boolean equals(Object object) {\n        new NestedClass() {\n            public void method() {\n                new Settings(Settings.FALSE || Settings.FALSE ||\n                        Settings.FALSE || _a || _b); \n            }\n            public void method2() {\n            }\n        };\n        return (((_a && (_b & _c)) || (_c ^ _d) || (_a && _d)));\n    }\n    public boolean bitwise()\n    {\n        return (((_a & (_b & _c)) | (_c ^ _d) | (_a & _d))); \n    }\n    public void notIgnoredMethodParameters()\n    {\n        new Settings(Settings.FALSE && Settings.FALSE && Settings.FALSE\n                && Settings.TRUE && Settings.TRUE); \n        new Settings(Settings.FALSE || Settings.FALSE || Settings.FALSE\n                || Settings.TRUE || Settings.TRUE); \n    }\n    public void ignoredMethodParameters()\n    {\n        new Settings(Settings.RESIZABLE | Settings.SCROLLBARS | Settings.LOCATION_BAR\n                | Settings.MENU_BAR | Settings.TOOL_BAR);\n        new Settings(Settings.RESIZABLE & Settings.SCROLLBARS & Settings.LOCATION_BAR\n                & Settings.MENU_BAR & Settings.TOOL_BAR);\n        new Settings(Settings.RESIZABLE ^ Settings.SCROLLBARS ^ Settings.LOCATION_BAR\n                ^ Settings.MENU_BAR ^ Settings.TOOL_BAR);\n    }\n    private class Settings {\n        public final static int RESIZABLE = 1;\n        public final static int SCROLLBARS = 2;\n        public final static int LOCATION_BAR = 3;\n        public final static int MENU_BAR = 4;\n        public final static int TOOL_BAR = 5;\n        public final static boolean TRUE = true;\n        public final static boolean FALSE = false;\n        public Settings(int flag)\n        {\n        }\n        public Settings(boolean flag)\n        {\n        }\n    }\n    abstract class NestedClass {\n        public abstract void method();\n        public abstract void method2();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputBooleanExpressionComplexityRecordsAndCompactCtors.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        15,
+        23,
+        34,
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.metrics.booleanexpressioncomplexity;\npublic class InputBooleanExpressionComplexityRecordsAndCompactCtors {\n    record MyRecord1(boolean a, boolean b) {\n        private boolean myBool() {\n           return  (a & b) ^ (a || b) | a; \n        }\n    }\n    record MyRecord2(String myString, boolean a, boolean b) {\n        public MyRecord2{\n            boolean d = (a & b) ^ (a || b) | a; \n        }\n    }\n    record MyRecord3(int x) {\n        MyRecord3(){\n            this(3);\n            boolean b = true;\n            boolean a = true;\n            boolean d = (a & b) ^ (a || b) | a; \n        }\n    }\n    record MyRecord4(int y) {\n        private record MyRecord5(int z) {\n            public MyRecord5{\n                boolean b = false;\n                boolean a = true;\n                boolean d = (a & b) ^ (a || b) | a; \n            }\n        }\n    }\n}"
+    }
+  ]
+}

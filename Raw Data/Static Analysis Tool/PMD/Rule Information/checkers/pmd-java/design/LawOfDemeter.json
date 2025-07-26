@@ -1,0 +1,374 @@
+{
+  "name": "LawOfDemeter",
+  "language": "java",
+  "description": "\nThe law of Demeter is a simple rule that says \"only talk to friends\". It forbids\nfetching data from \"too far away\", for some definition of distance, in order to\nreduce coupling between classes or objects of different levels of abstraction.\n\nThe rule uses a notion of \"degree\", that quantifies how \"far\" an object is.\nExpressions with too high degree can only be used in certain ways. The degree of\nan expression is defined inductively:\n- The degree of `this` is 0\n- The degree of a method parameter is 1\n- The degree of a new object created in a method is 1\n- The degree of a static variable is 1\n- The degree of a field access expression like `expr.field` is the degree of `expr` plus 1\n- The degree of a \"getter expression\" like `expr.getFoo()` is the degree of `expr` plus 1\n- The degree of a \"transformation expression\" like `expr.withFoo(\"\")` is the degree of `expr`\n- The degree of a variable is the maximum degree of all the assignments that reach it\n\nIntuitively, the more you call getters, the more the degree increases. Eventually\nthe degree reaches the report threshold (property `trustRadius`) and the expression\nis reported. The details of the calculation are more involved and make room for common\npatterns, like usage of collections (objects that are in a list or array have the\nsame degree as their container), the builder pattern, and getters that do not appear\nto break a boundary of abstraction.\n\nBe aware that this rule is prone to many false-positives and low-priority warnings.\nYou can increase the `trustRadius` property to reduce them drastically. The default\n`trustRadius` of 1 corresponds to the original law of Demeter (you're only allowed\none getter call on untrusted values). Given some `trustRadius` value:\n- expressions of degree lower or equal to `trustRadius` are not reported\n- expressions of degree exactly `trustRadius + 1` are reported, unless they are only returned\nfrom the current method, or passed as argument to another method. Without this exception it\nwould not be possible to extract any information from e.g. method parameters.\n- values of degree strictly greater than `trustRadius + 1` are not reported. The\nintuition is that to obtain a value of degree `n > 1` then you must use an expression\nof degree `n - 1`, so if you have `n > trustRadius + 1`, there you're using some value\nof degree `trustRadius + 1` that will be reported.\n\nSee also the references:\n\n*   Andrew Hunt, David Thomas, and Ward Cunningham. The Pragmatic Programmer. From Journeyman to Master. Addison-Wesley Longman, Amsterdam, October 1999.;\n*   K.J. Lieberherr and I.M. Holland. Assuring good style for object-oriented programs. Software, IEEE, 6(5):38–48, 1989.;\n*   <http://www.ccs.neu.edu/home/lieber/LoD.html>\n*   <http://en.wikipedia.org/wiki/Law_of_Demeter>\n        ",
+  "example": "public class Foo {\n    /**\n     * This example will result in one violation.\n     */\n    public void example(Bar b) { // b has degree 1\n        // `b.getC()` has degree 2, it's breaking a boundary of abstraction and so is reported.\n        b.getC().doIt();\n        // To respect the law of Demeter, Bar should encapsulate its\n        // C member more properly, eg by exposing a method like this:\n        b.callDoItOnC();\n\n        // a constructor call, not a method call.\n        D d = new D();\n        // this method call is ok, because we have create the new\n        // instance of D locally.\n        d.doSomethingElse();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 395,
+  "branches": 89,
+  "apis": 36,
+  "test": [
+    {
+      "description": "Simple method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n public void foo() {}\n}\n        "
+    },
+    {
+      "description": "Mixed local and foreign method calls",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        8
+      ],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    private List instanceVariableA;\n    public void example(Bar b) {\n        localMethod();\n        this.localMethod();\n        int localVariableC;\n        b.getC().doIt();\n        int localVariableD;\n    }\n    private void localMethod() {}\n    private int instanceVariableB;\n}\nclass C { void doIt() {} }\nclass Bar { C getC() {} }\n        "
+    },
+    {
+      "description": "Simple Method calls without chaining",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void example(Bar b) {\n        C c = b.getC();\n        c.doIt();\n    }\n}\nclass C { void doIt() {} }\nclass Bar { C getC() {} }\n        "
+    },
+    {
+      "description": "Simple Method calls with chaining",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void example(Bar b) {\n        b.getC().doIt();\n    }\n}\nclass C { void doIt() {} }\nclass Bar { C getC() {} }\n        "
+    },
+    {
+      "description": "Simple Method calls with chaining, starts with this method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void example() {\n        getC().doIt(); // no qualifier = this\n        this.getC().doIt();\n    }\n    C getC() {}\n}\nclass C { void doIt() {} }\n        "
+    },
+    {
+      "description": "Simple Method calls with local created object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void example() {\n        C c = new C();\n        c.doIt();\n    }\n}\nclass C { void doIt() {} }\n        "
+    },
+    {
+      "description": "Simple Method calls with local created object and other variable assignment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void example() {\n        String something;\n        C c = new C();\n        c.doIt();\n        something = \"no worries\";\n    }\n}\nclass C { void doIt() {} }\n        "
+    },
+    {
+      "description": "Simple Method calls with local created object and variables",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void example() {\n        int data = 5;\n        C c = new C();\n        c.doIt(data);\n    }\n}\nclass C { void doIt() {} }\n        "
+    },
+    {
+      "description": "Simple Method call on local created object within nesting local scopes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.ArrayList;\npublic class Foo {\n    public void example(int c) {\n        List<Integer> result = new ArrayList<Integer>();\n        if (c > 0) {\n            for (int i = 0; i < c; i++) {\n                result.add(i);\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Example documentation",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    /**\n     * This example will result in two violation.\n     */\n    public void example(Bar b) {\n        // this method call is ok, as b is a parameter of \"example\"\n        C c = b.getC();\n\n        // this method call is a violation, as we are using c, which we got from B.\n        // We should ask b directly instead, e.g. \"b.doItOnC();\"\n        c.doIt();\n\n        // this is also a violation, just differently expressed as a method chain without temporary variables.\n        b.getC().doIt();\n\n        // that's a constructor call, not a method call.\n        D d = new D();\n        // this method call is ok, because we have create the new instance of D locally.\n        d.doSomethingElse();\n    }\n}\nclass C { void doIt() {} }\nclass D { void doSomethingElse() {} }\nclass Bar { C getC() {} }\n        "
+    },
+    {
+      "description": "Static methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class B {\n    public static A a = new A();\n}\n\npublic class A {\n    public static void doStatic() {\n    }\n}\n\npublic class Foo {\n    public void example() {\n        A.doStatic(); // direct static - allowed\n\n        // Note: in PMD6, this was reported, in PMD7 not anymore. See #3510\n        B.a.doStatic(); // static chain - no violation anymore\n    }\n}\n        "
+    },
+    {
+      "description": "Instance methods on fields",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        18,
+        19,
+        24,
+        25
+      ],
+      "code": "\npublic class B {\n    public A a = new A();\n}\n\npublic class A {\n    public boolean doSomething() {\n        return false;\n    }\n}\n\npublic class Foo {\n\n    B b;\n    A a;\n\n    public void example() {\n        a.doSomething();             // ok: self field\n        b.a.doSomething();           // warn\n        this.b.a.doSomething();      // warn\n        foo(a);                      // ok: self field\n        foo(this.a);                 // ok: self field\n        foo(b.a);                    // ok: used in external method\n        foo(this.b.a);               // ok: used in external method\n        foo(b.a.doSomething());      // warn\n        foo(this.b.a.doSomething()); // warn\n    }\n\n    void foo(boolean b) {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Exclude iterator and list elements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.util.Iterator;\n\npublic class Foo {\n    public void example() {\n        List<String> list = new ArrayList<String>();\n        list.add(\"Tata\");\n        Iterator<String> it = list.iterator();\n        while (it.hasNext()) {\n                String s = it.next();\n                System.out.println(s);\n        }\n        if (list != null && !list.isEmpty()) {\n            for (String s : list) {\n                if (!s.isEmpty()) {\n                    System.out.println(s);\n                }\n            }\n        }\n\n        List<String> anotherList = calcList();\n        for (String s : anotherList) {\n            if (!s.isEmpty()) {\n                System.out.println(s);\n            }\n        }\n    }\n    List<String> calcList() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "#999 false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    //Thats no Violation in PMD:\n    public boolean compare1(final String aString) {\n        return aString.equals(\"S\");\n    }\n\n    //Thats a Violation in PMD:\n    public boolean compare2(final String aString) {\n        return \"A\".equals(aString);              // < - - false positive\n    }\n\n    Factory myFactory;\n    // no violation, because the object is not used\n    public Object create() {\n        Object o = myFactory.create();\n        return o;\n    }\n}\nclass Factory { Object create() { return new Object(); }}\n        "
+    },
+    {
+      "description": "FP with builder",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    // no violation, should be an exception, as the builder pattern is used here\n    public void toString() {\n        StringBuilder buffer = new StringBuilder();\n        buffer.append(\"string\").append(\"string\").append(\"string\");\n        return buffer.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "#999 false negatives -- amended: factory calls are allowed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    Factory myObjectCreator;\n    // violation, because object is used\n    public Object create2() {\n        Object o = myObjectCreator.create();\n        o.setName(\"my name\");\n        return o;\n    }\n}\nclass Factory { Object create() { return new Object(); }}\n        "
+    },
+    {
+      "description": "FP with string builder",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public void create2(StringBuffer buffer) {\n        buffer.append(\"string\").append(\"string\").append(\"string\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1245 False Positive for Law of Demeter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.sql.Connection;\npublic class Test {\n    Factory connectionFactory;\n    public void bar() {\n        // Create a Connection\n        final Connection connection = connectionFactory.createConnection();\n        connection.start();\n    }\n}\nclass Factory { Connection createConnection() { return new Connection(); }}\n        "
+    },
+    {
+      "description": "#1427 False Positive for Law of Demeter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public void bar() {\n        // Builder pattern\n        final Builder builder = Builder.newBuilder();\n        builder.withFoo();\n        final FooBuilder fooBuilder = FooBuilder.newBuilder();\n        fooBuilder.withBar();\n    }\n}\nclass Builder {static Builder newBuilder() {}}\nclass FooBuilder {static FooBuilder newBuilder() {}}\n        "
+    },
+    {
+      "description": "#2010 False Positive for Law of Demeter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public void bar() {\n        // Inner Builder pattern chained\n        final Bar bar = Bar.newBuilder()\n                .withFoo(\"foo\")\n                .build();\n    }\n}\n\nclass Bar {\n    static BarBuilder newBuilder() { }\n}\nclass BarBuilder {\n    BarBuilder withFoo(String s) {}\n    Bar build() {}\n}\n        "
+    },
+    {
+      "description": "Method chain is reset when someone produces trusted data",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Test {\n    A getA() {}\n    public void bar() {\n        this.getA().foo(\"\").getA(); // fine\n        this.getA().getB().getA().getB().getA(); // not ok\n        //          ^^^^ only report this\n    }\n}\ninterface A {\n    B getB();\n    B foo(String s);\n}\ninterface B { A getA(); }\n        "
+    },
+    {
+      "description": "Test trust radius",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            public class Test {\n                A getA() {}\n                public void bar() {\n                    this.getA().getB().getA().getB().getA(); // not ok\n                    //                 ^^^^ only report this\n                }\n            }\n            interface A {\n                B getB();\n                B foo(String s);\n            }\n            interface B { A getA(); }\n            "
+    },
+    {
+      "description": "[java] LawOfDemeter: False positive with 'this' pointer #2174",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage pmdtests;\n\npublic class Foo {\n    private final int i;\n\n    public Foo(int i) {\n        this.i = i;\n    }\n\n    public void meth() {\n        System.out.println(this.i);     // wrong violation: method chain calls\n        System.out.println(super.i);    // wrong violation: method chain calls\n        System.out.println(i);          // no violation\n    }\n\n    public void method(Foo this) {      // receiver param!!\n        System.out.println(this.i);     // wrong violation: method chain calls\n    }\n\n    public void method(Foo this, String... args) {\n        System.out.println(this.i);     // wrong violation: method chain calls\n        for (String arg: args) {\n            System.out.println(arg);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "System out println",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage pmdtests;\n\npublic class Foo {\n    private final int i;\n\n    public Foo(int i) {\n        this.i = i;\n    }\n\n    public void meth() {\n        System.out.println(\"\");     // wrong violation: method chain calls\n        System.out.println(\"\");    // wrong violation: method chain calls\n        System.out.println(\"\");          // no violation\n    }\n\n    public void method(Foo this) {      // receiver param!!\n        System.out.println(\"\");     // wrong violation: method chain calls\n    }\n\n    public void method(Foo this, String... args) {\n        System.out.println(\"\");     // wrong violation: method chain calls\n        for (String arg: args) {\n            System.out.println(arg);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] LawOfDemeter: False positive when casting to derived class #2189",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage pmdtests;\n\nimport java.util.List;\nimport java.util.concurrent.ForkJoinTask;\n\nclass TaskManager {\n\n    private final List<ForkJoinTask<Integer>> tasks;\n\n    public void cancelTasks(ForkJoinTask<Integer> cancelTask) {\n        for (ForkJoinTask<Integer> task : tasks) {\n            if (!task.equals(cancelTask)) {\n                task.cancel(true);\n                ((SearchNumberTask) task).writeCancelMessage(); // wrong violation: method chain calls\n            }\n        }\n    }\n\n    abstract static class SearchNumberTask extends ForkJoinTask<Integer> {\n        abstract void writeCancelMessage();\n    }\n}\n        "
+    },
+    {
+      "description": "[java] LawOfDemeter: False positive with indexed array access #2181",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Util {\n    public static boolean check(String hashed) { // degree 1\n        try {\n            final String[] parts = hashed.split(\"\\\\$\"); // degree 1: string is pure data\n\n            if (parts.length != 5                    // array length is ok\n                    || parts.clone()                 // wrong violation - method chain calls\n                    || parts[1].isEmpty()            // wrong violation - method chain calls\n                    || parts[1].equals(\"s0\")) {      // wrong violation - method chain calls\n                throw new IllegalArgumentException(\"Invalid hashed value\");\n            }\n        } catch (Exception e) { }\n    }\n}\n        "
+    },
+    {
+      "description": "List access",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic final class Util {\n    public static boolean check(String hashed) { // degree 1\n        try {\n            final List<String> parts = hashed.split(\"\\\\$\"); // degree 1: string is pure data\n\n            if (parts.size() != 5\n                    || parts.isEmpty()\n                    || parts.get(1).isEmpty()\n                    || parts.get(1).equals(\"s0\")) {\n                throw new IllegalArgumentException(\"Invalid hashed value\");\n            }\n        } catch (Exception e) { }\n    }\n}\n        "
+    },
+    {
+      "description": "FP when iterating on iterator field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nimport java.util.List;\npublic final class ControlEvent {\n    List<ControlEvent> controlQueue;\n\n    // Process all events currently stored in the control queue.\n    private void processControlQueue() {\n        synchronized (controlQueue) {\n            Iterator<ControlEvent> iter = controlQueue.iterator();\n            while (iter.hasNext()) {\n                ControlEvent ev = iter.next();\n                pollsetCtl(ev.fd(), 0);\n                if (!ev.removeOnly()) {\n                    ev.setError(pollsetCtl(ev.fd(), ev.events()));\n                }\n                iter.remove();\n            }\n            controlQueue.notifyAll();\n        }\n    }\n    void setError(Object o) {}\n    boolean removeOnly() {return false;}\n    Object pollsetCtl(int a, int b) {return null;}\n    int fd() {return 0;}\n    int events() {return 0;}\n}\n        "
+    },
+    {
+      "description": "FP when iterating on collection field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nimport java.util.List;\npublic final class ControlEvent {\n    List<ControlEvent> controlQueue;\n\n    private void processControlQueue() {\n        synchronized (controlQueue) {\n            for (ControlEvent ev: controlQueue) {\n                pollsetCtl(ev.fd(), 0);\n                if (!ev.removeOnly()) {\n                    ev.setError(pollsetCtl(ev.fd(), ev.events()));\n                }\n            }\n            controlQueue.notifyAll();\n        }\n    }\n    void setError(Object o) {}\n    boolean removeOnly() {return false;}\n    Object pollsetCtl(int a, int b) {return null;}\n    int fd() {return 0;}\n    int events() {return 0;}\n}\n        "
+    },
+    {
+      "description": "FP when iterating on collection param",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nimport java.util.List;\npublic final class ControlEvent {\n\n    private void processControlQueue(List<ControlEvent> controlQueue) {\n        synchronized (controlQueue) {\n            for (ControlEvent ev: controlQueue) {\n                pollsetCtl(ev.fd(), 0);\n            }\n            controlQueue.notifyAll();\n        }\n    }\n    void setError(Object o) {}\n    boolean removeOnly() {return false;}\n    Object pollsetCtl(int a, int b) {return null;}\n    int fd() {return 0;}\n    int events() {return 0;}\n}\n        "
+    },
+    {
+      "description": "Stackoverflow with cyclic data flow",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        10,
+        12
+      ],
+      "code": "\n            import java.nio.ByteBuffer;\n            import java.util.Iterator;\n            import java.util.List;\n            import java.io.*;\n\n            public final class Attribute {\n\n                void writeAttributes(int ctype, Attribute.Holder h) throws IOException {\n                    ByteBuffer buf, out, bufOut;\n                    for (Attribute a : h.attributes) { // warn(h.attributes)\n                        if (a.layout()\n                                == h.attributes) { // warn(h.attributes)\n                            DataOutputStream savedOut = out;\n                            out = savedOut;\n                        } else {\n                            out.write(a.bytes());\n                        }\n                    }\n                }\n\n                byte[] bytes() {}\n\n                class Holder {\n\n                    Object attributes;\n                }\n\n                int fd() { return 0; }\n\n                int events() { return 0; }\n            }\n            "
+    },
+    {
+      "description": "FP with enum - #1605",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.nio.charset.StandardCharsets;\n\n            public final class FileText {\n\n                void FileText(String fileToProcess, String charset) {\n                    final FileText fileText = FileText(fileToProcess,\n                                                       StandardCharsets.UTF_8.name());\n\n                }\n\n            }\n            "
+    },
+    {
+      "description": "FP with map iteration",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            import java.text.MessageFormat;\n\n            public final class FileText {\n\n                void foo(Map<String, String> messages, String messageKey) {\n                    String checkMessage;\n                    for (Map.Entry<String, String> entry : messages.entrySet()) {\n                        if (messageKey.equals(entry.getKey())) {\n                            final MessageFormat formatter = new MessageFormat(entry.getValue(), Locale.ROOT);\n                            checkMessage = formatter.format(arguments);\n                            break;\n                        }\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "Field access on call",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            import java.text.MessageFormat;\n\n            class Manager {\n\n            }\n            public final class Token {\n                Manager manager;\n                Token getLastToken() {\n\n                }\n            }\n            class Q {\n                void foo(Token t) {\n                    Manager m = t.getLastToken().manager;\n                    m.doSomethn();\n                }\n            }\n            "
+    },
+    {
+      "description": "#2175 - False positive for chained methods with generic method call ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Arrays;\n            import java.util.List;\n\n            public enum Containment {\n                ;\n\n                public static void main(String... args) {\n                    Object obj = \"one\";\n                    List<Object> objs = Arrays.asList(\"one\", 2, Math.PI, 4);\n                    List<Integer> ints = Arrays.asList(2, 4);\n                    assert objs.contains(obj);     // wrong violation: object not created locally\n                    assert objs.containsAll(ints); // wrong violation: object not created locally\n                    assert !ints.contains(obj);    // wrong violation: object not created locally\n                    assert !ints.containsAll(objs);// wrong violation: object not created locally\n\n                    obj = 1;\n                    objs = Arrays.<Object>asList(1, 3); // wrong violation: method chain calls\n                    ints = Arrays.asList(1, 2, 3, 4);\n                    assert ints.contains(obj);          // wrong violation: object not created locally\n                    assert ints.containsAll(objs);      // wrong violation: object not created locally\n                }\n            }\n            "
+    },
+    {
+      "description": "#2180 - False positive for thread.currentThread",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            import java.util.concurrent.ThreadLocalRandom;\n            import static java.lang.System.out;\n\n            public class TaskLocalRandom implements Runnable {\n\n                @Override\n                public void run() {\n                    StringBuilder sb = new StringBuilder(40);\n                    sb.append(Thread.currentThread().getName()).append(\" with priority \")\n                      .append(Thread.currentThread().getPriority())\n                      .append(\": %d %n\");\n                    String str = sb.toString();\n                    for (int i = 0; i < 10; i++)\n                        out.printf(\n                                str,\n                                ThreadLocalRandom.current().nextInt(10) );\n                }\n            }\n            "
+    },
+    {
+      "description": "#2179 - False positive (Law of Demeter): Static property access should treat class-level property as global object, not dot-accessed property. #2179",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            import java.util.concurrent.TimeUnit;\n            import static java.util.concurrent.TimeUnit.SECONDS;\n\n            public enum Test {\n                ;\n\n                public static void main(String[] args) {\n                    try {\n\n                        TimeUnit.MILLISECONDS.sleep(300);\n                        SECONDS.sleep(2);\n\n\n                    } catch (InterruptedException ie) {\n                        System.err.println(ie);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "#2182 - access to field of other instance in this class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.time.LocalDate;\n\n            public class Person {\n                LocalDate birthday;\n\n                public static int compareByAge(Person a, Person b) {\n                    return a.birthday.compareTo(b.birthday);\n                }\n            }\n            "
+    },
+    {
+      "description": "False positive with lambda expression #1014",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.function.Consumer;\n\n            public class SimpleClass{\n                public void simpleMethod() {\n                    anotherSimpleMethod(System.out::println, 10);\n                }\n\n                public <T> void anotherSimpleMethod(Consumer<T> consumer, T value) {\n                    consumer.accept(value);\n                }\n            }\n            "
+    },
+    {
+      "description": "False positive with fields assigned to local vars #2188",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            public class AddressUsingCopyOnWrite {\n                private volatile AddressValue addressValue;\n\n                public AddressUsingCopyOnWrite(String street, String city, String phone) {\n                    this.addressValue = new AddressValue(street, city, phone);\n                }\n\n                @Override\n                public String toString() {\n                    AddressValue local = addressValue;\n                    return \"street=\" + local.street + \",city=\" + local.getCity()\n                            + \",phoneNumber=\" + local.getPhoneNumber();\n                }\n\n                static class AddressValue {\n                    String street;\n                    String getStreet() {}\n                    String getCity() {}\n                    String getPhoneNumber() {}\n                }\n\n            }\n            "
+    },
+    {
+      "description": "Not a getter if it has arguments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class AddressUsingCopyOnWrite {\n\n                AddressUsingCopyOnWrite getSomething(String a) { }\n\n                public String toString() {\n                    getSomething(\"\")\n                            .getSomething(\"\")\n                            .getSomething(\"\")\n                            .getSomething(\"\")\n                            .getSomething(\"\")\n                            .getSomething(\"\");\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with stream",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class AddressUsingCopyOnWrite {\n\n                AddressUsingCopyOnWrite getSomething(String a) { }\n\n                public String toString(java.util.List<String> foo) {\n                    var a = foo.stream()\n                       .filter(a -> true)\n                       .filter(a -> true)\n                       .filter(a -> true)\n                       .filter(a -> true)\n                       .findFirst().get();\n                }\n            }\n            "
+    },
+    {
+      "description": "Foreign stream",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.*;\n            import java.util.stream.Stream;\n\n            class Bar {\n\n                public String toString(Foo foo) {\n                    Foo a = foo.stream()\n                               .filter(a -> true)\n                               .filter(a -> true)\n                               .filter(a -> true)\n                               .filter(a -> true)\n                               .findFirst().get();\n                    a.getSomething().foo();\n                }\n\n                void foo() {}\n            }\n\n            public class Foo {\n                Bar getSomething() { }\n                Stream<Foo> stream() { }\n            }\n            "
+    },
+    {
+      "description": "Can pass property of object to other method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            class Bar {\n\n                void foo(String f) {}\n\n                public String toString(Foo foo) {\n                    foo(foo.getSomething());\n                }\n\n            }\n\n            public class Foo {\n                String getSomething() { }\n            }\n            "
+    },
+    {
+      "description": "Can get properties if their type is related",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            class Foo {\n\n                void foo(Foo f) {}\n\n                public String toString(JavaNode foo) {\n                    Node p = foo.getRoot();\n                }\n\n            }\n\n            interface JavaNode extends Node {}\n            interface RootNode extends Node {}\n\n            public interface Node {\n                RootNode getRoot();\n            }\n            "
+    },
+    {
+      "description": "Ignore class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                public String toString(Foo foo) {\n                    int p = foo.getClass().getModifiers();\n                }\n            }\n            "
+    },
+    {
+      "description": "Null check means pure data",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            class Foo {\n                public String toString(Rule rule) {\n                    if (rule.getLanguage() == null)\n                        throw new IllegalArgumentException();\n                    System.out.println(rule.getLanguage());\n                    System.getProperty(rule.getLanguage().getName());\n                }\n            }\n            interface Language {\n                String getName();\n            }\n            interface Rule {\n                Language getLanguage();\n            }\n            "
+    },
+    {
+      "description": "Return and throw escape",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            class Foo {\n                public String toString(Rule rule) {\n                    rule.getLanguage().doSomething(); // warn\n\n                    println(rule.getLanguage()); // no warning\n                    if (foo())\n                        return rule.getLanguage(); // no warning\n                    else\n                        throw rule.getLanguage(); // no warning\n                }\n            }\n            interface Language {\n                String getName();\n                void doSomething();\n            }\n            interface Rule {\n                Language getLanguage();\n            }\n            "
+    },
+    {
+      "description": "Local var is fine until used, if some of them escape",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            class Foo {\n                public String toString(Rule rule) {\n                    Language l = rule.getLanguage(); // no warning\n                    l.doSomething(); // warn: degree 3\n                    println(l); // no warning\n                    if (foo())\n                        return l; // no warning\n                    else\n                        throw l; // no warning\n                }\n            }\n            interface Language {\n                String getName();\n                void doSomething();\n            }\n            interface Rule {\n                Language getLanguage();\n            }\n            "
+    },
+    {
+      "description": "Rule example",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            public class Foo {\n                /**\n                 * This example will result in one violation.\n                 */\n                public void example(Bar b) { // b has degree 1\n                    // `b.getC()` has degree 2, it's breaking a boundary of abstraction and so is reported.\n                    b.getC().doIt();\n                    // To respect the law of Demeter, Bar should encapsulate its\n                    // C member more properly, eg by exposing a method like this:\n                    b.callDoItOnC();\n\n                    // a constructor call, not a method call.\n                    D d = new D();\n                    // this method call is ok, because we have create the new\n                    // instance of D locally.\n                    d.doSomethingElse();\n                }\n            }\n            interface Bar {\n                C getC();\n            }\n            class D {\n                void doSomethingElse() {}\n            }\n            interface C { void doIt(); }\n            "
+    },
+    {
+      "description": "[java] LawOfDemeter disallows method call on locally created object #3840",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.List;\n            import java.util.concurrent.CompletableFuture;\n\n            public class ParallelHandler<T> {\n\n                private List<CompletableFuture<T>> futures;\n\n                //...\n\n                // pmd failed to warn\n                public List<CompletableFuture<T>> get_nowarning() {\n                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[] {})).join(); // point 1: true-negative\n                    return futures;\n                }\n\n                // pmd warns CompletableFuture.allOf(tempVar).join();\n                public List<CompletableFuture<T>> get_fp() {\n                    CompletableFuture[] tempVar =  futures.toArray(new CompletableFuture[] {});\n                    CompletableFuture.allOf(tempVar).join(); // point 2: false positive\n                    return futures;\n                }\n            }\n            "
+    },
+    {
+      "description": "conditional self assignment of fields",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        17
+      ],
+      "code": "\nclass LawOfDemeterFields {\n    static class Entry {\n        Entry left;\n        Entry right;\n        Integer value;\n    }\n\n    private Entry root;\n\n    Entry find(Integer i) {\n        Entry p = root;\n        while (p != null) {\n            int cmp = p.value.compareTo(i);\n            if (cmp < 0) {\n                p = p.left; // law of demeter: degree 1\n            } else if (cpm > 0) {\n                p = p.right; // law of demeter: degree 2\n            } else {\n                return p;\n            }\n        }\n        return null;\n    }\n}\n"
+    },
+    {
+      "description": "#3802 FN with lambdas",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.util.function.Function;\npublic class Example {\n\n    public void func() {\n        MyObject myObject = MyObjectProvider.get();\n        Function<Integer, Integer> f = (i) -> {\n            Object obj = myObject.getFunc(); //false-negative here\n            obj.hashCode();\n        };\n    }\n}\n\nclass MyObject {\n    public Object getFunc(){\n        return new Object();\n    }\n}\n\nclass MyObjectProvider {\n    public static MyObject get(){\n        return new MyObject();\n    }\n}\n"
+    },
+    {
+      "description": "#2192 [java] LawOfDemeter: False negative with Try-resource block treated as function call by rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage pmdtests;\n\nimport java.io.IOException;\nimport java.io.PrintWriter;\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\nimport java.sql.ResultSet;\nimport java.sql.SQLException;\nimport java.sql.Statement;\nimport javax.servlet.ServletException;\nimport javax.servlet.http.HttpServlet;\nimport javax.servlet.http.HttpServletRequest;\nimport javax.servlet.http.HttpServletResponse;\n\n// @WebServlet(\"/DbServlet\")\npublic class DbServlet extends HttpServlet {\n  private static final long serialVersionUID = 1L;\n  private static final String URL = \"jdbc:derby:HomeDB\";\n  private transient Connection link;\n\n  public void doPost(HttpServletRequest request, HttpServletResponse response)\n      throws ServletException, IOException {\n    response.setContentType(\"text/HTML\");\n    PrintWriter out = response.getWriter();\n\n    try (Statement statement = link.createStatement();\n         ResultSet results = statement.executeQuery(\"SELECT * FROM PhoneNums\");) {\n\n      while (results.next()) {\n        out.println(\"<TR>\");\n        out.println(\"<TD>\");\n        out.println(results.getString(\"Surname\"));\n        out.println(\"</TD>\");\n        out.println(\"<TD>\");\n        out.println(results.getString(\"Forenames\"));\n        out.println(\"</TD>\");\n        out.println(\"<TD>\");\n        out.println(results.getString(\"PhoneNum\"));\n        out.println(\"</TD>\");\n        out.println(\"</TR>\");\n      }\n      out.println(\"</TABLE>\");\n    } catch (SQLException sqlEx) {\n      printHtmlSelectError(out);\n      return;\n    }\n    out.println(\"<BODY>\");\n    out.println(\"</HTML>\");\n    out.flush();\n  }\n}\n"
+    },
+    {
+      "description": "#3801 [java] LawOfDemeter - false negative with braces",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        11,
+        15
+      ],
+      "code": "\npublic class Example {\n    public void func() {\n        MyObject myObject = MyObjectProvider.get();\n        myObject.func();   // allowed, distance 1\n        {myObject.func();} // allowed, distance 1\n    }\n\n    public void func2() {\n        MyObject myObject = MyObjectProvider.get();\n        {\n        Object obj = myObject.getFunc2();  // not allowed (line 11)\n        obj.hashCode();\n        }\n\n        myObject.getFunc2().hashCode(); // not allowed (line 15)\n    }\n}\n\nclass MyObject {\n    public void func(){\n        // do nothing\n    }\n\n    public Object getFunc2(){\n        return new Object();\n    }\n}\n\nclass MyObjectProvider {\n    public static MyObject get(){\n        return new MyObject();\n    }\n}\n"
+    }
+  ]
+}

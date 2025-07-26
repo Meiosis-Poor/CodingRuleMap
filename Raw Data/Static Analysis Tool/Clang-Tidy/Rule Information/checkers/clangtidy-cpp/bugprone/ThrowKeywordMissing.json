@@ -1,0 +1,28 @@
+{
+  "name": "ThrowKeywordMissing",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-throw-keyword-missing",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 42,
+  "branches": 1,
+  "apis": 38,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        50,
+        54,
+        78,
+        82,
+        128,
+        138,
+        175
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-throw-keyword-missing %t -- -- -fexceptions\n\nnamespace std {\n\n// std::string declaration (taken from test/clang-tidy/readability-redundant-string-cstr-msvc.cpp).\ntemplate <typename T>\nclass allocator {};\ntemplate <typename T>\nclass char_traits {};\ntemplate <typename C, typename T = std::char_traits<C>, typename A = std::allocator<C>>\nstruct basic_string {\n  basic_string();\n  basic_string(const basic_string &);\n  // MSVC headers define two constructors instead of using optional arguments.\n  basic_string(const C *);\n  basic_string(const C *, const A &);\n  ~basic_string();\n};\ntypedef basic_string<char> string;\ntypedef basic_string<wchar_t> wstring;\n\n// std::exception and std::runtime_error declaration.\nstruct exception {\n  exception();\n  exception(const exception &other);\n  virtual ~exception();\n};\n\nstruct runtime_error : public exception {\n  explicit runtime_error(const std::string &what_arg);\n};\n\n} // namespace std\n\n// The usage of this class should never emit a warning.\nstruct RegularClass {};\n\n// Class name contains the substring \"exception\", in certain cases using this class should emit a warning.\nstruct RegularException {\n  RegularException() {}\n\n  // Constructors with a single argument are treated differently (cxxFunctionalCastExpr).\n  RegularException(int) {}\n};\n\n// --------------\n\nvoid stdExceptionNotTrownTest(int i) {\n  if (i < 0)\n    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: suspicious exception object created but not thrown; did you mean 'throw {{.*}}'? [bugprone-throw-keyword-missing]\n    std::exception();\n\n  if (i > 0)\n    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: suspicious exception\n    std::runtime_error(\"Unexpected argument\");\n}\n\nvoid stdExceptionThrownTest(int i) {\n  if (i < 0)\n    throw std::exception();\n\n  if (i > 0)\n    throw std::runtime_error(\"Unexpected argument\");\n}\n\nvoid regularClassNotThrownTest(int i) {\n  if (i < 0)\n    RegularClass();\n}\n\nvoid regularClassThrownTest(int i) {\n  if (i < 0)\n    throw RegularClass();\n}\n\nvoid nameContainsExceptionNotThrownTest(int i) {\n  if (i < 0)\n    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: suspicious exception\n    RegularException();\n\n  if (i > 0)\n    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: suspicious exception\n    RegularException(5);\n}\n\nvoid nameContainsExceptionThrownTest(int i) {\n  if (i < 0)\n    throw RegularException();\n\n  if (i > 0)\n    throw RegularException(5);\n}\n\ntemplate <class Exception>\nvoid f(int i, Exception excToBeThrown) {}\n\ntemplate <class SomeType>\nvoid templ(int i) {\n  if (i > 0)\n    SomeType();\n}\n\nvoid funcCallWithTempExcTest() {\n  f(5, RegularException());\n\n  templ<RegularException>(4);\n  templ<RegularClass>(4);\n}\n\n// Global variable initialization test.\nRegularException exc = RegularException();\nRegularException *excptr = new RegularException();\n\nvoid localVariableInitTest() {\n  RegularException exc = RegularException();\n  RegularException *excptr = new RegularException();\n}\n\nclass CtorInitializerListTest {\n  RegularException exc;\n  RegularException exc2{};\n\n  CtorInitializerListTest() : exc(RegularException()) {}\n\n  CtorInitializerListTest(int) try : exc(RegularException()) {\n    // Constructor body\n  } catch (...) {\n    // CHECK-MESSAGES: :[[@LINE+1]]:5: warning: suspicious exception\n    RegularException();\n  }\n\n  CtorInitializerListTest(float);\n};\n\nCtorInitializerListTest::CtorInitializerListTest(float) try : exc(RegularException()) {\n  // Constructor body\n} catch (...) {\n  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: suspicious exception\n  RegularException();\n}\n\nnamespace GH115055 {\nclass CtorInitializerListTest2 {\n public:\n  CtorInitializerListTest2() {}\n private:\n  RegularException exc{};\n};\n}  // namespace GH115055\n\nRegularException funcReturningExceptionTest(int i) {\n  return RegularException();\n}\n\nvoid returnedValueTest() {\n  funcReturningExceptionTest(3);\n}\n\nstruct ClassBracedInitListTest {\n  ClassBracedInitListTest(RegularException exc) {}\n};\n\nvoid foo(RegularException, ClassBracedInitListTest) {}\n\nvoid bracedInitListTest() {\n  RegularException exc{};\n  ClassBracedInitListTest test = {RegularException()};\n  foo({}, {RegularException()});\n}\n\ntypedef std::exception ERROR_BASE;\nclass RegularError : public ERROR_BASE {};\n\nvoid typedefTest() {\n  // CHECK-MESSAGES: :[[@LINE+1]]:3: warning: suspicious exception\n  RegularError();\n}\n\nstruct ExceptionRAII {\n  ExceptionRAII() {}\n  ~ExceptionRAII() {}\n};\n\nvoid exceptionRAIITest() {\n  ExceptionRAII E;\n}\n\nnamespace std {\ntypedef decltype(sizeof(void*)) size_t;\n}\n\nvoid* operator new(std::size_t, void*);\n\nvoid placeMentNewTest() {\n  alignas(RegularException) unsigned char expr[sizeof(RegularException)];\n  new (expr) RegularException{};\n}"
+    }
+  ]
+}

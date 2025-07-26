@@ -1,0 +1,216 @@
+{
+  "name": "MissingOverride",
+  "language": "java",
+  "description": "\n            Annotating overridden methods with @Override ensures at compile time that\n            the method really overrides one, which helps refactoring and clarifies intent.\n        ",
+  "example": "public class Foo implements Runnable {\n                // This method is overridden, and should have an @Override annotation\n                public void run() {\n\n                }\n            }",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 32,
+  "branches": 4,
+  "apis": 3,
+  "test": [
+    {
+      "description": "Missing override on method from interface",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic class RunnableImpl implements Runnable {\n    public void run() { }\n}\n        "
+    },
+    {
+      "description": "Override present on method from interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class RunnableImpl implements Runnable{\n    @Override\n    public void run() { }\n}\n        "
+    },
+    {
+      "description": "Override absent in method from superclass",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class ConcreteClass extends AbstractClass {\n    Object fun(String s) {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Override present in method from superclass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class ConcreteClass extends AbstractClass {\n    @Override\n    Object fun(String s) {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Override present in method from interface transitively",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class ConcreteClassTransitive extends AbsClassWithInterface {\n    @Override\n    public void run() {\n    }\n}\n        "
+    },
+    {
+      "description": "Override absent in method from interface transitively",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class ConcreteClassTransitive extends AbsClassWithInterface {\n    public void run() {\n    }\n}\n        "
+    },
+    {
+      "description": "Consider anonymous classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class AnonClassExample {\n    static {\n        new Thread(new Runnable() {\n            // missing\n            public void run() {\n\n            }\n        }).start();\n    }\n}\n        "
+    },
+    {
+      "description": "Consider anonymous classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\npublic class AnonClassExample {\n    static {\n        new Thread(new Runnable() {\n            @Override\n            public void run() {\n                bar();\n            }\n\n            public void bar() {\n\n            }\n        }).start();\n    }\n}\n        "
+    },
+    {
+      "description": "Consider enum methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic enum EnumWithInterfaces implements InterfaceWithBound<int[]> {\n    Foo {\n        @Override\n        public void handle(int[] ints) {\n            super.handle(ints);\n        }\n    };\n\n    @Override\n    public void handle(int[] ints) {\n\n    }\n}\n\n        "
+    },
+    {
+      "description": "Consider enum methods 2",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        10
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic enum EnumWithInterfaces implements InterfaceWithBound<int[]> {\n    Foo {\n        public void handle(int[] ints) {\n            super.handle(ints);\n        }\n    };\n\n    public void handle(int[] ints) {\n\n    }\n}\n\n        "
+    },
+    {
+      "description": "Consider methods with array parameters",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\nimport org.objectweb.asm.Label;\n\npublic class ConcreteClassArrayParams extends AbstractClass {\n\n    // missing\n    public void arrayParams(String dflt, int[] keys, StringBuilder[] labels) {\n        super.arrayParams(dflt, keys, labels);\n    }\n}\n        "
+    },
+    {
+      "description": "Consider enum anon class (#3542)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        11
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic enum EnumWithAnonClass {\n    Foo {\n        // missing\n        public String toString() {\n            return super.toString();\n        }\n\n        // missing\n        public String getSomething() {\n            return null;\n        }\n    };\n\n    public Object getSomething() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Consider method inherited from generic supertype",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic enum EnumWithInterfaces implements InterfaceWithBound<int[]> {\n    Foo {\n        public void handle(int[] ints) {\n            super.handle(ints);\n        }\n    }\n}\n\n        "
+    },
+    {
+      "description": "Consider method inherited from generic supertype with overloads",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\nimport net.sourceforge.pmd.lang.java.ast.ASTCompilationUnit;\nimport net.sourceforge.pmd.lang.java.ast.ASTPackageDeclaration;\n\n\npublic class GenericWithOverloadsImpl implements GenericInterfaceWithOverloads<String, Integer> {\n\n    // a bridge method is generated for each of these\n\n\n    // missing\n    public String visit(ASTCompilationUnit node, String data) {\n        return null;\n    }\n\n\n    // missing\n    public String visit(ASTPackageDeclaration node, String data) {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Consider generic method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic class SubclassWithGenericMethod extends AbstractClass {\n\n    // missing\n    public <P, Q> Q generic(P t, Q r) { // generic param names are different from superclass\n        return super.generic(t, r);\n    }\n}\n        "
+    },
+    {
+      "description": "Consider varargs parameter",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n// Todo varargs method overriding non-varargs one\n\nclass M<V> {}\ninterface R {\n    <V> void setProperty(M<V> m, V... vs);\n}\n\npublic abstract class AbstractDelegateRule implements R {\n\n    // missing\n    public <V> void setProperty(M<V> propertyDescriptor, V... values) {\n    }\n\n}\n        "
+    },
+    {
+      "description": "Consider Object methods inherited into interfaces",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic interface InterfaceWithNoSuperClass {\n\n    // missing\n    String toString();\n}\n        "
+    },
+    {
+      "description": "Consider covariant return types",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic class CovariantReturnType extends AbstractClass {\n\n    // missing\n    String fun(String s) {\n        return \"\";\n    }\n}\n        "
+    },
+    {
+      "description": "Override of generic method with some other overload",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        12
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\nimport java.util.Comparator;\n\n\npublic class AmbiguousOverload implements Comparator<StringBuilder> {\n\n    // only one of those overloads is an override, and so there's only one bridge,\n    // so we can't choose the inherited overload\n\n    // missing\n    public int compare(StringBuilder o1, StringBuilder o2) {\n        return 0;\n    }\n\n    public int compare(String s, String s2) {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "Hierarchy with several bridges",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\nimport net.sourceforge.pmd.lang.ast.Node;\nimport net.sourceforge.pmd.lang.java.ast.ASTType;\nimport net.sourceforge.pmd.lang.java.ast.AbstractJavaTypeNode;\nimport net.sourceforge.pmd.lang.java.ast.JavaNode;\n\npublic abstract class HierarchyWithSeveralBridges<T extends Node> {\n\n    abstract void foo(T node);\n\n    public static abstract class SubclassOne<T extends JavaNode> extends HierarchyWithSeveralBridges<T> {\n\n        // this one could be resolved\n        // @Override\n        // abstract void foo(T node);\n\n    }\n\n    public static abstract class SubclassTwo<T extends AbstractJavaTypeNode> extends SubclassOne<T> {\n\n    }\n\n\n    public static class Concrete extends SubclassTwo<ASTType> {\n\n        // bridges: foo(AbstractJavaTypeNode), foo(JavaNode), foo(Node)\n\n        // missing\n        void foo(ASTType node) {\n\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Protected methods of Object redefined in an interface cannot have @Override",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\ninterface CloneableInterface extends Cloneable {\n    // nothing to report\n    CloneableInterface clone() throws CloneNotSupportedException;\n}\n        "
+    },
+    {
+      "description": "Overriding of method from interface needs @Override, even if it's a protected Object method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic interface CloneableInterfaceOverride extends CloneableInterface {\n\n    // Missing @Override\n    CloneableInterface clone() throws CloneNotSupportedException;\n}\n        "
+    },
+    {
+      "description": "Private methods can't be overridden",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic class SubclassPrivateNoOverride extends SuperclassWithPrivate {\n\n    // No override\n    public void foo() {\n\n    }\n}\n        "
+    },
+    {
+      "description": "Static methods can't be overridden",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic class SubclassWithStatic extends SuperclassWithStatic {\n\n    public static void fooBar(String f) {\n    }\n}\n        "
+    },
+    {
+      "description": "Empty enum no classpath #2007",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum EmptyEnum {\n    ;\n\n    public static void main(String... args) {\n        method();\n    }\n\n    public static void method(int... a) {\n        System.out.println(\"1\");\n    }\n\n    @SuppressWarnings(\"PMD.AvoidUsingShortType\")\n    public static void method(short... b) {\n        System.out.println(\"2\");\n    }\n}\n        "
+    },
+    {
+      "description": "Empty enum with classpath #2007",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic enum EmptyEnum {\n    ;\n\n    public static void main(String... args) {\n        method();\n    }\n\n    public static void method(int... a) {\n        System.out.println(\"1\");\n    }\n\n    @SuppressWarnings(\"PMD.AvoidUsingShortType\")\n    public static void method(short... b) {\n        System.out.println(\"2\");\n    }\n}\n        "
+    },
+    {
+      "description": "Record override",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic record Point(int x, int y) {\n\n    // @Override\n    public String toString() {return null;}\n}\n        "
+    },
+    {
+      "description": "Package private method cannot be overridden outside of its package #1969 (1)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n\n            package net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride.a;\n\n            public class PackagePrivateMethodRealExtend extends PackagePrivateMethod {\n\n                // package private, does override\n                // @Override\n                void printMessage() {\n                    System.out.println(\"Click\");\n                }\n            }\n        "
+    },
+    {
+      "description": "Package private method cannot be overridden outside of its package #1969 (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\n            package net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride.b;\n            import net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride.a.PackagePrivateMethod;\n\n            public class PackagePrivateMethodExtend extends PackagePrivateMethod {\n\n                // does not override\n                void printMessage() {\n                    System.out.println(\"Click\");\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] MissingOverride: False negative for enum method #3542",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        6,
+        11,
+        17
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.missingoverride;\n\npublic enum EnumToString {\n    sub_EnumClazz {\n        // missing @Override\n        public String toString() {\n            return \"test\";\n        }\n\n        // missing @Override\n        public void notOverride() {\n            System.out.println(\"test\");\n        }\n    };\n\n    // missing @Override\n    public String toString() {\n        return \"test\";\n    }\n\n    public void notOverride() {\n        System.out.println(\"test\");\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with generic erasure #3675",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        23
+      ],
+      "code": "\npackage test;\n\nimport java.util.Collection;\n\npublic abstract class AbstractBuilderMixedTypeVarOverride<B extends AbstractBuilderMixedTypeVarOverride<B, T>, T> {\n    @SuppressWarnings(\"unchecked\")\n    public B defaultValue(T val) {\n        return (B) this;\n    }\n\n    @SuppressWarnings(\"unchecked\")\n    public B defaultValue2(T val) {\n        return (B) this;\n    }\n\n    public static final class ConcreteBuilder<V, C extends Collection<V>> extends AbstractBuilderMixedTypeVarOverride<ConcreteBuilder<V, C>, C> {\n        //@Override is wrong here: method does not override or implement a method from a supertype\n        public ConcreteBuilder<V, C> defaultValue(Collection<? extends V> val) {\n            return this;\n        }\n\n        //@Override is indeed missing here\n        public ConcreteBuilder<V, C> defaultValue2(C val) {\n            return this;\n        }\n    }\n}\n        "
+    }
+  ]
+}

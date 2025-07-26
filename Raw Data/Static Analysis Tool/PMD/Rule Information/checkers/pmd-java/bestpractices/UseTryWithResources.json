@@ -1,0 +1,129 @@
+{
+  "name": "UseTryWithResources",
+  "language": "java",
+  "description": "\nJava 7 introduced the try-with-resources statement. This statement ensures that each resource is closed at the end\nof the statement. It avoids the need of explicitly closing the resources in a finally block. Additionally exceptions\nare better handled: If an exception occurred both in the `try` block and `finally` block, then the exception from\nthe try block was suppressed. With the `try`-with-resources statement, the exception thrown from the try-block is\npreserved.\n        ",
+  "example": "public class TryWithResources {\n    public void run() {\n        InputStream in = null;\n        try {\n            in = openInputStream();\n            int i = in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            try {\n                if (in != null) in.close();\n            } catch (IOException ignored) {\n                // ignored\n            }\n        }\n\n        // better use try-with-resources\n        try (InputStream in2 = openInputStream()) {\n            int i = in2.read();\n        }\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 64,
+  "branches": 10,
+  "apis": 10,
+  "test": [
+    {
+      "description": "Code sample",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() throws IOException {\n        InputStream in = null;\n        try {\n            in = openInputStream();\n            int i = in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            try {\n                if (in != null) in.close();\n            } catch (IOException ignored) {\n                // ignored\n            }\n        }\n\n        // better use try-with-resources\n        try (InputStream in2 = openInputStream()) {\n            int i = in2.read();\n        }\n    }\n\n    static InputStream openInputStream() {\n        throw new UnsupportedOperationException();\n    }\n}\n        "
+    },
+    {
+      "description": "With IOUtils.closeQuietly 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() {\n        InputStream in = null;\n        try {\n            in = openInputStream();\n            int i = in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            IOUtils.closeQuietly(in);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "With IOUtils.closeQuietly 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() {\n        InputStream in = null;\n        try {\n            in = openInputStream();\n            int i = in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            closeQuietly(in);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Multiple Resources",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() {\n        InputStream in1 = null;\n        InputStream in2 = null;\n        try {\n            in1 = openInputStream();\n            in2 = openInputStream();\n            int x = in1.read();\n            int y = in2.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            try {\n                if (in1 != null) in1.close();\n            } catch (IOException ignored) {\n                // ignored\n            }\n            IOUtils.closeQuietly(in2);\n        }\n\n        // better use try-with-resources\n        try (InputStream in3 = openInputStream(); InputStream in4 = openInputStream()) {\n            int x = in3.read();\n            int y = in4.read();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Custom close methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() {\n        InputStream in = null;\n        try {\n            in = openInputStream();\n            int i = in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            myClose(in);\n        }\n\n        // this block doesn't trigger the rule because of the custom close methods property\n        try {\n            in = openInputStream();\n            int i = in.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            IOUtils.closeQuietly(in);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False negative with two resources",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() {\n        Reader r1 = new FileReader(file);\n        try (Reader r2 = new FileReader(otherFile)) {\n        } finally {\n            r1.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with no autocloseable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class TryWithResources {\n    public void run() {\n        var noAutoCloseable = new Object() {\n            public void close() {}\n        };\n        try {\n            System.out.println(noAutoCloseable);\n        } finally {\n            noAutoCloseable.close();\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Custom close methods with multiple arguments",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.*;\n\npublic class TryWithResources {\n    public void run() {\n        InputStream in = null, in2 = null;\n        try {\n            in = openInputStream();\n            in2 = openInputStream();\n            int i = in.read(), j = in2.read();\n        } catch (IOException e) {\n            e.printStackTrace();\n        } finally {\n            myClose(in, in2);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UseTryWithResources - false negative for explicit close #2882",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            import java.io.*;\n\n            public class UseTryWithResources {\n                void method() throws Exception {\n                    final String fileName = \"Test\";\n                    final BufferedReader br = new BufferedReader(new InputStreamReader(\n                            new FileInputStream(fileName), StandardCharsets.UTF_8));\n                    try { // warning expected: Consider using a try-with-resources statement instead of explicitly closing the resource\n                    } finally {\n                        br.close();\n                    }\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] UseTryWithResources false positive when AutoCloseable helper used #2650",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class PMDUseTryWithResources {\n\n                static class ResourceCloser implements AutoCloseable {\n                    public static void close(NotAutoCloseable notAutoCloseable) {\n                        notAutoCloseable.close();\n                    }\n\n                    @Override\n                    public void close() throws Exception {\n                        // nothing\n                    }\n                }\n\n                interface NotAutoCloseable {\n                    void close();\n                }\n\n                public void useTryWithResources() {\n                    NotAutoCloseable notAutoCloseable = null;\n                    try {\n                        notAutoCloseable = new NotAutoCloseable() {\n                            @Override\n                            public void close() {\n                            }\n                        };\n                    } finally {\n                        if (notAutoCloseable != null) {\n                            ResourceCloser.close(notAutoCloseable);\n                        }\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] UseTryWithResources false positive when closeable is provided as a method argument or class field #3235 before java 9",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "[java] UseTryWithResources false positive when closeable is provided as a method argument or class field #3235",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        19
+      ],
+      "code": null
+    },
+    {
+      "description": "[java] UseTryWithResources with local var and before java 9 #3235",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        20
+      ],
+      "code": null
+    },
+    {
+      "description": "[java] UseTryWithResources with local var and latest java #3235",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        8,
+        20
+      ],
+      "code": null
+    },
+    {
+      "description": "NPE when determining closeTarget",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.InputStream;\nimport java.io.IOException;\n\npublic class UseTryWithResources {\n    public void read(InputStream is, boolean close) throws IOException {\n        try {\n            is.read();\n        } finally {\n            if (close) {\n                is.close();\n            }\n        }\n    }\n}\n        "
+    }
+  ]
+}

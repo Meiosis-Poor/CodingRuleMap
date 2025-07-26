@@ -1,0 +1,78 @@
+{
+  "name": "AbstractClassWithoutAnyMethod",
+  "language": "java",
+  "description": "\nIf an abstract class does not provide any methods, it may be acting as a simple data container\nthat is not meant to be instantiated. In this case, it is probably better to use a private or\nprotected constructor in order to prevent instantiation than make the class misleadingly abstract.\n        ",
+  "example": "public abstract class Example {\n    String field;\n    int otherField;\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Empty abstract method should trigger the rule nonetheless",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {}\n        "
+    },
+    {
+      "description": "An abstract method without any method at all (Basic test case)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    private String field;\n    public int otherField;\n}\n        "
+    },
+    {
+      "description": "An abstract method with constructors",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo extends Error {\n    public Foo() {\n        super();\n    }\n    public Foo(String s) {\n        super(s);\n    }\n}\n        "
+    },
+    {
+      "description": "An abstract class with method, no violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic abstract class Foo {\n    private String field;\n    public int otherField;\n\n    public abstract void m();\n}\n        "
+    },
+    {
+      "description": "#438 An abstract AutoValue class with no methods, no violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport com.google.auto.value.AutoValue;\n\n@AutoValue public abstract class Something implements java.util.RandomAccess {\n}\n        "
+    },
+    {
+      "description": "#438 An abstract AutoValue class with no methods and fully qualified annotation, no violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@com.google.auto.value.AutoValue public abstract class Something implements java.util.RandomAccess {\n}\n        "
+    },
+    {
+      "description": "FN with nested class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        1
+      ],
+      "code": "\nabstract class Foo {\n\n    class Inner {\n        void ohio() {}\n    }\n\n}\n        "
+    },
+    {
+      "description": "FN with sibling class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Foo {\n\n    abstract class Pos {}\n\n    class Sibling {\n        void ohio() {}\n    }\n\n}\n        "
+    },
+    {
+      "description": "Interfaces are ignored",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            interface Some {\n                // no abstract\n            }\n        "
+    },
+    {
+      "description": "[java] AbstractClassWithoutAnyMethod should consider lombok's @AllArgsConstructor #4189",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.AllArgsConstructor;\nimport lombok.NoArgsConstructor;\nimport lombok.RequiredArgsConstructor;\n\n@AllArgsConstructor\nabstract class AllArgs {\n    private String field;\n    public int otherField;\n}\n\n@NoArgsConstructor\nabstract class NoArgs {\n    private String field;\n    public int otherField;\n}\n\n@RequiredArgsConstructor\nabstract class RequiredArgs {\n    private String field;\n    public int otherField;\n}\n"
+    }
+  ]
+}

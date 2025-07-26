@@ -1,0 +1,267 @@
+{
+  "name": "CommentDefaultAccessModifier",
+  "language": "java",
+  "description": "\nTo avoid mistakes if we want that an Annotation, Class, Enum, Method, Constructor or Field have a default access modifier\nwe must add a comment at the beginning of its declaration.\nBy default, the comment must be `/* default */` or `/* package */`, if you want another, you have to provide a regular expression.\n\nThis rule ignores by default all cases that have a `@VisibleForTesting` annotation or any JUnit5/TestNG annotation. Use the\nproperty \"ignoredAnnotations\" to customize the recognized annotations.\n        ",
+  "example": "public class Foo {\n    final String stringValue = \"some string\";\n    String getString() {\n       return stringValue;\n    }\n\n    class NestedFoo {\n    }\n}\n\n// should be\npublic class Foo {\n    /* default */ final String stringValue = \"some string\";\n    /* default */ String getString() {\n       return stringValue;\n    }\n\n    /* default */ class NestedFoo {\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 186,
+  "branches": 32,
+  "apis": 17,
+  "test": [
+    {
+      "description": "Some methods and Fields with default access modifier in a class",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        10
+      ],
+      "code": null
+    },
+    {
+      "description": "All methods and Field with default access modifier in a class",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        2,
+        3,
+        4,
+        6,
+        9,
+        12
+      ],
+      "code": null
+    },
+    {
+      "description": "All methods and Field without default access modifier in a class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Methods with default access modifier in an Interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Nested classes with default access modifier",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        7,
+        10
+      ],
+      "code": null
+    },
+    {
+      "description": "Top-level annotations with default access modifier are ignored by default (#1880)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Top-level annotations with default access modifier checks enabled with property",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        7
+      ],
+      "code": null
+    },
+    {
+      "description": "Top-level enums with default access modifier are ignored by default (#1880)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Top-level enums with default access modifier checks enabled with property",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        1,
+        6
+      ],
+      "code": null
+    },
+    {
+      "description": "Top-level classes with default access modifier are ignored by default (#1880)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "Top-level classes with default access modifier checks enabled with property",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        1,
+        6
+      ],
+      "code": null
+    },
+    {
+      "description": "Test own regex to default access modifier rule",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        4,
+        13
+      ],
+      "code": null
+    },
+    {
+      "description": "Declarations inside an enum",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum TestEnum {\n    FOO;\n\n    public String getName() { return \"foo\"; }\n}\n        "
+    },
+    {
+      "description": "#1430 CommentDefaultAccessModifier triggers on field annotated with @VisibleForTesting",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport android.support.annotation.VisibleForTesting;\npublic class CommentDefaultAccessModifier {\n    @VisibleForTesting void method() {}\n}\n        "
+    },
+    {
+      "description": "#1430 CommentDefaultAccessModifier triggers on field annotated with @VisibleForTesting 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport com.google.common.annotations.VisibleForTesting;\n\npublic class CommentDefaultAccessModifier {\n    @VisibleForTesting void method() {}\n}\n        "
+    },
+    {
+      "description": "#536 Constructor with default access modifier should trigger",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo() {}\n}\n        "
+    },
+    {
+      "description": "#536 Enum constructor with implicit private modifier should not trigger",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum Bar {\n    ONE, TWO;\n\n    Bar() {}\n}\n        "
+    },
+    {
+      "description": "Nested Enum constructor with implicit private modifier should not trigger",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    /*package*/ enum Bar {\n        ONE, TWO;\n\n        Bar() {}\n    }\n}\n        "
+    },
+    {
+      "description": "Nested enum can trigger rule",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    enum Bar { // here\n        ONE, TWO;\n\n        Bar() {}\n    }\n}\n        "
+    },
+    {
+      "description": "Nested annotation method with default access modifier should not trigger",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    /*package*/ @interface Bar {\n        String baz();\n    }\n}\n        "
+    },
+    {
+      "description": "Nested annotation can trigger rule",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    @interface Bar {\n        String baz();\n    }\n}\n        "
+    },
+    {
+      "description": "Nested interface can trigger rule",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    interface Bar {\n        String baz();\n    }\n}\n        "
+    },
+    {
+      "description": "Nested record can trigger rule",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    record Bar(int i) {\n    }\n}\n        "
+    },
+    {
+      "description": "#1211 [java] CommentDefaultAccessModifier false positive with nested interface",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface A {\n    interface B {\n        default void b() {}\n    }\n}\n        "
+    },
+    {
+      "description": "Use property ignoredAnnotations (see #1343)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.commentdefaultaccessmodifier;\n\nimport android.support.annotation.VisibleForTesting;\n\npublic class CommentDefaultAccessModifier {\n    @VisibleForTesting void method() {}\n\n    @OnlyForTesting void method2() {}\n}\n        "
+    },
+    {
+      "description": "[java] CommentDefaultAccessModifier - add co.elastic.clients.util.VisibleForTesting to as default suppressed annotations #4285",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport co.elastic.clients.util.VisibleForTesting;\n\npublic class Foo {\n    @VisibleForTesting void method() {}\n}\n        "
+    },
+    {
+      "description": "Add a comment to the constructors with default access modifiers to avoid mistakes",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        4
+      ],
+      "code": null
+    },
+    {
+      "description": "Nested classes inside interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface MyInterface {\n    class MyNestedClass {} // this is always implicitly public static\n}\n        "
+    },
+    {
+      "description": "Nested classes inside enum",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic enum MyEnum {\n    FOO;\n    class MyNestedClass {}\n}\n        "
+    },
+    {
+      "description": "#3859 #4273 #4645 [java] CommentDefaultAccessModifier is triggered in JUnit5 method and it was conflicting with rule JUnit5TestShouldBePackagePrivate",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.AfterEach;\nimport org.junit.jupiter.api.BeforeEach;\nimport org.junit.jupiter.api.RepeatedTest;\nimport org.junit.jupiter.api.Test;\nimport org.junit.jupiter.api.extension.RegisterExtension;\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.ValueSource;\n\nclass SomeTest {\n\n  @Test\n  void test() {}\n\n  @ParameterizedTest\n  @ValueSource(strings = {\"a\", \"b\"})\n  void anotherTest(String param) { }\n\n  @BeforeEach\n  void setup() {}\n\n  @AfterEach\n  void cleanup() {}\n\n  @RepeatedTest(10)\n  void repeatedTest() {}\n\n  @RegisterExtension\n  void registerExtenstionTest(){}\n}\n        "
+    },
+    {
+      "description": "[java] CommentDefaultAccessModifier should consider lombok's @Value #4201 #2458",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Value;\n\n@Value\npublic class Test {\n    int foo;\n}\n        "
+    },
+    {
+      "description": "[java] CommentDefaultAccessModifier should consider lombok's @Value #4201, the value class should be reported",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport lombok.Value;\n@Value\nclass Test { // missing\n    int foo;\n}\n        "
+    },
+    {
+      "description": "[java] CommentDefaultAccessModifier: false positive with TestNG annotations #4268",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.testng.annotations.AfterClass;\nimport org.testng.annotations.AfterGroups;\nimport org.testng.annotations.AfterMethod;\nimport org.testng.annotations.AfterSuite;\nimport org.testng.annotations.AfterTest;\nimport org.testng.annotations.BeforeClass;\nimport org.testng.annotations.BeforeGroups;\nimport org.testng.annotations.BeforeMethod;\nimport org.testng.annotations.BeforeSuite;\nimport org.testng.annotations.BeforeTest;\nimport org.testng.annotations.Test;\nclass C {\n    @BeforeSuite\n    void beforeSuite() {}\n\n    @BeforeTest\n    void beforeTest() {}\n\n    @BeforeClass\n    void beforeClass() {}\n\n    @BeforeGroups(groups = \"group1\")\n    void beforeGroups() {}\n\n    @BeforeMethod\n    void beforeMethod() {}\n\n    @Test(groups = \"group1\")\n    void foo() {\n        synchronized (this) {}\n    }\n\n    @AfterMethod\n    void afterMethod() {}\n\n    @AfterGroups(groups = \"group1\")\n    void afterGroups() {}\n\n    @AfterClass\n    void afterClass() {}\n\n    @AfterTest\n    void afterTest() {}\n\n    @AfterSuite\n    void afterSuite() {}\n}\n        "
+    },
+    {
+      "description": "#4578 failure with comment after annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    @SuppressWarnings(\"\")\n    /* package */ void test1() {\n    }\n\n    /* package */ @SuppressWarnings(\"\")\n    void test2() {\n    }\n}\n        "
+    },
+    {
+      "description": "#5634: Annotated constructors with comment",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @SuppressWarnings(\"\")\n    /* package */ Foo() {}\n\n    /* package */ @SuppressWarnings(\"\")\n    Foo() {}\n\n    @SuppressWarnings(\"\")\n    Foo() /* package */ {}\n}\n        "
+    }
+  ]
+}

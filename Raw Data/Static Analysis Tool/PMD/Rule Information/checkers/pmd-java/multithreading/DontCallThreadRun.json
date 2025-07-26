@@ -1,0 +1,38 @@
+{
+  "name": "DontCallThreadRun",
+  "language": "java",
+  "description": "\nExplicitly calling Thread.run() method will execute in the caller's thread of control.  Instead, call Thread.start() for the intended behavior.\n        ",
+  "example": "Thread t = new Thread();\nt.run();            // use t.start() instead\nnew Thread().run(); // same violation",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "basic use case - calls to run()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        Thread t = new Thread();\n        t.run();                // use t.start() instead\n    }\n}\n        "
+    },
+    {
+      "description": "basic use case - call to Thread().run()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        new Thread().run();\n    }\n}\n        "
+    },
+    {
+      "description": "[java]DontCallThreadRun can't detect the case that call run() in foo.bar.run() #2538",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n\npublic class Foo {\n    private Thread bar;\n    public void bar(Foo foo) {\n        foo.bar.run();\n    }\n}\n        "
+    },
+    {
+      "description": "[java]DontCallThreadRun can't detect the case that call run() in this.run() #2537",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            public class MatrixThread extends Thread {\n\n                public MatrixThread(int[][] m1, int[][] m2) {\n                    this.m1 = m1;\n                    this.m2 = m2;\n                    this.run();\n                }\n            }\n            "
+    }
+  ]
+}

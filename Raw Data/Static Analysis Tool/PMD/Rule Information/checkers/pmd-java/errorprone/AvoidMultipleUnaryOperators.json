@@ -1,0 +1,58 @@
+{
+  "name": "AvoidMultipleUnaryOperators",
+  "language": "java",
+  "description": "\nThe use of multiple unary operators may be problematic, and/or confusing.\nEnsure that the intended usage is not a bug, or consider simplifying the expression.\n        ",
+  "example": "// These are typo bugs, or at best needlessly complex and confusing:\nint i = - -1;\nint j = + - +1;\nint z = ~~2;\nboolean b = !!true;\nboolean c = !!!true;\n\n// These are better:\nint i = 1;\nint j = -1;\nint z = 2;\nboolean b = true;\nboolean c = false;\n\n// And these just make your brain hurt:\nint i = ~-2;\nint j = -~7;",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Simple duplicate typos",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int i = + + 1;\n    int j = - - 1;\n    int k = ~~1;\n    boolean b = !!true;\n}\n        "
+    },
+    {
+      "description": "Compound",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    int i = + + + 1;\n    int j = - - - 1;\n    int k = ~~~1;\n    boolean b = !!!true;\n}\n        "
+    },
+    {
+      "description": "Compound with parentheses",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "code": "\npublic class Foo {\n    int i = +(+(+1));\n    int j = -(-(-1));\n    int k = ~(~(~1));\n    boolean b = !(!(!true));\n}\n        "
+    },
+    {
+      "description": "Compound with parentheses an mixed operators",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        2,
+        3,
+        4
+      ],
+      "code": "\npublic class Foo {\n    int i = +(~(-(~1)));\n    int j = ~(-(+(-1)));\n    int k = -(+(~(+1)));\n}\n        "
+    },
+    {
+      "description": "Multiple levels of nested parentheses",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int i = +((+1));\n    int j = -((-1));\n    int k = ~((~1));\n    boolean b = !((!true));\n}\n        "
+    }
+  ]
+}

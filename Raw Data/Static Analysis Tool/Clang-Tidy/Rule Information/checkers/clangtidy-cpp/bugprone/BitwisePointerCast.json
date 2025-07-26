@@ -1,0 +1,23 @@
+{
+  "name": "BitwisePointerCast",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-bitwise-pointer-cast",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 46,
+  "branches": 5,
+  "apis": 37,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        21,
+        23
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-bitwise-pointer-cast %t\n\nvoid memcpy(void* to, void* dst, unsigned long long size)\n{\n  // Dummy implementation for the purpose of the test\n}\n\nnamespace std\n{\nusing ::memcpy;\n}\n\nvoid pointer2pointer()\n{\n  int x{};\n  int* px{};\n  float y{};\n  float* py{};\n\n  memcpy(&py, &px, sizeof(px));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not use 'memcpy' to cast between pointers [bugprone-bitwise-pointer-cast]\n  std::memcpy(&py, &px, sizeof(px));\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: do not use 'memcpy' to cast between pointers [bugprone-bitwise-pointer-cast]\n\n  std::memcpy(&y, &x, sizeof(x));\n}\n\n// Pointer-integer conversions are allowed by this check\nvoid int2pointer()\n{\n  unsigned long long addr{};\n  float* p{};\n  std::memcpy(&p, &addr, sizeof(addr));\n}\n\nvoid pointer2int()\n{\n  unsigned long long addr{};\n  float* p{};\n  std::memcpy(&addr, &p, sizeof(p));\n}"
+    }
+  ]
+}

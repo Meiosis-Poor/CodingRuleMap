@@ -1,0 +1,92 @@
+{
+  "name": "BooleanGetMethodName",
+  "language": "java",
+  "description": "\n            Methods that return boolean or Boolean results should be named as predicate statements to denote this.\n            I.e., 'isReady()', 'hasValues()', 'canCommit()', 'willFail()', etc. Avoid the use of the 'get' prefix for these methods.\n        ",
+  "example": "public boolean getFoo();            // bad\npublic Boolean getFoo();            // bad\npublic boolean isFoo();             // ok\npublic Boolean isFoo();             // ok\npublic boolean getFoo(boolean bar); // ok, unless checkParameterizedMethods=true",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Bad name",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean getEnabled();\n}\n        "
+    },
+    {
+      "description": "Good name",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean isEnabled();\n}\n        "
+    },
+    {
+      "description": "Should not match on multiple parameters by default",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean getEnabled(boolean thisIsNotABean);\n}\n        "
+    },
+    {
+      "description": "Should not match for boxed Boolean on multiple parameters by default (#5253)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Boolean getEnabled(boolean thisIsNotABean) {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Should not match on methods annotated with @Override",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements Toggleable {\n    @Override\n    public boolean getEnabled() {\n        return true;\n    }\n}\ninterface Toggleable {\n    boolean getEnabled(); // NOPMD\n}\n        "
+    },
+    {
+      "description": "Should match on multiple parameters when checkParameterizedMethods = true",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean getEnabled(boolean thisIsNotABean);\n}\n        "
+    },
+    {
+      "description": "Bad name with boxed Boolean (#5253)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Boolean getEnabled() {\n        return true;\n    }\n}\n        "
+    },
+    {
+      "description": "Good name with boxed Boolean (#5253)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Boolean isEnabled() {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Should not match for boxed Boolean on methods annotated with @Override (#5253)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo implements Toggleable {\n    @Override\n    public Boolean getEnabled() {\n        return true;\n    }\n}\ninterface Toggleable {\n    Boolean getEnabled(); // NOPMD\n}\n        "
+    },
+    {
+      "description": "Should match for boxed Boolean on multiple parameters when checkParameterizedMethods = true (#5253)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Boolean getEnabled(boolean thisIsNotABean);\n}\n        "
+    },
+    {
+      "description": "Should match for boxed Boolean on multiple parameters when checkParameterizedMethods = true (#5253)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Boolean getEnabled(boolean thisIsNotABean) {\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Custom Boolean type (#5253)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Boolean { }\npublic class Foo {\n    public Boolean getEnabled() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "Custom Boolean type with returning value (#5253)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Boolean { }\npublic class Foo {\n    public Boolean getEnabled() { return false; }\n}\n        "
+    }
+  ]
+}

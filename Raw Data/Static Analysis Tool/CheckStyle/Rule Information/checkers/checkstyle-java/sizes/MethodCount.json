@@ -1,0 +1,60 @@
+{
+  "name": "MethodCount",
+  "language": "java",
+  "description": "<div>\n Checks the number of methods declared in each type declaration by access modifier\n or total count.\n </div>\n\n <p>\n This check can be configured to flag classes that define too many methods\n to prevent the class from getting too complex. Counting can be customized\n to prevent too many total methods in a type definition ({@code maxTotal}),\n or to prevent too many methods of a specific access modifier ({@code private},\n {@code package}, {@code protected} or {@code public}). Each count is completely\n separated to customize how many methods of each you want to allow. For example,\n specifying a {@code maxTotal} of 10, still means you can prevent more than 0\n {@code maxPackage} methods. A violation won't appear for 8 public methods,\n but one will appear if there is also 3 private methods or any package-private methods.\n </p>\n\n <p>\n Methods defined in anonymous classes are not counted towards any totals.\n Counts only go towards the main type declaration parent, and are kept separate\n from it's children's inner types.\n </p>\n <pre>\n public class ExampleClass {\n   public enum Colors {\n     RED, GREEN, YELLOW;\n\n     public String getRGB() { ... } // NOT counted towards ExampleClass\n   }\n\n   public void example() { // counted towards ExampleClass\n     Runnable r = (new Runnable() {\n       public void run() { ... } // NOT counted towards ExampleClass, won't produce any violations\n     });\n   }\n\n   public static class InnerExampleClass {\n     protected void example2() { ... } // NOT counted towards ExampleClass,\n                                    // but counted towards InnerExampleClass\n   }\n }\n </pre>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 133,
+  "branches": 6,
+  "apis": 30,
+  "test": [
+    {
+      "description": "Auto test from InputMethodCount3.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.sizes.methodcount;\npublic class InputMethodCount3 { \n    void doNothing50() {\n    }\n    void doNothing51() {\n    }\n    void doNothing52() {\n    }\n    void doNothing53() {\n    }\n    void doNothing54() {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMethodCount5.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.sizes.methodcount;\npublic class InputMethodCount5 { \n    void method1() {\n    }\n    private @interface Generates {}\n    void method2() {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMethodCount7.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        20
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.sizes.methodcount;\npublic class InputMethodCount7 {\n    void method1() {\n    }\n    void method2() {\n    }\n    enum InnerEnum { \n        ;\n        public static void test1() {\n            Runnable r = (new Runnable() {\n                public void run() {\n                    run2();\n                }\n                private void run2() {\n                }\n            });\n        }\n        public static void test2() {\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMethodCountInterfaceMemberScopeIsPublic.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.sizes.methodcount;\npublic interface InputMethodCountInterfaceMemberScopeIsPublic {\n    enum Enum { \n        ;\n        public static void method1() {}\n        public static void method2() {}\n    }\n    class Class { \n        public void method1() {}\n        public void method2() {}\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputMethodCountRecords.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        16,
+        49,
+        66,
+        76,
+        86,
+        98
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.sizes.methodcount;\npublic class InputMethodCountRecords {\n    record MyTestRecord() { \n        void foo() {\n        }\n        void foo2() {\n        }\n        void foo3() {\n        }\n        MyTestRecord(String str){\n            this();\n        }\n    }\n    record MyTestRecord2() { \n        void foo() {\n        }\n        void foo2() {\n        }\n        public MyTestRecord2 { \n        }\n    }\n    record MyTestRecord3() {\n        void foo() {\n        }\n        Record foo2() {\n            record InMethodDef(int x){ \n                void foo() {\n                }\n                void foo2() {\n                }\n                void foo3() {\n                }\n            }\n            return new InMethodDef(5);\n        }\n        public MyTestRecord3 { \n        }\n    }\n    record MyTestRecordOuter() { \n        void foo() {\n        }\n        void foo2() {\n        }\n        void foo3() {\n        }\n        record MyTestRecordInner1() { \n            void foo() {\n            }\n            void foo2() {\n            }\n            void foo3() {\n            }\n            record MyTestRecordInner2() { \n                void foo() {\n                }\n                void foo2() {\n                }\n                void foo3() {\n                }\n                Record innerMethod() {\n                    record InMethodDef(int x){ \n                        void foo() {\n                        }\n                        void foo2() {\n                        }\n                        void foo3() {\n                        }\n                    }\n                    return new InMethodDef(5);\n                }\n            }\n        }\n    }\n}"
+    }
+  ]
+}

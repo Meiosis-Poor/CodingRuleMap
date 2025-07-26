@@ -1,0 +1,44 @@
+{
+  "name": "MagicNumbers",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-magic-numbers",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 258,
+  "branches": 24,
+  "apis": 141,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 23,
+      "expected-linenumbers": [
+        16,
+        24,
+        27,
+        30,
+        33,
+        36,
+        40,
+        46,
+        52,
+        64,
+        65,
+        68,
+        70,
+        73,
+        74,
+        81,
+        86,
+        88,
+        90,
+        94,
+        97,
+        101,
+        103
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-magic-numbers %t \\\n// RUN: -config='{CheckOptions: \\\n// RUN:  {readability-magic-numbers.IgnoredIntegerValues: \"0;1;2;10;100;\", \\\n// RUN:   readability-magic-numbers.IgnoredFloatingPointValues: \"3.14;2.71828;9.81;10000.0;101.0;0x1.2p3\", \\\n// RUN:   readability-magic-numbers.IgnoreBitFieldsWidths: false, \\\n// RUN:   readability-magic-numbers.IgnorePowersOf2IntegerValues: true, \\\n// RUN:   readability-magic-numbers.IgnoreTypeAliases: false}}' \\\n// RUN: --\n\ntemplate <typename T, int V>\nstruct ValueBucket {\n  T value[V];\n};\n\nint BadGlobalInt = 5;\n// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: 5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\nint IntSquarer(int param) {\n  return param * param;\n}\n\nvoid BuggyFunction() {\n  int BadLocalInt = 6;\n  // CHECK-MESSAGES: :[[@LINE-1]]:21: warning: 6 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\n  (void)IntSquarer(7);\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: 7 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\n  int LocalArray[15];\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 15 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\n  for (int ii = 0; ii < 22; ++ii)\n  // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: 22 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n  {\n    LocalArray[ii] = 3 * ii;\n    // CHECK-MESSAGES: :[[@LINE-1]]:22: warning: 3 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n  }\n\n  ValueBucket<int, 66> Bucket;\n  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: 66 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n}\n\nclass TwoIntContainer {\npublic:\n  TwoIntContainer(int val) : anotherMember(val * val), yetAnotherMember(6), anotherConstant(val + val) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:73: warning: 6 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\n  int getValue() const;\n\nprivate:\n  int oneMember = 9;\n  // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: 9 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\n  int anotherMember;\n\n  int yetAnotherMember;\n\n  const int oneConstant = 2;\n\n  const int anotherConstant;\n};\n\nint ValueArray[] = {3, 5, 0, 0, 0};\n// CHECK-MESSAGES: :[[@LINE-1]]:21: warning: 3 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n// CHECK-MESSAGES: :[[@LINE-2]]:24: warning: 5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\nfloat FloatPiVariable = 3.1415926535f;\n// CHECK-MESSAGES: :[[@LINE-1]]:25: warning: 3.1415926535f is a magic number; consider replacing it with a named constant [readability-magic-numbers]\ndouble DoublePiVariable = 6.283185307;\n// CHECK-MESSAGES: :[[@LINE-1]]:27: warning: 6.283185307 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\nfloat SomeFloats[] = {0.5, 0x1.2p4};\n// CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 0.5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n// CHECK-MESSAGES: :[[@LINE-2]]:28: warning: 0x1.2p4 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\nint getAnswer() {\n  if (ValueArray[0] < ValueArray[1])\n    return ValueArray[1];\n\n  return -3; // FILENOTFOUND\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: 3 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n}\n\nstruct HardwareGateway {\n   unsigned int Some: 5;\n   // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 5 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n   unsigned int Bits: 7;\n   // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 7 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n   unsigned int: 6;\n   // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 6 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n   unsigned int Flag: 1; // no warning since this is suppressed by IgnoredIntegerValues rule\n   unsigned int: 0;      // no warning since this is suppressed by IgnoredIntegerValues rule\n   unsigned int Rest: 13;\n   // CHECK-MESSAGES: :[[@LINE-1]]:23: warning: 13 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n   //\n   unsigned int Another[3];\n   // CHECK-MESSAGES: :[[@LINE-1]]:25: warning: 3 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n};\n\nusing NumberInTypeAlias = ValueBucket<int, 25>;\n// CHECK-MESSAGES: :[[@LINE-1]]:44: warning: 25 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\ntypedef ValueBucket<char, 243> NumberInTypedef;\n// CHECK-MESSAGES: :[[@LINE-1]]:27: warning: 243 is a magic number; consider replacing it with a named constant [readability-magic-numbers]\n\n/*\n * Clean code\n */\n\n#define INT_MACRO 5\n\nconst int GoodGlobalIntConstant = 42;\n\nconstexpr int AlsoGoodGlobalIntConstant = 42;\n\nint InitializedByMacro = INT_MACRO;\n\nvoid SolidFunction() {\n  const int GoodLocalIntConstant = 43;\n\n  (void)IntSquarer(GoodLocalIntConstant);\n\n  int LocalArray[INT_MACRO];\n\n  ValueBucket<int, INT_MACRO> Bucket;\n}\n\nconst int ConstValueArray[] = {7, 9};\n\nconst int ConstValueArray2D[2][2] = {{7, 9}, {13, 15}};\n\n/*\n * no warnings for ignored values (specified in the configuration above)\n */\nint GrandfatheredIntegerValues[] = {0, 1, 2, 10, 100, -1, -10, -100, 65536};\n\nfloat GrandfatheredFloatValues[] = {3.14f, 3.14, 2.71828, 2.71828f, -1.01E2, 1E4, 0x1.2p3};\n\n/*\n * no warnings for enums\n */\nenum Smorgasbord {\n  STARTER,\n  ALPHA = 3,\n  BETA = 1 << 5,\n};\n\nconst float FloatPiConstant = 3.1415926535f;\nconst double DoublePiConstant = 6.283185307;\n\nconst float Angles[] = {45.0f, 90.0f, 135.0f};\n\ndouble DoubleZeroIsAccepted = 0.0;\nfloat FloatZeroIsAccepted = 0.0f;\n\nnamespace geometry {\n\ntemplate <typename T>\nstruct Point {\n  T x;\n  T y;\n\n  explicit Point(T xval, T yval) noexcept : x{xval}, y{yval} {\n  }\n};\n\ntemplate <typename T>\nstruct Dimension {\n  T x;\n  T y;\n\n  explicit Dimension(T xval, T yval) noexcept : x{xval}, y{yval} {\n  }\n};\n\ntemplate <typename T>\nstruct Rectangle {\n  Point<T> origin;\n  Dimension<T> size;\n  T rotation; // angle of rotation around origin\n\n  Rectangle(Point<T> origin_, Dimension<T> size_, T rotation_ = 0) noexcept : origin{origin_}, size{size_}, rotation{rotation_} {\n  }\n\n  bool contains(Point<T> point) const;\n};\n\n} // namespace geometry\n\nconst geometry::Rectangle<double> mandelbrotCanvas{geometry::Point<double>{-2.5, -1}, geometry::Dimension<double>{3.5, 2}};\n\n// Simulate the macro magic in Google Test internal headers.\nclass AssertionHelper {\npublic:\n  AssertionHelper(const char *Message, int LineNumber) : Message(Message), LineNumber(LineNumber) {}\n\nprivate:\n  const char *Message;\n  int LineNumber;\n};\n\n#define ASSERTION_HELPER_AT(M, L) AssertionHelper(M, L)\n\n#define ASSERTION_HELPER(M) ASSERTION_HELPER_AT(M, __LINE__)\n\nvoid FunctionWithCompilerDefinedSymbol(void) {\n  ASSERTION_HELPER(\"here and now\");\n}\n\n// Prove that integer literals introduced by the compiler are accepted silently.\nextern int ConsumeString(const char *Input);\n\nconst char *SomeStrings[] = {\"alpha\", \"beta\", \"gamma\"};\n\nint TestCheckerOverreach() {\n  int Total = 0;\n\n  for (const auto *Str : SomeStrings) {\n    Total += ConsumeString(Str);\n  }\n\n  return Total;\n}\n\n// Prove that using enumerations values don't produce warnings.\nenum class Letter : unsigned {\n    A, B, C, D, E, F, G, H, I, J\n};\n\ntemplate<Letter x> struct holder  { Letter letter = x;  };\ntemplate<Letter x> struct wrapper { using h_type = holder<x>;  };\n\ntemplate struct wrapper<Letter::A>;\ntemplate struct wrapper<Letter::J>;"
+    }
+  ]
+}

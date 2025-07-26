@@ -1,0 +1,22 @@
+{
+  "name": "CloexecAccept",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - android-cloexec-accept",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 40,
+  "branches": 1,
+  "apis": 31,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        11
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s android-cloexec-accept %t\n\nstruct sockaddr {};\ntypedef int socklen_t;\n#define NULL 0\n\nextern \"C\" int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);\n\nvoid f() {\n  accept(0, NULL, NULL);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: prefer accept4() to accept() because accept4() allows SOCK_CLOEXEC [android-cloexec-accept]\n  // CHECK-FIXES: accept4(0, NULL, NULL, SOCK_CLOEXEC);\n}\n\nnamespace i {\nint accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);\nvoid g() {\n  accept(0, NULL, NULL);\n}\n} // namespace i\n\nclass C {\npublic:\n  int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);\n  void h() {\n    accept(0, NULL, NULL);\n  }\n};"
+    }
+  ]
+}

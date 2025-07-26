@@ -1,0 +1,28 @@
+{
+  "name": "SuspiciousStringviewDataUsage",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-suspicious-stringview-data-usage",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 97,
+  "branches": 1,
+  "apis": 95,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        25,
+        27,
+        29,
+        31,
+        33,
+        35,
+        37
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++17-or-later %s bugprone-suspicious-stringview-data-usage %t -- -- -isystem %clang_tidy_headers\n#include <string>\n\nstruct View {\n   const char* str;\n};\n\nstruct Pair {\n   const char* begin;\n   const char* end;\n};\n\nstruct ViewWithSize {\n   const char* str;\n   std::string_view::size_type size;\n};\n\nvoid something(const char*);\nvoid something(const char*, unsigned);\nvoid something(const char*, unsigned, const char*);\nvoid something_str(std::string, unsigned);\n\nvoid invalid(std::string_view sv, std::string_view sv2) {\n  std::string s(sv.data());\n// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n  std::string si{sv.data()};\n// CHECK-MESSAGES: :[[@LINE-1]]:21: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n  std::string_view s2(sv.data());\n// CHECK-MESSAGES: :[[@LINE-1]]:26: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n  something(sv.data());\n// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n  something(sv.data(), sv.size(), sv2.data());\n// CHECK-MESSAGES: :[[@LINE-1]]:39: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n  something_str(sv.data(), sv.size());\n// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n  View view{sv.data()};\n// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: result of a `data()` call may not be null terminated, provide size information to the callee to prevent potential issues\n}\n\nvoid valid(std::string_view sv) {\n  std::string s1(sv.data(), sv.data() + sv.size());\n  std::string s2(sv.data(), sv.data() + sv.length());\n  std::string s3(sv.data(), sv.size() + sv.data());\n  std::string s4(sv.data(), sv.length() + sv.data());\n  std::string s5(sv.data(), sv.size());\n  std::string s6(sv.data(), sv.length());\n  something(sv.data(), sv.size());\n  something(sv.data(), sv.length());\n  ViewWithSize view1{sv.data(), sv.size()};\n  ViewWithSize view2{sv.data(), sv.length()};\n  Pair view3{sv.data(), sv.data() + sv.size()};\n  Pair view4{sv.data(), sv.data() + sv.length()};\n  Pair view5{sv.data(), sv.size() + sv.data()};\n  Pair view6{sv.data(), sv.length() + sv.data()};\n  const char* str{sv.data()};\n}"
+    }
+  ]
+}

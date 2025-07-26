@@ -1,0 +1,88 @@
+{
+  "name": "AvoidFieldNameMatchingMethodName",
+  "language": "java",
+  "description": "\nIt can be confusing to have a field name with the same name as a method. While this is permitted,\nhaving information (field) and actions (method) is not clear naming. Developers versed in\nSmalltalk often prefer this approach as the methods denote accessor methods.\n        ",
+  "example": "public class Foo {\n    Object bar;\n    // bar is data or an action or both?\n    void bar() {\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "pos",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    int bar;\n    void bar() {}\n}\n        "
+    },
+    {
+      "description": "Problem when there are several methods",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        2
+      ],
+      "code": "\npublic class Foo {\n    int bar;\n    void bar() {}\n    void bar2() {}\n}\n        "
+    },
+    {
+      "description": "pos, inner class",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\npublic class Foo {\n    class Dummy {\n        Foo foo;\n        void foo() {}\n    }\n}\n        "
+    },
+    {
+      "description": "neg, field and method are in different classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    Foo foo;\n    class Dummy {\n        void foo() {}\n    }\n}\n        "
+    },
+    {
+      "description": "Neg, inner enum",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n                int bar;\n                enum Inner {\n                    ;\n                    void bar() {}\n                }\n            }\n            "
+    },
+    {
+      "description": "Pos in enum",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public enum Foo {\n                ;\n                int bar;\n                void bar() {}\n            }\n            "
+    },
+    {
+      "description": "neg, field and method are in different classes, reversed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {}\n    class Dummy {\n        Foo foo;\n    }\n}\n        "
+    },
+    {
+      "description": "Just skip interfaces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic interface Bar {\n    public static final int FOO = 5;\n}\n        "
+    },
+    {
+      "description": "Test1 in Enum #3936",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class C {\n  enum E {\n      R;\n      int bar;\n      void bar() {}  // should report a warning in this line\n  }\n}\n        "
+    },
+    {
+      "description": "Test2 in Enum #3936",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class C {\n  int bar;\n  enum E {\n      R;\n      void bar() {}\n  }\n}\n        "
+    },
+    {
+      "description": "Test3 in Enum #3936",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class C {\n  void bar() {}\n  enum E {\n      R;\n      int bar;\n  }\n}\n        "
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "name": "UseStringBufferForStringAppends",
+  "language": "java",
+  "description": "\nThe use of the '+=' operator for appending strings causes the JVM to create and use an internal StringBuffer.\nIf a non-trivial number of these concatenations are being used then the explicit use of a StringBuilder or\nthreadsafe StringBuffer is recommended to avoid this.\n        ",
+  "example": "public class Foo {\n    String inefficientConcatenation() {\n        String result = \"\";\n        for (int i = 0; i < 10; i++) {\n            // warning: this concatenation will create one new StringBuilder per iteration\n            result += getStringFromSomeWhere(i);\n        }\n        return result;\n    }\n\n    String efficientConcatenation() {\n        // better would be to use one StringBuilder for the entire loop\n        StringBuilder result = new StringBuilder();\n        for (int i = 0; i < 10; i++) {\n            result.append(getStringFromSomeWhere(i));\n        }\n        return result.toString();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 98,
+  "branches": 17,
+  "apis": 9,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        7
+      ],
+      "code": "\npackage xxx;\npublic class Foo {\n    public void bar() {\n        String x;\n        x = \"foo\";\n        x += \"bar\";\n        x += \"baz\";\n    }\n}\n        "
+    },
+    {
+      "description": "concat inside method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean bar(String x) {\n        return x.startsWith(\"abc\");\n    }\n}\n        "
+    },
+    {
+      "description": "startsWith",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        foo(\"abc\" + def + \"hij\");\n    }\n}\n        "
+    },
+    {
+      "description": "compound append, should only report 1 failure",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        String x;\n        x = \"foo\";\n        x += \"bar\" + x;\n    }\n}\n        "
+    },
+    {
+      "description": "failure case, constructor",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    public Foo() {\n        String x;\n        x = \"foo\";\n        x += \"bar\";\n        x += \"baz\";\n    }\n}\n        "
+    },
+    {
+      "description": "static failure case",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    static {\n        String x;\n        x = \"foo\";\n        x += \"bar\";\n        x += \"baz\";\n    }\n}\n        "
+    },
+    {
+      "description": "reference self inside for loop",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\npublic class Foo {\n    private void bar() {\n        String result = \"\";\n        for (int i = 0; i < 10; i++) {\n            result = result + i;\n            result += i;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "false positive bug #2002722",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        String dtdColumnNames[] = null;\n        String sortedDtdColumns[] = null;\n        final int loop = 0;\n        dtdColumnNames[loop] = dtdColumnNames[loop].trim ( );\n        sortedDtdColumns[loop] = sortedDtdColumns[loop].trim ( );\n    }\n}\n        "
+    },
+    {
+      "description": "false positive bug #2002722, different bug in comment section",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar2() {\n        String foo =\"foo\";\n        foo = mangleTheInput(foo);\n    }\n    String mangleTheInput(final String s) { return s;}\n}\n        "
+    },
+    {
+      "description": "#1340 UseStringBufferForStringAppends False Positive with ternary operator (used in condition) ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseStringBuffer {\n    public void foo() {\n        String value = \"\";\n        value = (value != null) ? \"1\" : \"0\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1340 UseStringBufferForStringAppends False Positive with ternary operator (used both in condition and options)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Properties;\npublic class UseStringBuffer {\n    public void foo() {\n        String country = \"\";\n        country = (country == null || \"\".equals(country))\n                ? ((String) getCountry())\n                : country;\n    }\n    public void foo2(Properties request) {\n        String country = request.getProperty(\"country\");\n        country = (country == null) ? \"USA\" : country;\n    }\n    public Object getCountry() {\n        return \"\";\n    }\n}\n        "
+    },
+    {
+      "description": "#222 False positive when inverting ternary expression arguments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Properties;\npublic class Foo {\n    public void bar(Properties request) {\n        String country = request.getProperty(\"country\");\n        country = (country != null) ? country : \"USA\";\n    }\n}\n        "
+    },
+    {
+      "description": "violation: concat to String in for/while loop",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        9,
+        13,
+        20,
+        22,
+        29
+      ],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n\n    public void bad1() {\n        String logStatement = \"\";\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        for (String val : values) {\n            logStatement = logStatement + val + \", \"; // bad\n        }\n        Iterator iter = values.iterator();\n        while (iter.hasNext()) {\n            logStatement = logStatement + iter.next() + \", \"; // bad\n        }\n    }\n    public void bad2() {\n        String log = \"\";\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        for (String val1 : values) {\n            log += val1; // bad\n        }\n        for (String val2 : values) log += val2; // bad\n    }\n\n    public void bad3() {\n        String logStatement = \"\";\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        for (String val : values) {\n            logStatement += val + \", \"; // bad\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: add numbers in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n    public void good1() {\n        int log = 0;\n        List<Integer> values = Arrays.asList(new Integer[]{1, 2, 3});\n        for (int val : values) {\n            log = log + val;\n        }\n        Iterator<Integer> iter = values.iterator();\n        while (iter.hasNext()) {\n            log = log + iter.next();\n        }\n    }\n\n    public void good2() {\n        int log = 0;\n        List<Integer> values = Arrays.asList(new Integer[]{1, 2, 3});\n        for (int val : values) {\n            log += val;\n        }\n    }\n\n    public void good3() {\n        double totalParticipationPercentage = 0;\n        for (Object portfolioByCategory : new ArrayList()) {\n            for (Object portfolioInstrumentDetails : new ArrayList()) {\n                totalParticipationPercentage = totalParticipationPercentage\n                        + (double) portfolioInstrumentDetails.hashCode();\n            }\n        }\n    }\n\n    public int good4(String keyName) {\n        int index = 0;\n        HashMap<String, String> columnsTypes = new HashMap<String, String>();\n        for (String variableName : columnsTypes.keySet()) {\n            if (keyName.equals(variableName)) {\n                return index;\n            }\n            index += 1;\n        }\n    }\n\n    public long good5(String keyName) {\n        long index = 0;\n        HashMap<String, String> columnsTypes = new HashMap<String, String>();\n        for (String variableName : columnsTypes.keySet()) {\n            if (keyName.equals(variableName)) {\n                return index;\n            }\n            index += 1;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: concat in append in loops is caught by other rule InefficientStringBuffering",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n    public void bad1() {\n        StringBuilder logStatement = new StringBuilder();\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        for (String val : values) {\n            logStatement.append(val + \", \"); // bad, but that's InefficientStringBuffering\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: proper append in loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n    public void good() {\n        StringBuilder logStatement = new StringBuilder();\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        for (String val1 : values) {\n            logStatement.append(val1);\n        }\n        for (String val2 : values) logStatement.append(val2);\n    }\n}\n        "
+    },
+    {
+      "description": "violation: various concats in loop",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        9,
+        11,
+        13,
+        14,
+        15
+      ],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n    public String bad() {\n        String description = \" \" + \";\";\n        List<String> persons = new ArrayList<String>();\n        for (final String person : persons) {\n            if (person != null) {\n                description += \"0\" + \":\"; //bad\n            } else {\n                description += \":\"; //bad\n            }\n            description += person.toString() + \":\"; // bad\n            description += \";\"; // bad\n            description += person.toString(); // bad\n        }\n        return description;\n    }\n}\n        "
+    },
+    {
+      "description": "no violation: various concats in loop which do not aggregate",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n    private static final String ROLE_PREFIX = \"role-\";\n\n    public void good1() {\n        List<String> functionNames = Arrays.asList(new String[]{\"a\", \"b\"});\n        for (final String functionName : functionNames) {\n            if (true) {\n                functionNames.add(ROLE_PREFIX + functionName);\n            }\n        }\n    }\n\n    public static void good2(String propertyFile) {\n        String[] properyFilenames = propertyFile.split(\",\");\n        for (String propertyFilename : properyFilenames) {\n            if (propertyFilename != null) {\n                try {\n                    //getResourceAsStream(propertyFilename);\n                } catch (Exception e) {\n                    logError(\"Failed to load propertyFile with name \" + propertyFilename + \": \", e);\n                }\n            }\n        }\n    }\n\n    public static void good3() {\n        List<String> linkNames = new ArrayList<String>();\n        Map<String, String> messages = new HashMap<String, String>();\n        for (String linkName : linkNames) {\n            messages.put(linkName + \".url\", \"url\");\n            messages.put(linkName + \".description\", \"desc\");\n        }\n    }\n\n    public static void good4() {\n        List<String> linkNames = new ArrayList<String>();\n        Map<String, String> messages = new HashMap<String, String>();\n        String URL = \"\", DESCRIPTION = \"\";\n        for (String linkName : linkNames) {\n            if (!messages.containsKey(linkName + URL)) {\n                messages.put(linkName + URL, \"some\");\n            }\n            if (!messages.containsKey(linkName + DESCRIPTION)) {\n                messages.put(linkName + DESCRIPTION, \"some\");\n            }\n        }\n    }\n\n    private static void logError(String text, Exception e) {\n    }\n}\n        "
+    },
+    {
+      "description": "violation: concat to String in do-loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n\n    public void bad() {\n        String logStatement = \"\";\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        int i = 0;\n        do {\n            logStatement = logStatement + values.get(i++) + \", \"; // bad\n        } while (i < values.length());\n    }\n}\n        "
+    },
+    {
+      "description": "violation: concat to String field in loop",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        10
+      ],
+      "code": "\nimport java.util.*;\n\npublic class ConcatInLoop {\n\n    private String logStatement = \"\";\n\n    public void bad() {\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        for (String val : values) {\n            logStatement = logStatement + val + \", \"; // bad\n        }\n    }\n\n    public void good() {\n        List<String> values = Arrays.asList(\"tic\", \"tac\", \"toe\");\n        StringBuilder sb = new StringBuilder(logStatement);\n        for (String val : values) {\n            sb.append(val).append(\", \");\n        }\n        logStatement = sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "false positive with not accumulating String",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Foo {\n    private List<String> fileExtensions = new ArrayList();\n    public void good(List<String> fileExtensions) {\n        for (String fileExtension : fileExtensions) {\n                if (fileExtension.charAt(0) != '.') {\n                    fileExtension = \".\" + fileExtension;\n                }\n                this.fileExtensions.add(fileExtension);\n            }\n    }\n}\n        "
+    },
+    {
+      "description": "false positives with field assignment and shadowing parameters",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public static String staticField1 = \"\";\n    public String field2 = \"\";\n    private String aVariable;\n\n    void setStatic(String staticField1) {\n        staticField1 = staticField1; // no violation!!\n        this.staticField1 = staticField1;\n    }\n\n    void setStatic2(String staticField1) {\n        staticField1 += staticField1; // no violation - only problematic within loops\n        this.staticField1 += staticField1;\n    }\n\n    void setField(String field2) {\n        field2 = field2; // no violation\n        this.field2 = field2;\n    }\n\n    void setField2(String field2) {\n        field2 += field2; // no violation\n        this.field2 += field2;\n    }\n\n    public String method2(int val) {\n        switch (val) {\n            case 0:\n                String aVariable = \"\";\n                if (this.aVariable != null) {\n                    aVariable = this.aVariable;\n                }\n                return aVariable;\n        }\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UseStringBufferForStringAppends: False positive if only one concatenation #1736",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseStringBufferForStringAppendsFP {\n    public void doSomething(String s1) {\n        String s2 = \"a\";\n        s2 += s1;\n    }\n}\n        "
+    },
+    {
+      "description": "FP if variable is overwritten with dependent value",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class UseStringBufferForStringAppendsFP {\n\n                private String transformString(String s) {\n                    return s.toLowerCase();\n                }\n\n                public String doSomething() {\n                    String s2 = \"a\";\n                    s2 = transformString(\"a\" + s2);\n                    s2 = transformString(s2 + \"a\");\n                    return s2;\n                }\n            }\n            "
+    },
+    {
+      "description": "False positive with simple assignment instead of compound",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\nimport java.text.MessageFormat;\npublic class UseStringBufferForStringAppendsFP {\n    public void bar() {\n        String checkMessage = null;\n        List<String> messages = new ArrayList<>();\n        for (String m : messages) {\n            checkMessage = m; // FP here\n            checkMessage = \"a\"; // FP here\n            checkMessage = \"b\"; // FP here\n            final MessageFormat formatter = new MessageFormat(m, Locale.ROOT);\n            checkMessage = formatter.format(null); // FP here\n            int lastDotIndex = checkMessage.lastIndexOf('.');\n            checkMessage = checkMessage.substring(lastDotIndex + 1, checkMessage.length()); // FP here\n        }\n        return checkMessage;\n    }\n}\n        "
+    },
+    {
+      "description": "False positive with simple assignment in for-loop",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\npublic class UseStringBufferForStringAppendsFP {\n    public void bar(BufferedReader br) throws IOException {\n        for (String line = br.readLine(); line != null; line = br.readLine()) { // FP here\n            String parse = extract(line);\n            parse = parse.substring(parse.indexOf(':') + 1); // FP here\n            parse = parse.substring(0, parse.indexOf(':')); // FP here\n            final int lineNumber = Integer.parseInt(parse);\n        }\n    }\n    private String extract(String s) { return s; }\n\n    private void logMessage(int lineNumber, String message) {\n        String msg;\n        msg = message;\n        if (lineNumber >= 10) {\n            msg = \"TEST\" + msg; // FP here\n        }\n        log(lineNumber, msg);\n    }\n    private void log(int lineNumber, String msg) { }\n}\n        "
+    },
+    {
+      "description": "False positive for assignments",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        6
+      ],
+      "code": "\npublic class UseStringBufferForStringAppendsFP {\n    public void bar() {\n        String result;\n        result = \"a\";\n        result += \"b\"; // violation\n        result += \"c\"; // violation\n        result = \"d\"; // FP\n    }\n}\n        "
+    },
+    {
+      "description": "Test new rule example",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            public class Foo {\n                String inefficientConcatenation() {\n                    String result = \"\";\n                    for (int i = 0; i < 10; i++) {\n                        // warning: this concatenation will create one new StringBuilder per iteration\n                        result += getStringFromSomeWhere(i);\n                    }\n                    return result;\n                }\n\n                String efficientConcatenation() {\n                    // better would be to use one StringBuilder for the entire loop\n                    StringBuilder result = new StringBuilder();\n                    for (int i = 0; i < 10; i++) {\n                        result.append(getStringFromSomeWhere(i));\n                    }\n                    return result.toString();\n                }\n\n                String getStringFromSomeWhere(int i) {\n                    return \"a\" + i;\n                }\n            }\n        "
+    },
+    {
+      "description": "#4078 [java] False positive about the rule UseStringBufferForStringAppends",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        6,
+        12,
+        13
+      ],
+      "code": "\nclass Tester {\n    public void bar1(boolean tag) {\n      String x = \"foo\";\n      x += \"bar\" + x;  // report one warning in this line\n      if (false) {\n        x += \"bar\" + x;  // report one warning in this line\n      }\n    }\n\n    public void bar2(boolean tag) {\n      String x = \"foo\";\n      x += \"bar\" + x;  // report one warning in this line\n      x += \"bar\" + x;  // report one warning in this line\n    }\n}\n"
+    }
+  ]
+}

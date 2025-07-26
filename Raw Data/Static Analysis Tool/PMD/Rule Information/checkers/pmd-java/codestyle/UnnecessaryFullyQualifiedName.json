@@ -1,0 +1,498 @@
+{
+  "name": "UnnecessaryFullyQualifiedName",
+  "language": "java",
+  "description": "\nImport statements allow the use of non-fully qualified names.  The use of a fully qualified name\nwhich is covered by an import statement is redundant.  Consider using the non-fully qualified name.\n        ",
+  "example": "import java.util.List;\n\npublic class Foo {\n    private java.util.List list1;   // Unnecessary FQN\n    private List list2;             // More appropriate given import of 'java.util.List'\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 309,
+  "branches": 68,
+  "apis": 25,
+  "test": [
+    {
+      "description": "1, nothing wrong",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private List list;\n}\n        "
+    },
+    {
+      "description": "2, valid implements",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo implements List {\n}\n        "
+    },
+    {
+      "description": "3, invalid implements",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo implements java.util.List {\n}\n        "
+    },
+    {
+      "description": "4, valid extends",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\npublic class Foo implements ArrayList {\n}\n        "
+    },
+    {
+      "description": "5, invalid extends",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\npublic class Foo implements java.util.ArrayList {\n}\n        "
+    },
+    {
+      "description": "6, valid field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private List list;\n}\n        "
+    },
+    {
+      "description": "7, invalid field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private java.util.List list;\n}\n        "
+    },
+    {
+      "description": "8, valid return type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private List list();\n}\n        "
+    },
+    {
+      "description": "9, invalid return type",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private java.util.List list();\n}\n        "
+    },
+    {
+      "description": "10, valid formal parameter",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private void list(List list);\n}\n        "
+    },
+    {
+      "description": "11, invalid formal parameter",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\npublic class Foo {\n    private void list(java.util.List list);\n}\n        "
+    },
+    {
+      "description": "12, valid static method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\nimport java.util.List;\npublic class Foo {\n    List list = Arrays.asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "13, invalid static method call",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.util.Arrays;\nimport java.util.List;\npublic class Foo {\n    List list = java.util.Arrays.asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "14, valid static import method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.util.Arrays.asList;\nimport java.util.List;\npublic class Foo {\n    List list = asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "15, invalid static import method call",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.util.Arrays.asList;\nimport java.util.List;\npublic class Foo {\n    List list = java.util.Arrays.asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "16, valid static import method call with class import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\nimport static java.util.Arrays.asList;\nimport java.util.List;\npublic class Foo {\n    List list = asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "17, invalid static import method call with class import",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\nimport java.util.List;\nimport static java.util.Arrays.asList;\npublic class Foo {\n    List list = Arrays.asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "18, on-demand, valid field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    private List list;\n}\n        "
+    },
+    {
+      "description": "19, on-demand, invalid field",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    private java.util.List list;\n}\n        "
+    },
+    {
+      "description": "20, on-demand, valid static import method call ",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.util.Arrays.asList;\nimport java.util.List;\npublic class Foo {\n    List list = asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "21, on-demand, invalid static import method call",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.util.Arrays.*;\nimport java.util.List;\npublic class Foo {\n    List list = java.util.Arrays.asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "22, valid on-demand static import method call with class import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\nimport static java.util.Arrays.*;\nimport java.util.List;\npublic class Foo {\n    List list = asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "23, invalid on-demand static import method call with class import",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Arrays;\nimport static java.util.Arrays.*;\nimport java.util.List;\npublic class Foo {\n    List list = Arrays.asList(\"one\");\n}\n        "
+    },
+    {
+      "description": "#1078 Package statement introduces false positive UnnecessaryFullyQualifiedName violation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage a.b;\n\nimport a.*;\n\npublic class Test {}\n        "
+    },
+    {
+      "description": "#1404 Java8 'Unnecessary use of fully qualified name' in Streams Collector",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        15
+      ],
+      "code": "\n// https://github.com/FenixEdu/fenixedu-learning/blob/master/src/main/java/org/fenixedu/learning/domain/executionCourse/components/InitialPageComponent.java#L50\nimport java.util.Comparator;\nimport java.util.List;\nimport java.util.ArrayList;\nimport java.util.Map;\nimport java.util.stream.Collectors;\n\nimport static java.util.stream.Collectors.toList;\n\npublic class InitialPageComponent {\n    public void handle(Map<String, List<String>> globalContext) {\n        List<String> lst = new ArrayList<>();\n        globalContext.put(\"professorships\",\n                lst.stream().sorted(Comparator.comparingInt(String::length).reversed()\n                            .collect(Collectors.toList())));\n    }\n}\n        "
+    },
+    {
+      "description": "#1436 UnnecessaryFullyQualifiedName false positive on clashing static imports with enums",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.ENUM2;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.ENUM1.*;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.ENUM2.*;\n\npublic class UnnecessaryFullyQualifiedName {\n    public static void main(String[] args) {\n        System.out.println(A);\n        System.out.println(D);\n        System.out.println(ENUM2.values());\n    }\n}\n        "
+    },
+    {
+      "description": "#1546 part 1 UnnecessaryFullyQualifiedName doesn't take into consideration conflict resolution",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.PhonyMockito;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.PhonyMockito.*;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.Container.PhonyMockito.*;\n\npublic class Foo {\n    private Foo bar = PhonyMockito.mock(Foo.class); // doing simply mock(Foo.class) is ambiguous (compile error)\n}\n        "
+    },
+    {
+      "description": "#1546 part 2 UnnecessaryFullyQualifiedName doesn't take into consideration conflict resolution",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.PhonyMockito;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.PhonyMockito.*;\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.Container.PhonyMockito.mock;\n\npublic class Foo {\n    private Foo bar = PhonyMockito.mock(Foo.class); // doing simply mock(Foo.class) would use a differen method than intended\n}\n        "
+    },
+    {
+      "description": "#1555 - UnnecessaryFullyQualifiedName for conflict resolution with inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\n\nfinal class Test {\n    private Test() { }\n\n    private static class Locale {\n        public final java.util.Locale locale; // Here we need to fully qualify\n        public Locale(final String tag) {\n            this.locale = java.util.Locale.forLanguageTag(tag);\n        }\n    }\n\n    public static void main(String[] args) {\n        final Locale l = new Locale(\"fr-CA\");\n        System.out.println(l.toString());\n    }\n}\n        "
+    },
+    {
+      "description": "#1114 - Star import overwritten by explicit import is not correctly handled",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.subpackage.*;\nimport net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.MyClass;\n\npublic class CauseProblem {\n    public MyClass convert(net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.subpackage.MyClass original) { // necessary\n        return new MyClass();\n    }\n}\n            "
+    },
+    {
+      "description": "#1186 [java] UnnecessaryFullyQualifiedName doesn't detect java.lang FQ names as violations: without import",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class JavaLang {\n    public void convert(java.lang.String s) { // violation here\n    }\n    public void access(java.lang.reflect.Field f) { // no violation\n    }\n}\n        "
+    },
+    {
+      "description": "#1186 [java] UnnecessaryFullyQualifiedName doesn't detect java.lang FQ names as violations: with import",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.String;\npublic class JavaLang {\n    public void convert(java.lang.String s) { // violation here\n    }\n}\n        "
+    },
+    {
+      "description": "#1186 [java] UnnecessaryFullyQualifiedName doesn't detect java.lang FQ names as violations: with avoiding conflict import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.foo.String;\npublic class JavaLang {\n    public void convert(java.lang.String s) { // no violation\n    }\n}\n        "
+    },
+    {
+      "description": "#1186 [java] UnnecessaryFullyQualifiedName doesn't detect java.lang FQ names as violations: static members of classes in java.lang",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class JavaLang {\n    public void foo() {\n        ProcessBuilder pb = new ProcessBuilder(\"echo\");\n        pb.redirectError(java.lang.ProcessBuilder.Redirect.DISCARD); // violation\n    }\n}\n        "
+    },
+    {
+      "description": "#1216 [java] UnnecessaryFullyQualifiedName false positive for the same name method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.awt.Component;\nimport java.awt.Container;\nimport java.util.Arrays;\nimport java.util.asList.*; // we don't use stream since we're on java 7\nimport java.util.List;\n\npublic final class Test {\n    public static List<String> stream(Container parent) {\n        return Arrays.asList(\"\", \"\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1255 [java] UnnecessaryFullyQualifiedName false positive: static method on shadowed implicitly imported class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport x.y.Thread;\n\npublic class ThreadStuff {\n    public Thread stuff() {\n        return new Thread(java.lang.Thread.currentThread());\n    }\n}\n        "
+    },
+    {
+      "description": "Nullpointer in isJavaLangImplicit for java.lang.String[] arrays",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npublic class TestArrayType {\n    String[] someArray = new String[0];\n\n    public void foo() {\n        boolean b1 = someArray instanceof String[];\n        boolean b2 = someArray instanceof java.lang.String[]; // unnecessary FQN\n    }\n}\n        "
+    },
+    {
+      "description": "#1199 false negative for same package FQCN",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npackage java.util;\n\npublic class SamePackage {\n    public void convert(java.util.ArrayList s) { // violation\n    }\n}\n        "
+    },
+    {
+      "description": "#1951 false positive when package name is obscured by variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage threads;\n\npublic class FQNTest {\n  public static void main(String[] args) {\n    Thread[] threads = new Thread[5];\n    int i = threads.length;\n  }\n}\n        "
+    },
+    {
+      "description": "False positive when package name is obscured by variable (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage threads;\n\npublic class FQNTest {\n    public static void main(String[] args) {\n        Thread[] threads = new Thread[5];\n        int i = threads.length.foo;\n    }\n}\n\nclass length {\n    static int foo;\n}\n        "
+    },
+    {
+      "description": "False negative when name refers to static field",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npackage threads;\n\npublic class FQNTest {\n    public static void main(String[] args) {\n        // threads.length is the class\n        int i = threads.length.foo;\n    }\n}\n\nclass length {\n    static int foo;\n}\n        "
+    },
+    {
+      "description": "False positive when type name is obscured by variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n\npublic class FQNTest {\n    public static void main(String[] args) {\n        length length = new length();\n        // the type name 'length' is obscured.\n        int i = length.foo;\n    }\n}\n\nclass length {\n    static int foo;\n}\n        "
+    },
+    {
+      "description": "False positive when subpackage is referenced",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\n\npublic class FQNTest {\n    public void foo() {\n        new net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.subpackage.MyClass(); // no violation\n        new net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.TestClass(); // violation\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when same package static method is referenced",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage java.util;\n\npublic class Problem {\n    {\n        Collections.emptySet(); // false positive for UnnecessaryFullyQualifiedName\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when same package inner class is referenced",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle;\n\npublic class UnnecessaryFullyQualifiedName {\n    public static void main(String[] args) {\n        System.out.println(UnnecessaryFullyQualifiedNameTest.ENUM1.A);\n    }\n}\n        "
+    },
+    {
+      "description": "False positive when same package inner class is referenced (not enum) #4085",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\n\npublic class OuterTestClass {\n\tpublic static class TestClass{\n        private final net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.TestClass test;\n\n        public TestClass(net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.TestClass test){\n\n            this.test = test;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Should report fully-qualified name usage of a class in itself #4085",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\n\npublic class TestClass {\n    public static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.TestClass INSTANCE(){\n        return new TestClass();\n    }\n}\n        "
+    },
+    {
+      "description": "#2098 false positive with annotated package",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@com.example.subpackage.ExampleAnnotation\npackage com.example;\n        "
+    },
+    {
+      "description": "#2098 false positive with annotated package - with type-resolution",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.subpackage.MyAnnotation\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\n        "
+    },
+    {
+      "description": "False-Negative when referencing inner class",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        12
+      ],
+      "code": "\npackage com.example;\n\npublic class ClassOne extends com.example.ClassTwo { // 3\n    com.example.ClassTwo.Builder builder = null;     // 4\n\n    public void run() throws com.example.ClassOne.MyException { // 6\n        com.example.ClassOne.Builder builder = null;            // 7\n        com.example.ClassTwo.Builder builder2 = null;           // 8\n        throw new com.example.ClassOne.MyException();           // 9\n    }\n\n    public class Builder extends com.example.ClassTwo.Builder { // 12\n    }\n\n    public static class MyException extends Exception { }\n}\n\nclass ClassTwo {\n    class Builder { }\n}\n\n        "
+    },
+    {
+      "description": "#2029 [java] UnnecessaryFullyQualifiedName false-positive for non-static nested classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\n\nimport static net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.TestClass.*;\n\npublic class SomeClass {\n\n    public void theMethod() {\n        someMethod();\n        Object someObject = new Object();\n        if(someObject instanceof TestClass.SomeInnerClass) {\n            System.out.println(\"\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Type parameter shadows java lang",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage ohio;\n\npublic class InnerClass<RuntimeException extends ClassCastException> {\n    public void method1() throws RuntimeException,\n                                 java.lang.RuntimeException {\n    }\n}\n\n        "
+    },
+    {
+      "description": "Static import on demand does not import same method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage ohio;\n\nimport static org.junit.Assert.*;\n\npublic class Something{\n    {\n        // this is ohio.Assert.isNull, not org.junit.Assert.isNull\n        Assert.isNull(null);\n    }\n}\n\nclass Assert {\n\n    public static void isNull(Object o) {}\n\n}\n\n        "
+    },
+    {
+      "description": "Static import on demand from same file",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npackage ohio;\n\nimport static ohio.Assert.*;\n\npublic class Something{\n    {\n        Assert.isNull(null);\n    }\n}\n\nclass Assert {\n\n    public static void isNull(Object o) {}\n\n}\n\n        "
+    },
+    {
+      "description": "#1790 Enum constant obscures type name!",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public enum DataType {\n                Float(Float.class) {\n                    @Override\n                    public String toString(final Object value) {\n                        if (value == null) {\n                            return null;\n                        }\n                        final int bits = java.lang.Float.floatToIntBits((java.lang.Float) value); // false positive\n                        return \"\";\n                    }\n                };\n                private Class<?> dataClass;\n\n                private DataType(Class<?> dataClass) {\n                    this.dataClass = dataClass;\n                }\n\n                @Override\n                public Class<?> getDataClass() {\n                    return dataClass;\n                }\n            }\n        "
+    },
+    {
+      "description": "#2299 Package should not use startsWith",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package a.b.c;\n\n            class A {\n                a.b.car.Car c;\n            }\n            "
+    },
+    {
+      "description": "Just the Map prefix is a violation",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\n            package a;\n\n            import java.util.Map;\n            import java.util.Set;\n\n            class A<K, V> {\n                public Set<java.util.Map.Entry<K, V>> entrySet() {return null;}\n            }\n            "
+    },
+    {
+      "description": "Inherited method is in scope",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            package a;\n            import java.net.URLClassLoader;\n\n            class MyClassLoader extends URLClassLoader {\n                {\n                    ClassLoader.registerAsParallelCapable();\n                }\n            }\n            "
+    },
+    {
+      "description": "FQCN before field access",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            class ComplexButNotFlagged {\n\n                public final double SpecialSum = 2 + 1e10,\n                                    SpecialDifference = 4 - java.lang.Math.PI;\n            }\n            "
+    },
+    {
+      "description": "If there are type argument before method, it should not be flagged",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static ohio.Assert.*;\n\n            public class Something{\n                {\n                    Assert.<Class<?>>isNull(null);\n                }\n            }\n\n            class Assert {\n\n                public static <T> void isNull(Object o) {}\n\n            }\n            "
+    },
+    {
+      "description": "FN with static method imported through subtype (same file)",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import org.junit.Assert;\n            import static ohio.Assert2.*;\n\n            public class Something {\n                {\n                    // this is actually a reference to org.junit.Assert.isNull\n                    Assert2.isNull(null);\n                }\n            }\n\n            class Assert2 extends Assert {}\n            "
+    },
+    {
+      "description": "FN with static method imported through subtype",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.PhonyMockito.mock;\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.MockitoInherited.*;\n\n            import net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.MockitoInherited;\n\n            public class Something {\n\n                {\n                    // this is actually a reference to PhonyMockito::mock\n                    MockitoInherited.mock(null);\n                }\n            }\n\n            "
+    },
+    {
+      "description": "Test field access",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static java.lang.Math.PI;\n\n            public class Something {\n                static int i = Math.PI * 2;\n            }\n            "
+    },
+    {
+      "description": "Test field access FQCN",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static java.lang.Math.PI;\n\n            public class Something {\n                static int i = java.lang.Math.PI * 2;\n            }\n            "
+    },
+    {
+      "description": "Test field access disabled",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static java.lang.Math.PI;\n\n            public class Something {\n                static int i = Math.PI * 2;\n            }\n            "
+    },
+    {
+      "description": "Test field access disabled, FQCN is still reported",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static java.lang.Math.PI;\n\n            public class Something {\n                static int i = java.lang.Math.PI * 2;\n            }\n            "
+    },
+    {
+      "description": "Test field access imported through subtype",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package ohio;\n\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.PhonyMockito.mock;\n            import static net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.MockitoInherited.*;\n\n            import net.sourceforge.pmd.lang.java.rule.codestyle.UnnecessaryFullyQualifiedNameTest.MockitoInherited;\n\n            public class Something {\n                static int i = MockitoInherited.TWO * 2;\n            }\n            "
+    },
+    {
+      "description": "[java] UnnecessaryFullyQualifiedName - FP for inner class pkg.ClassA.Foo implementing pkg.Foo #4133",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\n\npublic class ClassA {\n    public static class Foo implements net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.Foo {}\n}\n"
+    },
+    {
+      "description": "[java] UnnecessaryFullyQualifiedName FP when the same simple class name exists in the current package #4139",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname;\nclass Scratch {\n    // note: there is also net.sourceforge.pmd.lang.java.rule.codestyle.unnecessaryfullyqualifiedname.Deprecated...\n    @java.lang.Deprecated\n    int aField;\n}\n"
+    },
+    {
+      "description": "[java] UnnecessaryFullyQualifiedName fails to recognize illegal self reference in enums #4631",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage impl;\n\nimport api.ObjectID;\nimport static api.ObjectID.*;\n\npublic enum Tree {\n    // src/impl/Tree.java:8:   UnnecessaryFullyQualifiedName:  Unnecessary use of fully qualified name 'ObjectID.TEAK_TREE' due to existing static import 'api.ObjectID.*'\n    TEAK_TREE(ObjectID.TEAK_TREE, TEAK_TREE_30437, TEAK_TREE_40758);\n\n    private final int[] treeIds;\n\n    Tree(int... treeIds) {\n        this.treeIds = treeIds;\n    }\n}\n/*\npackage api;\n\npublic final class ObjectID {\n    public static final int TEAK_TREE = 9036;\n    public static final int TEAK_TREE_30437 = 30437;\n    public static final int TEAK_TREE_40758 = 40758;\n}\n*/\n"
+    },
+    {
+      "description": "#1316 FP for local method shadowing static import",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport static java.lang.Thread.setUncaughtExceptionHandler;\n\npublic class Foo {\n    static {\n        setUncaughtExceptionHandler(null); // using static import, ok\n    }\n\n    public interface ExceptionHandler {\n        void setUncaughtExceptionHandler(Object o);\n    }\n\n    private final ExceptionHandler noopHandler = new ExceptionHandler() {\n        @Override\n        public void setUncaughtExceptionHandler(Object o) {\n            Thread.setUncaughtExceptionHandler(null); // need to fully qualify, should be ok\n        }\n    };\n}\n"
+    },
+    {
+      "description": "[java] UnnecessaryFullyQualifiedName: False positive with shadowed static method import #3083",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage ds;\n\nimport static java.util.Objects.requireNonNull;\nimport static java.util.Objects.isNull;\nimport static java.util.Objects.nonNull;\nimport static java.util.Objects.toString;\n\nimport java.util.Objects;\nimport java.util.Iterator;\n\npublic class BinaryTree<E extends Comparable<E>> implements Tree<E> {\n    private TreeNode<E> root;\n\n    public BinaryTree() {\n        root = null;\n    }\n\n    @Override\n    public void add(E obj) {\n        requireNonNull(obj);\n        if (isNull(root))\n            root = new TreeNode<>(obj, null, null);\n        else\n            root.insert(obj);\n    }\n\n    @Override\n    public boolean contains(E obj) {\n        requireNonNull(obj);\n        return nonNull(root) ? nonNull(root.find(obj)) : false;\n    }\n\n    @Override\n    public void remove(E obj) {\n        if (nonNull(root))\n            root = root.remove(obj, root);\n    }\n\n    @Override\n    public Iterator<E> iterator(TraversalOrder order) {\n        return null;\n    }\n\n    private static class TreeNode<T extends Comparable<T>> {\n        T val;\n        TreeNode<T> left;\n        TreeNode<T> right;\n\n        TreeNode(T val, TreeNode<T> left, TreeNode<T> right) {\n            this.val = val;\n            this.left = left;\n            this.right = right;\n        }\n\n        public void insert(T obj) {\n            requireNonNull(obj);\n            if (val.compareTo(obj) < 0) {\n                if (isNull(right)) right = new TreeNode<>(obj, null, null);\n                else right.insert(obj);\n            }\n            else {\n                if (isNull(left))\n                    left = new TreeNode<>(obj, null, null);\n                else left.insert(obj);\n            }\n        }\n\n        public TreeNode<T> find(T obj) {\n            int temp = val.compareTo(obj);\n            if (temp == 0) return this;\n            if (temp < 0) return isNull(right) ? null : right.find(obj);\n            return isNull(left) ? null : left.find(obj);\n        }\n\n        private TreeNode<T> remove(T obj, TreeNode<T> node) {\n            requireNonNull(obj);\n            TreeNode<T> t = node;\n            if (isNull(t)) return t;\n            if (obj.compareTo(t.val) < 0) t.left = remove(obj, t.left);\n            else if (obj.compareTo(t.val) > 0) t.right = remove(obj, t.right);\n            else if (isNull(t.left) || isNull(t.right)) t = isNull(t.left) ? t.right : t.left;\n            else {\n                t.val = findMin(t.right).val; t.right = remove(t.val, t.right);\n            }\n            return t;\n        }\n\n        private TreeNode<T> findMin(TreeNode<T> node) {\n            TreeNode<T> t = node;\n            if (isNull(t)) return null;\n            while (nonNull(t.left))\n                t = t.left;\n            return t;\n        }\n\n        @Override\n        public String toString() {\n            return Objects.toString(val); // False-positive here for UnnecessaryFullyQualifiedName\n        }\n    }\n}\n"
+    },
+    {
+      "description": "#5263 FP when forward reference is illegal",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public enum EnumX {\n                VALUE_X(EnumX.X); // MUST qualify the name or the file won't compile\n\n                static final String X = \"X\";\n\n                private final String v;\n\n                EnumX(final String v) {\n                    this.v = v;\n                }\n\n                public String getV() {\n                    return v;\n                }\n            }\n"
+    },
+    {
+      "description": "#5263 FP when forward reference is illegal (class)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            public class ClassX {\n                static final String Y = ClassX.X; // MUST qualify the name or the file won't compile\n                static final String X = \"X\";\n\n                private final String v;\n\n                ClassX(final String v) {\n                    this.v = v;\n                }\n\n                public String getV() {\n                    return v;\n                }\n            }\n"
+    },
+    {
+      "description": "#5263 not forward references",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        3,
+        6,
+        9,
+        13,
+        17
+      ],
+      "code": "\n            public class ClassX {\n                static final Object Y = new Object() {\n                    String q = ClassX.X; // not FWR\n                };\n\n                private final String v = ClassX.X; // not FWR bc not static\n\n                ClassX() {\n                    this.v = ClassX.X; // not FWR\n                }\n\n                void foo() {\n                    System.out.println(ClassX.X); // not FWR\n                }\n\n                static void bar() {\n                    System.out.println(ClassX.X); // not FWR\n                }\n\n                static final String X = \"X\";\n            }\n            "
+    }
+  ]
+}

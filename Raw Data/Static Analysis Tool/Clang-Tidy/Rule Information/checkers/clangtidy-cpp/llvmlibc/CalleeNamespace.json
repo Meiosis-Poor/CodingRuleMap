@@ -1,0 +1,32 @@
+{
+  "name": "CalleeNamespace",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - llvmlibc-callee-namespace",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 70,
+  "branches": 6,
+  "apis": 31,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        57,
+        58,
+        63,
+        64,
+        72,
+        73,
+        76,
+        77,
+        78,
+        81,
+        82
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s llvmlibc-callee-namespace %t\n\n#define OTHER_MACRO_NAMESPACE custom_namespace\nnamespace OTHER_MACRO_NAMESPACE {\n  void wrong_name_macro_func() {}\n}\n\nnamespace __llvm_libc {\n  void right_name_no_macro_func() {}\n}\n\n#define LIBC_NAMESPACE __llvm_libc_xyz\nnamespace LIBC_NAMESPACE {\nnamespace nested {\nvoid nested_func() {}\n} // namespace nested\nvoid libc_api_func() {}\n\nstruct libc_api_struct {\n  int operator()() const { return 0; }\n};\n} // namespace __llvm_libc\n\n// Emulate a function from the public headers like string.h\nvoid libc_api_func() {}\n\n// Emulate a function specifically allowed by the exception list.\nvoid malloc() {}\n\n// Emulate a non-trivially named symbol.\nstruct global_struct {\n  int operator()() const { return 0; }\n};\n\nnamespace LIBC_NAMESPACE {\nvoid Test() {\n  // Allow calls with the fully qualified name.\n  LIBC_NAMESPACE::libc_api_func();\n  LIBC_NAMESPACE::nested::nested_func();\n  void (*qualifiedPtr)(void) = LIBC_NAMESPACE::libc_api_func;\n  qualifiedPtr();\n\n  // Should not trigger on compiler provided function calls.\n  (void)__builtin_abs(-1);\n\n  // Bare calls are allowed as long as they resolve to the correct namespace.\n  libc_api_func();\n  nested::nested_func();\n  void (*barePtr)(void) = LIBC_NAMESPACE::libc_api_func;\n  barePtr();\n\n  // Allow calling entities defined in the namespace.\n  LIBC_NAMESPACE::libc_api_struct{}();\n\n  // Disallow calling into global namespace for implemented entrypoints.\n  ::libc_api_func();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'libc_api_func' must resolve to a function declared within the namespace defined by the 'LIBC_NAMESPACE' macro\n  // CHECK-MESSAGES: :25:6: note: resolves to this declaration\n\n  // Disallow indirect references to functions in global namespace.\n  void (*badPtr)(void) = ::libc_api_func;\n  badPtr();\n  // CHECK-MESSAGES: :[[@LINE-2]]:26: warning: 'libc_api_func' must resolve to a function declared within the namespace defined by the 'LIBC_NAMESPACE' macro\n  // CHECK-MESSAGES: :25:6: note: resolves to this declaration\n\n  // Allow calling into global namespace for specific functions.\n  ::malloc();\n\n  // Disallow calling on entities that are not in the namespace, but make sure\n  // no crashes happen.\n  global_struct{}();\n  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: 'operator()' must resolve to a function declared within the namespace defined by the 'LIBC_NAMESPACE' macro\n  // CHECK-MESSAGES: :32:7: note: resolves to this declaration\n\n  OTHER_MACRO_NAMESPACE::wrong_name_macro_func();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'wrong_name_macro_func' must resolve to a function declared within the namespace defined by the 'LIBC_NAMESPACE' macro\n  // CHECK-MESSAGES: :3:31: note: expanded from macro 'OTHER_MACRO_NAMESPACE'\n  // CHECK-MESSAGES: :5:8: note: resolves to this declaration\n  \n  __llvm_libc::right_name_no_macro_func();\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'right_name_no_macro_func' must resolve to a function declared within the namespace defined by the 'LIBC_NAMESPACE' macro\n  // CHECK-MESSAGES: :9:8: note: resolves to this declaration\n  \n}\n\n} // namespace __llvm_libc"
+    }
+  ]
+}

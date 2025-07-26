@@ -1,0 +1,45 @@
+{
+  "name": "UseEqualsDefault",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-use-equals-default",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 362,
+  "branches": 38,
+  "apis": 286,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 24,
+      "expected-linenumbers": [
+        11,
+        14,
+        21,
+        24,
+        100,
+        110,
+        119,
+        124,
+        129,
+        138,
+        144,
+        147,
+        162,
+        165,
+        173,
+        176,
+        187,
+        190,
+        204,
+        208,
+        240,
+        246,
+        254,
+        258
+      ],
+      "code": "\n// RUN: %check_clang_tidy --match-partial-fixes %s modernize-use-equals-default %t -- -- -fno-delayed-template-parsing -fexceptions\n\n// Out of line definition.\nclass OL {\npublic:\n  OL();\n  ~OL();\n};\n\nOL::OL() {};\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use '= default' to define a trivial default constructor [modernize-use-equals-default]\n// CHECK-FIXES: OL::OL() = default;\nOL::~OL() {}\n// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use '= default' to define a trivial destructor [modernize-use-equals-default]\n// CHECK-FIXES: OL::~OL() = default;\n\n// Inline definitions.\nclass IL {\npublic:\n  IL() {} \t ; // Note embedded tab on this line\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: IL() = default \t ; // Note embedded tab on this line\n  ~IL() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ~IL() = default;\n};\n\n// Non-empty body.\nvoid f();\nclass NE {\npublic:\n  NE() { f(); }\n  ~NE() { f(); }\n};\n\n// Skip unions.\nunion NU {\n  NU() {}\n  // CHECK-FIXES: NU() {}\n  ~NU() {}\n  // CHECK-FIXES: ~NU() {}\n  NE Field;\n};\n\n// Skip unions with out-of-line constructor/destructor.\nunion NUO {\n  NUO();\n  ~NUO();\n  NE Field;\n};\n\nNUO::NUO() {}\n// CHECK-FIXES: NUO::NUO() {}\nNUO::~NUO() {}\n// CHECK-FIXES: NUO::~NUO() {}\n\n// Skip structs/classes containing anonymous unions.\nstruct SU {\n  SU() {}\n  // CHECK-FIXES: SU() {}\n  ~SU() {}\n  // CHECK-FIXES: ~SU() {}\n  union {\n    NE Field;\n  };\n};\n\n// Skip variadic constructors.\nstruct VA {\n  VA(...) {}\n};\n\n// Skip template constructors.\nstruct TC {\n  template <unsigned U>\n  TC() {}\n\n  template <unsigned U>\n  TC(const TC &) {}\n\n  template <unsigned U>\n  TC& operator = (const TC &) { return *this; }\n};\n\n// Initializer or arguments.\nclass IA {\npublic:\n  // Constructor with initializer.\n  IA() : Field(5) {}\n  // Constructor with arguments.\n  IA(int Arg1, int Arg2) {}\n  int Field;\n};\n\n// Default member initializer\nclass DMI {\npublic:\n  DMI() {} // Comment before semi-colon on next line\n  ;\n  // CHECK-MESSAGES: :[[@LINE-2]]:3: warning: use '= default'\n  // CHECK-FIXES: DMI() = default // Comment before semi-colon on next line\n  // CHECK-FIXES-NEXT:   ;\n  int Field = 5;\n};\n\n// Class member\nclass CM {\npublic:\n  CM() {} /* Comments */ /* before */ /* semicolon */;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: CM() = default /* Comments */ /* before */ /* semicolon */;\n  OL o;\n};\n\n// Private constructor/destructor.\nclass Priv {\n  Priv();\n  ~Priv() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ~Priv() = default;\n};\n\nPriv::Priv() {}\n// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: use '= default'\n// CHECK-FIXES: Priv::Priv() = default;\n\nstruct SemiColon {\n  SemiColon() {};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: SemiColon() = default;{{$}}\n};\n\nstruct SemiColonOutOfLine {\n  SemiColonOutOfLine();\n};\n\nSemiColonOutOfLine::SemiColonOutOfLine() {};\n// CHECK-MESSAGES: :[[@LINE-1]]:21: warning: use '= default'\n// CHECK-FIXES: SemiColonOutOfLine::SemiColonOutOfLine() = default;{{$}}\n\n// struct.\nstruct ST {\n  ST() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ST() = default;{{$}}\n  ~ST() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ST() = default;{{$}}\n};\n\n// Deleted constructor/destructor.\nclass Del {\npublic:\n  Del() = delete;\n  ~Del() = delete;\n};\n\n// Do not remove other keywords.\nclass KW {\npublic:\n  explicit KW() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: use '= default'\n  // CHECK-FIXES: explicit KW() = default;\n  virtual ~KW() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: use '= default'\n  // CHECK-FIXES: virtual ~KW() = default;\n};\n\n// Nested class.\nstruct N {\n  struct NN {\n    NN() {}\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use '= default'\n    // CHECK-FIXES: NN() = default;\n    ~NN() {}\n    // CHECK-MESSAGES: :[[@LINE-1]]:5: warning: use '= default'\n    // CHECK-FIXES: ~NN() = default;\n  };\n  int Int;\n};\n\n// Class template.\ntemplate <class T>\nclass Temp {\npublic:\n  Temp() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: Temp() = default;\n  ~Temp() {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ~Temp() = default;\n};\n\n// Class template out of line with explicit instantiation.\ntemplate <class T>\nclass TempODef {\npublic:\n  TempODef();\n  ~TempODef();\n};\n\ntemplate <class T>\nTempODef<T>::TempODef() {}\n// CHECK-MESSAGES: :[[@LINE-1]]:14: warning: use '= default'\n// CHECK-FIXES: TempODef<T>::TempODef() = default;\ntemplate <class T>\nTempODef<T>::~TempODef() {}\n// CHECK-MESSAGES: :[[@LINE-1]]:14: warning: use '= default'\n// CHECK-FIXES: TempODef<T>::~TempODef() = default;\n\ntemplate class TempODef<int>;\ntemplate class TempODef<double>;\n\n// Non user-provided constructor/destructor.\nstruct Imp {\n  int Int;\n};\nvoid g() {\n  Imp *PtrImp = new Imp();\n  PtrImp->~Imp();\n  delete PtrImp;\n}\n\n// Already using default.\nstruct IDef {\n  IDef() = default;\n  ~IDef() = default;\n};\nstruct ODef {\n  ODef();\n  ~ODef();\n};\nODef::ODef() = default;\nODef::~ODef() = default;\n\n// Delegating constructor and overriden destructor.\nstruct DC : KW {\n  DC() : KW() {}\n  ~DC() override {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ~DC() override = default;{{$}}\n};\n\nstruct OverrideWithSemiColon : KW {\n  ~OverrideWithSemiColon() override {};\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: use '= default'\n  // CHECK-FIXES: ~OverrideWithSemiColon() override = default;{{$}}\n};\n\nstruct Comments {\n  Comments() {\n    // Don't erase comments inside the body.\n  }\n  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use '= default'\n  ~Comments() {\n    // Don't erase comments inside the body.\n  }\n  // CHECK-MESSAGES: :[[@LINE-3]]:3: warning: use '= default'\n};\n\n// Try-catch.\nstruct ITC {\n  ITC() try {} catch(...) {}\n  ~ITC() try {} catch(...) {}\n};\n\nstruct OTC {\n  OTC();\n  ~OTC();\n};\nOTC::OTC() try {} catch(...) {}\nOTC::~OTC() try {} catch(...) {}\n\n#define STRUCT_WITH_DEFAULT(_base, _type) \\\n  struct _type {                          \\\n    _type() {}                            \\\n    _base value;                          \\\n  };\n\nSTRUCT_WITH_DEFAULT(unsigned char, InMacro)\n\n#define ZERO_VALUE 0\nstruct PreprocesorDependentTest\n{\n  void something();\n\n  PreprocesorDependentTest() {\n#if ZERO_VALUE\n    something();\n#endif\n  }\n\n  ~PreprocesorDependentTest() {\n#if ZERO_VALUE\n    something();\n#endif\n  }\n};"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "ExplicitConstructor",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - google-explicit-constructor",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 164,
+  "branches": 23,
+  "apis": 110,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 15,
+      "expected-linenumbers": [
+        46,
+        50,
+        54,
+        59,
+        71,
+        75,
+        79,
+        83,
+        87,
+        112,
+        134,
+        138,
+        158,
+        161,
+        165
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s google-explicit-constructor %t\n\nnamespace std {\n  typedef decltype(sizeof(int)) size_t;\n\n  // libc++'s implementation\n  template <class _E>\n  class initializer_list\n  {\n    const _E* __begin_;\n    size_t    __size_;\n\n    initializer_list(const _E* __b, size_t __s)\n      : __begin_(__b),\n        __size_(__s)\n    {}\n\n  public:\n    typedef _E        value_type;\n    typedef const _E& reference;\n    typedef const _E& const_reference;\n    typedef size_t    size_type;\n\n    typedef const _E* iterator;\n    typedef const _E* const_iterator;\n\n    initializer_list() : __begin_(nullptr), __size_(0) {}\n\n    size_t    size()  const {return __size_;}\n    const _E* begin() const {return __begin_;}\n    const _E* end()   const {return __begin_ + __size_;}\n  };\n}\n\nstruct A {\n  A() {}\n  A(int x, int y) {}\n\n  explicit A(void *x) {}\n  explicit A(void *x, void *y) {}\n  explicit operator bool() const { return true; }\n\n  operator double() const = delete;\n\n  explicit A(const A& a) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: copy constructor should not be declared explicit [google-explicit-constructor]\n  // CHECK-FIXES: A(const A& a) {}\n\n  A(int x1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]\n  // CHECK-FIXES: explicit A(int x1);\n\n  A(double x2, double y = 3.14) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: constructors that are callable with a single argument must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]\n  // CHECK-FIXES: explicit A(double x2, double y = 3.14) {}\n\n  template <typename... T>\n  A(T&&... args);\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: constructors that are callable with a single argument\n  // CHECK-FIXES: explicit A(T&&... args);\n};\n\ninline A::A(int x1) {}\n\nstruct B {\n  B(std::initializer_list<int> list1) {}\n  B(const std::initializer_list<unsigned> &list2) {}\n  B(std::initializer_list<unsigned> &&list3) {}\n\n  operator bool() const { return true; }\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'operator bool' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]\n  // CHECK-FIXES: explicit operator bool() const { return true; }\n\n  operator double() const;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'operator double' must be marked explicit to avoid unintentional implicit conversions [google-explicit-constructor]\n  // CHECK-FIXES: explicit operator double() const;\n\n  explicit B(::std::initializer_list<double> list4) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor should not be declared explicit [google-explicit-constructor]\n  // CHECK-FIXES: B(::std::initializer_list<double> list4) {}\n\n  explicit B(const ::std::initializer_list<char> &list5) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor\n  // CHECK-FIXES: B(const ::std::initializer_list<char> &list5) {}\n\n  explicit B(::std::initializer_list<char> &&list6) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor\n  // CHECK-FIXES: B(::std::initializer_list<char> &&list6) {}\n};\n\ninline B::operator double() const { return 0.0; }\n\nstruct StructWithFnPointer {\n  void (*f)();\n} struct_with_fn_pointer = {[] {}};\n\nusing namespace std;\n\nstruct C {\n  C(initializer_list<int> list1) {}\n  C(const initializer_list<unsigned> &list2) {}\n  C(initializer_list<unsigned> &&list3) {}\n};\n\ntemplate <typename T>\nstruct C2 {\n  C2(initializer_list<int> list1) {}\n  C2(const initializer_list<unsigned> &list2) {}\n  C2(initializer_list<unsigned> &&list3) {}\n\n  explicit C2(initializer_list<double> list4) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: initializer-list constructor\n  // CHECK-FIXES: C2(initializer_list<double> list4) {}\n};\n\ntemplate <typename T>\nstruct C3 {\n  C3(initializer_list<T> list1) {}\n  C3(const std::initializer_list<T*> &list2) {}\n  C3(::std::initializer_list<T**> &&list3) {}\n\n  template <typename U>\n  C3(initializer_list<U> list3) {}\n};\n\nstruct D {\n  template <typename T>\n  explicit D(T t) {}\n};\n\ntemplate <typename T>\nstruct E {\n  E(T *pt) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors\n  // CHECK-FIXES: explicit E(T *pt) {}\n  template <typename U>\n  E(U *pu) {}\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: single-argument constructors\n  // CHECK-FIXES: explicit E(U *pu) {}\n\n  explicit E(T t) {}\n  template <typename U>\n  explicit E(U u) {}\n};\n\nvoid f(std::initializer_list<int> list) {\n  D d(list);\n  E<decltype(list)> e(list);\n  E<int> e2(list);\n}\n\ntemplate <typename T>\nstruct F {};\n\ntemplate<typename T>\nstruct G {\n  operator bool() const;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'operator bool' must be marked\n  // CHECK-FIXES: explicit operator bool() const;\n  operator F<T>() const;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'operator F<type-parameter-0-0>' must be marked\n  // CHECK-FIXES: explicit operator F<T>() const;\n  template<typename U>\n  operator F<U>*() const;\n  // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: 'operator F<type-parameter-1-0> *' must be marked\n  // CHECK-FIXES: explicit operator F<U>*() const;\n};\n\nvoid f2() {\n  G<int> a;\n  (void)(F<int>)a;\n  if (a) {}\n  (void)(F<int>*)a;\n  (void)(F<int*>*)a;\n\n  G<double> b;\n  (void)(F<double>)b;\n  if (b) {}\n  (void)(F<double>*)b;\n  (void)(F<double*>*)b;\n}\n\n#define DEFINE_STRUCT_WITH_OPERATOR_BOOL(name) \\\n  struct name {                                \\\n    operator bool() const;                     \\\n  }\n\nDEFINE_STRUCT_WITH_OPERATOR_BOOL(H);"
+    }
+  ]
+}

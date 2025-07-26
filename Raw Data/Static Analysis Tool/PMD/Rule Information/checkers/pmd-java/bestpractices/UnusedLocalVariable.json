@@ -1,0 +1,237 @@
+{
+  "name": "UnusedLocalVariable",
+  "language": "java",
+  "description": "\nDetects when a local variable is declared and/or assigned, but not used.\nVariables whose name starts with `ignored` or `unused` are filtered out.\n        ",
+  "example": "public class Foo {\n    public void doSomething() {\n        int i = 5; // Unused\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 35,
+  "branches": 5,
+  "apis": 6,
+  "test": [
+    {
+      "description": "unused local with assignment",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        String fr = new String();\n    }\n}\n        "
+    },
+    {
+      "description": "unused local w/o assignment",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        int x;\n    }\n}\n        "
+    },
+    {
+      "description": "unused local in constructor",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    public Foo() {\n       List a = new ArrayList();\n    }\n}\n        "
+    },
+    {
+      "description": "local used on rhs",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    public Foo() {\n       List a = new ArrayList();\n       if (true) {\n               a.size();\n       }\n    }\n}\n        "
+    },
+    {
+      "description": "unused local in static initializer",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    static {\n        String x;\n    }\n}\n        "
+    },
+    {
+      "description": "unused field",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public int x;\n}\n        "
+    },
+    {
+      "description": "loop indexes are not unused locals",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        for (int i=0;i<10; i++);\n        for (int i=0;i<10; i++);\n    }\n}\n        "
+    },
+    {
+      "description": "local used in anonymous inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        final int x = 2;\n        new Runnable() {\n            public void run() {\n                System.out.println(x);\n            }\n        };\n    }\n}\n        "
+    },
+    {
+      "description": "two unused locals of same name, one in nested class",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        int x = 2;\n        class Bar {\n            void buz() {\n                int x = 4;\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "two locals declared on same line",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        int x,y=0;\n    }\n}\n        "
+    },
+    {
+      "description": "an assignment does not a usage make",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x;\n        x = 4;\n    }\n}\n        "
+    },
+    {
+      "description": "a compound assignment operator does not a usage make #4517",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        3,
+        9,
+        12
+      ],
+      "code": "\npublic class UnusedCompoundAssignment {\n    void this_is_unused() {\n        int x = 0; // violation expected (line 3)\n        x += 2;    // doesn't count as usage\n    }\n    void transitive_used_but_unused1() {\n        int a = 1; // _no_ violation expected, a is used\n        int b = a; // _no_ violation expected, b is used\n        int c = b; // violation expected (line 9)\n    }\n    void transitive_used_but_unused2() {\n        int a, b, c; // 1 violation expected, only c is unused (line 12)\n        a = 1;\n        b = a;\n        c = b;\n    }\n    void transitive_used() {\n        int a, b, c; // _no_ violation expected\n        a = 1;\n        b = a;\n        c = b;\n        System.out.println(c); // usage\n    }\n    void this_is_used() {\n        int y = 0; // _no_ violation expected\n        y += 2;\n        System.out.println(y); // usage\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to a member field means used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int buz;\n    void bar() {\n        Foo b = new Foo();\n        b.buz = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "make sure scopes are working",
+      "expected-problems": 3,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        if (true) {int y =2;int j =3;}\n    }\n}\n        "
+    },
+    {
+      "description": "another scope test",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        if (true) {int y =2;foo(y);int j =3;foo(j);}\n    }\n    void bar2() {\n        int x = 2;\n        fiddle(x);\n    }\n}\n        "
+    },
+    {
+      "description": "assignment to an array member will be treated as a usage",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int[] x = {2};\n        x[1] = 2;\n    }\n}\n        "
+    },
+    {
+      "description": "local variable used in postfix expression as child of StatementExpression",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        x++;\n    }\n}\n        "
+    },
+    {
+      "description": "local variable used in postfix expression on right hand side",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        foo(x++);\n    }\n}\n        "
+    },
+    {
+      "description": "local variable, object ref, public field of which is incremented via in postfix expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    int x; Foo getBaz() { return this; }\n    void bar() {\n        Foo b = getBaz();\n        b.x++;\n    }\n}\n        "
+    },
+    {
+      "description": "local used in right shift",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        int x = 2;\n        int y = 4 >> x;\n        foo(y);\n    }\n}\n        "
+    },
+    {
+      "description": "unused local with assignment - Suppressed",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n@SuppressWarnings(\"unused\")\npublic class Foo {\n    void foo() {\n        String fr = new String();\n    }\n}\n        "
+    },
+    {
+      "description": "Reproducing bug #1955852: false positives for UnusedPrivateMethod and UnusedLocalField",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PMDFalsePositiveTest {\n    private <T> T doSomething(Object param){\n        return (T) param;\n    }\n\n    public static void main(String[] args) {\n        PMDFalsePositiveTest test = new PMDFalsePositiveTest();\n        Object o = \"Awesome!\";\n        String result = test.<String>doSomething(o);\n        System.out.println(result);\n    }\n}\n        "
+    },
+    {
+      "description": "#1247 Not able to recognize JDK 8 Static Method References",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(java.util.List<Object> objs) {\n        KeyMap keymap = new KeyMap();\n        if (objs.stream().allMatch(keymap::booleanFunc))\n        {\n            // do something\n        }\n    }\n    static class KeyMap {\n        boolean booleanFunc(Object o) {return o!=null;}\n    }\n}\n        "
+    },
+    {
+      "description": "#1484 UnusedLocalVariable - false positive - parenthesis",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class Test {\n    public static void main(String[] args) {\n        List<String> list = new ArrayList<>();\n        list.add(\"first\");\n        list.add(\"second\");\n\n        int notEmpty = 0;\n        for (String string : list) {\n                if (!string.isEmpty()) {\n                    notEmpty++;\n                }\n        }\n\n        System.out.println(list.size() + \" (\" + (notEmpty) + \" not empty)\");\n    }\n}\n        "
+    },
+    {
+      "description": "#257 UnusedLocalVariable - false positive - parenthesis",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Test {\n    public static void main(String[] args) {\n        double a = 4.0;\n        double b = 2.0;\n        double result = Math.sqrt((a) - b);\n        System.out.println(result);\n    }\n}\n        "
+    },
+    {
+      "description": "#1190 [java] UnusedLocalVariable/UnusedPrivateField false-positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.InputStream;\n\npublic class UnusedLocalVariable {\n\n    public void testSomething() {\n        InputStream is = new InputStream();\n\n        try (is) {\n            System.out.println(\"foo!\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#2957 Unused rules should ignore some names",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class UnusedLocalVariable {\n    public void testSomething() {\n        int ignored, unused = 0;\n        int notok = 0;\n    }\n}\n        "
+    },
+    {
+      "description": "#2130 [java] UnusedLocalVariable: false-negative with array",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\n            package pmdtests;\n\n            import java.lang.reflect.Constructor;\n\n            public final class Construct {\n\n                private Construct() {\n                    throw new IllegalStateException(\"Private constructor.\");\n                }\n\n                public static void main(String... args) {\n                    // get all visible constructors\n                    Constructor<?>[] constructors = String.class.getConstructors();\n                }\n            }\n            "
+    },
+    {
+      "description": "False positive with try-with-resources #3656",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.InputStream;\npublic class UsedLocalVar {\n    public boolean run() {\n        boolean canRead = false;\n        try(InputStream ignored = open()) {\n            canRead = true;\n        } catch (Throwable ignore) {}\n        return canRead;\n    }\n    private InputStream open() { return null; }\n}\n        "
+    },
+    {
+      "description": "Actually unused try-with-resources #3656 and #4516",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.io.InputStream;\npublic class UnusedUsedLocalVar {\n    public boolean run() {\n        boolean canRead = false;\n        try(InputStream resource = open()) {\n            canRead = true;\n        } catch (Throwable ignore) {}\n        return canRead;\n    }\n    private InputStream open() { return null; }\n}\n        "
+    },
+    {
+      "description": "False positive with variable used in unary expression #3671",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void run1(String ...args) {\n        int i = 0;\n        for (String a : args) {\n            String id = a + \" -> \" + i++;\n            System.out.println(id);\n        }\n    }\n    public void run2(String ...args) {\n        int x = 0;\n        for (String a : args) {\n            String id = a + \" -> \" + (++x);\n            System.out.println(id);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedLocalVariable: false-positive with multiple for-loop indices #4518",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        3,
+        6,
+        15
+      ],
+      "code": "\npublic class UnusedLocalVarsMultiple {\n    public void sample1() {\n        int a = 0, b = 1; // a and b unused (line 3)\n    }\n    public void sample2() {\n        int a = 0, b = a; // only b unused (line 6)\n    }\n    public void sample3() {\n        for (int i = 0; i < 10; i++); // i is loop index, is used and should be ignored\n    }\n    public void sample4() {\n        for (int i = 0, j = 0; i < 10; i++, j++); // i and j are loop indices, both are used (line 12)\n    }\n    public void sample5() {\n        for (int i = 0, j = 0; i < 10; i++); // i and j are loop indices, but j is not used (line 15)\n    }\n}\n"
+    },
+    {
+      "description": "Issues 5061/5081: Compound assignment used in another expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        int read = 0;\n        consume(read += 1);\n    }\n\n    void consume(int val) {\n        System.out.println(val);\n    }\n}\n        "
+    },
+    {
+      "description": "#5061/5081: Compound assignment used in another expression",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        int read = 0;\n        consume(read += 1);\n    }\n    void consume(int val) {\n        System.out.println(val);\n    }\n\n    void readUpTo(java.nio.channels.ReadableByteChannel channel, java.nio.ByteBuffer buffer, int length) {\n        int read = 0;\n        while ((read += channel.read(buffer)) < length) {\n        }\n\n        int totalBytesRead = 0;\n        read = 0;\n        while ((read = channel.read(buffer)) >= 0 && totalBytesRead < length) {\n            totalBytesRead += read;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedLocalVariable false positive with try-with-resource #5747 - workaround",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.*;\nimport java.nio.*;\nimport java.nio.channels.*;\n\nclass Foo {\n    long workaround() {\n        try (FileOutputStream fos = new FileOutputStream(file);\n                FileChannel out = fos.getChannel();\n                FileLock ignored = out.lock()) {\n            final int buffsize = 4096;\n            long position = 0;\n            long read;\n            while ((read = out.transferFrom(channel, position, buffsize)) > 0) {\n                position += read;\n            }\n            return position;\n        }\n    }\n}\n"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "name": "RedundantFunctionPtrDereference",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-redundant-function-ptr-dereference",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 34,
+  "branches": 1,
+  "apis": 14,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        9,
+        12,
+        13,
+        14,
+        15,
+        23
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-redundant-function-ptr-dereference %t\n\nvoid f(int i);\n\nvoid positive() {\n  void (*p)(int) = f;\n\n  (**p)(1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:4: warning: redundant repeated dereference of function pointer [readability-redundant-function-ptr-dereference]\n  // CHECK-FIXES: (*p)(1);\n  (*****p)(2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:4: warning: redundant repeated\n  // CHECK-MESSAGES: :[[@LINE-2]]:5: warning: redundant repeated\n  // CHECK-MESSAGES: :[[@LINE-3]]:6: warning: redundant repeated\n  // CHECK-MESSAGES: :[[@LINE-4]]:7: warning: redundant repeated\n  // CHECK-FIXES: (*p)(2);\n}\n\ntemplate<typename T>\nvoid invoke(const T& fn) {\n  fn(0); // 1\n  (*fn)(0); // 2\n  // CHECK-MESSAGES: :[[@LINE-1]]:4: warning: redundant repeated\n  // CHECK-FIXES: fn(0); // 1\n  // CHECK-FIXES: (fn)(0); // 2\n  // FIXME: Remove unnecessary parentheses.\n}\n\nvoid f1(int);\nvoid f2(double);\nvoid f3(char);\n\nvoid instantiate() {\n  invoke(f1);\n  invoke(f2);\n  invoke(f3);\n  invoke([](unsigned) {});\n}\n\nvoid negative() {\n  void (*q)(int) = &f;\n\n  q(1);\n  (*q)(2);\n}"
+    }
+  ]
+}

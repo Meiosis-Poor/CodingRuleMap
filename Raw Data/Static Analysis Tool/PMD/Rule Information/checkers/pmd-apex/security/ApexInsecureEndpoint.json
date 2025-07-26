@@ -1,0 +1,50 @@
+{
+  "name": "ApexInsecureEndpoint",
+  "language": "apex",
+  "description": "\nChecks against accessing endpoints under plain **http**. You should always use\n**https** for security.\n        ",
+  "example": "public without sharing class Foo {\n    void foo() {\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint('http://localhost:com');\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 115,
+  "branches": 20,
+  "apis": 10,
+  "test": [
+    {
+      "description": "Insecure callout endpoint variable concat",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint('http://localhost:com' + somevar);\n    }\n}\n        "
+    },
+    {
+      "description": "Insecure callout endpoint",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint('http://localhost:com');\n    }\n}\n        "
+    },
+    {
+      "description": "Secure callout endpoint",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint('https://localhost:com');\n    }\n}\n        "
+    },
+    {
+      "description": "Insecure callout endpoint from a variable 1",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        String endpoint = 'http://localhost:3300';\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint(endpoint);\n    }\n}\n        "
+    },
+    {
+      "description": "Insecure callout endpoint from a variable 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void foo() {\n        String endpoint;\n        endpoint = 'http://localhost:3300' + someVar;\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint(endpoint);\n    }\n}\n        "
+    },
+    {
+      "description": "Insecure callout endpoint from a variable 3",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private String endpoint = 'http://localhost:3300';\n    void foo() {\n        HttpRequest req = new HttpRequest();\n        req.setEndpoint(endpoint);\n    }\n}\n        "
+    }
+  ]
+}

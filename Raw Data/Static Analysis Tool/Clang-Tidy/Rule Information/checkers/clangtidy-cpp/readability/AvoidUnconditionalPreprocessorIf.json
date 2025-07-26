@@ -1,0 +1,31 @@
+{
+  "name": "AvoidUnconditionalPreprocessorIf",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-avoid-unconditional-preprocessor-if",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 105,
+  "branches": 24,
+  "apis": 42,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        3,
+        8,
+        17,
+        22,
+        27,
+        32,
+        37,
+        43,
+        49,
+        54
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-avoid-unconditional-preprocessor-if %t\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'false', consider removing both the condition and its contents [readability-avoid-unconditional-preprocessor-if]\n#if 0\n// some code\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'true', consider removing condition but leaving its contents [readability-avoid-unconditional-preprocessor-if]\n#if 1\n// some code\n#endif\n\n#if test\n\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'true', consider removing condition but leaving its contents [readability-avoid-unconditional-preprocessor-if]\n#if 10>5\n\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'false', consider removing both the condition and its contents [readability-avoid-unconditional-preprocessor-if]\n#if 10<5\n\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'true', consider removing condition but leaving its contents [readability-avoid-unconditional-preprocessor-if]\n#if 10 > 5\n// some code\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'false', consider removing both the condition and its contents [readability-avoid-unconditional-preprocessor-if]\n#if 10 < 5\n// some code\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'false', consider removing both the condition and its contents [readability-avoid-unconditional-preprocessor-if]\n#if !(10 > \\\n        5)\n// some code\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'true', consider removing condition but leaving its contents [readability-avoid-unconditional-preprocessor-if]\n#if !(10 < \\\n        5)\n// some code\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'true', consider removing condition but leaving its contents [readability-avoid-unconditional-preprocessor-if]\n#if true\n// some code\n#endif\n\n// CHECK-MESSAGES: :[[@LINE+1]]:2: warning: preprocessor condition is always 'false', consider removing both the condition and its contents [readability-avoid-unconditional-preprocessor-if]\n#if false\n// some code\n#endif\n\n#define MACRO\n#ifdef MACRO\n// some code\n#endif\n\n#if !SOMETHING\n#endif\n\n#if !( \\\n     defined MACRO)\n// some code\n#endif\n\n\n#if __has_include(<string_view>)\n// some code\n#endif\n\n#if __has_include(<string_view_not_exist>)\n// some code\n#endif\n\n#define DDD 17\n#define EEE 18\n\n#if 10 > DDD\n// some code\n#endif\n\n#if 10 < DDD\n// some code\n#endif\n\n#if EEE > DDD\n// some code\n#endif"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "name": "AvoidThreadGroup",
+  "language": "java",
+  "description": "\nAvoid using java.lang.ThreadGroup; although it is intended to be used in a threaded environment\nit contains methods that are not thread-safe.\n        ",
+  "example": "public class Bar {\n    void buz() {\n        ThreadGroup tg = new ThreadGroup(\"My threadgroup\");\n        tg = new ThreadGroup(tg, \"my thread group\");\n        tg = Thread.currentThread().getThreadGroup();\n        tg = System.getSecurityManager().getThreadGroup();\n    }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "bad, using new ThreadGroup()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        ThreadGroup t = new ThreadGroup(\"my tg\");\n    }\n}\n        "
+    },
+    {
+      "description": "bad, using fully qualified java.lang.ThreadGroup()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        java.lang.ThreadGroup t = new java.lang.ThreadGroup();\n    }\n}\n        "
+    },
+    {
+      "description": "bad, using Thread.getThreadGroup()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        ThreadGroup t = Thread.currentThread().getThreadGroup();\n    }\n}\n        "
+    },
+    {
+      "description": "bad, using System.getSecurityManager().getThreadGroup()",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() {\n        ThreadGroup t = System.getSecurityManager().getThreadGroup();\n    }\n}\n        "
+    },
+    {
+      "description": "ThreadGroup() but not java.lang.ThreadGroup",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.rule.multithreading.AvoidThreadGroupTest.ThreadGroup;\n\npublic class Foo {\n    void bar() {\n        ThreadGroup t = new ThreadGroup();\n    }\n}\n        "
+    },
+    {
+      "description": "MyThreadGroup() not java.lang.ThreadGroup",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.ThreadGroup;\npublic class Foo {\n\n    public class MyThreadGroup{}\n\n    void bar() {\n        MyThreadGroup t = new MyThreadGroup();\n    }\n}\n        "
+    },
+    {
+      "description": "false positive, bug #1018",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.lang.ThreadGroup;\n\npublic class Foo {\n    void bar() {\n        java.util.Date date = new java.util.Date();\n        java.sql.Date sqlData = new java.sql.Date();\n        java.math.BigInteger test = new java.math.BigInteger(\"123\");\n        throw new java.io.InvalidClassException();\n    }\n}\n        "
+    }
+  ]
+}

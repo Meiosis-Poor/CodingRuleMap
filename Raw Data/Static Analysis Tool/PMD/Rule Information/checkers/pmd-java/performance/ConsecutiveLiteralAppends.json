@@ -1,0 +1,503 @@
+{
+  "name": "ConsecutiveLiteralAppends",
+  "language": "java",
+  "description": "\nConsecutively calling StringBuffer/StringBuilder.append(...) with literals should be avoided.\nSince the literals are constants, they can already be combined into a single String literal and this String\ncan be appended in a single method call.\n        ",
+  "example": "StringBuilder buf = new StringBuilder();\nbuf.append(\"Hello\").append(\" \").append(\"World\");    // poor\nbuf.append(\"Hello World\");                          // good\n\nbuf.append('h').append('e').append('l').append('l').append('o'); // poor\nbuf.append(\"hello\");                                             // good\n\nbuf.append(1).append('m');  // poor\nbuf.append(\"1m\");           // good",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 318,
+  "branches": 47,
+  "apis": 28,
+  "test": [
+    {
+      "description": "1, Single append, should be ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(15);\n        sb.append(\"foo\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(15);\n        sb.append(\"foo\");\n    }\n}\n        "
+    },
+    {
+      "description": "2, Back to back append, not ok",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        10
+      ],
+      "code": null
+    },
+    {
+      "description": "2, re-running with threshold",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": null
+    },
+    {
+      "description": "3, Appends broken up by variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Date;\n\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(foo);\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(foo);\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(new Date());\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "4, Appends with literal appends",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        9
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\").append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\").append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "5, Appends broken up by while loop",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        12
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        while(true){\n        }\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        while(true){\n        }\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "6, Appends, then a variable",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        14
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(foo);\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(\"World\");\n        sb.append(foo);\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "7, Appends, then a variable",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(foo);\n        }\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(foo);\n        }\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "8, Appends, then a while",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "9, Multiple appends in same while",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        16
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(\"World\");\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n\n    public void bar() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(\"World\");\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "10, Multiple appends in same while, with multiple outside that while",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        4,
+        7,
+        15,
+        18
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(\"World\");\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        sb.append(\"Hello\");\n        while (true) {\n            sb.append(\"World\");\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "11, Multiple appends in same while, none outside the loop",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        13
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        while (true) {\n            StringBuffer sb = new StringBuffer();\n            sb.append(\"World\");\n            sb.append(\"World\");\n        }\n    }\n\n    public void bar2() {\n        while (true) {\n            StringBuilder sb = new StringBuilder();\n            sb.append(\"World\");\n            sb.append(\"World\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "12, Two loops, not consecutive appends though",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        while (true) {\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n        for (int ix = 0; ix < 2; ix++) {\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        while (true) {\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n        for (int ix = 0; ix < 2; ix++) {\n            sb.append(\"World\");\n        }\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "13, A bunch of loops, but nothing consecutive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello cruel world\");\n        Iterator iter = l.iterator();\n        while (iter.hasNext()) {\n            List innerList = (List) iter.next();\n            sb.append(\",\");\n            for (Iterator ixtor = innerList.iterator(); ixtor.hasNext();) {\n                Integer integer = (Integer) ixtor.next();\n                sb.append(\"\");\n                if (ixtor.hasNext()) {\n                    sb.append(\",\");\n                }\n            }\n            sb.append(\"foo\");\n        }\n    }\n\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello cruel world\");\n        Iterator iter = l.iterator();\n        while (iter.hasNext()) {\n            List innerList = (List) iter.next();\n            sb.append(\",\");\n            for (Iterator ixtor = innerList.iterator(); ixtor.hasNext();) {\n                Integer integer = (Integer) ixtor.next();\n                sb.append(\"\");\n                if (ixtor.hasNext()) {\n                    sb.append(\",\");\n                }\n            }\n            sb.append(\"foo\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "14, A bunch of loops, one consecutive",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        34
+      ],
+      "code": "\nimport java.util.Iterator;\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello cruel world\");\n        Iterator iter = l.iterator();\n        while (iter.hasNext()) {\n            List innerList = (List) iter.next();\n            sb.append(\",\");\n            for (Iterator ixtor = innerList.iterator(); ixtor.hasNext();) {\n                Integer integer = (Integer) ixtor.next();\n                sb.append(\"\");\n                if (ixtor.hasNext()) {\n                    sb.append(\",\");\n                    sb.append(\",\");\n                }\n            }\n            sb.append(\"foo\");\n        }\n    }\n\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello cruel world\");\n        Iterator iter = l.iterator();\n        while (iter.hasNext()) {\n            List innerList = (List) iter.next();\n            sb.append(\",\");\n            for (Iterator ixtor = innerList.iterator(); ixtor.hasNext();) {\n                Integer integer = (Integer) ixtor.next();\n                sb.append(\"\");\n                if (ixtor.hasNext()) {\n                    sb.append(\",\");\n                    sb.append(\",\");\n                }\n            }\n            sb.append(\"foo\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "15, A bunch of loops, none consecutive, separated by else",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Iterator;\nimport java.util.List;\npublic class Foo {\n    public void bar(List l) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello cruel world\");\n        Iterator iter = l.iterator();\n        while (iter.hasNext()) {\n            List innerList = (List) iter.next();\n            sb.append(\",\");\n            for (Iterator ixtor = innerList.iterator(); ixtor.hasNext();) {\n                Integer integer = (Integer) ixtor.next();\n                sb.append(\"\");\n                if (ixtor.hasNext()) {\n                    sb.append(\",\");\n                }\n            }\n            sb.append(\"foo\");\n        }\n    }\n\n    public void bar2(List l) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello cruel world\");\n        Iterator iter = l.iterator();\n        while (iter.hasNext()) {\n            List innerList = (List) iter.next();\n            sb.append(\",\");\n            for (Iterator ixtor = innerList.iterator(); ixtor.hasNext();) {\n                Integer integer = (Integer) ixtor.next();\n                sb.append(\"\");\n                if (ixtor.hasNext()) {\n                    sb.append(\",\");\n                }\n            }\n            sb.append(\"foo\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "16, Additive Expression 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"World\";\n        sb.append(\"Hello\" + foo);\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"World\";\n        sb.append(\"Hello\" + foo);\n    }\n}\n        "
+    },
+    {
+      "description": "17a, Additive Expression 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"World\";\n        sb.append(\"Hello\" + foo);\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"World\";\n        sb.append(\"Hello\" + foo);\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "17b, Additive Expression 3",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        12
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"Hello\";\n        sb.append(foo + \" \");\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"Hello\";\n        sb.append(foo + \" \");\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "18, End with literal append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(foo);\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"Hello\";\n        sb.append(\"Hello\");\n        sb.append(foo);\n    }\n}\n        "
+    },
+    {
+      "description": "19, A bunch of appends",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"World\";\n        sb.append(foo).append(\"World\");\n        sb.append(foo).append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"World\";\n        sb.append(foo).append(\"World\");\n        sb.append(foo).append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "20, Suffix append followed by real append",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        5,
+        12
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"AAA\";\n        sb.append(foo).append(\"BBB\");\n        sb.append(\"CCC\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"AAA\";\n        sb.append(foo).append(\"BBB\");\n        sb.append(\"CCC\");\n    }\n}\n        "
+    },
+    {
+      "description": "21, Appends separated by an if",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"BBB\");\n        if (true) {\n            sb.append(\"CCC\");\n        }\n        sb.append(\"DDD\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"BBB\");\n        if (true) {\n            sb.append(\"CCC\");\n        }\n        sb.append(\"DDD\");\n    }\n}\n        "
+    },
+    {
+      "description": "22, calls to methods in append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(String.valueOf(\"2\"));\n        sb.append(String.valueOf(\"3\"));\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(String.valueOf(\"2\"));\n        sb.append(String.valueOf(\"3\"));\n    }\n}\n        "
+    },
+    {
+      "description": "23, force 2 failures on 3 lines",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        5,
+        6,
+        14,
+        15
+      ],
+      "code": null
+    },
+    {
+      "description": "23, re-running with threshold",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        15
+      ],
+      "code": null
+    },
+    {
+      "description": "24, Appends from within switch statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String foo(int in) {\n        StringBuffer retval = new StringBuffer();\n        for (int i = 0; i < in; i++) {\n          switch (in){\n             case 0 :\n                continue;\n             case 1:\n                retval.append(\"0\");\n                continue;\n             case 2:\n                retval.append(\"1\");\n                continue;\n             case 3:\n                retval.append(\"2\");\n                continue;\n             default:\n                retval.append(\"3\");\n                continue;\n          }\n        }\n        return retval.toString();\n    }\n\n    public String foo2(int in) {\n        StringBuilder retval = new StringBuilder();\n        for (int i = 0; i < in; i++) {\n          switch (in){\n             case 0 :\n                continue;\n             case 1:\n                retval.append(\"0\");\n                continue;\n             case 2:\n                retval.append(\"1\");\n                continue;\n             case 3:\n                retval.append(\"2\");\n                continue;\n             default:\n                retval.append(\"3\");\n                continue;\n          }\n        }\n        return retval.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "25, Appends from within several different ifs",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        if (true) {\n            sb.append(\"CCC\");\n        }\n        if (true) {\n            sb.append(\"CCC\");\n        }\n        if (true) {\n            sb.append(\"CCC\");\n        }\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        if (true) {\n            sb.append(\"CCC\");\n        }\n        if (true) {\n            sb.append(\"CCC\");\n        }\n        if (true) {\n            sb.append(\"CCC\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "26, One append in if, one in else",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"CCC\");\n        if (true) {\n            sb.append(\"CCC\");\n        } else if (sb.length() == 2) {\n            sb.append(\"CCC\");\n        } else {\n            sb.append(\"CCC\");\n        }\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"CCC\");\n        if (true) {\n            sb.append(\"CCC\");\n        } else if (sb.length() == 2) {\n            sb.append(\"CCC\");\n        } else {\n            sb.append(\"CCC\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "27, Concurrent Appends from within switch statement",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        12,
+        19,
+        37,
+        44
+      ],
+      "code": "\npublic class Foo {\n    public String foo(int in) {\n        StringBuffer retval = new StringBuffer();\n        for (int i = 0; i < in; i++) {\n            switch (in) {\n                case 0 :\n                    continue;\n                case 1:\n                    retval.append(\"0\");\n                    continue;\n                case 2:\n                    retval.append(\"1\");\n                    retval.append(\"1\");\n                    continue;\n                case 3:\n                    retval.append(\"2\");\n                    continue;\n                default:\n                    retval.append(\"3\");\n                    retval.append(\"3\");\n                    continue;\n            }\n        }\n        return retval.toString();\n    }\n\n    public String foo2(int in) {\n        StringBuilder retval = new StringBuilder();\n        for (int i = 0; i < in; i++) {\n            switch (in){\n                case 0 :\n                    continue;\n                case 1:\n                    retval.append(\"0\");\n                    continue;\n                case 2:\n                    retval.append(\"1\");\n                    retval.append(\"1\");\n                    continue;\n                case 3:\n                    retval.append(\"2\");\n                    continue;\n                default:\n                    retval.append(\"3\");\n                    retval.append(\"3\");\n                    continue;\n            }\n        }\n        return retval.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "28, Additive inside an if statement",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        String foo = \"blah\";\n        int count = 0;\n        if (true) {\n            sb.append(\"CCC\" + (++count) + \"Ffalsd\");\n        } else if (foo.length() == 2) {\n            sb.append(\"CCC\" + (++count) + \"Ffalsd\");\n        }\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        String foo = \"blah\";\n        int count = 0;\n        if (true) {\n            sb.append(\"CCC\" + (++count) + \"Ffalsd\");\n        } else if(foo.length() == 2) {\n            sb.append(\"CCC\" + (++count) + \"Ffalsd\");\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "29, Adding two strings only",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"CCC\" + \"Ffalsd\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"CCC\" + \"Ffalsd\");\n    }\n}\n        "
+    },
+    {
+      "description": "30, Method call in append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        int count = 0;\n        sb.append(\"CCC\" + String.valueOf(count++));\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        int count = 0;\n        sb.append(\"CCC\" + String.valueOf(count++));\n    }\n}\n        "
+    },
+    {
+      "description": "31, Adding two strings together then another append",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        10
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"CCC\" + \"Ffalsd\");\n        sb.append(\"CCC\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"CCC\" + \"Ffalsd\");\n        sb.append(\"CCC\");\n    }\n}\n        "
+    },
+    {
+      "description": "32, Including the constructor's string",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        3,
+        8,
+        15,
+        27
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(\"CCC\");\n        sb.append(\"CCC\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(\"CCC\");\n        sb.append(\"CCC\");\n    }\n\n    private String getName() { return \"foo\"; }\n    public void bar3() {\n        StringBuilder sb = new StringBuilder(getName());\n        sb.append(\"first\");\n        sb.append(\"second\");\n    }\n\n    private String field = \"f\";\n    public void bar4() {\n        StringBuilder sb = new StringBuilder(\"CCC\").append(this.field);\n        sb.append(\"CCC\");\n    }\n\n    public void bar5(String desc) {\n        StringBuilder sb = new StringBuilder(desc)\n            .append(\"\\n\")\n            .append(\"CCC\")\n            .append(\"DDD\");\n    }\n}\n        "
+    },
+    {
+      "description": "33, Additive in the constructor",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(foo + \"CCC\");\n        sb.append(\"CCC\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(foo + \"CCC\");\n        sb.append(\"CCC\");\n    }\n}\n        "
+    },
+    {
+      "description": "34, Additive in the constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer(\"CCC\" + foo);\n        sb.append(\"CCC\");\n    }\n    public void bar2() {\n        StringBuilder sb = new StringBuilder(\"CCC\" + foo);\n        sb.append(\"CCC\");\n    }\n}\n        "
+    },
+    {
+      "description": "35, For block without braces",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"World\");\n        for (int ix = 0; ix < 2; ix++)\n            sb.append(\"World\");\n\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"World\");\n        for (int ix = 0; ix < 2; ix++)\n            sb.append(\"World\");\n\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "36, Appends broken up by method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"World\");\n        foo(sb);\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"World\");\n        foo(sb);\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "37, Intervening method call not related to append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"World\");\n        System.out.println(sb.toString());\n        sb.append(\"World\"); // merging this append in the previous would change the result of toString()\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"World\");\n        System.out.println(sb.toString());\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "38, Intervening method call not related to append",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"World\");\n        foo(sb.toString());\n        sb.append(\"World\");\n    }\n\n    public void bar2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"World\");\n        foo(sb.toString());\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "39, Buffer as class variable, accessed in 2 methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    StringBuffer sb = new StringBuffer();\n    public void foo() {\n        sb.append(\"World\");\n    }\n    public void bar() {\n        sb.append(\"World\");\n    }\n}\n\npublic class Foo2 {\n    StringBuilder sb = new StringBuilder();\n    public void foo() {\n        sb.append(\"World\");\n    }\n    public void bar() {\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "40, Call to external method with subtraction",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(int i) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(foo(i-2));\n        sb.append(\"World\");\n    }\n\n    public void foo2(int i) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(foo(i-2));\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "41, Call to external method with addition, not string appending",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        StringBuffer sb = new StringBuffer();\n        sb.append(foo(\"\".length()+2));\n        sb.append(\"World\");\n    }\n\n    public void foo2() {\n        StringBuilder sb = new StringBuilder();\n        sb.append(foo(\"\".length()+2));\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "42, Using variable string array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(String[] a, int i) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(a[i]).append(\"Hello\");\n        sb.append(a[i+1]).append(\"World\");\n    }\n\n    public void foo2(String[] a, int i) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(a[i]).append(\"Hello\");\n        sb.append(a[i+1]).append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "43, Using variable char array",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    toString2(char[] a, int n){\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"ab\");\n        sb.append(a, 0, n);\n        sb.append('c');\n        return sb.toString();\n    }\n\n    toString3(char[] a, int n){\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"ab\");\n        sb.append(a, 0, n);\n        sb.append('c');\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "44, Appending of not String additive expressions",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo(int i) {\n        StringBuffer sb = new StringBuffer();\n        sb.append(\"Hello\");\n        sb.append(i + 1);\n        sb.append(1 + i);\n        sb.append(\"World\");\n    }\n\n    public void foo2(int i) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"Hello\");\n        sb.append(i + 1);\n        sb.append(1 + i);\n        sb.append(\"World\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1175 false positive for StringBuilder.append called 2 consecutive times",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Escape {\n    public static String escape(final String value)\n    {\n        StringBuilder s = new StringBuilder(value.length() + 2);\n        s.append('\"');\n        for (int i = 0; i < value.length(); i++) {\n            s.append(value.charAt(i));\n        }\n        s.append('\"');\n        return s.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "#1369 ConsecutiveLiteralAppends not detected properly on StringBuffer",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        6,
+        12
+      ],
+      "code": "\npublic class StringBufferTest {\n\n    public void test() {\n\n        // This lint is reported as ConsecutiveLiteralAppends, but says \".append is called **5** consecutive times\"\n        final StringBuffer stringBuffer = new StringBuffer().append(\"agrego \").append(\"un \");\n        stringBuffer.append(\"string \"); // and in this line says \".append is called **4** consecutive times\"\n        System.out.println(stringBuffer.toString());\n\n        final StringBuffer stringBuffer2 = new StringBuffer();\n        // ConsecutiveLiteralAppends is not reported on any of these lines\n        stringBuffer2.append(\"agrego \");\n        stringBuffer2.append(\"un \");\n        stringBuffer2.append(\"string \");\n        System.out.println(stringBuffer2.toString());\n    }\n}\n        "
+    },
+    {
+      "description": "#1384 NullPointerException in ConsecutiveLiteralAppendsRule - 1",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ConsecutiveLiteralAppendsRuleTest {\nprivate StringBuilder cdata;\n}\n        "
+    },
+    {
+      "description": "#1384 NullPointerException in ConsecutiveLiteralAppendsRule - 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ConsecutiveLiteralAppendsRuleTest {\n    public void appendChar(final StringBuilder s) {\n        // do nothing\n    }\n}\n        "
+    },
+    {
+      "description": "#1401 False positive for StringBuilder.append called with constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public String foo(final String value)\n    {\n        StringBuilder s = new StringBuilder(\"start:\").append(value).append(\":end\");\n        return s.toString();\n    }\n\n    public String foo2(final String value)\n    {\n        StringBuilder s = new StringBuilder(\"start:\").append(value);\n        s.append(\":end\");\n        return s.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "Consecutive append of literals other than string: integer",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuilder s = new StringBuilder();\n        s.append(1);\n        s.append(2);\n    }\n}\n        "
+    },
+    {
+      "description": "Consecutive append of literals other than string: chars",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        13
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuilder s = new StringBuilder();\n        s.append('h');\n        s.append('e');\n        s.append('l');\n        s.append('l');\n        s.append('o');\n    }\n\n    public void bar2(int i, String[] arr) {\n        StringBuilder s = new StringBuilder();\n        s.append('\\n')\n         .append(\"Some string\")\n         .append(i + 1)\n         .append(\"another\")\n         .append(arr[i]);\n    }\n}\n        "
+    },
+    {
+      "description": "Consecutive append of literals other than string: mix chars and strings",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuilder s = new StringBuilder();\n        s.append('h');\n        s.append(\"ello\");\n    }\n}\n        "
+    },
+    {
+      "description": "#1325 [java] False positive in ConsecutiveLiteralAppends",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.function.Function;\n\npublic class ConsecutiveLiteralAppendsFP {\n    private Function<Object, String> valueToStringFunction = String::valueOf;\n    private List nodes;\n    public String test() {\n        StringBuilder builder = new StringBuilder(\"[\");\n        nodes.forEach((k, v) -> builder\n                .append(k)\n                .append(\" = \")\n                .append(valueToStringFunction.apply(v))\n                .append(\", \"));\n        int length = builder.length();\n        if (length > 1) {\n            builder.delete(length - 2, length);\n        }\n        builder.append(']');\n        return builder.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "FN append inside if statement",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        12,
+        13
+      ],
+      "code": "\npublic class ConsecutiveLiteralAppendsFN {\n    public void test() {\n        String resourceDescription = \"Foo\";\n        StringBuilder result = new StringBuilder(resourceDescription.length() + 16);\n        StringBuilder result2 = new StringBuilder();\n        for (int i = 0; i < resourceDescription.length(); i++) {\n            char character = resourceDescription.charAt(i);\n            if (character == '\\\\') {\n                result.append('/');\n            }\n            else if (character == '\"') {\n                result.append(\"\\\\\").append('\"'); // violation: 2 literals (String + Char) can be combined\n                result2.append(',').append(' '); // violation: 2 literals (Char + Char) can be combined\n            }\n            else {\n                result.append(character);\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "FP with constructor, append in while",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ConsecutiveLiteralAppendsFP {\n    public void test() {\n        StringBuilder sb = new StringBuilder(\n                \"foo\\n\" +\n                \"bar\\n\" +\n                \"baz\\n\");\n\n        while (sb.length() < 100) {\n            sb.append(\" \");\n        }\n        System.out.println(sb.toString());\n    }\n}\n        "
+    },
+    {
+      "description": "#1632 [java] ConsecutiveLiteralAppends false positive",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Test {\n    public String foo() {\n        final StringBuilder sb = new StringBuilder();\n        sb.append(\"literal1\");\n        try {\n            final String res = bar();\n            sb.append(res);\n            sb.append(\"literal2\");\n        } catch (ArithmeticException e) {\n            sb.append(\"literal3\");\n        } catch (ArrayIndexOutOfBoundsException e) {\n            sb.append(\"literal4\");\n        } catch (Exception e) {\n            sb.append(\"literal5\");\n        } finally {\n            sb.append(\"literal6\");\n        }\n        return sb.toString();\n    }\n\n    public String bar() throws Exception {\n        throw new Exception();\n    }\n}\n        "
+    },
+    {
+      "description": "Consecutive literal append over try",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\nimport java.io.IOException;\n\npublic final class Test {\n    public String foo() {\n        final StringBuilder sb = new StringBuilder();\n        sb.append(\"foo\"); // violation here\n        try {\n            sb.append(\"bar\");\n            final String res = methodThatMightThrow();\n            sb.append(res);\n        } catch (IOException ioe) {\n            // noop\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "literal appends over lambdas",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic final class Test {\n    public String foo() {\n        final StringBuilder sb = new StringBuilder();\n        Runnable r = () -> sb.append(\"foo\");\n        Runnable r2 = () -> sb.append(\"bar\");\n\n        r.run();\n        System.out.println(sb.toString());\n        r2.run();\n        return sb.toString();\n    }\n}\n        "
+    },
+    {
+      "description": "StringBuilder chains",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        6
+      ],
+      "code": "\npublic class Foo {\n    public void bar() {\n        StringBuilder sb1 = new StringBuilder().append(\"abc\").append(\"def\"); // bad\n        StringBuilder sb2 = new StringBuilder().append(\"abc\"); // ok\n        StringBuilder sb3 = new StringBuilder();\n        sb3.append(\"abc\").append(\"def\"); // bad\n        StringBuilder sb4 = new StringBuilder();\n        sb4.append(\"abc\"); // ok\n    }\n}\n        "
+    },
+    {
+      "description": "[java] StringBuilder/Buffer false negatives with typeres #2881",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            package net.sourceforge.pmd.lang.java.types.testdata;\n\n            public class DummyCompiledClass {\n                public String toString() {\n                    StringBuffer sb = new StringBuffer();\n                    sb.append(\"test \"); // warning expected: StringBuffer (or StringBuilder).append is called 3 consecutive times with literals. Use a single append with a single combined String.\n                    sb.append(\"test2 \").append(\"test3 \");\n                    return sb.toString();\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] StringBuilder/Buffer false negatives with typeres #2881 (countertest, no classpath)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            public class NoCompiledClass {\n                public String toString() {\n                    StringBuffer sb = new StringBuffer();\n                    sb.append(\"test \"); // warning expected: StringBuffer (or StringBuilder).append is called 3 consecutive times with literals. Use a single append with a single combined String.\n                    sb.append(\"test2 \").append(\"test3 \");\n                    return sb.toString();\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] ConsecutiveLiteralAppend false-positive with builder inside lambda #2427",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\nimport java.util.Collection;\nimport java.util.function.Consumer;\n\npublic class FalsePositive {\n\n    public void fp1(Map<Class<?>, Consumer<?>> consumerMap, final StringBuilder builder) {\n        consumerMap.put(Collection.class, o -> {\n            builder.append('[');\n            Collection<?> collection = (Collection<?>) o;\n            collection.forEach(t -> builder.append(t));\n            builder.append(']'); // here reported (with pmd 6.22.0)\n        });\n\n        consumerMap.put(Map.class, o -> {\n            builder.append('{');\n            Map<?, ?> map = (Map<?, ?>) o;\n            map.forEach((k, v) -> builder.append(k).append('=').append(v));\n            builder.append('}');\n        });\n    }\n}\n        "
+    },
+    {
+      "description": "[java] ConsecutiveLiteralAppends and InsufficientStringBufferDeclaration: FP with switch expressions #3152",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class FalsePositive {\n\n    public static String escapeHTML(String text) {\n        int length = text.length();\n        int index = findHTMLReservedChar(text);\n        if (index == length) return text;\n        var builder = new StringBuilder(length * 2); // Rule:InsufficientStringBufferDeclaration Priority:3 StringBuffer constructor is initialized with size 16, but has at least 29 characters appended..\n        for (int i = 0; i < index; i++) builder.append(text.charAt(i));\n        for (; index < length; index++) {\n            char ch = text.charAt(index);\n            switch (ch) {\n                case '<' -> { builder.append(\"&lt;\"); } // Rule:ConsecutiveLiteralAppends Priority:3 StringBuffer (or StringBuilder).append is called 6 consecutive times with literals. Use a single append with a single combined String..\n                case '>' -> builder.append(\"&gt;\");\n                case '\"' -> builder.append(\"&quot;\");\n                case '&' -> builder.append(\"&amp;\");\n                case '\\'' -> builder.append(\"&#39;\");\n                case '/' -> builder.append(\"&#47;\");\n                default -> builder.append(ch);\n            }\n        }\n        return builder.toString();\n    }\n\n    private static int findHTMLReservedChar(String text) {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "For-each loop, not consecutive appends",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class ConsecutiveLiteralAppendsForEach {\n    public void foo(String[] arr) {\n        StringBuilder sb = new StringBuilder();\n        sb.append(\"array:\\n\");\n        for (String s : arr) {\n            sb.append('\\t').append(s).append('\\n');\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "Wrong count of appends - should be 3",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        8
+      ],
+      "code": "\npublic class ConsecutiveLiteralAppends3 {\n    public String createMessage(String description) {\n        StringBuilder sb = new StringBuilder(description)\n                .append(\"\\n\")                       // <--- here\n                .append(\"Endpoint handler details:\\n\")\n                .append(\"Method [\")\n                .append(this.getMethod())\n                .append(\"]\\n\")                      // <--- here\n                .append(\"Bean [\")\n                .append(this.getBean())\n                .append(\"]\\n\");\n        return sb.toString();\n    }\n    public String getMethod() { return \"method\"; }\n    public String getBean() { return \"bean\"; }\n}\n        "
+    }
+  ]
+}

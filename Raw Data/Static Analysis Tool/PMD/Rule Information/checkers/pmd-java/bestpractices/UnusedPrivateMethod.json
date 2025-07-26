@@ -1,0 +1,675 @@
+{
+  "name": "UnusedPrivateMethod",
+  "language": "java",
+  "description": "\nUnused Private Method detects when a private method is declared but is unused.\n        ",
+  "example": "public class Something {\n    private void foo() {} // unused\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 152,
+  "branches": 19,
+  "apis": 16,
+  "test": [
+    {
+      "description": "private method called by public method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        foo();\n    }\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "simple unused private method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "simple unused annotated private method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\nimport net.sourceforge.pmd.lang.java.symbols.testdata.MethodAnnotation;\npublic class Foo {\n    @MethodAnnotation\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "anonymous inner class calls private method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        new Runnable() {\n            public void run() {\n                foo();\n            }\n        };\n    }\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "two private methods with same name but different parameters",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void foo() {}\n    private void foo(String baz) {}\n    public void bar() {\n        foo();\n    }\n}\n        "
+    },
+    {
+      "description": "calling private method after instantiating new copy of myself",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void foo(String[] args) {}\n    public static void main(String[] args) {\n        Foo u = new Foo();\n        u.foo(args);\n    }\n}\n        "
+    },
+    {
+      "description": "calling private method using 'this' modifier",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        this.foo();\n    }\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "simple unused private static method",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static void foo() {}\n}\n        "
+    },
+    {
+      "description": "readResolve/writeReplace/etc are OK",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void readResolve() {}\n    private void writeReplace() {}\n    private void readObject() {}\n    private void writeObject() {}\n}\n        "
+    },
+    {
+      "description": "Private methods called only by themselves, BUG 1038229",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void bar() {\n        bar();\n    }\n}\n        "
+    },
+    {
+      "description": "private with same name as public, different method signature",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar(int x) {\n        bar();\n    }\n    private void bar() {}\n}\n        "
+    },
+    {
+      "description": "False +, BUG 1114754",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n   public void methodFlagged(Object[] arrayObj) {\n       for(int i=0; i<arrayObj.length; i++) {\n           methodFlagged(arrayObj[i]);\n       }\n   }\n   private void methodFlagged(Object a) {\n       a.toString();\n   }\n}\n        "
+    },
+    {
+      "description": "called from constructor",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo() {\n        bar();\n    }\n    private void bar() {}\n}\n        "
+    },
+    {
+      "description": "private method with same name but diff arg count than public method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void baz() {\n        int x, y;\n        baz(x, y);\n    }\n    private void baz(int x, int y) {}\n}\n        "
+    },
+    {
+      "description": "static private called from initializer",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static { foo(); }\n    private static void foo() {}\n}\n        "
+    },
+    {
+      "description": "static private invoked in static context - i.e., Foo.hi()",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    static boolean BUZ = Foo.bar();\n    private static boolean bar() { return true; }\n}\n        "
+    },
+    {
+      "description": "private method with same name as param",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar(boolean buz) {\n        buz();\n    }\n    private void buz() {}\n}\n        "
+    },
+    {
+      "description": "two methods, one private, one public, same name, same arg count, diff types",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void baz() {\n        foo(\"hi\");\n    }\n    private void foo(String y) {}\n    public void foo(Integer y) {}\n}\n        "
+    },
+    {
+      "description": "two private methods, only one used, same name, same arg count, diff types",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        7
+      ],
+      "code": "\npublic class Foo {\n    public void baz() {\n        foo(getBuz());\n    }\n    String getBuz() {return \"\";}\n    private void foo(String y) {}\n    private void foo(Integer y) {}\n}\n        "
+    },
+    {
+      "description": "private method same name as local",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void baz() {\n        int x = x();\n    }\n    private int x() { return 42;}\n}\n        "
+    },
+    {
+      "description": "SuppressWarnings(\"unused\") - simple unused private method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @SuppressWarnings(\"unused\")\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "Calling method on instance of self",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo fooField;\n\n    public void bar() {\n        Foo f = new Foo();\n        f.fooField.buz();\n    }\n    private void buz() {}\n}\n        "
+    },
+    {
+      "description": "#46 False +: Unused private field: call to instance of self, received from another class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private Foo fooField;\n\n    public void bar() {\n        Biz.getFoo().buz();\n    }\n\n    private void buz() {}\n}\n        "
+    },
+    {
+      "description": "Calling one arg varargs method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        buz(\"baz\");\n    }\n    private void buz(String... s) {}\n}\n        "
+    },
+    {
+      "description": "Calling two arg varargs method",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        buz(\"baz\");\n    }\n    private void buz(String s, String... args) {}\n}\n        "
+    },
+    {
+      "description": "Reproducing bug #1955852: false positives for UnusedPrivateMethod and UnusedLocalField",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class PMDFalsePositiveTest {\n    private <T> T doSomething(Object param){\n        return (T) param;\n    }\n\n    public static void main(String[] args) {\n        PMDFalsePositiveTest test = new PMDFalsePositiveTest();\n        Object o = \"Awesome!\";\n        String result = test.<String>doSomething(o);\n        System.out.println(result);\n    }\n}\n        "
+    },
+    {
+      "description": "verify #1156 False failure with \"Avoid unused private methods\"",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void endTest(final String message, final Object... params) {\n    }\n    public static void main(String[] args) {\n        Foo f = new Foo();\n        f.endTest(\"\", (Object[]) null);\n        f.endTest(format, params);\n    }\n}\n        "
+    },
+    {
+      "description": "#1223 UnusedPrivateMethod: Java 8 method reference causing false positives",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private static Runnable staticMethod() {\n        return () -> System.out.println(\"run\");\n    }\n    private Runnable doLater() {\n        return () -> System.out.println(\"later\");\n    }\n    private Runnable doLater2() {\n        return () -> System.out.println(\"later\");\n    }\n\n    public static void main(String[] args) {\n        Runnable r1 = Foo::staticMethod;\n        Runnable r2 = new Foo()::doLater;\n    }\n    public void doNow() {\n        Runnable r3 = this::doLater2;\n        r3.run();\n    }\n}\n        "
+    },
+    {
+      "description": "#1226 False Positive: UnusedPrivateMethod overloading with varargs",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        9
+      ],
+      "code": "\npublic class Foo {\n    private String s;\n\n    public Foo() {\n        s = \"Foobar\";\n    }\n\n    //This method isn't flagged\n    private void bar(int... n)\n    {\n    }\n\n    //This method is flagged\n    private void bar(String s)\n    {\n    }\n\n    public void dummyMethod() {\n        bar(s);\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (1)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.Model;\npublic class ModelAndView {\n    public ModelAndView viewEntry(Model model) {\n        //call private method.  Flagged Method\n        return view(model, VIEW);\n    }\n\n    /** THIS IS FLAGGED AS UNUSED **/\n    private ModelAndView view(Model model, String view) {\n        //add values to the model\n\n        //return the correct view\n        return new ModelAndView(view, \"MVC_CONSTANTS.MODEL_KEY\", model.asMap());\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.HttpServletRequest;\nimport my.HttpServletResponse;\nimport my.ServletException;\npublic class ModelAndView {\n    public ModelAndView showLineGraph(HttpServletRequest request, HttpServletResponse response) throws ServletException {\n        //call private method  USAGE #1.  Method not flagged\n        Object filter = getGraphInnateFilter(request);\n\n        //LINE GRAPHIC LOGIC\n\n        //write output to response stream and return\n    }\n\n    public ModelAndView showPieChart(HttpServletRequest request, HttpServletResponse response) throws ServletException {\n        //call private method  USAGE #2.  Method not flagg\n        Object filter = getGraphInnateFilter(request);\n\n        //PIE CHART LOGIC\n\n        //write output to response stream and return\n    }\n\n    /** This method is NOT flagged as unused **/\n    private Object getGraphInnateFilter(HttpServletRequest request) {\n        Object filter = new Object();\n\n        //call private method.  Flagged method\n        setInnateFilterFields(filter, request);\n        //perform logic\n\n        //return\n        return filter;\n    }\n\n    /** THIS IS FLAGGED AS UNUSED **/\n    private void setInnateFilterFields(Object filter, HttpServletRequest request) {\n        //add values to filter object\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (3)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport my.HttpServletRequest;\nimport my.Model;\npublic class ModelAndView {\n    String VIEW = \"foo\";\n\n    public ModelAndView viewEntry(Model model, HttpServletRequest request, int fy) {\n        return view(model, VIEW, fy);\n    }\n\n    private ModelAndView view(Model model, String view, int fy) {\n        //return the correct view\n        return new ModelAndView(view, \"MVC_CONSTANTS.MODEL_KEY\", model.asMap());\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (4)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Foo makeUI() {\n        Foo box = new Foo();\n        box.add(makePanel(\"aaa\", box));\n        return box;\n    }\n    private static Foo makePanel(String title, Foo c) { // this is wrongly triggered\n        return c;\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (5a)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.servlet.http.HttpServletRequest;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.DashboardGraphInnateFilter;\n\npublic class Foo {\n\n    public DashboardGraphInnateFilter getGraphInnateFilter(HttpServletRequest request) {\n        setInnateFilterFields();\n        return null;\n    }\n\n    private void setInnateFilterFields() { //Not flagged\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (5b)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport javax.servlet.http.HttpServletRequest;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.DashboardGraphInnateFilter;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.DashboardInnateFilter;\n\npublic class Foo {\n\n    public DashboardGraphInnateFilter getGraphInnateFilter(HttpServletRequest request) {\n        DashboardGraphInnateFilter filter = new DashboardGraphInnateFilter();\n        setInnateFilterFields(filter, request);\n        return filter;\n    }\n\n    private void setInnateFilterFields(DashboardInnateFilter filter, HttpServletRequest request) { //incorrectly flagged\n    }\n}\n        "
+    },
+    {
+      "description": "#1233 UnusedPrivateMethod: False positive : method called on returned object.",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Locale;\n\npublic class Test {\n\n    public static void main(String args[]) {\n        Test t = new Test();\n        t.baz();\n    }\n\n    // Here we call both foo() and bar()\n    public void baz() {\n        foo().toLowerCase(Locale.US);\n        bar().toLowerCase();\n    }\n\n    private String foo() {\n        return \"Hello World\";\n    }\n\n    private String bar() {\n        return \"Hello World\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (6)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    private void double_class_1(Double d) {}\n    private void double_class_2(Double d) {}\n    private void double_class_3(Double d) {}\n    private void double_class_4(Double d) {}\n    private void double_class_5(Double d) {}\n    private void double_class_6(Double d) {}\n    private void double_class_7(Double d) {}\n    private void double_class_8(Double d) {}\n    private void double_class_9(Double d) {}\n    private void double_class_10(Double d) {}\n    private void double_class_11(Double d) {}\n    private void double_class_12(Double d) {}\n    private void double_type_1(double d) {}\n    private void double_type_2(double d) {}\n    private void double_type_3(double d) {}\n    private void double_type_4(double d) {}\n    private void double_type_5(double d) {}\n    private void double_type_6(double d) {}\n    private void double_type_7(double d) {}\n    private void double_type_8(double d) {}\n    private void double_type_9(double d) {}\n    private void double_type_10(double d) {}\n    private void double_type_11(double d) {}\n    private void double_type_12(double d) {}\n\n    private void float_class_1(Float f) {}\n    private void float_class_2(Float f) {}\n    private void float_class_3(Float f) {}\n    private void float_class_4(Float f) {}\n    private void float_class_5(Float f) {}\n    private void float_class_6(Float f) {}\n    private void float_class_7(Float f) {}\n    private void float_class_8(Float f) {}\n    private void float_class_9(Float f) {}\n    private void float_class_10(Float f) {}\n    private void float_class_11(Float f) {}\n    private void float_type_1(float f) {}\n    private void float_type_2(float f) {}\n    private void float_type_3(float f) {}\n    private void float_type_4(float f) {}\n    private void float_type_5(float f) {}\n    private void float_type_6(float f) {}\n    private void float_type_7(float f) {}\n    private void float_type_8(float f) {}\n    private void float_type_9(float f) {}\n    private void float_type_10(float f) {}\n    private void float_type_11(float f) {}\n\n    private void int_class_1(Integer i) {}\n    private void int_class_2(Integer i) {}\n    private void int_class_3(Integer i) {}\n    private void int_class_4(Integer i) {}\n    private void int_class_5(Integer i) {}\n    private void int_class_6(Integer i) {}\n    private void int_class_7(Integer i) {}\n    private void int_class_8(Integer i) {}\n    private void int_class_9(Integer i) {}\n    private void int_class_10(Integer i) {}\n    private void int_class_11(Integer i) {}\n    private void int_class_12(Integer i) {}\n    private void int_class_13(Integer i) {}\n    private void int_class_14(Integer i) {}\n    private void int_type_1(int i) {}\n    private void int_type_2(int i) {}\n    private void int_type_3(int i) {}\n    private void int_type_4(int i) {}\n    private void int_type_5(int i) {}\n    private void int_type_6(int i) {}\n    private void int_type_7(int i) {}\n    private void int_type_8(int i) {}\n    private void int_type_9(int i) {}\n    private void int_type_10(int i) {}\n    private void int_type_11(int i) {}\n    private void int_type_12(int i) {}\n    private void int_type_13(int i) {}\n    private void int_type_14(int i) {}\n    private void int_type_15(int i) {}\n    private void long_class_1(Long l) {}\n    private void long_class_2(Long l) {}\n    private void long_class_3(Long l) {}\n    private void long_class_4(Long l) {}\n    private void long_class_5(Long l) {}\n    private void long_class_6(Long l) {}\n    private void long_class_7(Long l) {}\n    private void long_class_8(Long l) {}\n    private void long_type_1(long l) {}\n    private void long_type_2(long l) {}\n    private void long_type_3(long l) {}\n    private void long_type_4(long l) {}\n    private void long_type_5(long l) {}\n    private void long_type_6(long l) {}\n    private void long_type_7(long l) {}\n    private void long_type_8(long l) {}\n    private void byte_class(Byte i) {}\n    private void byte_type(byte i) {}\n    private void short_class(Short s) {}\n    private void short_type(short s) {}\n    private void char_class_1(Character c) {}\n    private void char_class_2(Character c) {}\n    private void char_class_3(Character c) {}\n    private void char_class_4(Character c) {}\n    private void char_class_5(Character c) {}\n    private void char_type_1(char c) {}\n    private void char_type_2(char c) {}\n    private void char_type_3(char c) {}\n    private void char_type_4(char c) {}\n    private void char_type_5(char c) {}\n\n\n    public void test() {\n        double double_value = 2.0;\n        Double Double_value = 2.0;\n        float float_value = 2.0f;\n        Float Float_value = 2.0f;\n        int int_value = 1;\n        Integer Int_value = 1;\n        byte byte_value = 1;\n        Byte Byte_value = 1;\n        short short_value = 1;\n        Short Short_value = 1;\n        long long_value = 1L;\n        Long Long_value = 1L;\n        char char_value = 'a';\n        Character Char_value = 'a';\n\n        double_class_1(2.0);\n        double_class_2(double_value);\n        double_class_3(Double_value);\n        double_class_4((double)2.0f);\n        double_class_5((double)float_value);\n        double_class_6((double)Float_value);\n        double_class_7((double)1);\n        double_class_8((double)int_value);\n        double_class_9((double)Int_value);\n        double_class_10((double)1L);\n        double_class_11((double)long_value);\n        double_class_12((double)Long_value);\n        double_type_1(2.0);\n        double_type_2(double_value);\n        double_type_3(Double_value);\n        double_type_4(2.0f);\n        double_type_5(float_value);\n        double_type_6(Float_value);\n        double_type_7(1);\n        double_type_8(int_value);\n        double_type_9(Int_value);\n        double_type_10(1L);\n        double_type_11(long_value);\n        double_type_12(Long_value);\n\n        float_class_1(2.0f);\n        float_class_2(float_value);\n        float_class_3(Float_value);\n        float_class_4((float)2.0);\n        float_class_5((float)double_value);\n        float_class_6((float)1);\n        float_class_7((float)int_value);\n        float_class_8((float)Int_value);\n        float_class_9((float)1L);\n        float_class_10((float)long_value);\n        float_class_11((float)Long_value);\n        float_type_1(2.0f);\n        float_type_2(float_value);\n        float_type_3(Float_value);\n        float_type_4((float)2.0);\n        float_type_5((float)double_value);\n        float_type_6(1);\n        float_type_7(int_value);\n        float_type_8(Int_value);\n        float_type_9(1L);\n        float_type_10(long_value);\n        float_type_11(Long_value);\n\n        int_class_1(1);\n        int_class_2(int_value);\n        int_class_3(Int_value);\n        int_class_4((int)1L);\n        int_class_5((int)long_value);\n        int_class_6((int)1.0);\n        int_class_7((int)double_value);\n        int_class_8((int)1.0f);\n        int_class_9((int)float_value);\n        int_class_10((int)short_value);\n        int_class_11((int)Short_value);\n        int_class_12((int)byte_value);\n        int_class_13((int)char_value);\n        int_class_14((int)Char_value);\n        int_type_1(1);\n        int_type_2(int_value);\n        int_type_3(Int_value);\n        int_type_4((int)1L);\n        int_type_5((int)long_value);\n        int_type_6((int)1.0);\n        int_type_7((int)double_value);\n        int_type_8((int)1.0f);\n        int_type_9((int)float_value);\n        int_type_10(short_value);\n        int_type_11(Short_value);\n        int_type_12(byte_value);\n        int_type_13(Byte_value);\n        int_type_14(char_value);\n        int_type_15(Char_value);\n\n        long_class_1(1L);\n        long_class_2(long_value);\n        long_class_3(Long_value);\n        long_class_4((long)1);\n        long_class_5((long)int_value);\n        long_class_6((long)Int_value);\n        long_class_7((long)char_value);\n        long_class_8((long)Char_value);\n        long_type_1(1L);\n        long_type_2(long_value);\n        long_type_3(Long_value);\n        long_type_4(1);\n        long_type_5(int_value);\n        long_type_6(Int_value);\n        long_type_7(char_value);\n        long_type_8(Char_value);\n\n        byte_class((byte)1);\n        byte_type(Byte_value);\n        short_class((short)1);\n        short_type(Short_value);\n\n        char_class_1('a');\n        char_class_2(char_value);\n        char_class_3(Char_value);\n        char_class_4((char)1);\n        char_class_5((char)int_value);\n        char_type_1('a');\n        char_type_2(char_value);\n        char_type_3(Char_value);\n        char_type_4((char)1);\n        char_type_5((char)int_value);\n    }\n}\n        "
+    },
+    {
+      "description": "#1228 UnusedPrivateMethod returns false positives (7)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass JTree {\n    JTree getRoot() {return this;}\n}\nclass TreeNode extends JTree {}\n\npublic class Box {\n    interface Action { void perform(); }\n\n    void add(Action a) {}\n\n    private final JTree tree = new JTree();\n    public void makeUI() {\n        Box box = new Box();\n        box.add(new Action() {\n            @Override public void perform() {\n                TreeNode root = (TreeNode) tree.getRoot();\n                visitAll(tree, true); // line 14\n            }\n        });\n    }\n    private static void visitAll(JTree tree, boolean expand) { }\n}\n        "
+    },
+    {
+      "description": "#1234 Unused private methods still giving false positives in 5.1.3 snapshot",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\nimport java.util.Map;\npublic class Foo {\n    interface IListObject {}\n    Map<Integer, List<IListObject>> bliCodeCache;\n    public List<IListObject> getBliCodeByFiscalYear(int fiscalYear) {\n       List<IListObject> records = bliCodeCache.get(fiscalYear);\n        if (records == null) {\n            records = this.selectBLICodeByFiscalYear(fiscalYear);\n            bliCodeCache.put(fiscalYear, records);\n        }\n        return records;\n    }\n\n    /**\n     * Get a list of All BLI Code for given fiscal year.\n     * @param fy the selected FY\n     * @return an List of BLI Codes\n     */\n    private List<IListObject> selectBLICodeByFiscalYear(int fy) {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "#1156 False failure with \"Avoid unused private methods\" (part 2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void bar() {\n        int i = 1;\n        String s = getBoolString(i > 0);\n    }\n    private String getBoolString(boolean b) {\n        return b ? \"TRUE\" : \"FALSE\";\n    }\n}\n        "
+    },
+    {
+      "description": "#1251 UnusedPrivateMethod false positives for boxing & unboxing arguments",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedPrivateMethodFalsePositives {\n\n    // UnusedPrivateMethod false positive\n    private void prvUnboxing(final int i)     {}\n    public  void pubUnboxing(final Integer i) {prvUnboxing(i);}\n\n    // UnusedPrivateMethod false positive\n    private void prvBoxing(final Integer i) {}\n    public  void pubBoxing(final int i)     {prvBoxing(i);}\n\n    // Correctly does not generate a warning\n    private void prvPrimitive(final int i) {}\n    public  void pubPrimitive(final int i) {prvPrimitive(i);}\n\n    // Correctly does not generate a warning\n    private void prvObject(final Integer i) {}\n    public  void pubObject(final Integer i) {prvObject(i);}\n}\n        "
+    },
+    {
+      "description": "#1249 Regression: UnusedPrivateMethod from 5.0.5 to 5.1.2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage de.friedenhagen.pmd_private;\n\nimport java.net.URI;\n\nimport org.junit.runner.Description;\n\n/**\n * Holder object for the id in the {@link TestLink} annotation. By defining only a private constructor in this abstract\n * class and having both extending classes as inner classes, we assure nobody is able to create other extending classes.\n *\n * @param <T>\n *            of the id, either {@link Long} for internal or {@link String} for external IDs.\n *\n * @author Mirko Friedenhagen\n */\nabstract class TestLinkId<T> {\n\n    /** id of the test. */\n    private final T id;\n\n    /**\n     * Private to make sure we only have {@link ExternalTestLinkId} and {@link InternalTestLinkId} as subclasses.\n     *\n     * @param id\n     *            of the test.\n     */\n    private TestLinkId(final T id) {\n        this.id = id;\n    }\n\n    /**\n     * @return the id.\n     */\n    public T getId() {\n        return id;\n    }\n\n    /**\n     * Returns a String representation of the type of the current TestLink ID.\n     *\n     * @return type of the ID.\n     */\n    public abstract String getType();\n\n    /** {@inheritDoc} */\n    @Override\n    public String toString() {\n        return String.format(\"%s='%s'\", getType(), getId());\n    }\n\n    /**\n     * An external Testlink ID.\n     */\n    public static class ExternalTestLinkId extends TestLinkId<String> {\n\n        /**\n         * @param id\n         *            of the testcase\n         */\n        public ExternalTestLinkId(String id) {\n            super(id);\n        }\n\n        /** {@inheritDoc} */\n        @Override\n        public String getType() {\n            return \"external_id\";\n        }\n    }\n\n    /**\n     * An internal Testlink ID.\n     */\n    public static class InternalTestLinkId extends TestLinkId<Long> {\n\n        /**\n         * @param id\n         *            of the testcase\n         */\n        public InternalTestLinkId(final Long id) {\n            super(id);\n        }\n\n        /** {@inheritDoc} */\n        @Override\n        public String getType() {\n            return \"id\";\n        }\n    }\n}\n\n/**\n * Resolves links to the Testlink instance.\n *\n * @author Mirko Friedenhagen\n */\npublic class TestLinkUriResolver {\n\n    /** baseUri of the Testlink instance. */\n    private final URI baseUri;\n\n    /**\n     * The constructor normalizes the URI by adding a trailing slash when it is missing.\n     *\n     * @param baseUri\n     *            without <tt>index.php</tt>, eg <tt>http://testlink.sourceforge.net/demo/</tt>.\n     */\n    TestLinkUriResolver(URI baseUri) {\n        final String asciiUri = baseUri.toASCIIString();\n        if (asciiUri.endsWith(\"/\")) {\n            this.baseUri = baseUri;\n        } else {\n            this.baseUri = URI.create(asciiUri + \"/\");\n        }\n    }\n\n    /**\n     * http://testlink.sourceforge.net/demo/lib/testcases/tcPrint.php?testcase_id=2750.\n     *\n     * @param internalTestLinkId\n     *            id of the testcase\n     * @return an URI pointing to the printview of the last version of the testcase description.\n     */\n    private URI fromTestLinkId(final TestLinkId.InternalTestLinkId internalTestLinkId) {\n        return baseUri.resolve(String.format(\"lib/testcases/tcPrint.php?testcase_id=%s\", internalTestLinkId.getId()));\n    }\n\n    /**\n     * http://testlink.sourceforge.net/demo/lib/testcases/archiveData.php?targetTestCase=SM-1&edit=testcase&allowedit=0.\n     *\n     * @param externalTestLinkId\n     *            id of the testcase\n     * @return an URI pointing to the printview of the last version of the testcase description.\n     */\n    private URI fromTestLinkId(final TestLinkId.ExternalTestLinkId externalTestLinkId) {\n        return baseUri\n                .resolve(String.format(\"lib/testcases/archiveData.php?targetTestCase=%s&edit=testcase&allowedit=0\",\n                        externalTestLinkId.getId()));\n    }\n\n    /**\n     * Returns a link to the last version of the testcase description.\n     *\n     * http://testlink.sourceforge.net/demo/lib/testcases/tcPrint.php?testcase_id=2750\n     * http://testlink.sourceforge.net/demo/lib/testcases/archiveData.php?targetTestCase=SM-1&edit=testcase&allowedit=0\n     *\n     * @param testLinkId\n     *            of the test case.\n     * @return an URI pointing to the last version of the testcase description.\n     */\n    URI fromTestLinkId(final TestLinkId<?> testLinkId) {\n        // As this class is package protected we may safely assume there only two kinds of TestLinkIds.\n        if (testLinkId instanceof TestLinkId.InternalTestLinkId) {\n            return fromTestLinkId((TestLinkId.InternalTestLinkId) testLinkId);\n        } else {\n            return fromTestLinkId((TestLinkId.ExternalTestLinkId) testLinkId);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1261 False positive \"Avoid unused private methods\" with Generics",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class TestPrivate<T> {\n    protected Object getProtected(final T bean) {\n        return getPrivate(bean);\n    }\n    private Object getPrivate(final Object bean) {\n        return bean;\n    }\n}\n        "
+    },
+    {
+      "description": "#1261 False positive \"Avoid unused private methods\" with Generics 2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class TestPrivate<T extends List> {\n    protected Object getProtected(final T bean) {\n        return getPrivate(bean);\n    }\n    private Object getPrivate(final List bean) {\n        return bean;\n    }\n}\n        "
+    },
+    {
+      "description": "#1261 False positive \"Avoid unused private methods\" with Generics 3",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.List;\n\npublic class TestPrivate {\n    protected <T extends List> Object getProtected(final T bean) {\n        return getPrivate(bean);\n    }\n    private Object getPrivate(final List bean) {\n        return bean;\n    }\n}\n        "
+    },
+    {
+      "description": "#1261 False positive \"Avoid unused private methods\" with Generics 4",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.AbstractMap;\nimport java.util.Map;\n\npublic class TestPrivate {\n    public <T extends Map<?,?>, X extends Map<?,?>>  void createLedgerAndChangeHistory(T oldObject, X updatedObject, boolean isChildLedgerEntry) {\n\n        if (oldObject instanceof TestPrivate) {\n            setTotals(oldObject);\n        }\n        // do other stuff\n    }\n\n    private <X extends Map> void setTotals(X ledgerable) {\n        // do stuff\n    }\n}\n        "
+    },
+    {
+      "description": "#1276 False positive in UnusedPrivateMethod when method arg is Object and not called with plain Object",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Parent {\n    enum A {\n        someEnum;\n    }\n\n    public void doSomethingUnqualified(A a) {\n        doSomethingPrivateWithQualified(a);\n    }\n\n    private void doSomethingPrivateWithQualified(Parent.A a) {\n        // PMD error because it doesn't equate Parent.A as the same type as A.\n    }\n\n    public void doSomethingQualified(Parent.A a) {\n        doSomethingPrivateUnqualified(a);\n    }\n\n    private void doSomethingPrivateUnqualified(A a) {\n        // PMD error because it doesn't equate Parent.A as the same type as A.\n    }\n}\n        "
+    },
+    {
+      "description": "#1281 UnusedPrivateMethod incorrectly flagged for methods nested private classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class NestedClassPrivateMethods {\n    public void doPublic() {\n        doPrivate(new B());\n        doPrivate2(new C());\n    }\n\n    public void doPublic(C c) {\n        doPrivate3(c);\n    }\n\n    // incorrectly UnusedPrivateMethod\n    private void doPrivate(I i) {}\n    private void doPrivate2(I i) {}\n    private void doPrivate3(I i) {}\n\n    private interface I {\n        void visit();\n    }\n\n    private class B implements I {\n        public void visit() {\n        }\n    }\n\n    private class C extends B {\n    }\n}\n        "
+    },
+    {
+      "description": "#1287 UnusedPrivateMethod returns false positives for Superclass",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class SuperClassFalsePositive {\n\n    public void myPublicMethod() {\n        throw convertToUnchecked(new MyException(\"Something Bad Happened\"));\n    }\n\n    private IllegalArgumentException convertToUnchecked(Exception e) {\n        return new IllegalArgumentException(e);\n    }\n\n    private static class MyException extends Exception {\n        public MyException(String message) {\n            super(message);\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1286 UnusedPrivateMethod returns false positives for varags",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class VaragsFalsePositive {\n\n    enum Sizes\n    {\n        TINY,\n        MEDIUM\n    }\n\n    public boolean containsTiny(){\n        return hasTiny(Sizes.MEDIUM, Sizes.TINY);\n    }\n\n    private boolean hasTiny(Sizes... sizes) {\n        for (Sizes size : sizes) {\n            if (size==Sizes.TINY) {\n                return true;\n            }\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "#1294 False positive UnusedPrivateMethod with public inner enum from another class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/**\n *\n * UnusedPrivateMethodWithEnum.java\n *\n * Copyright 2014 Expedia, Inc. All rights reserved.\n * EXPEDIA PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.\n */\n\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.ClassWithPublicEnum;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.ClassWithPublicEnum.PublicEnum;\n\n/**\n * TODO svenz Describe UnusedPrivateMethodWithEnum\n *\n * @author <a href=\"mailto:svenz@expedia.com\">Sven Zethelius</a>\n *\n */\npublic class UnusedPrivateMethodWithEnum {\n        public void doPublic() {\n                ClassWithPublicEnum.PublicEnum value = ClassWithPublicEnum.PublicEnum.values()[0];\n                doPrivateWithShortEnum1(value);\n                doPrivateWithShortEnum2(value);\n        }\n\n        private void doPrivateWithShortEnum1(PublicEnum type) {\n                // do something\n        }\n        private void doPrivateWithShortEnum2(ClassWithPublicEnum.PublicEnum type) {\n                // do something\n        }\n}\n        "
+    },
+    {
+      "description": "#1296 PMD UnusedPrivateMethod invalid detection of 'private void method(int,boolean,Integer...)'",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedPrivateMethod {\n    public void deleteAllAssetsWithExceptionsNoPurge(int galleryId, Integer... exceptionList)\n    {\n        deleteAllAssetsWithExceptions(galleryId, false, exceptionList);\n    }\n\n    public void deleteAllAssetsWithExceptions(int galleryId, Integer... exceptionList)\n    {\n        deleteAllAssetsWithExceptions(galleryId, true, exceptionList);\n    }\n\n    private void deleteAllAssetsWithExceptions(int galleryId, boolean purge, Integer... exceptionList)\n    {\n    }\n}\n        "
+    },
+    {
+      "description": "#1332 False Positive: UnusedPrivateMethod",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.acme;\n\nimport org.junit.Test;\n\nimport static org.hamcrest.CoreMatchers.containsString;\nimport static org.junit.Assert.assertThat;\n\npublic class FooTest {\n\n    @Test\n    public void testBar() {\n        assertThat(createBar(\"\", \"\"), containsString(\"\"));\n    }\n\n    @Test\n    public void testFoo() {\n        assertThat(createFoo(\"\"), containsString(\"\"));\n    }\n\n    private String createFoo(String a) {\n        return a;\n    }\n\n    private String createBar(String b, String c) {\n        return b + c;\n    }\n}\n        "
+    },
+    {
+      "description": "#1395 UnusedPrivateMethod false positive for array element method call",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.File;\npublic class UnusedPrivateMethod {\n    public void doSomething() {\n        File[] files = getFiles();\n        for (int i = 0; i < files.length; i++) {\n            String name = getNameFromFilename(files[i].getName());\n            System.out.println(\"name is \" + name);\n        }\n    }\n\n    private String getNameFromFilename(String fileName) {\n        int index = fileName.lastIndexOf('.');\n        return fileName.substring(0, index);\n    }\n}\n        "
+    },
+    {
+      "description": "#1403 False positive UnusedPrivateMethod with JAVA8",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.function.Function;\nimport java.util.Map;\nimport java.util.stream.Collectors;\nimport java.util.stream.Stream;\n\nimport my.Combiners;\n\npublic class Purse {\n\n    Purse annPurse5, bobPurse7, bobPurse9, calPurse10, bobPurse16;\n\n    public void mapMergeShouldReturnTheUnionWhenGivenDifferentSetsWithSomeCommonValues() {\n        Combiners.mapMerge(mapOf(annPurse5, bobPurse7), mapOf(bobPurse9, calPurse10));\n    }\n\n    private static Map<String, Purse> mapOf(final Purse... values) {\n        return mapOf2(Purse::getOwner, values);\n    }\n\n    private static <K, V> Map<K, V> mapOf2(final Function<V, K> keyMapper, final V... values) {\n        return Stream.of(values).collect(Collectors.toMap(keyMapper, Function.identity()));\n    }\n\n    String getOwner() { return \"me\"; }\n\n    static class Combiners {\n\n        static <K, V> Map<K, V> mapMerge(Map<K, V> m1, Map<K, V> m2) {\n            return m2;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1405 UnusedPrivateMethod false positive?",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "import java.util.ArrayList;\nimport java.util.List;\nimport java.util.SortedMap;\n\nclass Sup {}\n\npublic class Blabla extends Sup {\n    public List<String> getProductImageUrls(final Blabla product, final String format) {\n        return getImageUrlsListForVariant(product, format);\n    }\n    private List<String> getImageUrlsListForVariant(final Sup variant, final String format) {\n    }\n}\n        "
+    },
+    {
+      "description": "#521 UnusedPrivateMethod returns false positives with primitive data type in map argument",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\nimport java.util.LinkedHashMap;\npublic class Foo {\n    public Foo() {\n        Map<String, double[]> map = new LinkedHashMap<>();\n        addToMap(map);\n    }\n\n    private void addToMap(Map<String, double[]> map) {\n        map.put(\"foo\", new double[]{0., 1.});\n    }\n}\n        "
+    },
+    {
+      "description": "#907 Add IgnoredAnnotations property to UnusedPrivateMethod",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @Deprecated\n    private void bar() {\n    }\n}\n        "
+    },
+    {
+      "description": "#5117 Ignore methods with jakarta.annotation.PostConstruct in UnusedPrivateMethod rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport jakarta.annotation.PostConstruct;\npublic class Foo {\n    @PostConstruct\n    private void bar() {\n    }\n}\n        "
+    },
+    {
+      "description": "#5117 Ignore methods with jakarta.annotation.PreDestroy in UnusedPrivateMethod rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport jakarta.annotation.PreDestroy;\npublic class Foo {\n    @PreDestroy\n    private void bar() {\n    }\n}\n        "
+    },
+    {
+      "description": "Explicit receiver parameters are ignored when matching methods",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Foo {\n    public void bar() {\n        test();\n    }\n\n    private void test(@Annotated Foo this) {\n    }\n    @interface Annotated {}\n}\n        "
+    },
+    {
+      "description": "Verify property ignoredAnnotations is used",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @Override // well override doesn't really make sense, but it's good enough for the test case\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "Verify property ignoredAnnotations is used - 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    @Deprecated\n    private void foo() {}\n}\n        "
+    },
+    {
+      "description": "#1531 [java] UnusedPrivateMethod false-positive with method result",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedPrivateMethodFP {\n    private void print(String s) { // <- unused private method?\n        System.out.println(s);\n    }\n\n    public void run() {\n        print(new Integer(1).toString()); // it is used here\n    }\n\n    private void print2(String s) {\n        System.out.println(s);\n    }\n\n    public void run2() {\n        String temp = new Integer(1).toString();\n        print2(temp); // workaround with extra temporary variable\n    }\n\n    private void print3(String s) {\n        System.out.println(s);\n    }\n\n    public void run3() {\n        print3((String)new Integer(1).toString()); // workaround with extra cast\n    }\n\n    public void runBoolean(String s) {\n        privateBooleanMethod(s, \"true\".equals(s));\n    }\n\n    private void privateBooleanMethod(String s, boolean isTrue) {\n        System.out.println(s);\n    }\n}\n        "
+    },
+    {
+      "description": "#2454 [java] UnusedPrivateMethod violation for disabled annotation in 6.23.0",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class OOO {\n    OOO server = this;\n    @Deprecated\n    private void shutdown() {\n        server.shutdown();\n    }\n}\n        "
+    },
+    {
+      "description": "UnusedPrivateMethod false positive #2890",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Map;\nimport java.util.Collections;\nimport java.util.List;\npublic class Client {\n\n\n    public void swap(Map<String, List<Integer>> optionIndexes, Object[] entries, int index1, int index2) {\n\n        List<Integer> list1 = optionIndexes.get(\"option1\"),\n                list2 = optionIndexes.get(\"option2\");\n\n        sortedInsert(list1, index2);\n        sortedInsert(list2, index1);\n    }\n\n    private static <T extends Comparable<? super T>> void sortedInsert(List<T> list, T value) // NOPMD: UnusedPrivateMethod: false positive\n    {\n        int idx = Collections.binarySearch(list, value);\n        list.add(idx < 0 ? -idx - 1 : idx, value);\n    }\n\n}\n        "
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false positive from inner class via external class #1189",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\n            public final class OuterClass {\n\n                private static class InnerClass {\n                    private void privateMethod() {} // shadows other, truly unused\n\n                    public void callPrivateMethod() {\n                        Referrer.getOuterClass().privateMethod();\n                    }\n\n                }\n\n                private void privateMethod() {}\n\n            }\n\n            class Referrer {\n                static OuterClass getOuterClass() { return null; }\n            }\n        "
+    },
+    {
+      "description": "UnusedPrivateMethod yields false positive for counter-variant arguments #770",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import org.junit.Test;\n            import static org.junit.Assert.*;\n            public final class OuterClass {\n\n                @Test\n                public void testFlipCaseDigit() {\n                    testNoChangeOnFlip(\"0123456789\");\n                }\n\n                @Test\n                public void testFlipCaseWhitespace() {\n                    testNoChangeOnFlip(\" \\r\\t\\n\");\n                }\n\n                @Test\n                public void testFlipCaseOtherChars() {\n                    testNoChangeOnFlip(\"!@#$%^\");\n                }\n\n                private static void testNoChangeOnFlip(CharSequence chars) {\n                }\n            }\n        "
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false positive when passing in lombok.val as argument #3118",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.val;\n\npublic class ValExample {\n    public void example() {\n        val example = \"value\";\n        aPrivateMethod(example);\n    }\n\n    private void aPrivateMethod(String s) {\n        System.out.println(s);\n    }\n}\n        "
+    },
+    {
+      "description": "False negative with unused private method in nested classes",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        2,
+        4
+      ],
+      "code": "\npublic class Outer {\n    private void outerUnusedMethod() {}\n    public class Inner {\n        private void innerUnusedMethod() {} // false negative\n        private void innerUsedByInnerMethod() {}\n        public void publicInnerMethod() {\n            innerUsedByInnerMethod();\n        }\n        private void innerUsedByOuterMethod() {}\n    }\n    public void publicOuterMethod() {\n        Inner inner = new Inner();\n        inner.innerUsedByOuterMethod();\n    }\n}\n        "
+    },
+    {
+      "description": "#1175 False positive with Junit 5 MethodSource",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.stream.Stream;\nimport org.junit.jupiter.params.provider.MethodSource;\nimport org.junit.jupiter.params.ParameterizedTest;\nimport org.junit.jupiter.params.provider.Arguments;\n\npublic class Outer {\n    private static Stream<Arguments> basenameKeyArguments() {\n        return Stream.of(\n                Arguments.of(\"simple\", \"simple\"),\n                Arguments.of(\"simple\", \"one/two/many/simple\"),\n                Arguments.of(\"simple\", \"//////an/////awful/key////simple\")\n        );\n    }\n\n    @ParameterizedTest\n    @MethodSource(\"basenameKeyArguments\")\n    void basenameKeyTest(final String expected, final String testString) {\n        assertEquals(expected, NetworkTable.basenameKey(testString));\n    }\n\n}\n        "
+    },
+    {
+      "description": "#3468 UnusedPrivateMethod false positive when outer class calls private static method on inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class OuterClass {\n\n    public void foo() {\n        InnerClass.doSomething();\n    }\n\n    static class InnerClass {\n        private static void doSomething() {}\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false positive with static method and cast expression #3209",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UnusedAssignmentRule {\n    private static class ReachingDefsVisitor {\n        private static String getVarIfUnaryAssignment(String node) {\n            return null;\n        }\n    }\n    public static class AssignmentEntry {\n        final String var;\n        final Object rhs;\n        public boolean isUnaryReassign() {\n            return rhs instanceof String\n                && var.equals(ReachingDefsVisitor.getVarIfUnaryAssignment((String) rhs));\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false positive: Autoboxing into Number #4625",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Example {\n\n    public Example() {\n        foo(2);\n    }\n\n    //src/Example.java:8:     UnusedPrivateMethod:    Avoid unused private methods such as 'foo(Number)'.\n    private void foo(Number bar) {\n        System.out.println(bar);\n    }\n}\n"
+    },
+    {
+      "description": "#3467 FP when outer class has method with same name as in inner class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class OuterClass {\n\n\tprivate final InnerClass o = new InnerClass();\n\n\tpublic void foo() {\n\t\tthis.o.foo();\n\t}\n\n\tpublic void notBar() {\n\t\tthis.o.bar();\n\t}\n\n\tclass InnerClass {\n\n\t\tprivate void foo() { // same name as method in OuterClass -> false positive\n\t\t}\n\n\t\tprivate void bar() { // different name than a method in OuterClass -> ok\n\t\t}\n\t}\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false-positive used in lambda #4817",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod;\n\nimport java.util.Collections;\nimport java.util.List;\n\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.cache.CacheBuilder;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.cache.CacheLoader;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.cache.LoadingCache;\n\npublic class NotUsedPrivateMethodFalsePositive {\n\n    private final LoadingCache<String, List<? extends String>> clientIdsToDps = CacheBuilder.newBuilder()\n            .build(CacheLoader.from(clientId -> notCachedGetAllDps(clientId))); // unqualified call\n\n    private List<? extends String> notCachedGetAllDps(String clientId) { // UnusedPrivateMethod:\tAvoid unused private methods such as 'notCachedGetAllDps(String)'\n        return Collections.singletonList(clientId);\n    }\n\n    public List<?> getClientIdsToDps() {\n        return clientIdsToDps.getUnchecked(\"\");\n    }\n}\n"
+    },
+    {
+      "description": "#3627 FN with anonymous class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Tester {\n  Object anonymousClass = new Object() {\n      private void foo() {}  // unused, should report a warning\n  };\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false-positive used in lambda - qualified #4817",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod;\n\nimport java.util.Collections;\nimport java.util.List;\n\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.cache.CacheBuilder;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.cache.CacheLoader;\nimport net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.cache.LoadingCache;\n\npublic class NotUsedPrivateMethodFalsePositive {\n\n    private final LoadingCache<String, List<? extends String>> clientIdsToDps = CacheBuilder.newBuilder()\n            .build(CacheLoader.from(clientId -> this.notCachedGetAllDps(clientId))); // qualified call\n\n    private List<? extends String> notCachedGetAllDps(String clientId) { // UnusedPrivateMethod:\tAvoid unused private methods such as 'notCachedGetAllDps(String)'\n        return Collections.singletonList(clientId);\n    }\n\n    public List<?> getClientIdsToDps() {\n        return clientIdsToDps.getUnchecked(\"\");\n    }\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false positive when using @MethodSource on a @Nested test #4975",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.api.Nested;\nimport org.junit.jupiter.params.provider.MethodSource;\nimport org.junit.jupiter.params.ParameterizedTest;\n\nclass FooTest{\n    @Nested\n    class ExampleTest {\n\n        @ParameterizedTest\n        @MethodSource(\"getStrings\")\n        void exampleTestUsingPrivateMethod(\n                List<String> strings) {\n            // insert code\n        }\n\n        private static Stream<Arguments> getStrings() {\n            Stream<Arguments> tests = Stream.of(\n                    Arguments.of(List.of(\"TEST\", \"TEST_1\")),\n                    Arguments.of(List.of(\"TEST_2\", \"TEST_3\"))\n            );\n\n            return Stream.of(tests)\n                    .reduce(Stream::concat)\n                    .orElseGet(Stream::empty);\n        }\n    }\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod FP with Junit 5 @MethodSource and default factory method name #4278",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.junit.jupiter.params.provider.MethodSource;\nimport org.junit.jupiter.params.ParameterizedTest;\n\nclass FooTest{\n    private static Stream<Arguments> testGetUsername_noMethodSourceValue() {\n        return Stream.of(\n                Arguments.of(\"foo\"),\n                Arguments.of(\"bar\"),\n                Arguments.of(\"baz\")\n        );\n    }\n\n    @MethodSource\n    @ParameterizedTest\n    void testGetUsername_noMethodSourceValue(String username) {\n        User sut = new User(username);\n\n        Assertions.assertEquals(username, sut.getUsername());\n    }\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false-positive / method reference in combination with custom object #4985",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.List;\n\n            public class Main {\n\n                public static void main(String[] args) {\n                    System.out.println(\"list\");\n\n                    // usage of method reference in combination with a custom object leads to a false positive of PMD.UnusedPrivateMethod\n                    List.of(new StringWrapper().getString())\n                        .stream()\n\n                        .map(Main::foo)\n                        .filter(Objects::nonNull)\n                        .toList();\n\n                    // no false positive .. :/\n                    List.of(\"s\")\n                        .stream()\n                        .map(Main::foo2)\n                        .filter(Objects::nonNull)\n                        .toList();\n                }\n\n                private static int foo(String s) {\n                    return s.length();\n                }\n\n                private static int foo2(String s) {\n                    return s.length();\n                }\n\n            }\n            "
+    },
+    {
+      "description": "UnusedPrivateMethod for Generics and Overloads #5047",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.function.Function;\n\n            public class Main {\n                public static void main(String[] args) {\n                    new Utils().printValue();\n                }\n\n                public enum ConsentStatus {\n                    NOT_APPLICABLE(0L),\n                    NO_CONSENT(1L),\n                    CONSENT(2L),\n                    UNKNOWN_STATUS(3L);\n\n                    private final long id;\n\n                    ConsentStatus(long id) {\n                        this.id = id;\n                    }\n\n                    public long id() {\n                        return this.id;\n                    }\n                }\n\n                public enum OptOutStatus {\n                    NOT_APPLICABLE(0L),\n                    OPTED_OUT(1L),\n                    DID_NOT_OPT_OUT(2L),\n                    UNKNOWN_STATUS(3L);\n\n                    private final long id;\n\n                    OptOutStatus(long id) {\n                        this.id = id;\n                    }\n\n                    public long id() {\n                        return this.id;\n                    }\n                }\n\n                static class Utils {\n                    public void printValue() {\n                        System.out.println(getValue(ConsentStatus.CONSENT));\n                        System.out.println(getValue(ConsentStatus.NO_CONSENT));\n\n                        System.out.println(getValue(OptOutStatus.DID_NOT_OPT_OUT));\n                        System.out.println(getValue(OptOutStatus.OPTED_OUT));\n                    }\n\n                    private Long getValue(ConsentStatus val) {\n                        return getValue(val, ConsentStatus::id);\n                    }\n\n                    private Long getValue(OptOutStatus val) {\n                        return getValue(val, OptOutStatus::id);\n                    }\n\n                    private <T extends Enum<T>> Long getValue(T enumValue, Function<T, Long> fn) {\n                        if (enumValue == null) {\n                            return null;\n                        }\n                        return fn.apply(enumValue);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "UnusedPrivateMethod for Lombok ObtainVia #5110",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.Builder;\nimport lombok.Builder.ObtainVia;\n\nimport java.util.Collections;\nimport java.util.List;\n\n@Builder(toBuilder = true)\npublic class ObtainViaTest {\n\n    @ObtainVia(method = \"fooProvider\")\n    private List<String> foo;\n\n    private List<String> fooProvider() {\n        return Collections.emptyList();\n    }\n}\n            "
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false positive when .class files missing from classpath #819",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.bumptech.glide.load.engine;\n\nimport com.bumptech.glide.load.Key; // key can't be resolved\n\nclass Engine {\n\n  void load(EngineKey key) {\n    logWithTimeAndKey(\"\", key);\n    loadFromActiveResources(key, true);\n  }\n\n  private static void logWithTimeAndKey(String log, Key key) { // false positive: not unused\n  }\n\n  private void loadFromActiveResources(Key key, boolean isMemoryCacheable) { // false positive: not unused\n  }\n}\n"
+    },
+    {
+      "description": "#3633 [java] Make UnusedPrivateMethod consider enum classes",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nclass Impl {\n  enum EnumClass {\n      FOO;\n      EnumClass() {}\n      private void func(){};  // should report a warning here\n  }\n}\n"
+    },
+    {
+      "description": "#3633 [java] Make UnusedPrivateMethod consider enum classes (top-level)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nenum EnumClass {\n  FOO;\n  EnumClass() {}\n  private void func(){};  // should report a warning here\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod: false positive with inner class instance method passed as a function reference parameter #3292",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.example;\n\nimport java.util.function.BiFunction;\n\npublic class TestUnusedPrivateMethodWithFunctionReference {\n\n  private final String separator;\n\n  public TestUnusedPrivateMethodWithFunctionReference(String separator) {\n    this.separator = separator;\n  }\n\n  public static void main(String[] args) {\n    new TestUnusedPrivateMethodWithFunctionReference(\"|\").test();\n  }\n\n  private void test() {\n    System.out.println(makeValue(Holder::combine));\n  }\n\n  private String makeValue(BiFunction<Holder, Holder, Holder> combiner) {\n    return combiner.apply(new Holder(\"t1\"), new Holder(\"t2\")).value;\n  }\n\n  private class Holder {\n\n    private final String value;\n\n    public Holder(String value) {\n      this.value = value;\n    }\n\n    private Holder combine(Holder other) { // false positive - not unused, used as Holder::combine\n      return new Holder(value + separator + other.value);\n    }\n  }\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false-positive when a private method defined in an inner private class is called. #4016",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass OuterClass {\n    private final class InnerClass {\n        private String readLine() { return \"\"; }\n    }\n\n    private InnerClass currentInner;\n\n    public String readLine() {\n        String line = currentInner.readLine();\n        return line;\n    }\n}\n"
+    },
+    {
+      "description": "#3899 [java] UnusedPrivateMethod - false positive with JDK 17",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/*\n * BSD-style license; for more info see http://pmd.sourceforge.net/license.html\n */\n\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.issue3899;\n\npublic class PmdTestCase {\n    public void check() {\n        Child child = new Child();\n\n        checkChild(child);\n        checkParent(child);\n    }\n\n    // OK\n    private void checkChild(Child child) {\n    }\n\n    // This method results in \"UnusedPrivateMethod: Avoid unused private methods such as 'checkParent(Parent)'\"\n    private void checkParent(Parent parent) { // false positive\n    }\n}\n"
+    },
+    {
+      "description": "#5324 UnusedPrivateMethod with method reference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package org.example.unusedPrivateMethod;\n\n            import static java.util.Collections.emptySet;\n\n            import java.util.*;\n            import java.util.stream.*;\n\n            public class Main {\n\n                public static void main(String[] args) {\n                    Library library = new Library(emptySet());\n                    Map<String, Map<String, String>> map = new Main().run(library);\n                    System.out.println(map);\n                }\n\n                private Map<String, Map<String, String>> run(Library library) {\n                    return library\n                            .books()\n                            .stream()\n                            .map(book -> book.lenders().stream().collect(Collectors.toMap(Lender::name, lender -> Map.of(book.title(), lender.status()))))\n                            .reduce(this::reduceBooksAndLenderStatusByLender)\n                            .orElse(null);\n                }\n\n                private Map<String, Map<String, String>> reduceBooksAndLenderStatusByLender(\n                        Map<String, Map<String, String>> previousMap,\n                        Map<String, Map<String, String>> nextMap\n                ) {\n                    previousMap.putAll(nextMap);\n                    return previousMap;\n                }\n            }\n\n\n            record Lender(String name, String status) {}\n            record Book(String title, Collection<Lender> lenders) {}\n            record Library(Collection<Book> books) {}\n            "
+    },
+    {
+      "description": "#5324 UnusedPrivateMethod with unresolved types",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                public User methodA() {\n                    val user = userOpt.orElseGet(() -> {\n                        try {\n                            return registerUser(email, firstName, lastName);\n                        } catch (Exception e) {\n                            throw new IllegalStateException(\"Failed to register user for \" + email, e);\n                        }\n                    });\n                    // ...\n                    return user;\n                }\n\n                private User registerUser(String email, String firstName, String lastName) throws Exception {\n                    // register user logic here...\n                }\n            }\n            "
+    },
+    {
+      "description": "#5329 UnusedPrivateMethod with unresolved types",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class Foo {\n                public User methodA() {\n                    List<SummaryDto.ItemDto> items = new ArrayList<>();\n                    loads.stream()\n                         .collect(Collectors.groupingBy(Item::getValue))\n                         .forEach((a, b) -> items.add(buildItem(a, b)));\n                }\n\n                private SummaryDto.ItemDto buildItem(BigDecimal a, List<Item> b) {\n                    return SummaryDto.ItemDto.builder().build();\n                }\n            }\n            "
+    },
+    {
+      "description": "#5097 UnusedPrivateMethod with unresolved target for method reference",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "package com.mytest;\n\n        import jakarta.validation.ConstraintViolation; //imported from jakarta.validation:jakarta.validation-api:3.0.2\n        import java.util.List;\n        import java.util.Set;\n\n        public class UnusedPrivateMethodFalsePositive {\n            //this does not trigger UnusedPrivateMethod\n            private void doWork(List obj) {\n                obj.toString();\n            }\n\n            public void execute(Set<List<?>> listOfLists) {\n                listOfLists.forEach(this::doWork);\n            }\n\n            //BUT this does???\n            //UnusedPrivateMethod -  this as a false positive - but what is different?\n            private void addValidationError(ConstraintViolation constraintViolation) {\n                constraintViolation.toString();\n            }\n\n            public void addValidationErrors(Set<ConstraintViolation<?>> constraintViolations) {\n                constraintViolations.forEach(this::addValidationError);\n            }\n\n        }\n            "
+    },
+    {
+      "description": "#5338 UnusedPrivateMethod with unresolved target for lambda",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.concurrent.CompletableFuture;\n            class SomeTest {\n\n                @Test\n                void test() {\n                    final BytesListener listener = createListener(\n                            (bytes) -> CompletableFuture.completedFuture(\"HI!\")\n                    );\n                    Assertions.assertNotNull(listener.onRecord(new byte[0]));\n                }\n\n                private static BytesListener createListener(\n                        BytesParser<String> parser\n                ) {\n                    return bytes -> parser\n                            .parse(bytes)\n                            .thenAccept(System.out::println);\n                }\n            }\n            "
+    },
+    {
+      "description": "UnusedPrivateMethod #5113",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            import java.util.Optional;\n\n            public class VarTest {\n                public Optional<Boolean> foo(int param) {\n                    var optional = param == 0 ? Optional.of(true) : Optional.of(false);\n                    return optional.flatMap(this::dummy);\n                }\n\n                private Optional<Boolean> dummy(boolean foo) {\n                    return Optional.of(foo);\n                }\n            }\n            "
+    },
+    {
+      "description": "UnusedPrivateMethod #5083 - method reference without target type",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            @Getter\n            @RequiredArgsConstructor\n            enum GenerationType {\n                APPLE_DESKTOP(\"https://apps.apple.com/app/id\", GenerationType::isAppleType),\n                APPLE_ITUNES(\"https://itunes.apple.com/app/id\", GenerationType::isAppleType),\n                SAMSUNG(\"https://www.samsung.com/us/appstore/app/\", GenerationType::isSamsungType),\n                ROKU(\"https://channelstore.roku.com/details/\", GenerationType::isRokuType),\n                AMAZON(\"https://www.amazon.com/dp/\", GenerationType::isAmazonType),\n                ANDROID(\"https://play.google.com/store/apps/details?id=\", GenerationType::isAndroidType);\n\n                private final String baseUrl;\n                private final Predicate<String> predicate;\n\n                private static boolean isAppleType(String data) {\n                    return \"apple\".equals(data);\n                }\n\n                private static boolean isRokuType(String data) {\n                    return \"roku\".equals(data);\n                }\n\n                private static boolean isSamsungType(String data) {\n                    return \"samsung\".equals(data);\n                }\n\n                private static boolean isAmazonType(String data) {\n                    return \"amazon\".equals(data);\n                }\n\n                private static boolean isAndroidType(String data) {\n                    return \"android\".equals(data);\n                }\n            }\n            "
+    },
+    {
+      "description": "UnusedPrivateMethod #5083 - method reference without target type (2)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class GenerationType {\n                static {\n                    foo(GenerationType::isAndroidType);\n                }\n                {\n                    foo(this::instance);\n                }\n\n                private  boolean instance(String data) {}\n                private static boolean isAndroidType(String data) {\n                    return \"android\".equals(data);\n                }\n            }\n            "
+    },
+    {
+      "description": "#4861 [java] UnusedPrivateMethod - false positive with static methods in core JDK classes",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            package java.lang;\n            class Integer {\n                static {\n                    toStringUTF16(1, 2);\n                }\n                private static String toStringUTF16(int i, int j) {}\n            }\n            "
+    },
+    {
+      "description": "#5486 [java] UnusedPrivateMethod detected when class is referenced in another class",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n/*\n * BSD-style license; for more info see http://pmd.sourceforge.net/license.html\n */\n\npackage net.sourceforge.pmd.lang.java.rule.bestpractices.unusedprivatemethod.issue5486;\n\npublic class Class1 {\n    public void publicMethod() {\n        new Class2().getClass1().privateMethod();\n    }\n\n    private void privateMethod() { // This method is detected as UnusedPrivateMethod (false positive)\n        // do stuff\n    }\n\n    public void publicMethod2() {\n        // Declaring the variable, makes the PMD works fine (workaround)\n        Class1 class1 = new Class2().getClass1();\n        class1.privateMethod2();\n    }\n\n    private void privateMethod2() {\n        // do stuff\n    }\n}\n"
+    },
+    {
+      "description": "#3359 [java] UnusedPrivateMethod does not recognize Lombok @EqualsAndHashCode.Include annotation",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport lombok.EqualsAndHashCode;\n\n@EqualsAndHashCode\npublic class Foo {\n\n  @EqualsAndHashCode.Exclude\n  private BigDecimal bar;\n\n  @EqualsAndHashCode.Include\n  private BigDecimal getBarValueForEqAndHc() { // false positive UnusedMethod\n    return bar != null ? bar.stripTrailingZeros() : null;\n  }\n}\n"
+    },
+    {
+      "description": "Problem with capture of type parametr that has wildcard parameterized bound",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            class AJjtN<N, B> {}\n            class JavaccToken {}\n            public final class JjtreeBuilder<N extends AJjtN<N, ?>> {\n\n\n                public void closeNodeScope(N n, boolean condition, JavaccToken lastToken) {\n                    closeImpl(n, lastToken);\n                }\n\n\n                private void closeImpl(N n, JavaccToken lastToken) {\n\n                }\n            }\n            "
+    },
+    {
+      "description": "#5369 [java] UnusedPrivateMethod false positives with lombok.val",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage sample;\n\nimport lombok.val; // note: we have this under src/test/java/lombok/val.java on the auxclasspath during test\n\nclass Foo {\n  public void method() {\n     val test = \"a\";\n\n     privateMethod(test);\n  }\n\n  private void privateMethod(String a) {\n    System.out.println(a);\n  }\n}\n"
+    },
+    {
+      "description": "#5687 [java] UnusedPrivateMethodRule: exclude serialization method readObjectNoData()",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.io.ObjectStreamException;\npublic class Foo {\n    private void readObjectNoData() throws ObjectStreamException {}\n}\n"
+    },
+    {
+      "description": "#5621 [java] UnusedPrivateMethod false positives with method ref",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage sample;\n\nimport java.util.Optional;\nimport java.io.*;\nimport java.util.Base64;\nimport java.net.InetSocketAddress;\n\nclass Foo {\n\n    public String foo(final Object foo, final String bar) {\n        final String abc = Optional.ofNullable(foo.toString()).map(Foo::getNormalizedAddress).orElse(null);\n        return abc;\n    }\n\n    private static String getNormalizedAddress(final String encoded) {\n        try (var objectInputStream = new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(encoded)))) {\n            final var inetSocketAddress = (InetSocketAddress) objectInputStream.readObject();\n            return inetSocketAddress.toString().substring(1);\n        } catch (IOException | ClassNotFoundException | IllegalArgumentException e) {\n            return null;\n        }\n    }\n\n}\n"
+    },
+    {
+      "description": "#5621 [java] UnusedPrivateMethod false positives with method ref, #2",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage sample;\n\nimport java.util.Collection;\nimport java.util.List;\nimport java.util.function.Consumer;\nimport java.io.*;\nimport java.util.Base64;\nimport java.net.InetSocketAddress;\n\nclass Foo {\n    @Override\n    public Collection<Consumer<Router>> routes() {\n        return List.of(\n                r -> r.post(\"/some/path\").handler(this::handleRequest)\n        );\n    }\n\n    private void handleRequest(RoutingContext rc) { }\n    private void handleRequest(String rc) { }\n}\n"
+    },
+    {
+      "description": "Verify that if the method ref is obviously in another class our methods are still flagged",
+      "expected-problems": 4,
+      "expected-linenumbers": [],
+      "code": "\npackage sample;\n\nimport java.util.Collection;\nimport java.util.List;\nimport java.util.function.Consumer;\nimport java.io.*;\nimport java.util.Base64;\nimport java.net.InetSocketAddress;\n\nimport foo.Bar;\n\nclass Foo {\n    @Override\n    public Collection<Consumer<Router>> routes() {\n        return List.of(\n                // Other is an ambiguous name and it may be var or type,\n                // therefore it has a fully unknown type\n                r -> r.post(\"/some/path\").handler(Other::handleRequest) \n        );\n        return List.of(\n                // This is an unresolved type but unambiguous thanks to the\n                // import. That means we know that Bar::alala cannot\n                // be a reference to one of Foo's alala methods.\n                r -> r.post(\"/some/path\").handler(Bar::alala)\n        );\n        return List.of(\n                // This is a fully known type, same thing\n                r -> r.post(\"/some/path\").handler(String::elelel)\n        );\n    }\n\n    private void handleRequest(RoutingContext rc) { }\n    private void handleRequest(String rc) { }\n    \n    private void alala(RoutingContext rc) { }\n    private void alala(String rc) { }\n    \n    private void elelel(RoutingContext rc) { }\n    private void elelel(String rc) { }\n}\n"
+    },
+    {
+      "description": "[java] UnusedPrivateMethod false-positive #5664 (not reproducible)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            @ExtendWith(MockitoExtension.class)\n            class TimeProfilerTests {\n                @Nested\n                class operations_test {\n                    private final long[] offset = {0L};\n\n                    private static Long offsetTimeSupplier(final long[] offset) {\n                        return offset[0];\n                    }\n\n                    @BeforeEach\n                    void setUp() {\n                        offset[0] = offsetTimeSupplier(offset);\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "FP with lambda",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\n            // should reproduce https://github.com/pmd/pmd/issues/5621#issuecomment-2849411551\n            class Test {\n                class operations_test {\n\n                    void method(long l) {\n                    }\n                    void method() {}\n\n                    void setUp() {\n                        foo(unresolved -> {\n                            method(unresolved);\n                        });\n                    }\n                }\n            }\n            "
+    }
+  ]
+}

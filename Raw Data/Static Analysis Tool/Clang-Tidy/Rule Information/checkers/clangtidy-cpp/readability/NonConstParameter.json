@@ -1,0 +1,41 @@
+{
+  "name": "NonConstParameter",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - readability-non-const-parameter",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 236,
+  "branches": 81,
+  "apis": 223,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 20,
+      "expected-linenumbers": [
+        15,
+        29,
+        36,
+        83,
+        89,
+        116,
+        122,
+        128,
+        134,
+        209,
+        232,
+        238,
+        254,
+        273,
+        301,
+        310,
+        314,
+        321,
+        327,
+        341
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s readability-non-const-parameter %t\n\n// Currently the checker only warns about pointer arguments.\n//\n// It can be defined both that the data is const and that the pointer is const,\n// the checker only checks if the data can be const-specified.\n//\n// It does not warn about pointers to records or function pointers.\n\n// Some external function where first argument is nonconst and second is const.\nchar *strcpy1(char *dest, const char *src);\nunsigned my_strcpy(char *buf, const char *s);\nunsigned my_strlen(const char *buf);\n\n// CHECK-MESSAGES: :[[@LINE+1]]:29: warning: pointer parameter 'last' can be pointer to const [readability-non-const-parameter]\nvoid warn1(int *first, int *last) {\n  // CHECK-FIXES: {{^}}void warn1(int *first, const int *last) {{{$}}\n  *first = 0;\n  if (first < last) {\n  } // <- last can be const\n}\n\n// TODO: warning should be written here\nvoid warn2(char *p) {\n  char buf[10];\n  strcpy1(buf, p);\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:19: warning: pointer parameter 'p' can be\nvoid assign1(int *p) {\n  // CHECK-FIXES: {{^}}void assign1(const int *p) {{{$}}\n  const int *q;\n  q = p;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:19: warning: pointer parameter 'p' can be\nvoid assign2(int *p) {\n  // CHECK-FIXES: {{^}}void assign2(const int *p) {{{$}}\n  const int *q;\n  q = p + 1;\n}\n\nvoid assign3(int *p) {\n  *p = 0;\n}\n\nvoid assign4(int *p) {\n  *p += 2;\n}\n\nvoid assign5(char *p) {\n  p[0] = 0;\n}\n\nvoid assign6(int *p) {\n  int *q;\n  q = p++;\n}\n\nvoid assign7(char *p) {\n  char *a, *b;\n  a = b = p;\n}\n\nvoid assign8(char *a, char *b) {\n  char *x;\n  x = (a ? a : b);\n}\n\nvoid assign9(unsigned char *str, const unsigned int i) {\n  unsigned char *p;\n  for (p = str + i; *p;) {\n  }\n}\n\nvoid assign10(int *buf) {\n  int i, *p;\n  for (i = 0, p = buf; i < 10; i++, p++) {\n    *p = 1;\n  }\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:17: warning: pointer parameter 'p' can be\nvoid init1(int *p) {\n  // CHECK-FIXES: {{^}}void init1(const int *p) {{{$}}\n  const int *q = p;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:17: warning: pointer parameter 'p' can be\nvoid init2(int *p) {\n  // CHECK-FIXES: {{^}}void init2(const int *p) {{{$}}\n  const int *q = p + 1;\n}\n\nvoid init3(int *p) {\n  int *q = p;\n}\n\nvoid init4(float *p) {\n  int *q = (int *)p;\n}\n\nvoid init5(int *p) {\n  int *i = p ? p : 0;\n}\n\nvoid init6(int *p) {\n  int *a[] = {p, p, 0};\n}\n\nvoid init7(int *p, int x) {\n  for (int *q = p + x - 1; 0; q++)\n    ;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:18: warning: pointer parameter 'p' can be\nint return1(int *p) {\n  // CHECK-FIXES: {{^}}int return1(const int *p) {{{$}}\n  return *p;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:25: warning: pointer parameter 'p' can be\nconst int *return2(int *p) {\n  // CHECK-FIXES: {{^}}const int *return2(const int *p) {{{$}}\n  return p;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:25: warning: pointer parameter 'p' can be\nconst int *return3(int *p) {\n  // CHECK-FIXES: {{^}}const int *return3(const int *p) {{{$}}\n  return p + 1;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:27: warning: pointer parameter 'p' can be\nconst char *return4(char *p) {\n  // CHECK-FIXES: {{^}}const char *return4(const char *p) {{{$}}\n  return p ? p : \"\";\n}\n\nchar *return5(char *s) {\n  return s;\n}\n\nchar *return6(char *s) {\n  return s + 1;\n}\n\nchar *return7(char *a, char *b) {\n  return a ? a : b;\n}\n\nchar return8(int *p) {\n  return ++(*p);\n}\n\nvoid dontwarn1(int *p) {\n  ++(*p);\n}\n\nvoid dontwarn2(int *p) {\n  (*p)++;\n}\n\nint dontwarn3(_Atomic(int) * p) {\n  return *p;\n}\n\nvoid callFunction1(char *p) {\n  strcpy1(p, \"abc\");\n}\n\nvoid callFunction2(char *p) {\n  strcpy1(&p[0], \"abc\");\n}\n\nvoid callFunction3(char *p) {\n  strcpy1(p + 2, \"abc\");\n}\n\nchar *callFunction4(char *p) {\n  return strcpy1(p, \"abc\");\n}\n\nunsigned callFunction5(char *buf) {\n  unsigned len = my_strlen(buf);\n  return len + my_strcpy(buf, \"abc\");\n}\n\nvoid f6(int **p);\nvoid callFunction6(int *p) { f6(&p); }\n\ntypedef union { void *v; } t;\nvoid f7(t obj);\nvoid callFunction7(int *p) {\n  f7((t){p});\n}\n\nvoid f8(int &x);\nvoid callFunction8(int *p) {\n  f8(*p);\n}\n\n// Don't warn about nonconst function pointers that can be const.\nvoid functionpointer(double f(double), int x) {\n  f(x);\n}\n\n// TODO: This is a false positive.\n// CHECK-MESSAGES: :[[@LINE+1]]:27: warning: pointer parameter 'p' can be\nint functionpointer2(int *p) {\n  return *p;\n}\nvoid use_functionpointer2() {\n  int (*fp)(int *) = functionpointer2; // <- the parameter 'p' can't be const\n}\n\n// Don't warn about nonconst record pointers that can be const.\nstruct XY {\n  int *x;\n  int *y;\n};\nvoid recordpointer(struct XY *xy) {\n  *(xy->x) = 0;\n}\nvoid recordInitList(int *x) {\n  XY xy = {x, nullptr};\n}\n\nstruct XYConst {\n  int const *x;\n};\n// CHECK-MESSAGES: :[[@LINE+1]]:30: warning: pointer parameter 'x' can be pointer to const\nvoid recordInitListDiag(int *x) {\n  // CHECK-FIXES: {{^}}void recordInitListDiag(const int *x) {{{$}}\n  XYConst xy = {x};\n}\ntypedef XYConst XYConstAlias;\n// CHECK-MESSAGES: :[[@LINE+1]]:35: warning: pointer parameter 'x' can be pointer to const\nvoid recordInitListAliasDiag(int *x) {\n  // CHECK-FIXES: {{^}}void recordInitListAliasDiag(const int *x) {{{$}}\n  XYConstAlias xy = {x};\n}\n\nclass C {\npublic:\n  C(int *p) : p(p) {}\n\nprivate:\n  int *p;\n};\n\nclass C2 {\npublic:\n  // CHECK-MESSAGES: :[[@LINE+1]]:11: warning: pointer parameter 'p' can be\n  C2(int *p) : p(p) {}\n  // CHECK-FIXES: {{^}}  C2(const int *p) : p(p) {}{{$}}\n\nprivate:\n  const int *p;\n};\n\nvoid tempObject(int *p) {\n  C c(p);\n}\n\n// avoid fp for const pointer array\nvoid constPointerArray(const char *remapped[][2]) {\n  const char *name = remapped[0][0];\n}\n\nclass Warn {\npublic:\n  // CHECK-MESSAGES: :[[@LINE+1]]:21: warning: pointer parameter 'p' can be\n  void doStuff(int *p) {\n    // CHECK-FIXES: {{^}}  void doStuff(const int *p) {{{$}}\n    x = *p;\n  }\n\nprivate:\n  int x;\n};\n\nclass Base {\npublic:\n  // Ensure there is no false positive for this method. It is virtual.\n  virtual void doStuff(int *p) {\n    int x = *p;\n  }\n};\n\nclass Derived : public Base {\npublic:\n  // Ensure there is no false positive for this method. It overrides a method.\n  void doStuff(int *p) override {\n    int x = *p;\n  }\n};\n\nextern char foo(char *s); // 1\n// CHECK-FIXES: {{^}}extern char foo(const char *s); // 1{{$}}\n// CHECK-MESSAGES: :[[@LINE+1]]:16: warning: pointer parameter 's' can be\nchar foo(char *s) {\n  // CHECK-FIXES: {{^}}char foo(const char *s) {{{$}}\n  return *s;\n}\nchar foo(char *s); // 2\n// CHECK-FIXES: {{^}}char foo(const char *s); // 2{{$}}\n\nvoid lvalueReference(int *p) {\n  // CHECK-MESSAGES-NOT: warning: pointer parameter 'p' can be\n  int &x = *p;\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:32: warning: pointer parameter 'p' can be\nvoid constLValueReference(int *p) {\n  // CHECK-FIXES: {{^}}void constLValueReference(const int *p) {{{$}}\n  const int &x = *p;\n}\n\nvoid lambdaLVRef(int *p) {\n  // CHECK-MESSAGES-NOT: warning: pointer parameter 'p' can be\n  auto foo = [&]() {\n    int &x = *p;\n  };\n}\n\n// CHECK-MESSAGES: :[[@LINE+1]]:28: warning: pointer parameter 'p' can be\nvoid lambdaConstLVRef(int *p) {\n  // CHECK-FIXES: {{^}}void lambdaConstLVRef(const int *p) {{{$}}\n  auto foo = [&]() {\n    const int &x = *p;\n  };\n}\n\nstruct Temp1 {\n  Temp1(int &i) {\n    i = 10;\n  }\n};\nvoid constructLVRef(int *p) {\n  // CHECK-MESSAGES-NOT: warning: pointer parameter 'p' can be\n  Temp1 t(*p);\n}"
+    }
+  ]
+}

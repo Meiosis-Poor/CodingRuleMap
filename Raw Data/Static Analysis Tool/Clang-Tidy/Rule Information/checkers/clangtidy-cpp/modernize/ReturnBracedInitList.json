@@ -1,0 +1,31 @@
+{
+  "name": "ReturnBracedInitList",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - modernize-return-braced-init-list",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 99,
+  "branches": 8,
+  "apis": 69,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 10,
+      "expected-linenumbers": [
+        60,
+        74,
+        108,
+        131,
+        140,
+        150,
+        157,
+        163,
+        169,
+        175
+      ],
+      "code": "\n// RUN: %check_clang_tidy -std=c++14-or-later %s modernize-return-braced-init-list %t\n\nnamespace std {\ntypedef decltype(sizeof(int)) size_t;\n\n// libc++'s implementation\ntemplate <class _E>\nclass initializer_list {\n  const _E *__begin_;\n  size_t __size_;\n\n  initializer_list(const _E *__b, size_t __s)\n      : __begin_(__b),\n        __size_(__s) {}\n\npublic:\n  typedef _E value_type;\n  typedef const _E &reference;\n  typedef const _E &const_reference;\n  typedef size_t size_type;\n\n  typedef const _E *iterator;\n  typedef const _E *const_iterator;\n\n  initializer_list() : __begin_(nullptr), __size_(0) {}\n\n  size_t size() const { return __size_; }\n  const _E *begin() const { return __begin_; }\n  const _E *end() const { return __begin_ + __size_; }\n};\n\ntemplate <typename T>\nstruct allocator {};\n\ntemplate <typename T, typename Allocator = ::std::allocator<T>>\nclass vector {\npublic:\n  vector(T);\n  vector(size_t, T, const Allocator &alloc = Allocator());\n  vector(std::initializer_list<T>);\n};\n} // namespace std\n\nclass Bar {};\n\nBar b0;\n\nclass Foo {\npublic:\n  Foo(Bar) {}\n  explicit Foo(Bar, unsigned int) {}\n  Foo(unsigned int) {}\n};\n\nclass Baz {\npublic:\n  Foo m() {\n    Bar bm;\n    return Foo(bm);\n    // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: avoid repeating the return type from the declaration; use a braced initializer list instead [modernize-return-braced-init-list]\n    // CHECK-FIXES: return {bm};\n  }\n};\n\nclass Quux : public Foo {\npublic:\n  Quux(Bar bar) : Foo(bar) {}\n  Quux(unsigned, unsigned, unsigned k = 0) : Foo(k) {}\n};\n\nFoo f() {\n  Bar b1;\n  return Foo(b1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {b1};\n}\n\nFoo f2() {\n  Bar b2;\n  return {b2};\n}\n\nauto f3() {\n  Bar b3;\n  return Foo(b3);\n}\n\n#define A(b) Foo(b)\n\nFoo f4() {\n  Bar b4;\n  return A(b4);\n}\n\nFoo f5() {\n  Bar b5;\n  return Quux(b5);\n}\n\nFoo f6() {\n  Bar b6;\n  return Foo(b6, 1);\n}\n\nstd::vector<int> vectorWithOneParameter() {\n  int i7 = 1;\n  return std::vector<int>(i7);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n}\n\nstd::vector<int> vectorIntWithTwoParameter() {\n  return std::vector<int>(1, 2);\n}\n\nstd::vector<double> vectorDoubleWithTwoParameter() {\n  return std::vector<double>(1, 2.1);\n}\nstruct A {};\nstd::vector<A> vectorRecordWithTwoParameter() {\n  A a{};\n  return std::vector<A>(1, a);\n}\n\n\nBar f8() {\n  return {};\n}\n\nBar f9() {\n  return Bar();\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n}\n\nBar f10() {\n  return Bar{};\n}\n\nFoo f11(Bar b11) {\n  return Foo(b11);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {b11};\n}\n\nFoo f12() {\n  return f11(Bar());\n}\n\nFoo f13() {\n  return Foo(Bar()); // 13\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {Bar()}; // 13\n}\n\nFoo f14() {\n  // FIXME: Type narrowing should not occur!\n  return Foo(-1);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {-1};\n}\n\nFoo f15() {\n  return Foo(f10());\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {f10()};\n}\n\nQuux f16() {\n  return Quux(1, 2);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {1, 2};\n}\n\nQuux f17() {\n  return Quux(1, 2, 3);\n  // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: avoid repeating the return type\n  // CHECK-FIXES: return {1, 2, 3};\n}\n\ntemplate <typename T>\nT f19() {\n  return T();\n}\n\nBar i1 = f19<Bar>();\nBaz i2 = f19<Baz>();\n\ntemplate <typename T>\nFoo f20(T t) {\n  return Foo(t);\n}\n\nFoo i3 = f20(b0);\n\ntemplate <typename T>\nclass BazT {\npublic:\n  T m() {\n    Bar b;\n    return T(b);\n  }\n\n  Foo m2(T t) {\n    return Foo(t);\n  }\n};\n\nBazT<Foo> bazFoo;\nFoo i4 = bazFoo.m();\nFoo i5 = bazFoo.m2(b0);\n\nBazT<Quux> bazQuux;\nFoo i6 = bazQuux.m();\nFoo i7 = bazQuux.m2(b0);\n\nauto v1 = []() { return std::vector<int>({1, 2}); }();\nauto v2 = []() -> std::vector<int> { return std::vector<int>({1, 2}); }();"
+    }
+  ]
+}

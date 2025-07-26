@@ -1,0 +1,32 @@
+{
+  "name": "GodClass",
+  "language": "java",
+  "description": "\nThe God Class rule detects the God Class design flaw using metrics. God classes do too many things,\nare very big and overly complex. They should be split apart to be more object-oriented.\nThe rule uses the detection strategy described in \"Object-Oriented Metrics in Practice\".\nThe violations are reported against the entire class.\n\nThe rule uses metrics to implement its detection strategy. The violation message\ngives information about the values of these metrics:\n* WMC: a class complexity measure, see {% jdoc java::lang.java.metrics.JavaMetrics#WEIGHED_METHOD_COUNT %}\n* ATFD: a measure of how much data external data the class uses, see {% jdoc java::lang.java.metrics.JavaMetrics#ACCESS_TO_FOREIGN_DATA %}\n* TCC: a measure of how tightly related the methods are, see {% jdoc java::lang.java.metrics.JavaMetrics#TIGHT_CLASS_COHESION %}\n\nThe rule identifies a god class by looking for classes which have all of the following properties:\n* High WMC\n* High ATFD\n* Low TCC\n\nSee also the reference:\n\nMichele Lanza and Radu Marinescu. *Object-Oriented Metrics in Practice:\nUsing Software Metrics to Characterize, Evaluate, and Improve the Design\nof Object-Oriented Systems.* Springer, Berlin, 1 edition, October 2006. Page 80.\n        ",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 70,
+  "branches": 6,
+  "apis": 4,
+  "test": [
+    {
+      "description": "Simple god class",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foreigner {\n    public int data;\n    private double other;\n\n    public void getData() {\n        return data;\n    }\n\n    public void setData(int data) {\n        this.data = data;\n    }\n\n    public double getOther() {\n        return other;\n    }\n\n    public void setOther(double other) {\n        this.other = other;\n    }\n\n    public void someOtherNonDataMethod() {\n    }\n}\n\npublic class Foo {\n    int myown = 2;\n\n    private int somePrivateFunction() {\n        if (myown == 2) {\n            return 42;\n        } else {\n            return myown;\n        }\n    }\n\n    private int anotherFunction() {\n        // used, to have the TCC lower than 0.333 - this method\n        // doesn't use myown\n    }\n\n    public void first() {\n        Foreigner f = new Foreigner();\n        int a = 1;\n        int b = 2;\n        int c = somePrivateFunction();\n\n        if (a == 2) {\n            b = a - 1;\n        }\n\n        f.setData(3);\n        f.data = 5;\n        myown = f.getData();\n        f.someOtherNonDataMethod();\n    }\n\n    public void other() {\n        int b = 100;\n        for (int i = 0; i < 2; i++) {\n            b++;\n        }\n\n        if (b < 10) {\n            Foreigner f2;\n            f2.setOther(1.0);\n            if (f2.getOther() == 1.0) {\n                while (b < 10) {\n                    b++;\n                }\n            }\n            if (f2.data == 5) {\n                f2.setData(4);\n            }\n        }\n\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n        if (true || false || true || false || true || false) {\n            if (b == 1 || b == 2 || b == 3 || b == 4 || b == 5) {\n                if (b == 1 && b == 2 && b == 3 && b == 4 && b == 5) {\n                }\n            }\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1085 NullPointerException by at net.sourceforge.pmd.lang.java.rule.design.GodClassRule.visit(GodClassRule.java:313)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic enum Color {\n    BLUE,\n    RED;\n\n    public int toHex() {\n        return 0;\n    }\n}\n        "
+    },
+    {
+      "description": "GodClass crashes with java.lang.NullPointerException, refs #827",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npackage com.pack;\n\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.Date;\nimport java.util.HashMap;\nimport java.util.List;\nimport java.util.Map;\n\nimport my.IPack;\nimport my.IInner;\n\npublic class Pack implements IPack {\n\n    @Override\n    public Map<String, String> get() {\n\n        class Inner implements IInner {\n\n            private Map<String, String> results;\n\n            public Inner(Map<String, String> results) {\n                this.results = results;\n            }\n        }\n        return null;\n    }\n}\n        "
+    }
+  ]
+}

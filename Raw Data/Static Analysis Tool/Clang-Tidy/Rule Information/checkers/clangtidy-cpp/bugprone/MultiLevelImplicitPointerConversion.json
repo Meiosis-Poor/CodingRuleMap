@@ -1,0 +1,32 @@
+{
+  "name": "MultiLevelImplicitPointerConversion",
+  "language": "cpp",
+  "description": ".. title:: clang-tidy - bugprone-multi-level-implicit-pointer-conversion",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "cpp",
+  "loc": 98,
+  "branches": 5,
+  "apis": 52,
+  "test": [
+    {
+      "description": null,
+      "expected-problems": 11,
+      "expected-linenumbers": [
+        23,
+        29,
+        38,
+        41,
+        44,
+        47,
+        52,
+        55,
+        58,
+        61,
+        73
+      ],
+      "code": "\n// RUN: %check_clang_tidy %s bugprone-multi-level-implicit-pointer-conversion %t\n\nusing OneStar = void*;\nusing OneStarFancy = OneStar;\n\nvoid takeFirstLevelVoidPtr(OneStar message);\nvoid takeFirstLevelConstVoidPtr(const OneStarFancy message);\nvoid takeFirstLevelConstVoidPtrConst(const void* const message);\nvoid takeSecondLevelVoidPtr(void** message);\n\nvoid** getSecondLevelVoidPtr();\nvoid* getFirstLevelVoidPtr();\nint** getSecondLevelIntPtr();\nint* getFirstLevelIntPtr();\n\nint table[5];\n\nvoid test()\n{\n  void** secondLevelVoidPtr;\n  int* firstLevelIntPtr;\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:13: warning: multilevel pointer conversion from 'void **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  void* a = getSecondLevelVoidPtr();\n\n  void** b = getSecondLevelVoidPtr();\n  void* c = getFirstLevelVoidPtr();\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:13: warning: multilevel pointer conversion from 'int **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  void* d = getSecondLevelIntPtr();\n\n  takeFirstLevelVoidPtr(&table);\n\n  takeFirstLevelVoidPtr(firstLevelIntPtr);\n\n  takeFirstLevelVoidPtr(getFirstLevelIntPtr());\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:25: warning: multilevel pointer conversion from 'void **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelVoidPtr(secondLevelVoidPtr);\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:30: warning: multilevel pointer conversion from 'void **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelConstVoidPtr(secondLevelVoidPtr);\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:35: warning: multilevel pointer conversion from 'void **' to 'const void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelConstVoidPtrConst(secondLevelVoidPtr);\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:35: warning: multilevel pointer conversion from 'void ***' to 'const void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelConstVoidPtrConst(&secondLevelVoidPtr);\n\n  takeSecondLevelVoidPtr(secondLevelVoidPtr);\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:25: warning: multilevel pointer conversion from 'void **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelVoidPtr(getSecondLevelVoidPtr());\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:30: warning: multilevel pointer conversion from 'void **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelConstVoidPtr(getSecondLevelVoidPtr());\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:35: warning: multilevel pointer conversion from 'void **' to 'const void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelConstVoidPtrConst(getSecondLevelVoidPtr());\n\n  // CHECK-MESSAGES: :[[@LINE+1]]:25: warning: multilevel pointer conversion from 'int **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n  takeFirstLevelVoidPtr(getSecondLevelIntPtr());\n\n  takeSecondLevelVoidPtr(getSecondLevelVoidPtr());\n}\n\nnamespace PR93959 {\n  void free(void*);\n\n  void test() {\n    char **p = nullptr;\n    free(p);\n    // CHECK-MESSAGES: :[[@LINE-1]]:10: warning: multilevel pointer conversion from 'char **' to 'void *', please use explicit cast [bugprone-multi-level-implicit-pointer-conversion]\n    free((void *)p);\n    free(static_cast<void *>(p));\n  }\n}"
+    }
+  ]
+}

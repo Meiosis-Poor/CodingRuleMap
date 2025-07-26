@@ -1,0 +1,32 @@
+{
+  "name": "AvoidDirectAccessTriggerMap",
+  "language": "apex",
+  "description": "\n      Avoid directly accessing Trigger.old and Trigger.new as it can lead to a bug. Triggers should be bulkified and iterate through the map to handle the actions for each item separately.\n    ",
+  "example": "trigger AccountTrigger on Account (before insert, before update) {\n   Account a = Trigger.new[0]; //Bad: Accessing the trigger array directly is not recommended.\n\n   for ( Account a : Trigger.new ) {\n        //Good: Iterate through the trigger.new array instead.\n   }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Directly accessing the Trigger.old map.",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\ntrigger AccountTrigger on Account (before insert, before update) {\n   Account a = Trigger.new[0]; //Bad: Accessing the trigger array directly is not recommended.\n}\n        "
+    },
+    {
+      "description": "Looping through map, best practice",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\ntrigger AccountTrigger on Account (before insert, before update) {\n   for ( Account a : Trigger.new ){\n        //Good: Iterate through the trigger.new array instead.\n        System.debug(a);\n   }\n}\n        "
+    },
+    {
+      "description": "Regression issue #792",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass NotATrigger {\n   void foo(){\n        Account[] accounts = opportunity.Accounts[0];\n   }\n}\n        "
+    }
+  ]
+}

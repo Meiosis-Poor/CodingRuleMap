@@ -1,0 +1,184 @@
+{
+  "name": "ProperLogger",
+  "language": "java",
+  "description": "\nA logger should normally be defined private static final and be associated with the correct class.\n`private final Log log;` is also allowed for rare cases where loggers need to be passed around,\nwith the restriction that the logger needs to be passed into the constructor.\n        ",
+  "example": "public class Foo {\n\n    private static final Log LOG = LogFactory.getLog(Foo.class);    // proper way\n\n    protected Log LOG = LogFactory.getLog(Testclass.class);         // wrong approach\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private static final Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "Wrong class name",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private static final Log LOG = LogFactory.getLog(Bar.class);\n}\nclass Bar {}\n        "
+    },
+    {
+      "description": "Ok, special case",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private final Log log;\n    Foo(Log log) {\n        this.log = log;\n    }\n}\n        "
+    },
+    {
+      "description": "Enum wrong class name",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic enum Foo {\n    TEST;\n    private static final Log LOG = LogFactory.getLog(Bar.class);\n}\nclass Bar {}\n        "
+    },
+    {
+      "description": "bug 1626232, a separate variable initialization should not confuse the rule",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private String bar = \"\";\n    private final Log log;\n    Foo(Log log) {\n        this.log = log;\n    }\n}\n        "
+    },
+    {
+      "description": "Enums shoud be accepted for declaration",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic enum Foo {\n    TEST;\n    private static final Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "bug 1626232, extra loggers with different names are not allowed by default (use NOPMD if you want them)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private static final Log LOG = LogFactory.getLog(Foo.class);\n    private static final Log LOG2 = LogFactory.getLog(Foo.class + \".foo\");\n}\n        "
+    },
+    {
+      "description": "Custom logger-class with invalid logger variable name",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private static final MyLog INVALID_LOG_NAME = LogFactory.getLog(Foo.class);\n}\n\nabstract class MyLog implements Log {}\n        "
+    },
+    {
+      "description": "Public logger",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    public static final Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "package-private logger",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    static final Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "package-private logger non static",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    final Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "package-private logger non static and non final",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "Public logger when static final required",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    public static final Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "Logger initialized as String constant from class name (java.util.logging)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.logging.Logger;\n\npublic class Foo {\n    private static final Logger LOG = Logger.getLogger(Foo.class.getName());\n}\n        "
+    },
+    {
+      "description": "non-private Logger initialized as String constant from class name",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport java.util.logging.Logger;\n\npublic class Foo {\n    Logger LOG = Logger.getLogger(Foo.class.getName());\n}\n        "
+    },
+    {
+      "description": "Package-protected logger when static final is not required",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "Package-protected logger when static final is required",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    Log LOG = LogFactory.getLog(Foo.class);\n}\n        "
+    },
+    {
+      "description": "Check type resolution of logger",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic class Foo {\n    private static final Logger LOG = LoggerFactory.getLogger(Foo.class);\n}\n        "
+    },
+    {
+      "description": "Check type resolution of logger with invalid logger specified",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic class Foo {\n    private static final Logger LOG = LoggerFactory.getLogger(Bar.class);\n}\nclass Bar {}\n        "
+    },
+    {
+      "description": "similar to special case but with creating a new logger instead of passing in",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        4
+      ],
+      "code": "\nimport org.apache.commons.logging.LogFactory;\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private final Log log;\n    public Foo() {\n        this.log = LogFactory.getLog(Foo.class);\n    }\n}\n        "
+    },
+    {
+      "description": "similar to special case but with creating a new logger instead of passing in",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nimport org.apache.commons.logging.Log;\npublic class Foo {\n    private final Log log;\n    public Foo() {\n        this.log = new Log(Foo.class);\n    }\n}\n        "
+    },
+    {
+      "description": "false negative with apache commons logging",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport org.apache.commons.logging.Log;\nimport org.apache.commons.logging.LogFactory;\n\npublic class ProperLoggerSample {\n    private final Log log;\n\n    public PropperLoggerSample() {\n        log = LogFactory.getLog(ProperLoggerSample.class);\n    }\n}\n        "
+    },
+    {
+      "description": "[java] ProperLogger gives false positives for inner classes #3436",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport org.slf4j.Logger;\nimport org.slf4j.LoggerFactory;\n\npublic class ResultHolders {\n  private ResultHolders() {\n    super();\n  }\n\n  private static class SynchronizedHolder {\n    private static final Logger LOG = LoggerFactory.getLogger(SynchronizedHolder.class);\n  }\n\n  private static class JMSHolder {\n    private static final Logger LOG = LoggerFactory.getLogger(SynchronizedHolder.class);\n  }\n\n  static class ResultMessage {\n    private static final Logger LOG = LoggerFactory.getLogger(ResultMessage.class);\n  }\n}\n        "
+    }
+  ]
+}

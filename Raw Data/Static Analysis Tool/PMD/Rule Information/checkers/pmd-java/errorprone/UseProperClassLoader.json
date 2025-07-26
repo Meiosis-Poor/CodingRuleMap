@@ -1,0 +1,47 @@
+{
+  "name": "UseProperClassLoader",
+  "language": "java",
+  "description": "\nIn J2EE, the getClassLoader() method might not work as expected. Use\nThread.currentThread().getContextClassLoader() instead.\n        ",
+  "example": "public class Foo {\n    ClassLoader cl = Bar.class.getClassLoader();\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "failure case",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() { ClassLoader cl = Foo.class.getClassLoader(); }\n}\n        "
+    },
+    {
+      "description": "correct way",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    void bar() { ClassLoader cl = Thread.currentThread().getContextClassLoader(); }\n}\n        "
+    },
+    {
+      "description": "False negatives (#2544)",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        4,
+        7
+      ],
+      "code": "\npublic class UseProperClassLoaderFN {\n    {\n        Object o = new Object();\n        ClassLoader cl = o.getClass().getClassLoader();\n\n        Class<?> c = o.getClass();\n        ClassLoader cl2 = c.getClassLoader();\n    }\n}\n        "
+    },
+    {
+      "description": "False positives (#3173)",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class UseProperClassLoaderFP {\n    public void run() {\n        ClassLoader cl = UseProperClassLoaderFP.getClassLoader();\n    }\n    \n    private static ClassLoader getClassLoader() {\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "[java] False-positive UseProperClassLoader #4711",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nclass Tester {\n    public Object dataSource(final DataSourceProperties properties) {\n      return DataSourceBuilder.create(properties.getClassLoader())\n          .build();\n    }\n}\ninterface DataSourceProperties {\n    ClassLoader getClassLoader();\n}\ninterface DataSourceBuilder {\n    static DataSourceBuilder create(ClassLoader classLoader);\n    Object build();\n}\n"
+    }
+  ]
+}

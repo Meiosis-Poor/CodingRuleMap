@@ -1,0 +1,308 @@
+{
+  "name": "RequireThis",
+  "language": "java",
+  "description": "<div>\n Checks that references to instance variables and methods of the present\n object are explicitly of the form \"this.varName\" or \"this.methodName(args)\"\n and that those references don't rely on the default behavior when \"this.\" is absent.\n </div>\n\n <p>Warning: the Check is very controversial if 'validateOnlyOverlapping' option is set to 'false'\n and not that actual nowadays.</p>\n\n <p>Rationale:</p>\n <ol>\n   <li>\n     The same notation/habit for C++ and Java (C++ have global methods, so having\n     &quot;this.&quot; do make sense in it to distinguish call of method of class\n     instead of global).\n   </li>\n   <li>\n     Non-IDE development (ease of refactoring, some clearness to distinguish\n     static and non-static methods).\n   </li>\n </ol>\n\n <p>Limitations: Nothing is currently done about static variables\n or catch-blocks.  Static methods invoked on a class name seem to be OK;\n both the class name and the method name have a DOT parent.\n Non-static methods invoked on either this or a variable name seem to be\n OK, likewise.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 916,
+  "branches": 148,
+  "apis": 107,
+  "test": [
+    {
+      "description": "Auto test from InputRequireThisAllowLambdaParameters.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        22,
+        45,
+        80
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.util.function.Consumer;\npublic class InputRequireThisAllowLambdaParameters {\n    private String s1 = \"foo1\";\n    int x=-1;\n    int y=-2;\n    void foo1() {\n        final java.util.List<String> strings = new java.util.ArrayList<>();\n        strings.add(\"foo1\");\n        strings.stream().filter(s1 -> s1.contains(\"f\"))  \n                .collect(java.util.stream.Collectors.toList());\n        s1 = \"foo1\"; \n    }\n    void foo2() {\n        final java.util.List<String> strings = new java.util.ArrayList<>();\n        strings.add(\"foo1\");\n        strings.stream().filter(s1 -> s1.contains(s1 = s1 + \"2\"))\n                .collect(java.util.stream.Collectors.toList());\n    }\n    class FirstLevel {\n        int x;\n        int y;\n        int z;\n        void methodInFirstLevel(int x) {\n            Consumer<Integer> myConsumer = (y) ->   \n            {\n                new String(\"x = \" + x);\n                new String(\"y = \" + y);  \n                new String(\"InputRequireThisAllowLambdaParameters.this.x = \" +\n                        InputRequireThisAllowLambdaParameters.this.x);\n                y=x+z++;  \n            };\n            myConsumer.accept(x);\n        }\n    }\n}\nclass Calculator {\n    int a;\n    int b;\n    interface IntegerMath {\n        int operation(int a, int b);\n    }\n    public int operateBinary(int a, int b, IntegerMath op) {\n        return op.operation(a, b);\n    }\n    public void addSub(String... args) {\n        Calculator myApp = new Calculator();\n        IntegerMath addition = (a, b) -> a = a + b;  \n        IntegerMath subtraction = (a, b) -> a = a - b; \n        myApp.operateBinary(20, 10, subtraction);\n        myApp.operateBinary(a++, b, addition);  \n    }\n}\nclass Test {\n    private Thread thread;\n    public void testThreadHasWrongClassLoader() {\n        Thread t = new Thread(() -> {\n            try {\n                thread.wait(); \n            }\n            catch (Exception e) {\n            }\n        });\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisAllowLocalVars.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        17,
+        25,
+        38,
+        43,
+        49,
+        50
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nclass InputRequireThisAllowLocalVars {\n    private String s1 = \"foo1\";\n    String s2 = \"foo2\";\n    InputRequireThisAllowLocalVars() {\n        s1 = \"bar1\"; \n        String s2;\n        s2 = \"bar2\"; \n    }\n    public int getS1() {\n        String s1 = null;\n        s1 = \"bar\"; \n        s1 = s1; \n        return 1;\n    }\n    public String getS1(String param) {\n        String s1 = null;\n        s1 = param; \n        s1 += s1;   \n        return s1;  \n    }\n    String getS2() {\n        String s2 = null;\n        s2+=s2; \n        return \"return\";\n    }\n    String getS2(String s2) {\n        s2 = null; \n        return s2; \n    }\n    String getS2(int a) {\n        String s2 = \" \";\n        s2 += s2; \n        return s1; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisAnonymousEmpty.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        28,
+        32,
+        55
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisAnonymousEmpty {\n    private int bar; private int Override;\n    int a;\n    interface AnonWithEmpty {\n        public void fooEmpty();\n    }\n    void method() {\n        AnonWithEmpty foo = new AnonWithEmpty() {\n            public void emptyMethod() {\n            }\n            @Override\n            public void fooEmpty() {\n                int a = doSideEffect(); \n            }\n            public int doSideEffect() {\n                return bar; \n            }\n        };\n        new AnonWithEmpty() {\n            int anonMember = 0;\n            @Override\n            public void fooEmpty() {\n                new AnonWithEmpty() {\n                    @Override\n                    public void fooEmpty() {\n                        anonMember++;\n                    }\n                };\n            }\n        };\n        new AnonWithEmpty() {\n            int foobar = 1;\n            @Override\n            public void fooEmpty() {\n                foobar++; \n            }\n        };\n    }\n    void method2() {\n        int a = 1;\n        InputRequireThisAnonymousEmpty obj =\n            new InputRequireThisAnonymousEmpty() {\n                void method() {\n                    a += 1;\n                }\n            };\n    }\n    void anotherMethod() {\n        int var1 = 12;\n        int var2 = 13;\n        Foo obj = new Foo() {\n            void method() {\n                var2 += var1;\n            }\n        };\n        obj.getClass();\n    }\n}\nclass SharkFoo {\n    int var1 = 12;\n}\nclass Foo {\n    int var2 = 13;\n    class SharkFoo {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisCatchVariables.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisCatchVariables extends Thread {\n    private Throwable ex;\n    public InputRequireThisCatchVariables(Throwable ex) {\n        this.ex = ex;\n    }\n    @Override\n    public void run() {\n        if (this.ex != null) {\n            try {\n                exceptional(this.ex);\n            }\n            catch (RuntimeException ex) {\n                if (ex == this.ex) {\n                    debug(\"Expected exception thrown\", ex);\n                }\n                else {\n                    ex.printStackTrace();\n                }\n            }\n            catch (Error err) {\n                if (err == this.ex) {\n                    debug(\"Expected exception thrown\", err);\n                }\n                else {\n                    ex.printStackTrace(); \n                }\n            }\n            catch (Throwable ex) {\n                ex.printStackTrace();\n            }\n        }\n    }\n    private static void exceptional(Throwable ex) {}\n    private static void debug(String message, Throwable err) {}\n    int baseline;\n    public int getBaseline() {\n        int baseline = 12;\n        final int placement = 3;\n        switch (placement) {\n            case 3:\n                baseline = 3 + baseline;\n                return baseline;\n        }\n        return -1;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisEnumInnerClassesAndBugs.java",
+      "expected-problems": 13,
+      "expected-linenumbers": [
+        19,
+        25,
+        39,
+        57,
+        64,
+        121,
+        122,
+        123,
+        129,
+        130,
+        142,
+        150,
+        210
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.awt.Toolkit;\nimport java.io.ByteArrayInputStream;\nimport java.io.IOException;\nimport java.io.InputStream;\npublic class InputRequireThisEnumInnerClassesAndBugs {\n    int i;\n    void method1() {\n        i = 3; \n    }\n    void method2(int i) {\n        i++;\n        this.i = i;\n        method1(); \n        try {\n            this.method1();\n        }\n        catch (RuntimeException e) {\n            e.toString();\n        }\n        this.i--;\n        Integer.toString(10);\n    }\n    <T> void method3()\n    {\n        i = 3; \n    }\n    void method4() {\n        this.<String>method3();\n        this.<I>method3();\n    }\n    int I = 0;\n    private class I {}\n}\nenum MyEnum\n{\n    A,\n    B\n    {\n        void doSomething()\n        {\n            z = 1; \n        }\n    };\n    int z;\n    private MyEnum()\n    {\n        z = 0; \n    }\n}\nclass Bug2123003 {\n    @Rock(band = \"GnR\")\n    private String band;\n    class Inner {\n        @Rock(band = {\"GnR\"})\n        private String band;\n    }\n    class Inner2 {\n        @Rock(band = {\"Tool\"})\n        private String band;\n    }\n    @interface Rock {\n        String[] band() default \"Metallica\";\n    }\n}\nclass Bug1155921 {\n    private static int CONST = 1;\n    private static int static_method() {\n        return 1;\n    }\n    private int method1() {\n        return CONST;\n    }\n    private int method2() {\n        return static_method();\n    }\n}\ninterface Issue155 {\n    String BASE = \"A\";\n    String EXT = BASE + \"B\";\n}\nclass Issue257 {\n    public void foo() {\n        try (final InputStream foo = new ByteArrayInputStream(new byte[512])) {\n            foo.read();\n        }\n        catch (final IOException e) {\n            e.getCause();\n        }\n    }\n}\nclass Issue2240 {\n    int i;\n    void foo() {\n        i++; \n        i++; int i = 1; i++; \n        instanceMethod(); \n    }\n    void instanceMethod() {};\n    class Nested {\n        void bar() {\n            instanceMethod(); \n            i++; \n        }\n    }\n}\nclass Issue2539{\n    void foo(int i) {}\n    static void foo(double i) {}\n    void foo() {}\n    void bar() {\n        foo(1);\n        foo(); \n    }\n}\nclass NestedRechange {\n    final String s = \"\";\n    NestedRechange() {\n        String s = \"t\";\n        s = s.substring(0); \n    }\n    private static class NestedStatic {\n        static final String s = \"\";\n        public void method() {\n            s.substring(0);\n        }\n    }\n}\nclass NestedFrames {\n    int a = 0;\n    int b = 0;\n    public int oneReturnInMethod2() {\n        for (int i = 0; i < 10; i++) {\n            int a = 1;\n            if (a != 2 && true) {\n                if (true | false) {\n                    if (a - a != 0) {\n                        a += 1;\n                    }\n                }\n            }\n        }\n        return a + a * a; \n    }\n    public int oneReturnInMethod3() {\n        for (int b = 0; b < 10; b++) {\n        }\n        return b + b * b; \n    }\n    final NestedFrames NestedFrames = new NestedFrames();\n}\nclass Another {\n    void method1() {\n       for (int i = 0; i < 1; i++) {\n           i = i + 1;\n       }\n       for (int i = 0; i < 1; i++) {\n           for (int j = 0; j < 1; i++) {\n               --i;\n           }\n       }\n   }\n   private int i;\n}\nclass TestClass {\n    private final TestClass field = new TestClass();\n    private String child;\n    public void method() {\n        if (false) {\n            return;\n        } else if (true) {\n            String child = (String) this.child;\n            if (!(this.child instanceof String)) {\n                child = field.get(child); \n            }\n        }\n    }\n    public String get(String s) {\n        return s;\n    }\n}\nclass TestClass3 {\n    private static class Flags {\n        public void method() {\n            final char ch = ' ';\n            parse(ch);\n        }\n        private static void parse(char c) {\n        }\n    }\n    private void parse(String s) {\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisEnumInnerClassesAndBugs2.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        24,
+        123,
+        129,
+        142
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.io.ByteArrayInputStream;\nimport java.io.IOException;\nimport java.io.InputStream;\npublic class InputRequireThisEnumInnerClassesAndBugs2 {\n    int i;\n    void method1() {\n        i = 3;\n    }\n    void method2(int i) {\n        i++;\n        this.i = i;\n        method1(); \n        try {\n            this.method1();\n        }\n        catch (RuntimeException e) {\n            e.toString();\n        }\n        this.i--;\n        Integer.toString(10);\n    }\n    <T> void method3()\n    {\n        i = 3;\n    }\n    void method4() {\n        this.<String>method3();\n        this.<I>method3();\n    }\n    int I = 0;\n    private class I {}\n}\nenum MyEnum2\n{\n    A,\n    B\n    {\n        void doSomething()\n        {\n            z = 1;\n        }\n    };\n    int z;\n    private MyEnum2()\n    {\n        z = 0;\n    }\n}\nclass Bug21230032 {\n    @Rock(band = \"GnR\")\n    private String band;\n    class Inner {\n        @Rock(band = {\"GnR\"})\n        private String band;\n    }\n    class Inner2 {\n        @Rock(band = {\"Tool\"})\n        private String band;\n    }\n    @interface Rock {\n        String[] band() default \"Metallica\";\n    }\n}\nclass Bug11559212 {\n    private static int CONST = 1;\n    private static int static_method() {\n        return 1;\n    }\n    private int method1() {\n        return CONST;\n    }\n    private int method2() {\n        return static_method();\n    }\n}\ninterface Issue1552 {\n    String BASE = \"A\";\n    String EXT = BASE + \"B\";\n}\nclass Issue2572 {\n    public void foo() {\n        try (final InputStream foo = new ByteArrayInputStream(new byte[512])) {\n            foo.read();\n        }\n        catch (final IOException e) {\n            e.getCause();\n        }\n    }\n}\nclass Issue22402 {\n    int i;\n    void foo() {\n        i++;\n        i++; int i = 1; i++;\n        instanceMethod(); \n    }\n    void instanceMethod() {};\n    class Nested {\n        void bar() {\n            instanceMethod(); \n            i++;\n        }\n    }\n}\nclass Issue25392{\n    void foo(int i) {}\n    static void foo(double i) {}\n    void foo() {}\n    void bar() {\n        foo(1);\n        foo(); \n    }\n}\nclass NestedRechange2 {\n    final String s = \"\";\n    NestedRechange2() {\n        String s = \"t\";\n        s = s.substring(0);\n    }\n    private static class NestedStatic {\n        static final String s = \"\";\n        public void method() {\n            s.substring(0);\n        }\n    }\n}\nclass NestedFrames2 {\n    int a = 0;\n    int b = 0;\n    public int oneReturnInMethod2() {\n        for (int i = 0; i < 10; i++) {\n            int a = 1;\n            if (a != 2 && true) {\n                if (true | false) {\n                    if (a - a != 0) {\n                        a += 1;\n                    }\n                }\n            }\n        }\n        return a + a * a;\n    }\n    public int oneReturnInMethod3() {\n        for (int b = 0; b < 10; b++) {\n        }\n        return b + b * b;\n    }\n    final NestedFrames NestedFrames = new NestedFrames();\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisEnumInnerClassesAndBugs3.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        18,
+        38,
+        57,
+        64,
+        121,
+        122,
+        130,
+        151
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.io.ByteArrayInputStream;\nimport java.io.IOException;\nimport java.io.InputStream;\npublic class InputRequireThisEnumInnerClassesAndBugs3 {\n    int i;\n    void method1() {\n        i = 3; \n    }\n    void method2(int i) {\n        i++;\n        this.i = i;\n        method1();\n        try {\n            this.method1();\n        }\n        catch (RuntimeException e) {\n            e.toString();\n        }\n        this.i--;\n        Integer.toString(10);\n    }\n    <T> void method3()\n    {\n        i = 3; \n    }\n    void method4() {\n        this.<String>method3();\n        this.<I>method3();\n    }\n    int I = 0;\n    private class I {}\n}\nenum MyEnum3\n{\n    A,\n    B\n    {\n        void doSomething()\n        {\n            z = 1; \n        }\n    };\n    int z;\n    private MyEnum3()\n    {\n        z = 0; \n    }\n}\nclass Bug21230033 {\n    @Rock(band = \"GnR\")\n    private String band;\n    class Inner {\n        @Rock(band = {\"GnR\"})\n        private String band;\n    }\n    class Inner2 {\n        @Rock(band = {\"Tool\"})\n        private String band;\n    }\n    @interface Rock {\n        String[] band() default \"Metallica\";\n    }\n}\nclass Bug11559213 {\n    private static int CONST = 1;\n    private static int static_method() {\n        return 1;\n    }\n    private int method1() {\n        return CONST;\n    }\n    private int method2() {\n        return static_method();\n    }\n}\ninterface Issue1553 {\n    String BASE = \"A\";\n    String EXT = BASE + \"B\";\n}\nclass Issue2573 {\n    public void foo() {\n        try (final InputStream foo = new ByteArrayInputStream(new byte[512])) {\n            foo.read();\n        }\n        catch (final IOException e) {\n            e.getCause();\n        }\n    }\n}\nclass Issue22403 {\n    int i;\n    void foo() {\n        i++; \n        i++; int i = 1; i++; \n        instanceMethod();\n    }\n    void instanceMethod() {};\n    class Nested {\n        void bar() {\n            instanceMethod();\n            i++; \n        }\n    }\n}\nclass Issue25393{\n    void foo(int i) {}\n    static void foo(double i) {}\n    void foo() {}\n    void bar() {\n        foo(1);\n        foo();\n    }\n}\nclass NestedRechange3 {\n    final String s = \"\";\n    NestedRechange3() {\n        String s = \"t\";\n        s = s.substring(0); \n    }\n    private static class NestedStatic {\n        static final String s = \"\";\n        public void method() {\n            s.substring(0);\n        }\n    }\n}\nclass NestedFrames3 {\n    int a = 0;\n    int b = 0;\n    public int oneReturnInMethod2() {\n        for (int i = 0; i < 10; i++) {\n            int a = 1;\n            if (a != 2 && true) {\n                if (true | false) {\n                    if (a - a != 0) {\n                        a += 1;\n                    }\n                }\n            }\n        }\n        return a + a * a; \n    }\n    public int oneReturnInMethod3() {\n        for (int b = 0; b < 10; b++) {\n        }\n        return b + b * b; \n    }\n    final NestedFrames NestedFrames = new NestedFrames();\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisExpressions.java",
+      "expected-problems": 19,
+      "expected-linenumbers": [
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisExpressions {\n    String id;\n    int length;\n    boolean b;\n    public void method(int[] arr) {\n        Object plus = \"\" + id; \n        Object minus = 1 - length; \n        Object multi = 1 * length; \n        Object div = 1 / length; \n        Object mod = 1 % length; \n        Object lt = 1 < length; \n        Object gt = 1 > length; \n        Object le = 1 <= length; \n        Object ge = 1 >= length; \n        Object equal = false == b; \n        Object notEqual = false != b; \n        Object sl = 1 << length; \n        Object sr = 1 >> length; \n        Object bsr = 1 >>> length; \n        Object and = 1 & length; \n        Object xor = 1 ^ length; \n        Object bor = 1 | length; \n        Object lor = false || b; \n        Object land = false && b; \n    }\n    public void methodThis(int[] arr) {\n        Object plus = \"\" + this.id;\n        Object minus = 1 - this.length;\n        Object multi = 1 * this.length;\n        Object div = 1 / this.length;\n        Object mod = 1 % this.length;\n        Object lt = 1 < this.length;\n        Object gt = 1 > this.length;\n        Object le = 1 <= this.length;\n        Object ge = 1 >= this.length;\n        Object equal = false == this.b;\n        Object notEqual = false != this.b;\n        Object sl = 1 << this.length;\n        Object sr = 1 >> this.length;\n        Object bsr = 1 >>> this.length;\n        Object and = 1 & this.length;\n        Object xor = 1 ^ this.length;\n        Object bor = 1 | this.length;\n        Object lor = false || this.b;\n        Object land = false && this.b;\n        Object fields = arr.length + this.length;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisExtendedMethod.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.util.logging.Logger;\npublic class InputRequireThisExtendedMethod\n{\n    public class Check {\n        private Logger log1 = Logger.getLogger(getClass().getName());\n    }\n    String ELIST;\n    String method(Object a) {\n        String ELIST = \"abc\";\n        ELIST = this.method(new Check() {\n        });\n        return \"\";\n    }\n    int EXPR;\n    String method(int EXPR) {\n        EXPR += 12; \n        return \"someString\";\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisFinalInstanceVariable.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        17,
+        18
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisFinalInstanceVariable {\n    final int x = 1;\n    final int y = 2;\n    final int z;\n    public InputRequireThisFinalInstanceVariable(int y, int z) {\n        y = y; \n        z = z; \n    }\n    {\n        this.z = 3;\n    }\n    public void foo(int x) {\n        x = x;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisFor.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        21,
+        28
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.nio.file.Path;\npublic class InputRequireThisFor {\n    private String name;\n    int bottom;\n    public void method1() {\n        for (int i = 0; i < 10; i++) {\n            int bottom = i - 4;\n            bottom = bottom > 0 ? bottom - 1 : bottom; \n        }\n    }\n    public void method2() {\n        for (String name : new String[]{}) {\n        }\n        Path jarfile = Path.of(name + \".jar\"); \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisMethodReferences.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        23
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.util.Arrays;\nimport java.util.Collections;\nimport java.util.Set;\nimport java.util.TreeSet;\nimport java.util.stream.Collectors;\npublic class InputRequireThisMethodReferences {\n    private Set<String> tags = Collections.unmodifiableSortedSet(\n        Arrays.stream(new String[] {\"br\", \"li\", \"dt\", \"dd\", \"hr\", \"img\", \"p\", \"td\", \"tr\", \"th\",})\n            .collect(Collectors.toCollection(TreeSet::new)));\n    public InputRequireThisMethodReferences(Set<String> tags) {\n        tags = tags; \n    }\n    public InputRequireThisMethodReferences() {\n        this.tags = Arrays.stream(\n            new String[] {\"br\", \"li\", \"dt\", \"dd\", \"hr\", \"img\", \"p\", \"td\", \"tr\", \"th\",})\n            .collect(Collectors.toCollection(TreeSet::new));\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisRecordAsTopLevel.java",
+      "expected-problems": 7,
+      "expected-linenumbers": [
+        16,
+        17,
+        18,
+        25,
+        29,
+        37,
+        44
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic record InputRequireThisRecordAsTopLevel(int x, int y) {\n    private static int i; \n    public InputRequireThisRecordAsTopLevel {\n        method1(); \n        method2(42); \n        method3(); \n        int z = x + y + 2; \n        System.out.println(y + x); \n    }\n    InputRequireThisRecordAsTopLevel(int x) {\n        this(x,42);\n        method1(); \n    }\n    public int getIPlusX() {\n        return  i + x; \n    }\n    public static void setI(int i) {\n        InputRequireThisRecordAsTopLevel.i = i;\n    }\n    void method1() {\n        i = 3 + y; \n        int w = this.x;\n    }\n    void method2(int i) {\n        i++;\n        this.setI(i);\n        method1(); \n        try {\n            this.method1();\n        } catch (RuntimeException e) {\n            e.toString();\n        }\n        this.setI(this.getIPlusX() - 1);\n        Integer.toString(10);\n    }\n    <T> void method3() {\n        setI(3);\n    }\n    void method4() {\n        this.<String>method3();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisRecordDefault.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        25
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic record InputRequireThisRecordDefault(int x, int y) {\n    private static int i; \n    public InputRequireThisRecordDefault {\n        method1();\n        method2(42);\n        method3();\n        int z = x + y + 2;\n        System.out.println(y + x);\n    }\n    InputRequireThisRecordDefault(int x) {\n        this(x,42);\n        x = x; \n    }\n    public int getIPlusX() {\n        return  i + x;\n    }\n    public static void setI(int i) {\n        InputRequireThisRecordDefault.i = i;\n    }\n    void method1() {\n        i = 3 + y;\n        int w = this.x;\n    }\n    void method2(int i) {\n        i++;\n        this.setI(i);\n        method1();\n        try {\n            this.method1();\n        } catch (RuntimeException e) {\n            e.toString();\n        }\n        this.setI(this.getIPlusX() - 1);\n        Integer.toString(10);\n    }\n    <T> void method3() {\n        setI(3);\n    }\n    void method4() {\n        this.<String>method3();\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisRecordsAndCompactCtors.java",
+      "expected-problems": 8,
+      "expected-linenumbers": [
+        17,
+        18,
+        19,
+        29,
+        55,
+        56,
+        57,
+        67
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisRecordsAndCompactCtors {\n    public static record MyRecord1(Integer x, String str) {\n        static int i; \n        public MyRecord1 {\n            method1(); \n            method2(42); \n            method3(); \n        }\n        void method1() {\n            i = 3; \n        }\n        void method2(int i) {\n            i++;\n            this.i = i;\n            method1(); \n            try {\n                this.method1();\n            }\n            catch (RuntimeException e) {\n                e.toString();\n            }\n            this.i--;\n            Integer.toString(10);\n        }\n        <T> void method3()\n        {\n            i = 3; \n        }\n        void method4() {\n            this.<String>method3();\n        }\n    }\n    public static class MyClass {\n        static int i;\n        public MyClass(int i) {\n            method1(); \n            method2(i); \n            method3(); \n        }\n        void method1() {\n            i = 3; \n        }\n        void method2(int i) {\n            i++;\n            this.i = i;\n            method1(); \n            try {\n                this.method1();\n            }\n            catch (RuntimeException e) {\n                e.toString();\n            }\n            this.i--;\n            Integer.toString(10);\n        }\n        <T> void method3()\n        {\n            i = 3; \n        }\n        void method4() {\n            this.<String>method3();\n        }\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisRecordsWithCheckFieldsOverlap.java",
+      "expected-problems": 3,
+      "expected-linenumbers": [
+        19,
+        38,
+        45
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic record InputRequireThisRecordsWithCheckFieldsOverlap(String a) {\n    void method() {\n        String a = \"BUG\";\n        a = a.substring(0, 1); \n    }\n    void method2() {\n        String x = a; \n        String y = this.a; \n        String a = this.a; \n        a += a; \n    }\n}\nclass InputRequireThisRecordsWithCheckFieldsClassTwo {\n    public final String a;\n    public InputRequireThisRecordsWithCheckFieldsClassTwo(String a) {\n        this.a = a;\n    }\n    void method() {\n        String a = \"BUG\";\n        a = a.substring(0, 1); \n    }\n    void method2() {\n        String x = a; \n        String y = this.a; \n        String a = this.a; \n        a += a; \n    }\n    public String a() {\n        return a; \n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisSimple.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        15,
+        16
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisSimple {\n        private final int number = 1;\n    public int check() {\n        int sum = number; \n        sum += other(); \n        return sum;\n    }\n    private int other() {\n            return 0;\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisTryWithResourcesOnlyOverlappingFalse.java",
+      "expected-problems": 6,
+      "expected-linenumbers": [
+        43,
+        56,
+        67,
+        75,
+        101,
+        109
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.io.*;\nimport java.util.Scanner;\npublic class InputRequireThisTryWithResourcesOnlyOverlappingFalse implements AutoCloseable {\n    private BufferedReader fldBufferedReader;\n    private InputStreamReader fldStreamReader;\n    private Scanner fldScanner;\n    private String fldCharset = \"utf-8\";\n    void oneResource() {\n        try (BufferedReader fldBufferedReader\n                     = new BufferedReader(new InputStreamReader(null, \"utf-8\"))) { }\n        catch (IOException e) { }\n    }\n    void twoResourcesReferencingEachOther() {\n        try (InputStreamReader fldStreamReader = new InputStreamReader(null, \"utf-8\");\n             BufferedReader fldBufferedReader = new BufferedReader(fldStreamReader)) { }\n        catch (IOException e) { }\n    }\n    void threeResourcesReferencingEachOther() {\n        try (InputStreamReader fldStreamReader = new InputStreamReader(null, \"utf-8\");\n             BufferedReader fldBufferedReader = new BufferedReader(fldStreamReader);\n             Scanner fldScanner\n                     = new Scanner(fldStreamReader.toString()\n                     + fldBufferedReader.toString())) { }\n        catch (IOException e) { }\n    }\n    void failToHandleParameter() {\n        try (BufferedReader fldBufferedReader = new BufferedReader(new InputStreamReader(\n                null, fldCharset))) { } \n        catch (IOException e) { }\n    }\n    void handleParameter() {\n        try (BufferedReader fldBufferedReader = new BufferedReader(\n                new InputStreamReader(null, this.fldCharset))) { }\n        catch (IOException e) { }\n    }\n    void noResources() {\n        try {\n            int a = 5;\n            fldCharset += a; \n        }\n        catch (Exception ex) { }\n    }\n    String methodToInvoke() {\n        return \"string\";\n    }\n    void methodInvoke() {\n        try (BufferedReader fldBufferedReader = new BufferedReader(\n                new InputStreamReader(null, methodToInvoke()))) { }\n        catch (Exception ex) { }\n    }\n    void methodIdentCopy() {\n        try (BufferedReader methodToInvoke = new BufferedReader(\n                new InputStreamReader(null, this.methodToInvoke()))) {\n            String a = methodToInvoke() + methodToInvoke.toString();\n        }\n        catch (Exception ex) { }\n    }\n    final static InputRequireThisTryWithResources r1 = new InputRequireThisTryWithResources();\n    final InputRequireThisTryWithResources r2 = new InputRequireThisTryWithResources();\n    static InputRequireThisTryWithResources r3 = new InputRequireThisTryWithResources();\n    InputRequireThisTryWithResources r4 = new InputRequireThisTryWithResources();\n    void staticVariables() {\n        try (r1) { }\n        catch (Exception e) { }\n        try (r1.r2) { }\n        catch (Exception e) { }\n        try (r1.r2.r4.r2.r4.r2) { }\n        catch (Exception e) { }\n    }\n    void nestedTryWithResources() {\n        try (InputStreamReader fldStreamReader = new InputStreamReader(null, \"utf-8\")) {\n            try (BufferedReader fldBufferedReader = new BufferedReader(fldStreamReader)) {\n                try (Scanner fldScanner = new Scanner(\n                        fldBufferedReader.toString() + fldStreamReader.toString())) { }\n            }\n            try (Scanner fldScanner = new Scanner(fldBufferedReader.toString()\n                    + fldStreamReader.toString())) { }\n            String a = fldStreamReader.toString()\n                    + fldBufferedReader.toString() + fldScanner.toString(); \n        }\n        catch (IOException e) {\n            String a = fldStreamReader.toString() \n                    + fldBufferedReader.toString() + fldScanner.toString(); \n        }\n    }\n    @Override\n    public void close() throws Exception { }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisValidateOnlyOverlappingFalse.java",
+      "expected-problems": 43,
+      "expected-linenumbers": [
+        28,
+        29,
+        30,
+        31,
+        35,
+        36,
+        37,
+        41,
+        45,
+        49,
+        51,
+        53,
+        57,
+        58,
+        68,
+        69,
+        88,
+        127,
+        136,
+        140,
+        176,
+        177,
+        178,
+        180,
+        184,
+        185,
+        186,
+        188,
+        193,
+        197,
+        218,
+        225,
+        236,
+        246,
+        261,
+        270,
+        278,
+        309,
+        348,
+        382,
+        384,
+        392,
+        498
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.util.*;\npublic class InputRequireThisValidateOnlyOverlappingFalse {\n    private static String fieldStatic = \"fieldStatic\";\n    private final long fieldFinal1;\n    private final long fieldFinal2;\n    private final BitSet fieldFinal3;\n    private String field1;\n    private String field2;\n    private String field3 = \"some string\";\n    private boolean booleanField;\n    private int intField;\n    public InputRequireThisValidateOnlyOverlappingFalse(String field1) {\n        field1 = field1; \n        fieldFinal1 = 0; \n        fieldFinal2 = 0; \n        fieldFinal3 = new BitSet(); \n    }\n    public InputRequireThisValidateOnlyOverlappingFalse(long value) {\n        fieldFinal1 = value; \n        fieldFinal2 = 0; \n        fieldFinal3 = new BitSet(); \n    }\n    public InputRequireThisValidateOnlyOverlappingFalse() {\n        fieldFinal1 = 0; \n        long fieldFinal2 = 0L;\n        fieldFinal2 = 1L;\n        this.fieldFinal2 = fieldFinal2;\n        fieldFinal3 = new BitSet(); \n    }\n    public InputRequireThisValidateOnlyOverlappingFalse(String name, long id) {\n        fieldFinal1 = 0; \n        long field1 = 0L;\n        field1 = field1; \n        this.fieldFinal2 = 1L;\n        fieldFinal3 = new BitSet(); \n    }\n    public InputRequireThisValidateOnlyOverlappingFalse(int param) {\n        fieldFinal2 = 0L; \n        fieldFinal3 = new BitSet(); \n        long fieldFinal1 = 1L;\n        try {\n            fieldFinal1 = 2L;\n        }\n        catch (Exception ex) {}\n        this.fieldFinal1 = fieldFinal1;\n    }\n    public InputRequireThisValidateOnlyOverlappingFalse(BitSet fieldFinal3) {\n        fieldFinal1 = 1L; \n        fieldFinal2 = 0L; \n        fieldFinal3 = new BitSet();\n        if (true) {\n            fieldFinal3 = (BitSet) fieldFinal3.clone();\n        }\n        this.fieldFinal3 = fieldFinal3;\n    }\n    void foo1(String methodParam) {\n        methodParam = methodParam;\n    }\n    void foo2() {\n        String localVar = \"values\";\n        localVar = localVar;\n    }\n    void foo3() {\n        String field1 = \"values\";\n        field1 = field1; \n    }\n    void foo4(String methodParam) {\n        fieldStatic = methodParam;\n    }\n    void foo5(String methodParam) {\n        methodParam = methodParam + \"string\";\n    }\n    void foo6(String field1) {\n        field1 = this.field1 + field1;\n        this.field1 = field1 + this.field1;\n        field1 = field1 + this.field1;\n        field1 = this.field1 + this.field1;\n        this.field1 = this.field1 + this.field1;\n        this.field1 = this.field1 + field1;\n        field1 += field1;\n    }\n    String addSuffixToParameter(String methodParam) {\n        return methodParam += \"suffix\";\n    }\n    String addSuf2F(String field1) {\n        return field1 += \"suffix\";\n    }\n    String addSuffixToThisField(String field1) {\n        return this.field1 += \"suffix\";\n    }\n    static void foo7(String fieldStatic) {\n        fieldStatic = fieldStatic;\n    }\n    void foo8(Long field1) {\n        field1 += field1; \n    }\n    void foo9(Long fieldFinal1) {\n        fieldFinal1 += fieldFinal1;\n    }\n    void method1() {\n        field1 = \"2\"; \n    }\n    void method2() {\n        method1() ; \n    }\n    void method3() {\n        staticFoo();\n        staticTwoArgs(\"message\", \"arg\");\n        staticTwoArgs(\"message\", 1);\n        this.method1() ;\n    }\n    static void staticFoo() { }\n    static void foo10() {\n        staticFoo();\n        staticTwoArgs(\"message\", \"arg\");\n    }\n    static void staticTwoArgs(String message1, String argument) {}\n    void staticTwoArgs(String message1, int argument) {}\n    static void foo16() {\n        long fieldFinal1 = 5L;\n        fieldFinal1 = 11L;\n    }\n    static void foo17() {\n        String fieldStatic = \"\";\n        fieldStatic = \"Hello, World!\";\n    }\n    InputRequireThisValidateOnlyOverlappingFalse(boolean flag) {\n        fieldFinal1 = 0L; \n        fieldFinal2 = 0L; \n        fieldFinal3 = new BitSet(); \n        long field1 = 1L;\n        field1 = field1; \n    }\n    InputRequireThisValidateOnlyOverlappingFalse(boolean flag, String name) {\n        fieldFinal1 = 0L; \n        fieldFinal2 = 0L; \n        fieldFinal3 = new BitSet(); \n        long field1 = 1L;\n        field1 = field1; \n        return;\n    }\n    void foo18() {\n        field1 = \"Hello\"; \n    }\n    void foo19(String field1) {\n        field1 = \"Hello\"; \n    }\n    void foo20() {\n        boolean foo21 = this.foo21(\"\");\n        if (foo21) {\n        }\n    }\n    boolean foo21(String s) {\n        return true;\n    }\n    void foo22() {\n        long fieldFinal1 = 1L;\n        fieldFinal1 = fieldFinal1;\n    }\n    void foo23() {\n        field1 = \"Hello!\"; \n    }\n    void foo24() {\n        String field1 = \"Hello\";\n        field1 = \"Java\"; \n        this.booleanField = true;\n        this.booleanField = booleanField; \n    }\n    void foo25() {\n        try {\n            if (true) {\n                String field1 = \"Hello, World!\";\n                if (true) {\n                    field1 = new String(); \n                }\n                else {\n                    field1 += field1; \n                }\n            }\n        }\n        catch (Exception ex) {\n        }\n    }\n    void foo26(String field1) {\n        field1 = field1.replace('/', '*'); \n    }\n    void foo27() {\n        int intField = -1;\n        if (intField == -1) {\n            intField = 20;\n        }\n        else {\n            intField = this.intField / 100;\n        }\n    }\n    void foo28() {\n        boolean booleanField = true;\n        booleanField = !booleanField; \n    }\n    static void foo29(String field1) {\n        field1 = true ? \"field1\" : field1;\n    }\n    void foo30(String field1) {\n        field1 = true ? \"field1\" : field1; \n    }\n    void foo31(String field1) {\n        field1 = this.field1;\n    }\n    String foo32(String field1) {\n        field1 = addSuf2F(field1); \n        return field1;\n    }\n    String foo33(String field1 ) {\n        field1 = addSuf2F(field1); \n        return \"New String\";\n    }\n    String foo34(String field1) {\n        field1 = field1.replace('A', 'B');\n        if (field1.contains(\"C\")) {\n            return field1;\n        }\n        else {\n            return field1 + 'C';\n        }\n    }\n    String foo35() {\n        String field1 = \"values\";\n        field1 = field1;\n        return field1;\n    }\n    void foo36(String field1) {\n        field1 = field1.replace('/', '*');\n        field1 = this.field1;\n    }\n    String foo37(String field1) {\n        field1 += \"suffix\"; \n        return \"New string\";\n    }\n    static void foo38() {\n        fieldStatic = \"\";\n    }\n    static void foo39() {\n        boolean booleanField = true;\n        booleanField = !booleanField;\n    }\n    static void foo40() {\n        try {\n            boolean booleanField = true;\n            booleanField = !booleanField;\n        }\n        catch (Exception e) {}\n    }\n    static {\n        fieldStatic = \"\";\n    }\n    {\n    }\n    {\n        String field1 = \"\";\n        field1 = field1; \n    }\n    static {\n        fieldStatic = \"\";\n        String field1 = \"\";\n        field1 = field1;\n    }\n    void foo41(long fieldFinal1) {\n        fieldFinal1 = fieldFinal1;\n    }\n    void foo42(String fieldStatic) {\n        this.fieldStatic = fieldStatic;\n    }\n    void foo43(String fieldStatic) {\n        fieldStatic = fieldStatic;\n    }\n    void foo44(String fieldStatic) {\n        fieldStatic = this.fieldStatic;\n    }\n    private String action;\n    public String getAction() {\n        return this.action;\n    }\n    public String foo45() {\n        String action = getAction(); \n        if (true) {\n            return processAction(\"action\"); \n        }\n        else if (action.endsWith(\"/\")) {\n            if (action.startsWith(\"/\")) {\n                action = \"\" + action;\n            }\n        }\n        action = \"action\"; \n        return processAction(action); \n    }\n    private String processAction(String action) {\n        return \"\";\n    }\n    public InputRequireThisValidateOnlyOverlappingFalse(long fieldFinal1, long fieldFinal2,\n                                                        BitSet fieldFinal3, boolean booleanField) {\n        this.fieldFinal1 = fieldFinal1;\n        this.fieldFinal2 = fieldFinal2;\n        this.fieldFinal3 = fieldFinal3;\n        booleanField = this.booleanField;\n        if (booleanField) {\n            booleanField = \"Hello, World!\".equals(\"Hello, Checkstyle!\");\n        }\n        this.booleanField = booleanField;\n    }\n    void foo46(boolean booleanField) {\n        booleanField = this.booleanField;\n        if (booleanField) {\n            booleanField = \"Hello, World!\".equals(\"Hello, Checkstyle!\");\n        }\n        this.booleanField = booleanField;\n    }\n    static void foo47(String fieldStatic) {\n        fieldStatic = \"Andrei\";\n    }\n    void foo48(long fieldFinal1) {\n        fieldFinal1 = 1L;\n    }\n    private boolean foo49(boolean booleanField) {\n        boolean suppressionSourceExists = true;\n        try {\n        }\n        catch (Exception ex) {\n            suppressionSourceExists = false;\n        }\n        finally {\n            if (booleanField) {\n                try {\n                }\n                catch (Exception ignored) {\n                    this.booleanField = false;\n                }\n            }\n        }\n        return suppressionSourceExists;\n    }\n    void foo50(String fieldStatic) {\n        fieldStatic = fieldStatic;\n    }\n    void foo51(String methodParam) {\n        fieldStatic = methodParam;\n    }\n    void foo52(String fieldStatic) {\n        fieldStatic += fieldStatic;\n    }\n    void foo53(String fieldStatic) {\n        fieldStatic += fieldStatic;\n    }\n    void foo54(String methodParam) {\n        fieldStatic += methodParam;\n    }\n    void foo55(String methodParam) {\n        fieldStatic += fieldStatic;\n    }\n    void foo56(boolean booleanField) { booleanField = this.booleanField; }\n    boolean foo57(boolean booleanField) { booleanField = !booleanField;  return booleanField; }\n}\nclass Issue6264 {\n    private final String hashCode;\n    Issue6264() {\n        this.hashCode = new String();\n    }\n    private void hashCodeMethod(String param) {\n        hashCode();\n    }\n}\nclass Issue7306 {\n    List<String> add = new ArrayList<>();\n    List<String> singletonList = new ArrayList<>();\n    void someMethod() {\n        List<String> test = new ArrayList<>();\n        test.forEach(this.add::add);\n        test.forEach(test::add);\n        test.forEach(Collections::singletonList);\n        test.forEach(add::add); \n    }\n}\nclass AnotherOverlappingFalse {\n    private String name;\n    public void bind() {\n        new Object() {\n            @Override\n            public String toString() {\n                String name = null;\n                if ( true ) {\n                    name = String.format(Locale.US, name);\n                }\n                return name;\n            }\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputRequireThisValidateOnlyOverlappingFalseLeaves.java",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        24,
+        35
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\npublic class InputRequireThisValidateOnlyOverlappingFalseLeaves {\n    InputRequireThisValidateOnlyOverlappingFalseLeaves() {}\n    class NestedClass {\n        NestedClass() {}\n    }\n    interface NestedInterface {}\n    enum NestedEnum {}\n    @interface NestedAnnotation {}\n    record NestedRecord() {}\n    private int id(int i) {\n        return i;\n    }\n    private final int field = id(0); \n}\nclass Method {\n    private boolean _a = false;\n    public boolean equals(Object object) {\n        new NestedClassOne() {\n            public void method() {}\n            public void method2() {}\n        };\n        return _a; \n    }\n}\nclass NestedClassOne {}"
+    },
+    {
+      "description": "Auto test from InputRequireThisValidateOnlyOverlappingTrue.java",
+      "expected-problems": 12,
+      "expected-linenumbers": [
+        28,
+        51,
+        88,
+        127,
+        180,
+        188,
+        246,
+        261,
+        270,
+        283,
+        309,
+        347
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.requirethis;\nimport java.util.BitSet;\npublic class InputRequireThisValidateOnlyOverlappingTrue {\n    private static String fieldStatic = \"fieldStatic\";\n    private final long fieldFinal1;\n    private final long fieldFinal2;\n    private final BitSet fieldFinal3;\n    private String field1;\n    private String field2;\n    private String field3 = \"some string\";\n    private boolean booleanField;\n    private int intField;\n    public InputRequireThisValidateOnlyOverlappingTrue(String field1) {\n        field1 = field1; \n        fieldFinal1 = 0;\n        fieldFinal2 = 0;\n        fieldFinal3 = new BitSet();\n    }\n    public InputRequireThisValidateOnlyOverlappingTrue(long value) {\n        fieldFinal1 = value;\n        fieldFinal2 = 0;\n        fieldFinal3 = new BitSet();\n    }\n    public InputRequireThisValidateOnlyOverlappingTrue() {\n        fieldFinal1 = 0;\n        long fieldFinal2 = 0L;\n        fieldFinal2 = 1L;\n        this.fieldFinal2 = fieldFinal2;\n        fieldFinal3 = new BitSet();\n    }\n    public InputRequireThisValidateOnlyOverlappingTrue(String name, long id) {\n        fieldFinal1 = 0;\n        long field1 = 0L;\n        field1 = field1; \n        this.fieldFinal2 = 1L;\n        fieldFinal3 = new BitSet();\n    }\n    public InputRequireThisValidateOnlyOverlappingTrue(int param) {\n        fieldFinal2 = 0L;\n        fieldFinal3 = new BitSet();\n        long finalField1 = 1L;\n        try {\n            finalField1 = 2L;\n        }\n        catch (Exception ex) {}\n        this.fieldFinal1 = finalField1;\n    }\n    public InputRequireThisValidateOnlyOverlappingTrue(BitSet fieldFinal3) {\n        fieldFinal1 = 1L;\n        fieldFinal2 = 0L;\n        fieldFinal3 = new BitSet();\n        if (true) {\n            fieldFinal3 = (BitSet) fieldFinal3.clone();\n        }\n        this.fieldFinal3 = fieldFinal3;\n    }\n    void foo1(String methodParam) {\n        methodParam = methodParam;\n    }\n    void foo2() {\n        String localVar = \"values\";\n        localVar = localVar;\n    }\n    void foo3() {\n        String field1 = \"values\";\n        field1 = field1; \n    }\n    void foo4(String methodParam) {\n        fieldStatic = methodParam;\n    }\n    void foo5(String methodParam) {\n        methodParam = methodParam + \"string\";\n    }\n    void foo6(String field1) {\n        field1 = this.field1 + field1;\n        this.field1 = field1 + field1;\n        field1 = field1 + this.field1;\n        field1 = this.field1 + this.field1;\n        this.field1 = this.field1 + this.field1;\n        this.field1 = this.field1 + field1;\n        field1 += field1;\n    }\n    String addSuffixToParameter(String methodParam) {\n        return methodParam += \"suffix\";\n    }\n    String addSuf2F(String field1) {\n        return field1 += \"suffix\";\n    }\n    String addSuffixToThisField(String field1) {\n        return this.field1 += \"suffix\";\n    }\n    static void foo7(String fieldStatic) {\n        fieldStatic = fieldStatic;\n    }\n    void foo8(Long field1) {\n        field1 += field1; \n    }\n    void foo9(Long fieldFinal1) {\n        fieldFinal1 += fieldFinal1;\n    }\n    void method1() {\n        field1 = \"2\";\n    }\n    void method2() {\n        method1();\n    }\n    void method3() {\n        staticFoo();\n        staticTwoArgs(\"message\", \"arg\");\n        staticTwoArgs(\"message\", 1);\n        this.method1() ;\n    }\n    static void staticFoo() { }\n    static void foo10() {\n        staticFoo();\n        staticTwoArgs(\"message\", \"arg\");\n    }\n    static void staticTwoArgs(String message1, String argument) {}\n    void staticTwoArgs(String message1, int argument) {}\n    static void foo16() {\n        long fieldFinal1 = 5L;\n        fieldFinal1 = 11L;\n    }\n    static void foo17() {\n        String fieldStatic = \"\";\n        fieldStatic = \"Hello, World!\";\n    }\n    InputRequireThisValidateOnlyOverlappingTrue(boolean flag) {\n        fieldFinal1 = 0L;\n        fieldFinal2 = 0L;\n        fieldFinal3 = new BitSet();\n        long field1 = 1L;\n        field1 = field1; \n    }\n    InputRequireThisValidateOnlyOverlappingTrue(boolean flag, String name) {\n        fieldFinal1 = 0L;\n        fieldFinal2 = 0L;\n        fieldFinal3 = new BitSet();\n        long field1 = 1L;\n        field1 = field1; \n        return;\n    }\n    void foo18() {\n        field1 = \"Hello\";\n    }\n    void foo19(String field1) {\n        field1 = \"Hello\";\n    }\n    void foo20() {\n        boolean foo21 = this.foo21(\"\");\n        if (foo21) {\n        }\n    }\n    boolean foo21(String s) {\n        return true;\n    }\n    void foo22() {\n        long fieldFinal1 = 1L;\n        fieldFinal1 = fieldFinal1;\n    }\n    void foo23() {\n        field1 = \"Hello!\";\n    }\n    void foo24() {\n        String field1 = \"Hello\";\n        field1 = \"Java\";\n        this.booleanField = true;\n        this.booleanField = booleanField;\n    }\n    void foo25() {\n        try {\n            if (true) {\n                String field1 = \"Hello, World!\";\n                if (true) {\n                    field1 = new String();\n                }\n                else {\n                    field1 = new String();\n                }\n            }\n        }\n        catch (Exception ex) {\n        }\n    }\n    void foo26(String field1) {\n        field1 = field1.replace('/', '*'); \n    }\n    void foo27() {\n        int intField = -1;\n        if (intField == -1) {\n            intField = 20;\n        }\n        else {\n            intField = this.intField / 100;\n        }\n    }\n    void foo28() {\n        boolean booleanField = true;\n        booleanField = !booleanField; \n    }\n    static void foo29(String field1) {\n        field1 = true ? \"field1\" : field1;\n    }\n    void foo30(String field1) {\n        field1 = true ? \"field1\" : field1; \n    }\n    void foo31(String field1) {\n        field1 = this.field1;\n    }\n    String foo32(String field1) {\n        field1 = addSuf2F(field1); \n        return field1;\n    }\n    String foo33(String field1) {\n        field1 = addSuf2F(field1); \n        return \"New String\";\n    }\n    String foo34(String field1) {\n        field1 = field1.replace('A', 'B');\n        if (field1.contains(\"C\")) {\n            return field1;\n        }\n        else {\n            return field1 + 'C';\n        }\n    }\n    String foo35() {\n        String field1 = \"values\";\n        field1 = field1;\n        return field1;\n    }\n    void foo36(String field1) {\n        field1 = field1.replace('/', '*');\n        field1 = this.field1;\n    }\n    String foo37(String field1) {\n        field1 += \"suffix\"; \n        return \"New string\";\n    }\n    static void foo38() {\n        fieldStatic = \"\";\n    }\n    static void foo39() {\n        boolean booleanField = true;\n        booleanField = !booleanField;\n    }\n    static void foo40() {\n        try {\n            boolean booleanField = true;\n            booleanField = !booleanField;\n        }\n        catch (Exception e) {}\n    }\n    static {\n        fieldStatic = \"\";\n    }\n    {\n        String field1 = \"\";\n        field1 = field1; \n    }\n    static {\n        fieldStatic = \"\";\n        String field1 = \"\";\n        field1 = field1;\n    }\n    void foo41(long fieldFinal1) {\n        fieldFinal1 = fieldFinal1;\n    }\n    void foo42(String fieldStatic) {\n        this.fieldStatic = fieldStatic;\n    }\n    void foo43(String fieldStatic) {\n        fieldStatic = fieldStatic;\n    }\n    void foo44(String fieldStatic) {\n        fieldStatic = this.fieldStatic;\n    }\n    private String servletRelativeAction;\n    public String getServletRelativeAction() {\n        return this.servletRelativeAction;\n    }\n    public String foo45() {\n        String servletRelativeAction = getServletRelativeAction();\n        if (true) {\n            return processAction(\"action\");\n        }\n        else if (servletRelativeAction.endsWith(\"/\")) {\n            if (servletRelativeAction.startsWith(\"/\")) {\n                servletRelativeAction = \"\" + servletRelativeAction;\n            }\n        }\n        servletRelativeAction = \"servletRelativeAction\";\n        return processAction(servletRelativeAction);\n    }\n    private String processAction(String servletRelativeAction) {\n        return \"\";\n    }\n    public InputRequireThisValidateOnlyOverlappingTrue(long fieldFinal1, long fieldFinal2,\n                                                       BitSet fieldFinal3, boolean booleanField) {\n        this.fieldFinal1 = fieldFinal1;\n        this.fieldFinal2 = fieldFinal2;\n        this.fieldFinal3 = fieldFinal3;\n        booleanField = this.booleanField;\n        if (booleanField) {\n            booleanField = \"Hello, World!\".equals(\"Hello, Checkstyle!\");\n        }\n        this.booleanField = booleanField;\n    }\n    void foo46(boolean booleanField) {\n        booleanField = this.booleanField;\n        if (booleanField) {\n            booleanField = \"Hello, World!\".equals(\"Hello, Checkstyle!\");\n        }\n        this.booleanField = booleanField;\n    }\n    static void foo47(String fieldStatic) {\n        fieldStatic = \"Andrei\";\n    }\n    void foo48(long fieldFinal1) {\n        fieldFinal1 = 1L;\n    }\n    private boolean foo49(boolean booleanField) {\n        boolean suppressionSourceExists = true;\n        try {\n        }\n        catch (Exception ex) {\n            suppressionSourceExists = false;\n        }\n        finally {\n            if (booleanField) {\n                try {\n                }\n                catch (Exception ignored) {\n                    this.booleanField = false;\n                }\n            }\n        }\n        return suppressionSourceExists;\n    }\n    void foo50(String fieldStatic) {\n        fieldStatic = fieldStatic;\n    }\n    void foo51(String methodParam) {\n        fieldStatic = methodParam;\n    }\n    void foo52(String fieldStatic) {\n        fieldStatic += fieldStatic;\n    }\n    void foo53(String fieldStatic) {\n        fieldStatic += fieldStatic;\n    }\n    void foo54(String methodParam) {\n        fieldStatic += methodParam;\n    }\n    void foo55(String methodParam) {\n        fieldStatic += fieldStatic;\n    }\n    void foo56(boolean booleanField) { booleanField = this.booleanField; }\n    boolean foo57(boolean booleanField) { booleanField = !booleanField;  return booleanField; }\n}"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "UseConcurrentHashMap",
+  "language": "java",
+  "description": "\nSince Java5 brought a new implementation of the Map designed for multi-threaded access, you can\nperform efficient map reads without blocking other threads.\n        ",
+  "example": "public class ConcurrentApp {\n  public void getMyInstance() {\n    Map map1 = new HashMap();           // fine for single-threaded access\n    Map map2 = new ConcurrentHashMap(); // preferred for use with multiple threads\n\n    // the following case will be ignored by this rule\n    Map map3 = someModule.methodThatReturnMap(); // might be OK, if the returned map is already thread-safe\n  }\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 0,
+  "branches": 0,
+  "apis": 0,
+  "test": [
+    {
+      "description": "Basic use case",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    private Map _map = new TreeMap();\n\n    public void m() {\n        Map m = new HashMap();\n    }\n\n    public Map contructMap() {\n        return new HashMap(); //not detected\n    }\n}\n        "
+    },
+    {
+      "description": "#1034 UseConcurrentHashMap flags calls to methods that return Map",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.*;\npublic class Foo {\n    public void m() {\n        final Map myMap = new Foo().methodThatReturnMap();\n    }\n\n    Map methodThatReturnMap() { return null; }\n}\n        "
+    },
+    {
+      "description": "#1342 UseConcurrentHashMap false positive (with documentation example)",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        5
+      ],
+      "code": "\nimport java.util.*;\nimport java.util.concurrent.*;\npublic class ConcurrentApp {\n    public void getMyInstance() {\n        Map map1 = new HashMap();   // fine for single-threaded access --- violation on this line\n        Map map2 = new ConcurrentHashMap();  // preferred for use with multiple threads\n    }\n}\n        "
+    },
+    {
+      "description": "FP with Properties",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\nimport java.util.Properties;\nimport java.util.concurrent.*;\npublic class ConcurrentApp {\n    public void getMyInstance() {\n        final Properties pr = new Properties();\n    }\n }\n         "
+    }
+  ]
+}

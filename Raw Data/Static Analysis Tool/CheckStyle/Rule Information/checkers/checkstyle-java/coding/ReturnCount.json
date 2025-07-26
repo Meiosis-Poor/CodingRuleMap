@@ -1,0 +1,80 @@
+{
+  "name": "ReturnCount",
+  "language": "java",
+  "description": "<div>\n Restricts the number of return statements in methods, constructors and lambda expressions.\n Ignores specified methods ({@code equals} by default).\n </div>\n\n <p>\n <b>max</b> property will only check returns in methods and lambdas that\n return a specific value (Ex: 'return 1;').\n </p>\n\n <p>\n <b>maxForVoid</b> property will only check returns in methods, constructors,\n and lambdas that have no return type (IE 'return;'). It will only count\n visible return statements. Return statements not normally written, but\n implied, at the end of the method/constructor definition will not be taken\n into account. To disallow \"return;\" in void return type methods, use a value\n of 0.\n </p>\n\n <p>\n Rationale: Too many return points can mean that code is\n attempting to do too much or may be difficult to understand.\n </p>",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 131,
+  "branches": 16,
+  "apis": 31,
+  "test": [
+    {
+      "description": "Auto test from InputReturnCountLambda.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        23,
+        36,
+        43,
+        49,
+        58
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.returncount;\nimport java.lang.Integer;\nimport java.util.Optional;\nimport java.util.concurrent.Callable;\nimport java.util.function.Supplier;\npublic class InputReturnCountLambda {\n    Runnable fieldWithOneReturnInLambda = () -> {\n        return;\n    };\n    Callable<Integer> fieldWithTwoReturnInLambda = () -> { \n        if (hashCode() == 0) return 0;\n        else return 1;\n    };\n    Optional<Integer> methodWithOneReturnInLambda() {\n        return Optional.of(hashCode()).filter(i -> {\n            return i > 0;\n        });\n    }\n    Optional<Integer> methodWithTwoReturnInLambda() {\n        return Optional.of(hashCode()).filter(i -> { \n            if (i > 0) return true;\n            else return false;\n        });\n    }\n    Optional<Object> methodWithThreeReturnInLambda(int number) {\n        return Optional.of(number).map(i -> { \n            if (i == 42) return true;\n            else if (i == 7) return true;\n            else return false;\n        });\n    }\n    int methodWithTwoReturnWithLambdas(final int number) { \n        if (hashCode() > 0) {\n            new Thread(\n                () -> {\n                }\n            ).start();\n            return number;\n        } else {\n            return Optional.of(hashCode()).orElseGet(() -> { \n                if (number > 0) return number;\n                else return 0;\n            });\n        }\n    }\n    Supplier<Supplier<Integer>> methodWithOneReturnPerLambda() {\n        return () -> {\n            return () -> {\n                return 1;\n            };\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputReturnCountLambda2.java",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        42
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.returncount;\nimport java.util.Optional;\nimport java.util.concurrent.Callable;\nimport java.util.function.Supplier;\npublic class InputReturnCountLambda2 {\n    Runnable fieldWithOneReturnInLambda = () -> {\n        return;\n    };\n    Callable<Integer> fieldWithTwoReturnInLambda = () -> {\n        if (hashCode() == 0) return 0;\n        else return 1;\n    };\n    Optional<Integer> methodWithOneReturnInLambda() {\n        return Optional.of(hashCode()).filter(i -> {\n            return i > 0;\n        });\n    }\n    Optional<Integer> methodWithTwoReturnInLambda() {\n        return Optional.of(hashCode()).filter(i -> {\n            if (i > 0) return true;\n            else return false;\n        });\n    }\n    Optional<Object> methodWithThreeReturnInLambda(int number) {\n        return Optional.of(number).map(i -> { \n            if (i == 42) return true;\n            else if (i == 7) return true;\n            else return false;\n        });\n    }\n    int methodWithTwoReturnWithLambdas(final int number) {\n        if (hashCode() > 0) {\n            new Thread(\n                () -> {\n                }\n            ).start();\n            return number;\n        } else {\n            return Optional.of(hashCode()).orElseGet(() -> {\n                if (number > 0) return number;\n                else return 0;\n            });\n        }\n    }\n    Supplier<Supplier<Integer>> methodWithOneReturnPerLambda() {\n        return () -> {\n            return () -> {\n                return 1;\n            };\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputReturnCountLambda3.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        33,
+        40,
+        48,
+        63
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.returncount;\nimport java.util.Optional;\nimport java.util.concurrent.Callable;\nimport java.util.function.Supplier;\npublic class InputReturnCountLambda3 {\n    Runnable fieldWithOneReturnInLambda = () -> {\n        return;\n    };\n    Callable<Integer> fieldWithTwoReturnInLambda = () -> {\n        if (hashCode() == 0) return 0;\n        else return 1;\n    };\n    Optional<Integer> methodWithOneReturnInLambda() {\n        return Optional.of(hashCode()).filter(i -> {\n            return i > 0;\n        });\n    }\n    Optional<Integer> methodWithTwoReturnInLambda() { \n        return Optional.of(hashCode()).filter(i -> {\n            if (i > 0) return true;\n            else return false;\n        });\n    }\n    Optional<Object> methodWithThreeReturnInLambda(int number) { \n        return Optional.of(number).map(i -> {\n            if (i == 42) return true;\n            else if (i == 7) return true;\n            else return false;\n        });\n    }\n    int methodWithTwoReturnWithLambdas(final int number) { \n        if (hashCode() > 0) {\n            new Thread(\n                () -> {\n                }\n            ).start();\n            return number;\n        } else {\n            return Optional.of(hashCode()).orElseGet(() -> {\n                if (number > 0) return number;\n                else return 0;\n            });\n        }\n    }\n    Supplier<Supplier<Integer>> methodWithOneReturnPerLambda() { \n        return () -> {\n            return () -> {\n                return 1;\n            };\n        };\n    }\n}"
+    },
+    {
+      "description": "Auto test from InputReturnCountSwitches.java",
+      "expected-problems": 4,
+      "expected-linenumbers": [
+        26,
+        38,
+        44,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.returncount;\npublic class InputReturnCountSwitches\n{\n    public boolean equals(Object obj) {\n        int i = 1;\n        switch (i) {\n        case 1: return true;\n        case 2: return true;\n        case 3: return true;\n        case 4: return true;\n        case 5: return true;\n        case 6: return true;\n        }\n        return false;\n    }\n    void foo(int i) { \n        switch (i) {\n        case 1: return;\n        case 2: return;\n        case 3: return;\n        case 4: return;\n        case 5: return;\n        case 6: return;\n        }\n        return;\n    }\n    void foo1(int i) { \n        if (i == 1) {\n            return;\n        }\n        Object obj = new Object() {\n                void method1(int i) { \n                    switch (i) {\n                    case 1: return;\n                    case 2: return;\n                    case 3: return;\n                    case 4: return;\n                    case 5: return;\n                    }\n                    return;\n                }\n            };\n        return;\n    }\n    public boolean foo2() { \n        int i = 1;\n        switch (i) {\n        case 1: return true;\n        case 2: return true;\n        case 3: return true;\n        case 4: return true;\n        case 5: return true;\n        case 6: return true;\n        }\n        return false;\n    }\n}\nclass Test {\n    public Test() {}\n}"
+    },
+    {
+      "description": "Auto test from InputReturnCountSwitches2.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        14,
+        26,
+        38,
+        44,
+        57
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.returncount;\npublic class InputReturnCountSwitches2\n{\n    public boolean equals(Object obj) { \n        int i = 1;\n        switch (i) {\n        case 1: return true;\n        case 2: return true;\n        case 3: return true;\n        case 4: return true;\n        case 5: return true;\n        case 6: return true;\n        }\n        return false;\n    }\n    void foo(int i) { \n        switch (i) {\n        case 1: return;\n        case 2: return;\n        case 3: return;\n        case 4: return;\n        case 5: return;\n        case 6: return;\n        }\n        return;\n    }\n    void foo1(int i) { \n        if (i == 1) {\n            return;\n        }\n        Object obj = new Object() {\n                void method1(int i) { \n                    switch (i) {\n                    case 1: return;\n                    case 2: return;\n                    case 3: return;\n                    case 4: return;\n                    case 5: return;\n                    }\n                    return;\n                }\n            };\n        return;\n    }\n    public boolean foo2() { \n        int i = 1;\n        switch (i) {\n        case 1: return true;\n        case 2: return true;\n        case 3: return true;\n        case 4: return true;\n        case 5: return true;\n        case 6: return true;\n        }\n        return false;\n    }\n}\nclass Test2 {\n    public Test2() {}\n}"
+    },
+    {
+      "description": "Auto test from InputReturnCountVoid.java",
+      "expected-problems": 5,
+      "expected-linenumbers": [
+        13,
+        16,
+        22,
+        38,
+        49
+      ],
+      "code": "package com.puppycrawl.tools.checkstyle.checks.coding.returncount;\nclass InputReturnCountVoid {\n    public InputReturnCountVoid() { \n        return;\n    }\n    public void method() { \n        if (true) {\n            return;\n        }\n    }\n    public void method2() { \n        if (true) {\n            return;\n        }\n        return;\n    }\n    public int method3() {\n        if (true) {\n            return 0;\n        }\n        return 0;\n    }\n    public int method4() { \n        if (true) {\n            return 0;\n        }\n        if (false) {\n            return 0;\n        }\n        return 0;\n    }\n    void method5() { \n        if (true) {\n            return;\n        }\n        return;\n    }\n}"
+    }
+  ]
+}

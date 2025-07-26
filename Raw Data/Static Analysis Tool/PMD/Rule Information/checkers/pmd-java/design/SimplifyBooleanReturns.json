@@ -1,0 +1,123 @@
+{
+  "name": "SimplifyBooleanReturns",
+  "language": "java",
+  "description": "\nAvoid unnecessary if-then-else statements when returning a boolean. The result of\nthe conditional test can be returned instead.\n        ",
+  "example": "public boolean isBarEqualTo(int x) {\n    if (bar == x) {      // this bit of code...\n        return true;\n    } else {\n        return false;\n    }\n}\n\npublic boolean isBarEqualTo(int x) {\n    return bar == x;    // can be replaced with this\n}",
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 198,
+  "branches": 59,
+  "apis": 14,
+  "test": [
+    {
+      "description": "1, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean foo() {\n        if (true) {\n            return true;\n        } else {\n            return false;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "2, bad",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public boolean foo() {\n        if (true)\n            return true;\n        else\n            return false;\n    }\n}\n        "
+    },
+    {
+      "description": "3, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public Object foo() {\n        if (!true) {\n            return null;\n        } else\n        {\n            // nothing\n        }\n        return null;\n    }\n}\n        "
+    },
+    {
+      "description": "4, ok",
+      "expected-problems": 0,
+      "expected-linenumbers": [],
+      "code": "\npublic class Foo {\n    public void foo() {\n        if (true) {\n            return;\n        } else {\n            return;\n        }\n    }\n}\n        "
+    },
+    {
+      "description": "#1320 Enhance SimplifyBooleanReturns checks",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class SimplifyBooleanReturns {\n    java.util.List<Object> myObjectList;\n    public boolean exists(Object obj) {\n        if (myObjectList.contains(obj)) {\n            return true;\n        }\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "#1320 Enhance SimplifyBooleanReturns checks - case 2 without block",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class SimplifyBooleanReturns {\n    java.util.List<Object> myObjectList;\n    public boolean exists(Object obj) {\n        if (myObjectList.contains(obj))\n            return true;\n        return false;\n    }\n}\n        "
+    },
+    {
+      "description": "Check for negated expr",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class SimplifyBooleanReturns {\n    java.util.List<Object> myObjectList;\n    public boolean exists(Object obj) {\n        if (myObjectList.contains(obj))\n            return obj != null;\n        return obj == null;\n    }\n}\n        "
+    },
+    {
+      "description": "Check for negated expr 2",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class SimplifyBooleanReturns {\n    java.util.List<Object> myObjectList;\n    public boolean exists(Object obj) {\n        if (myObjectList.contains(obj))\n            return obj.getClass().equals(String.class);\n        return !obj.getClass().equals(String.class);\n    }\n}\n        "
+    },
+    {
+      "description": "Check for boolean literal somewhere",
+      "expected-problems": 1,
+      "expected-linenumbers": [],
+      "code": "\npublic class SimplifyBooleanReturns {\n    public boolean exists(Object obj) {\n        if (obj instanceof String)\n            return true;\n        return !obj.getClass().equals(String.class);\n    }\n}\n        "
+    },
+    {
+      "description": "don't report if expr would need paren",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        13
+      ],
+      "code": "\n            public class Foo {\n                public boolean foo(Object foo, boolean a, boolean b) {\n                    if (foo instanceof Foo) { // foo instanceof Foo && (a || b)\n                        return a || b;\n                    } else {\n                        return false;\n                    }\n                    if (foo instanceof Foo) { // !(foo instanceof Foo) || a\n                        return a;\n                    } else {\n                        return true;\n                    }\n                    if (foo instanceof Foo) { // foo instanceof Foo && a\n                        return a;\n                    } else {\n                        return false;\n                    }\n                    if (a || b) { // (a || b) && a\n                        return a;\n                    } else {\n                        return false;\n                    }\n                    if (foo instanceof Foo) { // !(foo instanceof Foo) && a;\n                        return a;\n                    } else {\n                        return true;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "some ops can be negated ok",
+      "expected-problems": 2,
+      "expected-linenumbers": [
+        3,
+        8
+      ],
+      "code": "\n            public class Foo {\n                public boolean foo(Object foo, boolean a, boolean b) {\n                    if (foo == null) { // foo != null || a\n                        return a;\n                    } else {\n                        return true;\n                    }\n                    if (!(foo instanceof String)) { // foo instanceof String || a\n                        return a;\n                    } else {\n                        return true;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "expr already has parens",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public boolean foo(Object foo, boolean a, boolean b) {\n                    if (foo instanceof Foo) { // foo instanceof Foo && (a || b)\n                        return (a || b);\n                    } else {\n                        return false;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "both booleans",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\n            public class Foo {\n                public boolean foo(Object entry, boolean a, boolean b) {\n                    if ((entry != null) && (entry instanceof String)) {\n                        return true;\n                    } else {\n                        return false;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "De Morgan",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        6
+      ],
+      "code": "\n            public class Foo {\n\n                public boolean foo(Object entry, boolean a, boolean b) {\n                    // !(entry != null && entry != b) || a\n                    // -> entry == null || entry == b || a\n                    if (entry != null && entry != b) {\n                        return a;\n                    } else {\n                        return true;\n                    }\n                }\n            }\n            "
+    },
+    {
+      "description": "[java] SimplifyBooleanReturns should consider literal expression #3852",
+      "expected-problems": 1,
+      "expected-linenumbers": [
+        3
+      ],
+      "code": "\nclass Tester {\n    public boolean foo() {\n        if (true) {  // should report a warning in this if-else statement\n            return (true || false);\n        } else {\n            return false;\n        }\n    }\n}\n"
+    },
+    {
+      "description": " [java] SimplifyBooleanReturns - wrong suggested solution #4763 ",
+      "expected-problems": 2,
+      "expected-linenumbers": [],
+      "code": "\n            public class Foo {\n\n                public boolean foo(Object a) {\n                    if (a == null) {\n                        return false;\n                    }\n                    return \"FOO\".equals(a.toString());\n                }\n\n                public boolean bar(String stringA, String stringB) {\n                    if (StringUtils.isAnyBlank(stringA, stringB)) {\n                        return false;\n                    }\n                    return Objects.equals(stringA, stringB);\n                }\n            }\n            "
+    }
+  ]
+}
