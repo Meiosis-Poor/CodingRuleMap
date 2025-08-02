@@ -2,10 +2,10 @@ import os
 import re
 import json
 
-checker_file = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer-main\infer-main\infer\src\base\Checker.ml"
-src_root_dir = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer-main\infer-main\infer\src"
-test_base_dir = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer-main\infer-main\infer\tests\codetoanalyze"
-output_root_dir = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer\Rule formation\checkers"
+checker_file = r"C:\Poorcomputer\Study\Github\infer\infer\src\base\Checker.ml"
+src_root_dir = r"C:\Poorcomputer\Study\Github\infer\infer\src"
+test_base_dir = r"C:\Poorcomputer\Study\Github\infer\infer\tests\codetoanalyze"
+output_root_dir = r"C:\Poorcomputer\Study\Github\CodingRuleMap\Raw Data\Static Analysis Tool\infer\Rule formation\checkers"
 
 os.makedirs(output_root_dir, exist_ok=True)
 

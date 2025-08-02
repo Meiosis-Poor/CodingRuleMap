@@ -2,9 +2,10 @@ import os
 import re
 import json
 
-checker_ml_path = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer-main\infer-main\infer\src\base\Checker.ml"
-src_base_dir = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer-main\infer-main\infer\src"
-output_dir = r"C:\Poorcomputer\Study\软件所实习\静态分析工具规则知识图谱\infer\Rule formation\groups"
+checker_ml_path = r"C:\Poorcomputer\Study\Github\infer\infer\src\base\Checker.ml"
+src_base_dir = r"C:\Poorcomputer\Study\Github\infer\infer\src"
+output_dir = r"C:\Poorcomputer\Study\Github\CodingRuleMap\Raw Data\Static Analysis Tool\infer\Rule formation\groups"
+
 
 # 提取所有规则名
 with open(checker_ml_path, encoding='utf-8') as f:
