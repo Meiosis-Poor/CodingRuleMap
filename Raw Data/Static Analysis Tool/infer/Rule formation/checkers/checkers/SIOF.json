@@ -1,0 +1,100 @@
+{
+  "name": "SIOF",
+  "language": [
+    "clang"
+  ],
+  "description": "Catches Static Initialization Order Fiascos in C++, that can lead to subtle, \\\n           compiler-version-dependent errors.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "OCaml",
+  "loc": 267,
+  "branches": 35,
+  "apis": 69,
+  "test": [
+    {
+      "testname": "by_ref.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 0,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include <string>\n\nextern const std::string dangerous_object;\n\nconst std::string* init_pointer_by_ref_to_dangerous_global_good = {\n    &dangerous_object};\nconst std::string init_pointer_by_val_to_dangerous_global_bad =\n    dangerous_object;\n"
+    },
+    {
+      "testname": "const.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 7,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\nint mult(int a, int b);\n\nconst int const_y = 32; // harmless global\nconst int const_x = 52 * const_y; // harmless\nint constexpr z =\n    const_x / const_y + 1; // user guarantees it is harmless with constexpr\nint u = mult(32, 52); // potentially in need of initialization\n"
+    },
+    {
+      "testname": "const_use.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 8,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\nextern const int const_x;\nextern const int const_y;\nextern int z;\nextern int u;\n\nint use_x = const_x + 1;\nint use_y = const_y + 1;\nint use_z = z + 1;\nint use_u = u + 1;\n"
+    },
+    {
+      "testname": "duplicate_reports.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 3,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include \"siof_types.h\"\n\nextern SomeNonPODObject rick;\nextern SomeNonPODObject dangerous;\n\nvoid access_rick() { rick.some_method(); }\nvoid nested_access() {\n  access_rick();\n  dangerous.some_method();\n  access_rick();\n}\nvoid nested_nested_access() {\n  access_rick();\n  nested_access();\n  rick.some_method();\n}\n\nstruct X {\n  X() {\n    access_rick();\n    rick.some_method();\n    nested_access();\n    nested_access();\n    dangerous.some_method();\n    nested_nested_access();\n  }\n};\n\nX many_paths_to_siof_bad;\n"
+    },
+    {
+      "testname": "include_iostream.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 1,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include <iostream>\n\nvoid safe_streams() {\n  std::cout << \"yay I'm safe thanks to having included <iostream>\";\n}\n"
+    },
+    {
+      "testname": "pod_across_translation_units-1.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 9,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nextern int foo();\nint bar() { return foo(); }\nint baz() { return bar(); }\nstatic int x = baz(); // BAD: report SIOF here\nstatic int x1 = x; // do not report here\nstatic int x2 = x1; // do not report here\n"
+    },
+    {
+      "testname": "pod_across_translation_units-2.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 4,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nint goo();\n\nstatic int y = goo();\n\nint foo() { return y; }\n"
+    },
+    {
+      "testname": "pod_same_translation_unit.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 6,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nint same_tu_foo();\nint same_tu_goo();\n\n// BAD: report SIOF here\n// This may not get the initialized value for y.\n// Infer doesn't yet report here because it only looks across translation units.\nint same_tu_x = same_tu_foo();\nint same_tu_y = same_tu_goo();\n\nint same_tu_foo() { return same_tu_y; }\n\nint same_tu_goo() { return 42; }\n"
+    },
+    {
+      "testname": "siof.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 10,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n#include \"siof_types.h\"\n\nextern SomeNonPODObject extern_global_object;\nSomeNonPODObject global_object;\nextern int access_to_non_pod();\nvoid safe_streams();\n\nstruct SomeOtherNonPODObject {\n  SomeOtherNonPODObject() {\n    global_object.some_method(); // OK, same translation unit\n    extern_global_object.some_method(); // bad, different translation unit\n  };\n\n  SomeOtherNonPODObject(int i) {\n    global_object.some_method(); // OK, same translation unit\n    safe_streams(); // OK, that function is SIOF safe\n  };\n};\n\nSomeOtherNonPODObject another_global_object_bad;\nSomeOtherNonPODObject another_global_object2_bad(access_to_non_pod());\nSomeOtherNonPODObject another_global_object3_bad(access_to_templated_non_pod());\nSomeOtherNonPODObject another_global_object4_good(42);\n\nint pod_accesses_non_pod_bad = access_to_non_pod();\n\nstruct X {\n  static int static_pod_accesses_non_pod_bad;\n};\n\nint X::static_pod_accesses_non_pod_bad = access_to_non_pod();\n\nSomeNonPODObject initWithStatic_good = getFunctionStaticNonPOD();\nSomeNonPODObject initWithGlobal_bad = getGlobalNonPOD();\n\nSomeNonPODObject initWithGlobalAllowListed_good = getGlobalNonPODAllowListed();\n\nSomeNonPODObject initWithGlobalAllowListedNamespaced_good =\n    allow_listed::getGlobalNonPOD();\n\nSomeNonPODObject initWithGlobalAllowListedTemplated_good =\n    allow_listed::TemplatedObject<int>::getGlobalNonPOD();\n\n// not declared constexpr but actually constexpr\nextern SomeConstexprObject& getGlobalConstexpr();\nSomeConstexprObject initWithConstexpr_good = getGlobalConstexpr();\nSomeConstexprObject initArrayWithConstexprs_good[] = {\n    getGlobalConstexpr(), getGlobalConstexpr(), getGlobalConstexpr()};\n\nextern SomeTemplatedConstexprObject<int>& getGlobalTemplatedConstexpr();\nSomeTemplatedConstexprObject<int> initWithTemplatedConstexpr_good =\n    getGlobalTemplatedConstexpr();\n"
+    },
+    {
+      "testname": "siof_different_tu.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 11,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n#include \"siof_types.h\"\n\nSomeNonPODObject global_object2;\nSomeNonPODObject some_other_global_object2;\n\nint access_to_non_pod() {\n  global_object2.some_method();\n  // access several global objects to check that we group the reports together\n  some_other_global_object2.some_method();\n  return 5;\n}\n\nSomeTemplatedNonPODObject<int> global_object3;\n\nint access_to_templated_non_pod() { return global_object3.some_method(); }\n\nSomeNonPODObject& getFunctionStaticNonPOD() {\n  static SomeNonPODObject instance;\n  return instance;\n}\n\nSomeNonPODObject& getGlobalNonPOD() {\n  some_other_global_object2.some_method();\n  return global_object2;\n}\n\nSomeNonPODObject& getGlobalNonPODWhitelisted() {\n  some_other_global_object2.some_method();\n  return global_object2;\n}\n\n// initialise static class field\nSomeConstexprObject SomeConstexprObject::instance_;\n\nSomeConstexprObject& getGlobalConstexpr() {\n  return SomeConstexprObject::singletonMethod();\n}\n\nnamespace allow_listed {\n\nSomeNonPODObject& getGlobalNonPOD() {\n  some_other_global_object2.some_method();\n  return global_object2;\n}\n\ntemplate <typename T>\nSomeNonPODObject& TemplatedObject<T>::getGlobalNonPOD() {\n  some_other_global_object2.some_method();\n  return global_object2;\n}\n\n// instantiate template so that infer analyses it\ntemplate struct TemplatedObject<int>;\n} // namespace allow_listed\n\n// initialize static class field\ntemplate <typename T>\nSomeTemplatedConstexprObject<T> SomeTemplatedConstexprObject<T>::instance_;\nSomeTemplatedConstexprObject<int>& getGlobalTemplatedConstexpr() {\n  return SomeTemplatedConstexprObject<int>::singletonMethod();\n}\n"
+    },
+    {
+      "testname": "siof_templated.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 6,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n#include \"siof_types.h\"\n\nextern SomeTemplatedNonPODObject<int> extern_global_object;\n\nSomeTemplatedNonPODObject<int> global_template_object;\n\ntemplate <typename T>\nstruct SomeOtherTemplatedNonPODObject {\n  SomeOtherTemplatedNonPODObject() {\n    global_template_object.some_method(); // OK, same translation unit\n    extern_global_object.some_method(); // bad, different translation unit\n  }\n\n  SomeOtherTemplatedNonPODObject(int i) {\n    global_template_object.some_method(); // OK, same translation unit\n  }\n\n  SomeOtherTemplatedNonPODObject(int i, int j) {\n    // OK: declared in another file but instantiated in this translation unit\n    someTemplatedStatic<int>.some_method();\n  }\n};\n\nSomeOtherTemplatedNonPODObject<bool> another_templated_global_object_bad;\nSomeOtherTemplatedNonPODObject<bool> another_templated_global_object2_bad(\n    access_to_non_pod());\nSomeOtherTemplatedNonPODObject<bool> another_templated_global_object3_bad(\n    access_to_templated_non_pod());\nSomeOtherTemplatedNonPODObject<bool> another_templated_global_object4_good(42);\nSomeOtherTemplatedNonPODObject<bool> access_variable_template_ok(32, 52);\n"
+    },
+    {
+      "testname": "smart_pointer1.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 1,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include \"smart_pointer1.h\"\n\nstd::unique_ptr<int> InitWithConstexprStaticOK::foo_smart_pointer_;\n"
+    },
+    {
+      "testname": "smart_pointer2.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 0,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include \"smart_pointer1.h\"\n\nInitWithConstexprStaticOK initWithConstexprStaticOk;\n"
+    },
+    {
+      "testname": "std_ios_base_init.cpp",
+      "testlanguage": "c++",
+      "expected-problems": 8,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include <istream>\n#include <ostream>\n\nnamespace std {\nextern std::istream cin;\nextern std::wistream wcin;\nextern std::ostream cerr;\nextern std::wostream wcerr;\nextern std::ostream clog;\nextern std::wostream wclog;\nextern std::ostream cout;\nextern std::wostream wcout;\n}; // namespace std\n\nvoid printing_no_SIOF() {\n  std::ios_base::Init ioInit;\n  std::cerr << \"it's ok to print here\";\n}\n\nvoid printing_SIOF() {\n  std::cerr << \"I forgot to initialize std::cerr so I might not see this error \"\n               \"message!\";\n}\n\nint return_4_SIOF() {\n  printing_SIOF();\n  return 4;\n}\n\nvoid print_from_function_call() { std::cout << \"I can even print here\"; }\n\nint return_4_no_SIOF() {\n  printing_no_SIOF();\n  std::clog << \"I can even print here with clog\";\n  std::wclog << \"I can even print here with wclog\";\n  std::cout << \"I can even print here with cout\";\n  std::wcout << \"I can even print here with wcout\";\n  std::cerr << \"I can even print here with cerr\";\n  std::wcerr << \"I can even print here with wcerr\";\n  int x;\n  std::cin >> x;\n  std::wcin >> x;\n  print_from_function_call();\n  return 4;\n}\n\nint global_std_cerr_access_bad = return_4_SIOF();\nint global_std_cerr_access_good = return_4_no_SIOF();\n"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "name": "PurityChecker",
+  "language": [
+    "clang",
+    "java"
+  ],
+  "description": "Detects pure (side-effect-free) functions. A different implementation of \\",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "OCaml",
+  "loc": 36,
+  "branches": 4,
+  "apis": 2,
+  "test": [
+    {
+      "testname": "array.c",
+      "testlanguage": "c",
+      "expected-problems": 18,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n#include <stdio.h>\n#include <time.h>\n\nvoid swap_bad(int* array, int i, int j) {\n  int tmp = array[i];\n  array[i] = array[j];\n  array[j] = tmp;\n}\n\nvoid alias_mod_bad(int array[], int i, int j) {\n  int* a = array;\n  a[j] = i;\n}\n\nvoid fresh_arr_ok(int size) {\n  int arr[size];\n  for (int i = 0; i < size - 1; i++) {\n    arr[i] = 0;\n  }\n}\n\nvoid call_impure_with_local_ok(int size) {\n  int arr[size];\n  alias_mod_bad(arr, 0, 9);\n}\n\nvoid time_bad() {\n  time_t rawtime;\n  struct tm* timeinfo;\n\n  time(&rawtime);\n  timeinfo = localtime(&rawtime);\n}\n"
+    },
+    {
+      "testname": "global_test.c",
+      "testlanguage": "c",
+      "expected-problems": 15,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nint global;\n\nstatic int s;\n\nvoid static_incr_bad() { s += 1; }\n\nvoid global_write_bad(int x, int y) { global += x + y; }\n\nvoid call_impure_bad(int size) {\n  for (int i = 0; i < size; i++) {\n    global_write_bad(i, size);\n  }\n}\n\nint local_write_ok(int x, int y) {\n  int k = x + y;\n  k++;\n  return k;\n}\n\n// calls foo which modifies global var\nvoid call_set_bad() { static_incr_bad(); }\n"
+    },
+    {
+      "testname": "struct.c",
+      "testlanguage": "c",
+      "expected-problems": 10,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\ntypedef struct {\n  int i;\n} Foo;\n\nstatic int variable_init_ok(const int* x) {\n  const Foo* foo = (const Foo*)x;\n  return foo->i;\n}\n\nFoo* variable_init_bad(const int* x) {\n  Foo* foo = (const Foo*)x; // aliasing to x\n  foo->i = 0;\n  return foo;\n}\n\nvoid set_fresh_ok() {\n  Foo* foo = {0};\n  foo->i = 0;\n}\n\nvoid set_fresh_primitive_ok(int x) {\n  Foo* foo = {x};\n  foo->i = 0;\n}\n\nvoid set_alias_primitive_bad(int* x) {\n  Foo* foo = {x};\n  foo->i = 0;\n}\n"
+    },
+    {
+      "testname": "GlobalTest.java",
+      "testlanguage": "java",
+      "expected-problems": 18,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\nclass GlobalTest {\n  public static int s = 0;\n  public static Foo foo;\n\n  class Foo {\n\n    int x = 0;\n    // modifies global var 's' hence impure\n    void set_impure() {\n      s = 10;\n    }\n  }\n\n  void incr(Foo foo, int i) {\n    foo.x += i;\n  }\n\n  // calls foo which modifies global var\n  void call_set_impure() {\n    Foo f = new Foo();\n    f.set_impure();\n  }\n\n  // foo is global which is modified by incr.\n  void global_mod_via_argument_passing_impure(int size, Foo f) {\n    for (int i = 0; i < size; i++) {\n      incr(foo, i);\n    }\n  }\n\n  // aliased_foo is aliasing a global and then is modified by incr.\n  void global_mod_via_argument_passing_impure_aliased(int size, Foo f) {\n    Foo aliased_foo = foo; // Inferbo can't recognize aliasing here\n    // and assumes aliased_foo is in [-oo,+oo] not in foo\n    for (int i = 0; i < size; i++) {\n      incr(aliased_foo, i);\n    }\n  }\n}\n"
+    },
+    {
+      "testname": "Localities.java",
+      "testlanguage": "java",
+      "expected-problems": 38,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\nimport java.util.ArrayList;\nimport java.util.Iterator;\n\nclass Localities {\n  // @pure\n  boolean contains_pure_FN(Integer i, ArrayList<Integer> list) {\n    Iterator<Integer> listIterator = list.iterator();\n    while (listIterator.hasNext()) {\n      Integer el = listIterator.next();\n      if (i.equals(el)) {\n        return true;\n      }\n    }\n    return false;\n  }\n\n  // @mod:{list}\n  void makeAllZero_impure(ArrayList<Foo> list) {\n    Iterator<Foo> listIterator = list.iterator();\n    while (listIterator.hasNext()) {\n      Foo foo = listIterator.next();\n      foo.x = 0;\n    }\n  }\n\n  // @mod:{list}\n  void incrementAll_impure(ArrayList<Foo> list) {\n    Iterator<Foo> listIterator = list.iterator();\n    while (listIterator.hasNext()) {\n      Foo foo = listIterator.next();\n      foo.inc_impure();\n    }\n  }\n\n  // @pure\n  void call_impure_with_fresh_args_pure() {\n    ArrayList<Foo> list = new ArrayList<Foo>();\n    makeAllZero_impure(list);\n  }\n\n  class Bar {\n    int p;\n  }\n\n  class Foo {\n    int x;\n    Bar bar;\n\n    // @mod:{this}\n    void inc_impure() {\n      x++;\n    }\n  }\n\n  class Counter {\n\n    int i = 0;\n    // @mod:{this}\n    // only modifies fields of its receiver object\n    void inc_impure() {\n      i++;\n    }\n\n    // @pure, @loc:{}\n    int get_i_pure() {\n      return i;\n    }\n  }\n\n  // @pure, @loc:{}\n  int length_pure(ArrayList<Integer> list) {\n    Counter c = new Counter();\n    for (Integer i : list) {\n      c.inc_impure();\n    }\n    return c.i;\n  }\n\n  class HasCounter {\n    Counter counter = new Counter();\n\n    // @loc:{this}\n    Counter getCounter_pure() {\n      return counter;\n    }\n  }\n\n  // @loc:{}\n  public static int[] setFreshArrayEntry_pure(int index, int value) {\n    int[] arr = new int[] {1, 2, 3};\n    if (index > 0) {\n      arr[index % 3] = value;\n    }\n    return arr;\n  }\n\n  // @loc: T\n  private int newHashCode_impure() {\n    return new Object().hashCode();\n  }\n\n  // @loc:{c}\n  HasCounter mkHC_pure(Counter c) {\n    HasCounter hc = new HasCounter();\n    hc.counter = c;\n    return hc;\n  }\n\n  // @mod:{array}, @loc:{array,f}\n  Foo get_f_impure(Foo[] array, int i, Foo f) {\n    Foo tmp = array[i];\n    tmp.x = f.x;\n    return tmp;\n  }\n\n  // @mod:{array}, @loc:{array,f}\n  Foo[] get_array_impure(Foo[] array, int i, Foo f) {\n    Foo tmp = array[i];\n    tmp.x = f.x;\n    return array;\n  }\n\n  // @mod:{array}, @loc:{p}\n  Bar get_foo_via_tmp_impure(Foo[] array, int i, Foo f, Foo p) {\n    Foo tmp = array[i];\n    tmp.bar = f.bar;\n    Foo tmp2 = tmp;\n    tmp2.bar = p.bar;\n    return tmp.bar;\n  }\n\n  // @pure, @loc:{}\n  boolean copy_ref_pure_FN(int[] a, int b) {\n    int[] local = a; // copy reference\n    a = new int[1]; //  can't detect that a becomes fresh\n    a[0] = local[0]; // not modification\n    return true;\n  }\n\n  // @mod:{a}, @loc:{}\n  boolean copy_ref_impure(int[] a, int b) {\n    int[] local = a; // copy reference\n    a = new int[1]; // overwrite reference\n    a[0] = local[0]; // not modification\n    local[0] = b; // modify arg a\n    b = a[0]; // not modification\n    return true;\n  }\n}\n"
+    },
+    {
+      "testname": "PurityModeled.java",
+      "testlanguage": "java",
+      "expected-problems": 8,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\nimport java.util.ArrayList;\n\nclass PurityModeled {\n\n  double math_random_impure() {\n    return Math.random();\n  }\n\n  void arraycopy_pure(int[] src) {\n    int[] dst = {5, 10, 20, 30, 40, 50};\n    // copies an array from the specified source array\n    System.arraycopy(src, 0, dst, 0, 1);\n  }\n\n  enum Color {\n    RED,\n    GREEN,\n    BLUE; // values() calls clone\n  }\n\n  public void enum_iter_pure() {\n    for (Color c : Color.values()) {}\n  }\n\n  @SuppressWarnings(\"unchecked\")\n  void clone_pure(ArrayList<String> list) {\n    ArrayList<String> cloned = (ArrayList<String>) list.clone();\n    cloned.add(\"\"); // no change the list\n  }\n}\n"
+    },
+    {
+      "testname": "Test.java",
+      "testlanguage": "java",
+      "expected-problems": 43,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\nimport java.util.ArrayList;\n\nclass Test {\n\n  private int a = 0;\n  static Integer[] global_arr;\n\n  void Test(int size) {\n    global_arr = new Integer[size];\n  }\n\n  void set_impure(int x, int y) {\n    a = x + y;\n  }\n\n  void global_array_set_impure(int x, int y) {\n    global_arr[0] = x + y;\n  }\n\n  int local_write_pure(int x, int y) {\n    int k = x + y;\n    k++;\n    return k;\n  }\n\n  void call_pure_pure(int size) {\n    for (int i = 0; i < size; i++) {\n      local_write_pure(i, size);\n    }\n  }\n\n  void call_impure_impure(int size) {\n    int d = 0;\n    for (int i = 0; i < size; i++) {\n      set_impure(i, size);\n    }\n  }\n\n  // no change to outside state, the local allocation is ok.\n  int local_alloc_pure(int x, int y) {\n    ArrayList<Integer> list = new ArrayList<Integer>(x + y);\n    for (Integer el : list) {\n      call_pure_pure(el);\n    }\n    return list.size();\n  }\n\n  void parameter_field_write_impure(Test test, boolean b) {\n    int c = b ? 0 : 1;\n    test.a = c;\n  }\n\n  int parameter_field_access_pure(Test test) {\n    return test.a;\n  }\n\n  // expected to be impure since y points to x\n  void local_field_write_impure(Test x) {\n    Test y = x;\n    y.a = 0;\n  }\n\n  void swap_impure(int[] array, int i, int j) {\n    int tmp = array[i];\n    array[i] = array[j];\n    array[j] = tmp;\n  }\n\n  void alias_impure(int[] array, int i, int j) {\n    int[] a = array;\n    a[j] = i;\n  }\n\n  // Currently, we can't distinguish between returning new Objects or\n  // creating new Objects locally. Ideally, the latter should be fine\n  // as long as it doesn't leak to the result.\n  public ArrayList<Integer> emptyList_impure_FP() {\n    return new ArrayList<Integer>();\n  }\n\n  // All unmodeled calls will be marked as modifying global state\n  static long systemNanoTime_impure() {\n    return System.nanoTime();\n  }\n}\n"
+    }
+  ]
+}

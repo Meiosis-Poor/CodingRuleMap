@@ -1,0 +1,82 @@
+{
+  "name": "ScopeLeakage",
+  "language": [
+    "java"
+  ],
+  "description": "The Java/Kotlin checker takes into account a set of \\",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "OCaml",
+  "loc": 799,
+  "branches": 70,
+  "apis": 155,
+  "test": [
+    {
+      "testname": "Box.java",
+      "testlanguage": "java",
+      "expected-problems": 3,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class Box<T> {\n  final String name;\n\n  public Box(String name) {\n    this.name = name;\n  }\n}\n"
+    },
+    {
+      "testname": "BoxProvider.java",
+      "testlanguage": "java",
+      "expected-problems": 8,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class BoxProvider {\n\n  // Should generate scope\n  public static Box get(String name, ScopedClass scoped) {\n    return new Box(name);\n  }\n\n  // Should not generate scope since its parameters aren't scoped\n  public static Box get(String name) {\n    return new Box(name);\n  }\n\n  // Should not generate scope since its name is not in generator config\n  public static Box getBox(String name) {\n    return new Box(name);\n  }\n}\n"
+    },
+    {
+      "testname": "Factory.java",
+      "testlanguage": "java",
+      "expected-problems": 4,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class Factory {\n  public static <T> T make(Class<T> c) {\n    T result = null;\n    try {\n      result = c.getDeclaredConstructor().newInstance();\n    } catch (NoSuchMethodException e) {\n    } catch (java.lang.reflect.InvocationTargetException e) {\n    } catch (InstantiationException e) {\n    } catch (IllegalAccessException e) {\n    }\n    return result;\n  }\n}\n"
+    },
+    {
+      "testname": "Inner.java",
+      "testlanguage": "java",
+      "expected-problems": 2,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class Inner {}\n"
+    },
+    {
+      "testname": "InnerScope.java",
+      "testlanguage": "java",
+      "expected-problems": 6,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class InnerScope {\n  public static <T> Box<T> getBox(Class<?> c) {\n    return new Box<T>(c.getName());\n  }\n\n  public static ScopedClass getScopedClass() {\n    return new ScopedClass();\n  }\n}\n"
+    },
+    {
+      "testname": "Middle.java",
+      "testlanguage": "java",
+      "expected-problems": 2,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class Middle {}\n"
+    },
+    {
+      "testname": "MultiLevel.java",
+      "testlanguage": "java",
+      "expected-problems": 17,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\n@ScopeType(value = Outer.class)\npublic class MultiLevel<T> {\n\n  // An error that requires interprocedural analysis to consider chains of fields.\n  public final Level3 f3_bad = new Level3();\n  // public final Level2 f2_bad = new Level2();\n  // public final Level1 f1_bad = new Level1();\n  // public final Leaf f0_leaf_bad = new Leaf();\n}\n\n@ScopeType(value = Inner.class)\nclass Leaf {\n  public Leaf() {}\n}\n\nclass Level1 {\n  public final Leaf f1 = new Leaf();\n\n  public Level1() {}\n}\n\nclass Level2 {\n  public final Level1 f2 = new Level1();\n}\n\nclass Level3 {\n  public final Level2 f3 = new Level2();\n}\n"
+    },
+    {
+      "testname": "Outer.java",
+      "testlanguage": "java",
+      "expected-problems": 2,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\npublic class Outer {}\n"
+    },
+    {
+      "testname": "OuterHoldsInner.java",
+      "testlanguage": "java",
+      "expected-problems": 45,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nclass AnonymousBox {\n  public Object f;\n}\n\n@ScopeType(value = Outer.class)\npublic class OuterHoldsInner<T> {\n  // Simple error, requires basic analysis of types, fields, and annotations.\n  public final InnerScopedClass u_bad = OuterHoldsInner.getMethod();\n\n  // An error that requires recognizing scope generating methods.\n  public final Box<InnerScopedClass> l_bad = InnerScope.getBox(InnerScopedClass.class);\n\n  // An error that requires recognizing scope generating methods via return types.\n  public final ScopedClass l_bad_2 = InnerScope.getScopedClass();\n\n  // An error that requires recognizing scope generating methods via class suffix + method names +\n  // parameter types\n  public final Box l_bad_3 = BoxProvider.get(\"foo\", new ScopedClass());\n\n  public final Box l_good = BoxProvider.get(\"foo\");\n\n  public final Box l_good_2 = BoxProvider.getBox(\"foo\");\n\n  // An error that requires analyzing the code in the constructor.\n  public final Object o_bad = OuterHoldsInner.getMethod();\n\n  public Object f_good = new Object();\n\n  public Object indirect_bad = new Object();\n\n  public Object[] arr_bad = new Object[1];\n\n  // An error that requires taking annotations on interfaces into account.\n  public final ExtendsInnerClassViaInterface f_interface = new ExtendsInnerClassViaInterface();\n\n  // An error that requires taking super types into account.\n  public final ExtendsInnerScopedClass ex_bad = new ExtendsInnerScopedClass();\n\n  // An error that requires analyzing arrays.\n  public final InnerScopedClass[] InnerArr_bad = new InnerScopedClass[5];\n\n  // An error that requires interprocedural analysis to consider chains of fields.\n  public final MiddleInnerScopedClass middle_bad = new MiddleInnerScopedClass();\n\n  // An error that requires modeling reflection-based factory methods.\n  public final Object FN_inner_via_factory = Factory.make(InnerScopedClass.class);\n\n  public Object anon_box_holder_bad;\n\n  public OuterHoldsInner() {\n    AnonymousBox b = new AnonymousBox();\n    b.f = new InnerScopedClass();\n    // An error that requires tracking field assignments to variables other\n    // than 'this' ('b' in this case).\n    anon_box_holder_bad = b;\n  }\n\n  public static InnerScopedClass getMethod() {\n    return new InnerScopedClass();\n  }\n}\n\nclass IndirectAssign {\n  public IndirectAssign() {\n    OuterHoldsInner a = new OuterHoldsInner();\n    // An erroneous assignment to an object of a different class than this one.\n    a.indirect_bad = new InnerScopedClass();\n\n    // An erroneous assignment via an array.\n    OuterHoldsInner[] arr = new OuterHoldsInner[1];\n    arr[0].indirect_bad = new InnerScopedClass();\n\n    // An erroneous assignment via an array. Currently, a false negative.\n    a.arr_bad[0] = new InnerScopedClass();\n  }\n}\n\nclass OuterHoldsInnerEx<T> extends OuterHoldsInner<T> {\n  // An error that requires analysis this type's super types.\n  public final InnerScopedClass xu_bad = OuterHoldsInner.getMethod();\n\n  // An error that requires analysis of the field's super types.\n  public final ExtendsInnerScopedClass xus_bad = new ExtendsInnerScopedClass();\n\n  // An error that requires analyzing the annotations of interfaces.\n  public final ExtendsInnerClassViaInterface f_interface_bad = new ExtendsInnerClassViaInterface();\n}\n\n@ScopeType(value = Inner.class)\nclass InnerScopedClass {\n  public InnerScopedClass() {}\n}\n\nclass ExtendsInnerScopedClass extends InnerScopedClass {\n  public ExtendsInnerScopedClass() {}\n}\n\n@ScopeType(value = Inner.class)\ninterface InnerInterface {}\n\nclass ExtendsInnerClassViaInterface implements InnerInterface {\n  public ExtendsInnerClassViaInterface() {}\n}\n\nclass MiddleInnerScopedClass {\n  public final InnerScopedClass f = new InnerScopedClass();\n\n  public MiddleInnerScopedClass() {}\n}\n"
+    },
+    {
+      "testname": "ScopedClass.java",
+      "testlanguage": "java",
+      "expected-problems": 1,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nclass ScopedClass {}\n"
+    },
+    {
+      "testname": "ScopeType.java",
+      "testlanguage": "java",
+      "expected-problems": 0,
+      "code": "/*\n * Copyright (c) Facebook, Inc. and its affiliates.\n *\n * This source code is licensed under the MIT license found in the\n * LICENSE file in the root directory of this source tree.\n */\n\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\n\n@Retention(RetentionPolicy.RUNTIME)\n@interface ScopeType {\n  // The scope type\n  Class<?> value();\n}\n"
+    }
+  ]
+}
