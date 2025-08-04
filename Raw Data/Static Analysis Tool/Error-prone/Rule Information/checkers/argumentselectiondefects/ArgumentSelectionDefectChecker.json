@@ -1,0 +1,134 @@
+{
+  "name": "ArgumentSelectionDefectChecker",
+  "language": "java",
+  "description": "Arguments are in the wrong order or could be commented for clarity.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 120,
+  "branches": 9,
+  "apis": 9,
+  "test": [
+    {
+      "description": "argumentSelectionDefectChecker_findsSwap_withSwappedMatchingPair",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              void test(Object first, Object second) {\n                // BUG: Diagnostic contains: target(first, second)\n                // target(/* first= */second, /* second= */first)\n                target(second, first);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_findsSwap_withSwappedMatchingPairWithMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              abstract Object getSecond();\n\n              void test(Object first) {\n                // BUG: Diagnostic contains: target(first, getSecond())\n                // target(/* first= */getSecond(), /* second= */first)\n                target(getSecond(), first);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_findsSwap_withOneNullArgument",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              void test(Object second) {\n                // BUG: Diagnostic contains: target(null, second)\n                // target(/* first= */second, /* second= */null)\n                target(second, null);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_rejectsSwap_withNoAssignableAlternatives",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        122
+      ],
+      "code": "abstract class Test {\n              abstract void target(String first, Integer second);\n\n              void test(Integer first, String second) {\n                target(second, first);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_commentsOnlyOnSwappedPair_withThreeArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second, Object third);\n\n              void test(Object first, Object second, Object third) {\n                // BUG: Diagnostic contains: target(first, second, third)\n                // target(/* first= */second, /* second= */first, third)\n                target(second, first, third);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_rejectsSwap_withIgnoredFormalParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object ignore, Object second);\n\n              void test(Object ignore, Object second) {\n                target(second, ignore);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_makesSwap_withNullArgument",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              void test(Object second) {\n                target(second, null);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectChecker_rejectsSwap_withArgumentWithoutName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        214
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              void test(Object second) {\n                target(second, 1);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectCheckerWithPenalty_findsSwap_withSwappedMatchingPair",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              void test(Object first, Object second) {\n                // BUG: Diagnostic contains: target(first, second)\n                // target(/* first= */second, /* second= */first)\n                target(second, first);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectCheckerWithPenalty_makesNoChange_withAlmostMatchingSet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        270
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second, Object third, Object fourth);\n\n              void test(Object first, Object second, Object third, Object different) {\n                target(different, third, second, first);\n              }\n            }"
+    },
+    {
+      "description": "argumentSelectionDefectCheckerWithPenalty_noSwap_withNamedPair",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        307
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              void test(Object first, Object second) {\n                target(/* first= */ second, /* second= */ first);\n              }\n            }"
+    },
+    {
+      "description": "parameterNamesAvailable_returnsTree_onMethodNotInCompilationUnit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351
+      ],
+      "code": ""
+    },
+    {
+      "description": "description",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        367
+      ],
+      "code": "abstract class Test {\n  abstract void target(Object first, Object second);\n\n  void test(Object first, Object second) {\n    // BUG: Diagnostic contains: The following arguments may have been swapped: 'second' for formal\n    // parameter 'first', 'first' for formal parameter 'second'. Either add clarifying `/*\n    // paramName= */` comments, or swap the arguments if that is what was intended\n    target(second, first);\n  }\n}"
+    },
+    {
+      "description": "records",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        387
+      ],
+      "code": "class Test {\n  Foo test(String first, String second) {\n    // BUG: Diagnostic contains: may have been swapped\n    return new Foo(second, first);\n  }\n}\n\nrecord Foo(String first, String second) {}"
+    },
+    {
+      "description": "recordPattern",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        407
+      ],
+      "code": "import %s;\n            class Test {\n              String test(Object o) {\n                return switch (o) {\n                  case Foo(String first, String second) -> first;\n                  default -> \"\";\n                };\n              }\n            }"
+    }
+  ]
+}

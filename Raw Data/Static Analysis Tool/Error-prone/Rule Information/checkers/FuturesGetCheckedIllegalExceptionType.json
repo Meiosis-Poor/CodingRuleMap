@@ -1,0 +1,30 @@
+{
+  "name": "FuturesGetCheckedIllegalExceptionType",
+  "language": "java",
+  "description": "Futures.getChecked requires a checked exception type with a standard constructor.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 154,
+  "branches": 16,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        28
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static com.google.common.util.concurrent.Futures.getChecked;\nimport static java.util.concurrent.TimeUnit.SECONDS;\n\nimport java.util.concurrent.Future;\n\n/** Positive cases for {@link FuturesGetCheckedIllegalExceptionType}. */\npublic class FuturesGetCheckedIllegalExceptionTypePositiveCases {\n  <T extends RuntimeException> void runtime(\n      Future<?> future, Class<? extends RuntimeException> c1, Class<T> c2) throws Exception {\n    // BUG: Diagnostic contains: getUnchecked(future)\n    getChecked(future, RuntimeException.class);\n    // BUG: Diagnostic contains: getUnchecked(future)\n    getChecked(future, IllegalArgumentException.class);\n    // BUG: Diagnostic contains: getUnchecked(future)\n    getChecked(future, RuntimeException.class, 0, SECONDS);\n    // BUG: Diagnostic contains: getUnchecked(future)\n    getChecked(future, c1);\n    // BUG: Diagnostic contains: getUnchecked(future)\n    getChecked(future, c2);\n  }\n\n  void visibility(Future<?> future) throws Exception {\n    // BUG: Diagnostic contains: parameters\n    getChecked(future, PrivateConstructorException.class);\n    // BUG: Diagnostic contains: parameters\n    getChecked(future, PackagePrivateConstructorException.class);\n    // BUG: Diagnostic contains: parameters\n    getChecked(future, ProtectedConstructorException.class);\n  }\n\n  void parameters(Future<?> future) throws Exception {\n    // BUG: Diagnostic contains: parameters\n    getChecked(future, OtherParameterTypeException.class);\n    // TODO(cpovirk): Consider a specialized error message if inner classes prove to be common.\n    // BUG: Diagnostic contains: parameters\n    getChecked(future, InnerClassWithExplicitConstructorException.class);\n    // BUG: Diagnostic contains: parameters\n    getChecked(future, InnerClassWithImplicitConstructorException.class);\n  }\n\n  public static class PrivateConstructorException extends Exception {\n    private PrivateConstructorException() {}\n  }\n\n  public static class PackagePrivateConstructorException extends Exception {\n    PackagePrivateConstructorException() {}\n  }\n\n  public static class ProtectedConstructorException extends Exception {\n    protected ProtectedConstructorException() {}\n  }\n\n  public class OtherParameterTypeException extends Exception {\n    public OtherParameterTypeException(int it) {}\n  }\n\n  public class InnerClassWithExplicitConstructorException extends Exception {\n    public InnerClassWithExplicitConstructorException() {}\n  }\n\n  public class InnerClassWithImplicitConstructorException extends Exception {}\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static com.google.common.util.concurrent.Futures.getChecked;\nimport static java.util.concurrent.TimeUnit.SECONDS;\n\nimport java.io.IOException;\nimport java.util.concurrent.Future;\n\n/** Negative cases for {@link FuturesGetCheckedIllegalExceptionType}. */\npublic class FuturesGetCheckedIllegalExceptionTypeNegativeCases {\n  <T extends Exception> void runtime(Future<?> future, Class<? extends Exception> c1, Class<T> c2)\n      throws Exception {\n    getChecked(future, Exception.class);\n    getChecked(future, Exception.class, 0, SECONDS);\n    getChecked(future, IOException.class);\n    // These might or might not be RuntimeExceptions. We can't prove it one way or the other.\n    getChecked(future, c1);\n    getChecked(future, c2);\n    getChecked(future, null);\n  }\n\n  <T extends ProtectedConstructorException> void constructor(\n      Future<?> future, Class<? extends ProtectedConstructorException> c1, Class<T> c2)\n      throws Exception {\n    getChecked(future, StaticNestedWithExplicitConstructorException.class);\n    getChecked(future, StaticNestedWithImplicitConstructorException.class);\n    /*\n     * These might be ProtectedConstructorException, but they might be a subtype with a public\n     * constructor.\n     */\n    getChecked(future, c1);\n    getChecked(future, c2);\n  }\n\n  public static class StaticNestedWithExplicitConstructorException extends Exception {\n    public StaticNestedWithExplicitConstructorException() {}\n  }\n\n  public static class StaticNestedWithImplicitConstructorException extends Exception {}\n\n  public static class ProtectedConstructorException extends Exception {\n    protected ProtectedConstructorException() {}\n  }\n}\\"
+    }
+  ]
+}

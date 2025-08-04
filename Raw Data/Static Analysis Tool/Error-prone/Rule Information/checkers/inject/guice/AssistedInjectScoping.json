@@ -1,0 +1,30 @@
+{
+  "name": "AssistedInjectScoping",
+  "language": "java",
+  "description": "Scope annotation on implementation class of AssistedInject factory is not allowed",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 100,
+  "branches": 7,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            import com.google.inject.Inject;\n            import com.google.inject.Singleton;\n            import com.google.inject.assistedinject.Assisted;\n            import com.google.inject.assistedinject.AssistedInject;\n            import com.google.inject.servlet.RequestScoped;\n\n            /**\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            public class AssistedInjectScopingPositiveCases {\n\n              // BUG: Diagnostic contains: remove this line\n              @Singleton\n              public class TestClass {\n                @Inject\n                public TestClass(String unassisted, @Assisted String assisted) {}\n              }\n\n              // BUG: Diagnostic contains: remove this line\n              @RequestScoped\n              public class TestClass2 {\n                @Inject\n                public TestClass2(String unassisted, @Assisted String assisted) {}\n              }\n\n              // BUG: Diagnostic contains: remove this line\n              @Singleton\n              public class TestClass3 {\n                @AssistedInject\n                public TestClass3(String param) {}\n              }\n\n              /** Multiple constructors, but only one with @Inject, and that one matches. */\n              // BUG: Diagnostic contains: remove this line\n              @Singleton\n              public class TestClass4 {\n                @Inject\n                public TestClass4(String unassisted, @Assisted String assisted) {}\n\n                public TestClass4(String unassisted, int i) {}\n\n                public TestClass4(int i, String unassisted) {}\n              }\n\n              /** Multiple constructors, none with @Inject, one matches. */\n              // BUG: Diagnostic contains: remove this line\n              @Singleton\n              public class TestClass5 {\n                public TestClass5(String unassisted1, String unassisted2) {}\n\n                public TestClass5(String unassisted, int i) {}\n\n                @AssistedInject\n                public TestClass5(int i, String unassisted) {}\n              }\n\n              /** JSR330 annotations. */\n              // BUG: Diagnostic contains: remove this line\n              @javax.inject.Singleton\n              public class TestClass6 {\n                @javax.inject.Inject\n                public TestClass6(String unassisted, @Assisted String assisted) {}\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\nimport com.google.inject.Inject;\nimport com.google.inject.Singleton;\nimport com.google.inject.assistedinject.Assisted;\nimport com.google.inject.assistedinject.AssistedInject;\n\n/**\n * @author eaftan@google.com (Eddie Aftandilian)\n */\npublic class AssistedInjectScopingNegativeCases {\n\n  /** Class is not assisted and has no scoping annotation. */\n  public class TestClass1 {\n    public TestClass1(String unassisted1, String unassisted2) {}\n  }\n\n  /** Class is not assisted and has no scoping annotation, but has an unrelated annotation. */\n  @SuppressWarnings(\"foo\")\n  public class TestClass2 {\n    public TestClass2(String unassisted, @Assisted String assisted) {}\n  }\n\n  /** Class is not assisted but has scoping annotation. */\n  @Singleton\n  public class TestClass3 {\n    public TestClass3(String unassisted1, String unassisted2) {}\n  }\n\n  /** Class is assisted via @Assisted param but has no scoping annotation. */\n  public class TestClass4 {\n    @Inject\n    public TestClass4(@Assisted String assisted) {}\n  }\n\n  /** Class is assisted via @AssistedInject constructor but has no scoping annotation. */\n  public class TestClass5 {\n    @AssistedInject\n    public TestClass5(String unassisted) {}\n  }\n\n  /** Class is not assisted -- constructor with @Assisted param does not have @Inject. */\n  @Singleton\n  public class TestClass6 {\n    public TestClass6(@Assisted String assisted) {}\n  }\n\n  /** Multiple constructors but not assisted. */\n  @Singleton\n  public class TestClass7 {\n    public TestClass7(String unassisted1, String unassisted2) {}\n\n    public TestClass7(String unassisted, int i) {}\n\n    public TestClass7(int i, String unassisted) {}\n  }\n\n  /** Multiple constructors, one with @Inject, non-@Inject ones match. */\n  @Singleton\n  public class TestClass8 {\n    @Inject\n    public TestClass8(String unassisted1, String unassisted2) {}\n\n    @AssistedInject\n    public TestClass8(String param, int i) {}\n\n    @AssistedInject\n    public TestClass8(int i, String param) {}\n  }\n\n  /** Multiple constructors, one with @Inject, non-@Inject ones match. */\n  @Singleton\n  public class TestClass9 {\n    @Inject\n    public TestClass9(String unassisted1, String unassisted2) {}\n\n    @AssistedInject\n    public TestClass9(String param, int i) {}\n\n    @AssistedInject\n    public TestClass9(int i, String param) {}\n  }\n\n  @Singleton\n  public class TestClass10 {\n    public TestClass10(@Assisted String assisted, String unassisted) {}\n\n    public TestClass10(@Assisted String assisted, int i) {}\n\n    public TestClass10(int i, @Assisted String assisted) {}\n  }\n}\\"
+    }
+  ]
+}

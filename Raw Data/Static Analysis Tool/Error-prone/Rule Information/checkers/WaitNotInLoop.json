@@ -1,0 +1,22 @@
+{
+  "name": "WaitNotInLoop",
+  "language": "java",
+  "description": "Because of spurious wakeups, Object.wait() and Condition.await() must always be called in a loop",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 67,
+  "branches": 11,
+  "apis": 2,
+  "test": [
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        118
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author eaftan@google.com (Eddie Aftandilian)\n *     <p>TODO(eaftan): Add test cases for enhanced for loop, loop outside synchronized block.\n */\npublic class WaitNotInLoopNegativeCases {\n\n  boolean flag = true;\n\n  public void test1() {\n    synchronized (this) {\n      while (!flag) {\n        try {\n          wait();\n        } catch (InterruptedException e) {\n        }\n      }\n    }\n  }\n\n  public void test2() {\n    synchronized (this) {\n      while (!flag) {\n        try {\n          wait(1000);\n        } catch (InterruptedException e) {\n        }\n      }\n    }\n  }\n\n  public void test3() {\n    synchronized (this) {\n      while (!flag) {\n        try {\n          wait(1000, 1000);\n        } catch (InterruptedException e) {\n        }\n      }\n    }\n  }\n\n  // This code is incorrect, but this check should not flag it.\n  public void testLoopNotInSynchronized() {\n    while (!flag) {\n      synchronized (this) {\n        try {\n          wait();\n        } catch (InterruptedException e) {\n        }\n      }\n    }\n  }\n\n  public void testDoLoop() {\n    synchronized (this) {\n      do {\n        try {\n          wait();\n        } catch (InterruptedException e) {\n        }\n      } while (!flag);\n    }\n  }\n\n  public void testForLoop() {\n    synchronized (this) {\n      for (; !flag; ) {\n        try {\n          wait();\n        } catch (InterruptedException e) {\n        }\n      }\n    }\n  }\n\n  public void testEnhancedForLoop() {\n    int[] arr = new int[100];\n    synchronized (this) {\n      for (int i : arr) {\n        try {\n          wait();\n        } catch (InterruptedException e) {\n        }\n      }\n    }\n  }\n\n  private void wait(Object obj) {}\n\n  public void testNotObjectWait() {\n    wait(new Object());\n  }\n}\\"
+    }
+  ]
+}

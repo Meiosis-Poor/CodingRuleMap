@@ -1,0 +1,118 @@
+{
+  "name": "LockNotBeforeTry",
+  "language": "java",
+  "description": "Calls to Lock#lock should be immediately followed by a try block which releases the lock.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 192,
+  "branches": 24,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                try {\n                  // BUG: Diagnostic contains:\n                  lock.lock();\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "ignoresMultipleLocks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lockA, ReentrantLock lockB) {\n                try {\n                  lockA.lock();\n                  lockB.lock();\n                  System.out.println(\"hi\");\n                } finally {\n                  lockA.unlock();\n                  lockB.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactorToBefore",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                try {\n                  lock.lock();\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }\n            \n\n            import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "interspersed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                try {\n                  System.out.println(\"hi\");\n                  // BUG: Diagnostic contains:\n                  lock.lock();\n                  System.out.println(\"bye\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactorIntermediate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        168
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                System.out.println(\"hi\");\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }\n            \n\n            import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactorUnlockOutsideTry",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                System.out.println(\"hi\");\n                lock.unlock();\n              }\n            }\n            \n\n            import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "twoRegions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        243
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                System.out.println(\"hi\");\n                lock.unlock();\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }\n            \n\n            import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "unclosed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        290
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock) {\n                // BUG: Diagnostic contains:\n                lock.lock();\n                System.out.println(\"hi\");\n                lock.lock();\n                try {\n                  System.out.println(\"hi\");\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "receiverless",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        316
+      ],
+      "code": "abstract class Test implements java.util.concurrent.locks.Lock {\n              private void test() {\n                lock();\n                try {\n                } finally {\n                  unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "receiverless2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        335
+      ],
+      "code": "import java.util.concurrent.locks.Lock;\n\n            abstract class Test implements Lock {\n              private void test(Lock l) {\n                lock();\n                l.lock();\n                try {\n                } finally {\n                  unlock();\n                  l.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonInvocationExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        358
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantLock;\n\n            abstract class Test {\n              private void test(ReentrantLock lock) {\n                String s;\n                // BUG: Diagnostic contains:\n                lock.lock();\n                s = lock.toString();\n                lock.unlock();\n              }\n            }"
+    },
+    {
+      "description": "nullCheck",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        379
+      ],
+      "code": "import static java.util.Objects.requireNonNull;\n            import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock, Runnable r) {\n                lock.lock();\n                requireNonNull(r);\n                try {\n                  r.run();\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }\n            \n\n            import static java.util.Objects.requireNonNull;\n            import java.util.concurrent.locks.ReentrantLock;\n\n            class Test {\n              private void test(ReentrantLock lock, Runnable r) {\n                lock.lock();\n                try {\n                  requireNonNull(r);\n                  r.run();\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    }
+  ]
+}

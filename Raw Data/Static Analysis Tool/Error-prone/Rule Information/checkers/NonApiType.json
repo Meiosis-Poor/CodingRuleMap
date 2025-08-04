@@ -1,0 +1,166 @@
+{
+  "name": "NonApiType",
+  "language": "java",
+  "description": "Certain types should not be passed across API boundaries.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 276,
+  "branches": 14,
+  "apis": 9,
+  "test": [
+    {
+      "description": "listImplementations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "public class Test {\n              // BUG: Diagnostic contains: java.util.List\n              private void test1(java.util.ArrayList value) {}\n\n              // BUG: Diagnostic contains: java.util.List\n              private void test1(java.util.LinkedList value) {}\n            }"
+    },
+    {
+      "description": "protoListImplementations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        52
+      ],
+      "code": "public class Test {\n              // BUG: Diagnostic contains: java.util.List\n              private void test1(com.google.protobuf.ProtocolStringList value) {}\n\n              // BUG: Diagnostic contains: java.util.List\n              private void test1(com.google.protobuf.LazyStringList value) {}\n\n              // BUG: Diagnostic contains: java.util.List\n              private void test1(com.google.protobuf.LazyStringArrayList value) {}\n            }"
+    },
+    {
+      "description": "setImplementations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "public class Test {\n              // BUG: Diagnostic contains: java.util.Set\n              private void test1(java.util.HashSet value) {}\n\n              // BUG: Diagnostic contains: java.util.Set\n              private void test1(java.util.LinkedHashSet value) {}\n\n              // BUG: Diagnostic contains: java.util.Set\n              private void test1(java.util.TreeSet value) {}\n            }"
+    },
+    {
+      "description": "mapImplementations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "public class Test {\n              // BUG: Diagnostic contains: java.util.Map\n              private void test1(java.util.HashMap value) {}\n\n              // BUG: Diagnostic contains: java.util.Map\n              private void test1(java.util.LinkedHashMap value) {}\n\n              // BUG: Diagnostic contains: java.util.Map\n              private void test1(java.util.TreeMap value) {}\n            }"
+    },
+    {
+      "description": "guavaOptionals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            public class Test {\n              // BUG: Diagnostic contains: java.util.Optional\n              public Optional<String> middleName() {\n                return Optional.of(\"alfred\");\n              }\n\n              // BUG: Diagnostic contains: java.util.Optional\n              public void setMiddleName(Optional<String> middleName) {}\n            }"
+    },
+    {
+      "description": "jdkOptionals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              public Optional<String> middleName() {\n                return Optional.of(\"alfred\");\n              }\n\n              // BUG: Diagnostic contains: Avoid Optional parameters\n              public void setMiddleName(Optional<String> middleName) {}\n            }"
+    },
+    {
+      "description": "immutableFoos",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": ""
+    },
+    {
+      "description": "primitiveArrays",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        181
+      ],
+      "code": "public class Test {\n              // BUG: Diagnostic contains: ImmutableIntArray\n              public int[] testInts() {\n                return null;\n              }\n\n              // BUG: Diagnostic contains: ImmutableDoubleArray\n              public void testDoubles1(double[] values) {}\n\n              // BUG: Diagnostic contains: ImmutableDoubleArray\n              public void testDoubles2(Double[] values) {}\n            }"
+    },
+    {
+      "description": "protoTime",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "import com.google.protobuf.Duration;\n            import com.google.protobuf.Timestamp;\n\n            public class Test {\n              // BUG: Diagnostic contains: java.time.Duration\n              public Duration test() {\n                return null;\n              }\n\n              // BUG: Diagnostic contains: java.time.Instant\n              public void test(Timestamp timestamp) {}\n            }"
+    },
+    {
+      "description": "varargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": ""
+    },
+    {
+      "description": "typeArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        238
+      ],
+      "code": "import com.google.protobuf.Timestamp;\n            import java.util.List;\n            import java.util.Map;\n\n            public class Test {\n              // BUG: Diagnostic contains: java.time.Instant\n              public void test1(List<Timestamp> timestamps) {}\n\n              // BUG: Diagnostic contains: java.time.Instant\n              public void test2(List<Map<String, Timestamp>> timestamps) {}\n            }"
+    },
+    {
+      "description": "nonPublicApisInPublicClassAreNotFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        259
+      ],
+      "code": "import com.google.protobuf.Timestamp;\n\n            public class Test {\n              void test1(Timestamp timestamp) {}\n\n              protected void test2(Timestamp timestamp) {}\n\n              private void test3(Timestamp timestamp) {}\n            }"
+    },
+    {
+      "description": "publicApisInNonPublicClassAreNotFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "import com.google.protobuf.Timestamp;\n\n            class Test {\n              public void test1(Timestamp timestamp) {}\n            }"
+    },
+    {
+      "description": "normalApisAreNotFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        293
+      ],
+      "code": "public class Test {\n              public Test(int a) {}\n\n              public int doSomething() {\n                return 42;\n              }\n\n              public void doSomething(int a) {}\n            }"
+    },
+    {
+      "description": "streams",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        312
+      ],
+      "code": "import java.util.stream.Stream;\n\n            public class Test {\n              // BUG: Diagnostic contains: NonApiType\n              public Test(Stream<String> iterator) {}\n\n              // BUG: Diagnostic contains: NonApiType\n              public void methodParam(Stream<String> iterator) {}\n            }"
+    },
+    {
+      "description": "iterators",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        331
+      ],
+      "code": "import java.util.Iterator;\n\n            public class Test {\n              // BUG: Diagnostic contains: NonApiType\n              public Iterator<String> returnType() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "recordConstructorParameters_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        349
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            public record Record(String a) {\n              public Record(ArrayList<String> a) {\n                this(a.get(0));\n              }\n            }"
+    },
+    {
+      "description": "recordCompactConstructor_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        369
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkArgument;\n            import com.google.common.collect.ImmutableSet;\n\n            public class Test {\n              public record RecordWithImmutableSet(ImmutableSet<String> ids) {\n                public RecordWithImmutableSet {\n                  ids.forEach(id -> checkArgument(!id.isBlank()));\n                }\n              }\n            }"
+    },
+    {
+      "description": "guiceModules",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        389
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n\n            public class Test extends AbstractModule {\n              // BUG: Diagnostic contains: NonApiType\n              public AbstractModule test() {\n                return new AbstractModule() {};\n              }\n\n              // Exact type, no finding.\n              public Test test2() {\n                return new Test();\n              }\n            }"
+    }
+  ]
+}

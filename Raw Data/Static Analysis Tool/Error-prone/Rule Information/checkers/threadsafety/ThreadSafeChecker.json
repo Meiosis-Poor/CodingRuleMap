@@ -1,0 +1,550 @@
+{
+  "name": "ThreadSafeChecker",
+  "language": "java",
+  "description": "Type declaration annotated with @ThreadSafe is not thread safe",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 252,
+  "branches": 35,
+  "apis": 8,
+  "test": [
+    {
+      "description": "basicFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.concurrent.ConcurrentMap;\n            import java.util.concurrent.atomic.AtomicLong;\n\n            @ThreadSafe\n            class Test {\n              final int a = 42;\n              final String b = null;\n              final java.lang.String c = null;\n              final com.google.common.collect.ImmutableList<String> d = null;\n              final ImmutableList<Integer> e = null;\n              final Deprecated dep = null;\n              final Class<?> clazz = Class.class;\n              final ConcurrentMap<Long, AtomicLong> concurrentMap = null;\n            }"
+    },
+    {
+      "description": "interfacesMutableByDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": ""
+    },
+    {
+      "description": "refactoringWithNameClash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "@com.google.errorprone.annotations.ThreadSafe\n            interface I {}\n            \n\n            class ThreadSafe implements I {}\n            \n\n            @com.google.errorprone.annotations.ThreadSafe\n            class ThreadSafe implements I {}"
+    },
+    {
+      "description": "annotationsCanBeAnnotatedWithThreadSafe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            @interface Test {}"
+    },
+    {
+      "description": "customAnnotationsMightBeMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        128
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            @interface Test {}\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n            import java.lang.annotation.Annotation;\n\n            @ThreadSafe\n            final class MyTest implements Test {\n              // BUG: Diagnostic contains: should be final or annotated\n              public Object[] xs = {};\n\n              public Class<? extends Annotation> annotationType() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "customAnnotationsSubtype",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        158
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            @interface Test {}\n            \n\n            import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains:\n            // extends @ThreadSafe type Test, but is not annotated as threadsafe\n            final class MyTest implements Test {\n              public Object[] xs = {};\n\n              public Class<? extends Annotation> annotationType() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "annotationsDefaultToImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import javax.lang.model.element.ElementKind;\n\n            @ThreadSafe\n            class Test {\n              private final Override override = null;\n            }"
+    },
+    {
+      "description": "enumsDefaultToImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import javax.lang.model.element.ElementKind;\n\n            @ThreadSafe\n            class Test {\n              private final ElementKind ek = null;\n            }"
+    },
+    {
+      "description": "enumsMayBeImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        221
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            enum Kind {\n              A,\n              B,\n              C;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              private final Kind k = null;\n            }"
+    },
+    {
+      "description": "mutableArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains:\n              final int[] xs = {42};\n            }"
+    },
+    {
+      "description": "immutableAnnotatedNotTested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        266
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final int[] xs = {42};\n            }"
+    },
+    {
+      "description": "immutableAnnotatedNotTested_inheritance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        282
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface Test {}\n            \n\n            final class MyTest implements Test {\n              public Object[] xs = {};\n            }"
+    },
+    {
+      "description": "annotatedThreadSafeInterfaces",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        303
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            interface Test {}"
+    },
+    {
+      "description": "threadSafeInterfaceField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        317
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            interface MyInterface {}\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              final MyInterface i = null;\n            }"
+    },
+    {
+      "description": "immutableInterfaceField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        341
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface MyInterface {}\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              final MyInterface i = null;\n            }"
+    },
+    {
+      "description": "deeplyImmutableArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        365
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              final ImmutableList<ImmutableList<ImmutableList<String>>> l = null;\n            }"
+    },
+    {
+      "description": "deeplyThreadsafeArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        382
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\nimport com.google.errorprone.annotations.ThreadSafe;\nimport java.util.concurrent.ConcurrentMap;\nimport java.util.concurrent.atomic.AtomicInteger;\n\n@ThreadSafe\nclass Test {\n  final ConcurrentMap<String, ConcurrentMap<Long, ImmutableList<AtomicInteger>>> l = null;\n}"
+    },
+    {
+      "description": "mutableNonFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        401
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: should be final or annotated\n              int a = 42;\n            }"
+    },
+    {
+      "description": "mutableStaticFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        418
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.List;\n            import java.util.Map;\n\n            @ThreadSafe\n            class Test {\n              static int a = 42;\n              static final Map<Long, List<Long>> b = null;\n            }"
+    },
+    {
+      "description": "mutableFieldGuardedByErrorProneAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        437
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.List;\n            import java.util.Map;\n\n            @ThreadSafe\n            class Test {\n              @GuardedBy(\"this\")\n              int a = 42;\n\n              @GuardedBy(\"this\")\n              final Map<Long, List<Long>> b = null;\n\n              @GuardedBy(\"this\")\n              volatile int c = 42;\n            }"
+    },
+    {
+      "description": "mutableFieldNotGuarded",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        463
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import javax.annotation.concurrent.GuardedBy;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: @GuardedBy\n              volatile int a = 42;\n            }"
+    },
+    {
+      "description": "mutableField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        481
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.Map;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains:\n              final Map<String, String> a = null;\n            }"
+    },
+    {
+      "description": "deeplyMutableTypeArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        499
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.Map;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: instantiated with non-thread-safe type for 'E'\n              final ImmutableList<ImmutableList<ImmutableList<Map<String, String>>>> l = null;\n            }"
+    },
+    {
+      "description": "rawImpliesImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        518
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: was raw\n              final ImmutableList l = null;\n            }"
+    },
+    {
+      "description": "extendsThreadSafe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        536
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            public class Super {\n              public final int x = 42;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test extends Super {}"
+    },
+    {
+      "description": "extendsThreadSafe_annotatedWithImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        560
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            public class Super {\n              public final int x = 42;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test extends Super {}"
+    },
+    {
+      "description": "extendsMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        584
+      ],
+      "code": "public class Super {\n              public int x = 42;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            // BUG: Diagnostic contains: 'Super' has non-final field 'x'\n            class Test extends Super {}"
+    },
+    {
+      "description": "mutableTypeArgumentInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        606
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            public class Holder<T> {\n              public final T t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains:\n              final Holder<Object> h = null;\n            }"
+    },
+    {
+      "description": "instantiationWithMutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        632
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            public class Holder<T> {\n              public final T t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: not annotated\n              final Holder<Object> h = null;\n            }"
+    },
+    {
+      "description": "missingContainerOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        658
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.List;\n\n            @ThreadSafe\n            class Test<T> {\n              // BUG: Diagnostic contains: 'T' is a non-thread-safe type variable\n              private final T t = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        676
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            public class X<T> {\n              final ImmutableList<T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains:\n              final X<Object> x = null;\n            }"
+    },
+    {
+      "description": "immutableInstantiation_superBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        702
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            public class X<T> {\n              final ImmutableList<? super T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.List;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains:\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation_superBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        729
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            public class X<T> {\n              final ImmutableList<? super T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n            import java.util.List;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: is not annotated\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation_inferredImmutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        756
+      ],
+      "code": "public class X<T> {\n              final T xs = null;\n            }\n            \n\n            public class Y<T> {\n              final X<? extends T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains:\n              final Y<Object> x = null;\n            }"
+    },
+    {
+      "description": "testImmutableListImplementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        787
+      ],
+      "code": "package com.google.common.collect;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class ImmutableList<E> {\n              public Object[] veryMutable = null;\n            }"
+    },
+    {
+      "description": "positiveAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        805
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            class Test {\n              {\n                new Super() {\n                  // BUG: Diagnostic contains: should be final or annotated\n                  int x = 0;\n\n                  {\n                    x++;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "positiveAnonymousInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        841
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            interface Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            class Test {\n              {\n                new Super() {\n                  // BUG: Diagnostic contains: should be final or annotated\n                  int x = 0;\n\n                  {\n                    x++;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        879
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Super {}\n            \n\n            package threadsafety;\n\n            class Test extends Super {\n              // BUG: Diagnostic contains: should be final or annotated\n              public int x = 0;\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        905
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test extends Super {}"
+    },
+    {
+      "description": "transitive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        933
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            interface I {}\n            \n\n            package threadsafety;\n\n            // BUG: Diagnostic contains: extends @ThreadSafe\n            class Test implements J {\n              public int x = 0;\n            }\n            \n\n            package threadsafety;\n\n            // BUG: Diagnostic contains: extends @ThreadSafe\n            interface J extends I {}"
+    },
+    {
+      "description": "negativeAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        969
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            class Test {\n              {\n                new Super() {};\n              }\n            }"
+    },
+    {
+      "description": "positiveEnumConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        998
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            interface Super {\n              int f();\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            enum Test implements Super {\n              INSTANCE {\n                // BUG: Diagnostic contains: should be final or annotated\n                public int x = 0;\n\n                public int f() {\n                  return x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeEnumConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1035
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            interface Super {\n              void f();\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            enum Test implements Super {\n              INSTANCE {\n                public void f() {}\n              }\n            }"
+    },
+    {
+      "description": "immutableNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1081
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              final int[] xs = null;\n            }"
+    },
+    {
+      "description": "twoFieldsInSource",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1097
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: arrays are not thread-safe\n              final int[] xs = {1};\n              // BUG: Diagnostic contains: arrays are not thread-safe\n              final int[] ys = {1};\n            }"
+    },
+    {
+      "description": "protosNotOnClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1116
+      ],
+      "code": "package com.google.errorprone.annotations;\n\n            import static java.lang.annotation.ElementType.TYPE;\n            import static java.lang.annotation.RetentionPolicy.RUNTIME;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n\n            @Target(TYPE)\n            @Retention(RUNTIME)\n            public @interface ThreadSafe {}"
+    },
+    {
+      "description": "mutableEnclosing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1146
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            public class Test {\n              int x = 0;\n\n              @ThreadSafe\n              // BUG: Diagnostic contains: 'Inner' has non-thread-safe enclosing instance 'Test'\n              public class Inner {\n                public int count() {\n                  return x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "superFieldSuppression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1178
+      ],
+      "code": ""
+    },
+    {
+      "description": "lazyInit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1189
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.concurrent.LazyInit;\n\n            @ThreadSafe\n            class Test {\n              @LazyInit int a = 42;\n            }"
+    },
+    {
+      "description": "lazyInitMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1206
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.concurrent.LazyInit;\n            import java.util.List;\n\n            @ThreadSafe\n            class Test {\n              // BUG: Diagnostic contains: 'List' is not thread-safe\n              @LazyInit List<Integer> a = null;\n            }"
+    },
+    {
+      "description": "rawClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1225
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              final Class clazz = Test.class;\n            }"
+    },
+    {
+      "description": "threadSafeTypeParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1242
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            public class X {\n              final ImmutableList<@ThreadSafeTypeParameter ?> unknownSafeType;\n\n              X(ImmutableList<@ThreadSafeTypeParameter ?> unknownSafeType) {\n                this.unknownSafeType = unknownSafeType;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              final X badX = new X(ImmutableList.of(ImmutableList.<String>of()));\n            }"
+    },
+    {
+      "description": "mutableTypeParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1272
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            public class X {\n              final ImmutableList<@ThreadSafe ?> unknownSafeType;\n\n              X(ImmutableList<@ThreadSafe ?> unknownSafeType) {\n                this.unknownSafeType = unknownSafeType;\n              }\n            }\n            \n\n            import java.util.ArrayList;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              final X badX = new X(ImmutableList.of(new ArrayList<String>()));\n            }"
+    },
+    {
+      "description": "knownThreadSafeFlag",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1313
+      ],
+      "code": "package threadsafety;\n\n            class SomeImmutable {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              public final SomeImmutable s = new SomeImmutable();\n            }"
+    },
+    {
+      "description": "threadSafeTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1339
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n\n            @ThreadSafe\n            class Test<@ThreadSafeTypeParameter T> {\n              final T t = null;\n            }"
+    },
+    {
+      "description": "threadSafeTypeParameterInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1356
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n\n            @ThreadSafe\n            class A<@ThreadSafeTypeParameter T> {}\n            \n\nclass Test {\n  A<String> f() {\n    return new A<>();\n  }\n\n  A<Object> g() {\n    // BUG: Diagnostic contains: instantiation of 'T' is not thread-safe, 'Object' is not\n    // thread-safe\n    return new A<>();\n  }\n}"
+    },
+    {
+      "description": "threadSafeTypeParameterUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1386
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n\n            class Test {\n              static <@ThreadSafeTypeParameter T> void f() {}\n            }"
+    },
+    {
+      "description": "threadSafeTypeParameterUsage_interface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1401
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n\n            @ThreadSafe\n            interface Test<@ThreadSafeTypeParameter T> {}"
+    },
+    {
+      "description": "threadSafeTypeParameterMutableClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1416
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n\n            // BUG: Diagnostic contains: @ThreadSafeTypeParameter is only supported on\n            class A<@ThreadSafeTypeParameter T> {}"
+    },
+    {
+      "description": "annotatedClassType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1430
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n\n            @Target(TYPE_USE)\n            @interface A {}\n\n            class Test {\n              Object o = new @A Object();\n            }"
+    },
+    {
+      "description": "instantiationWithThreadSafeTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1449
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.ThreadSafe;\n            import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n\n            @ThreadSafe\n            public class Test<@ThreadSafeTypeParameter T> {\n              final ImmutableList<T> xs = ImmutableList.of();\n            }"
+    },
+    {
+      "description": "notAllTypeVarsInstantiated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1468
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n            import java.util.function.Function;\n\n            class Test {\n              public final <A> void f1(A transform) {}\n\n              public <B, @ThreadSafeTypeParameter C> C f2(Function<B, C> fn) {\n                return null;\n              }\n\n              public final <D, E> void f3(Function<D, E> fn) {\n                // BUG: Diagnostic contains: instantiation of 'C' is not thread-safe\n                // 'E' is a non-thread-safe type variable\n                f1(f2(fn));\n              }\n            }"
+    },
+    {
+      "description": "notAllTypeVarsInstantiated_shouldFail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1497
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafeTypeParameter;\n            import java.util.function.Function;\n\n            class Test {\n              public final <A> void f1(A transform) {}\n\n              public <@ThreadSafeTypeParameter B, C> C f2(Function<B, C> fn) {\n                return null;\n              }\n\n              public final <D, E> void f3(Function<D, E> fn) {\n                // BUG: Diagnostic contains: instantiation of 'B' is not thread-safe\n                // 'D' is a non-thread-safe type variable\n                f1(f2(fn));\n              }\n            }"
+    },
+    {
+      "description": "threadSafeUpperBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1523
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class MyThreadSafeType {}\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test<T extends MyThreadSafeType> {\n              final T x = null;\n            }"
+    },
+    {
+      "description": "threadSafeRecursiveUpperBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1547
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            abstract class Recursive<T extends Recursive<T>> {\n              final T x = null;\n            }"
+    },
+    {
+      "description": "threadSafeRecursiveUpperBound_notThreadsafe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1563
+      ],
+      "code": "import com.google.errorprone.annotations.ThreadSafe;\nimport java.util.List;\n\n@ThreadSafe\nabstract class Recursive<T extends Recursive<T>> {\n  final T x = null;\n  // BUG: Diagnostic contains: @ThreadSafe class has non-thread-safe field, 'List' is not\n  // thread-safe\n  final List<T> y = null;\n}"
+    },
+    {
+      "description": "protoEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1583
+      ],
+      "code": "import com.google.protobuf.ProtocolMessageEnum;\n\n            abstract class E implements ProtocolMessageEnum {}\n            \n\n            import com.google.errorprone.annotations.ThreadSafe;\n\n            @ThreadSafe\n            class Test {\n              final E x = null;\n            }"
+    }
+  ]
+}

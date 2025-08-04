@@ -1,0 +1,166 @@
+{
+  "name": "UngroupedOverloads",
+  "language": "java",
+  "description": "Constructors and methods with the same name should appear sequentially with no other code in between, even when modifiers such as static or private differ between the methods. Please re-order or re-name methods.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 162,
+  "branches": 12,
+  "apis": 8,
+  "test": [
+    {
+      "description": "ungroupedOverloadsPositiveCasesSingle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        40
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            public class UngroupedOverloadsPositiveCasesSingle {\n\n              public void quux() {\n                foo();\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo'\n              public void foo() {\n                foo(42);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo'\n              public void foo(int x) {\n                foo(x, x);\n              }\n\n              public void bar() {\n                bar(42);\n              }\n\n              public void bar(int x) {\n                foo(x);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo'\n              public void foo(int x, int y) {\n                System.out.println(x + y);\n              }\n\n              public void norf() {}\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsPositiveCasesMultiple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            public class UngroupedOverloadsPositiveCasesMultiple {\n\n              private int foo;\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x, String z, int y) {\n                System.out.println(String.format(\"z: %s, x: %d, y: %d\", z, x, y));\n              }\n\n              private UngroupedOverloadsPositiveCasesMultiple(int foo) {\n                this.foo = foo;\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x) {\n                bar(foo, x);\n              }\n\n              public void baz(String x) {\n                bar(42, x, 42);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x, int y) {\n                bar(y, FOO, x);\n              }\n\n              public static final String FOO = \"foo\";\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x, int y, int z) {\n                bar(x, String.valueOf(y), z);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'quux'\n              public int quux() {\n                return quux(quux);\n              }\n\n              public int quux = 42;\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'quux'\n              public int quux(int x) {\n                return x + quux;\n              }\n\n              private static class Quux {}\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'quux'\n              public int quux(int x, int y) {\n                return quux(x + y);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'norf'\n              public int norf(int x) {\n                return quux(x, x);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'norf'\n              public int norf(int x, int y) {\n                return norf(x + y);\n              }\n\n              public void foo() {\n                System.out.println(\"foo\");\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'norf'\n              public void norf(int x, int y, int w) {\n                norf(x + w, y + w);\n              }\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsPositiveCasesInterleaved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            public class UngroupedOverloadsPositiveCasesInterleaved {\n\n              private int foo;\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x, String z, int y) {\n                System.out.println(String.format(\"z: %s, x: %d, y: %d\", z, x, y));\n              }\n\n              public UngroupedOverloadsPositiveCasesInterleaved(int foo) {\n                this.foo = foo;\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x) {\n                bar(foo, x);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'baz'\n              public void baz(String x) {\n                baz(x, FOO);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x, int y) {\n                bar(y, FOO, x);\n              }\n\n              public static final String FOO = \"foo\";\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'baz'\n              public void baz(String x, String y) {\n                bar(foo, x + y, foo);\n              }\n\n              public void foo(int x) {}\n\n              public void foo() {\n                foo(foo);\n              }\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsPositiveCasesCovering",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        229
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            public class UngroupedOverloadsPositiveCasesCovering {\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo'\n              public void foo(int x) {\n                System.out.println(x);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar() {\n                foo();\n              }\n\n              public void baz() {\n                bar();\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'bar'\n              public void bar(int x) {\n                foo(x);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'quux'\n              private void quux() {\n                norf();\n              }\n\n              private void norf() {\n                quux();\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'quux'\n              public void quux(int x) {\n                bar(x);\n              }\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo'\n              public void foo() {\n                foo(42);\n              }\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsPositiveCasesCoveringOnlyFirstOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author hanuszczak@google.com (Łukasz Hanuszczak)\n */\npublic class UngroupedOverloadsPositiveCasesCoveringOnlyOnFirst {\n\n  // BUG: Diagnostic contains: Constructors and methods with the same name should appear\n  public void foo(int x) {\n    System.out.println(x);\n  }\n\n  public void bar() {\n    foo();\n  }\n\n  public void baz() {\n    bar();\n  }\n\n  public void bar(int x) {\n    foo(x);\n  }\n\n  private void quux() {\n    norf();\n  }\n\n  private void norf() {\n    quux();\n  }\n\n  public void quux(int x) {\n    bar(x);\n  }\n\n  public void foo() {\n    foo(42);\n  }\n}\\"
+    },
+    {
+      "description": "ungroupedOverloadsNegativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        335
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            public class UngroupedOverloadsNegativeCases {\n\n              private int foo;\n\n              public UngroupedOverloadsNegativeCases(int foo) {\n                this.foo = foo;\n              }\n\n              public void bar(int x) {\n                bar(foo, x);\n              }\n\n              public void bar(int x, String z, int y) {\n                System.out.println(String.format(\"z: %s, x: %d, y: %d\", z, x, y));\n              }\n\n              public void bar(int x, int y) {\n                bar(y, FOO, x);\n              }\n\n              public static class Baz {}\n\n              public static final String FOO = \"foo\";\n\n              public void baz(String x) {\n                baz(x, FOO);\n              }\n\n              public void baz(String x, String y) {\n                bar(foo, x + y, foo);\n              }\n\n              public int foo() {\n                return this.foo;\n              }\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsRefactoringComments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        386
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            class UngroupedOverloadsRefactoringComments {\n\n              private void bar() {}\n\n              public static final String FOO = \"foo\"; // This is super-important comment for `foo`.\n\n              // Something about `bar`.\n              /** Does something. */\n              public void bar(int x) {}\n\n              // Something about this `bar`.\n              public void bar(int x, int y) {}\n\n              // Something about `baz`.\n              public static final String BAZ = \"baz\"; // Stuff about `baz` continues.\n\n              // More stuff about `bar`.\n              public void bar(int x, int y, int z) {\n                // Some internal comments too.\n              }\n\n              public void quux() {}\n\n              public void bar(String s) {}\n            }\\\n            \n\n            package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            class UngroupedOverloadsRefactoringComments {\n\n              private void bar() {}\n\n              // Something about `bar`.\n              /** Does something. */\n              public void bar(int x) {}\n\n              // Something about this `bar`.\n              public void bar(int x, int y) {}\n\n              // More stuff about `bar`.\n              public void bar(int x, int y, int z) {\n                // Some internal comments too.\n              }\n\n              public void bar(String s) {}\n\n              public static final String FOO = \"foo\"; // This is super-important comment for `foo`.\n\n              // Something about `baz`.\n              public static final String BAZ = \"baz\"; // Stuff about `baz` continues.\n\n              public void quux() {}\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsRefactoringMultiple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        460
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            class UngroupedOverloadsRefactoringMultiple {\n\n              public void foo() {}\n\n              public void foo(int x) {}\n\n              private static class foo {}\n\n              public void foo(int x, int y) {}\n\n              public void bar() {}\n\n              public static final String BAZ = \"baz\";\n\n              public void foo(int x, int y, int z) {}\n\n              public void quux() {}\n\n              public void quux(int x) {}\n\n              public static final int X = 0;\n              public static final int Y = 1;\n\n              public void quux(int x, int y) {}\n\n              private int quux;\n\n              public void norf() {}\n\n              public void quux(int x, int y, int z) {}\n\n              public void thud() {}\n            }\\\n            \n\n            package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            class UngroupedOverloadsRefactoringMultiple {\n\n              public void foo() {}\n\n              public void foo(int x) {}\n\n              public void foo(int x, int y) {}\n\n              public void foo(int x, int y, int z) {}\n\n              private static class foo {}\n\n              public void bar() {}\n\n              public static final String BAZ = \"baz\";\n\n              public void quux() {}\n\n              public void quux(int x) {}\n\n              public void quux(int x, int y) {}\n\n              public void quux(int x, int y, int z) {}\n\n              public static final int X = 0;\n              public static final int Y = 1;\n\n              private int quux;\n\n              public void norf() {}\n\n              public void thud() {}\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsRefactoringInterleaved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        550
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            class UngroupedOverloadsRefactoringInterleaved {\n\n              public void foo() {}\n\n              public void baz() {}\n\n              public void bar() {}\n\n              public void foo(int x) {}\n\n              public void baz(int x) {}\n\n              public void foo(int x, int y) {}\n\n              public void quux() {}\n\n              public void baz(int x, int y) {}\n\n              public void quux(int x) {}\n\n              public void bar(int x) {}\n\n              public void quux(int x, int y) {}\n\n              public void foo(int x, int y, int z) {}\n\n              public void bar(int x, int y) {}\n            }\\\n            \n\n            package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author hanuszczak@google.com (Łukasz Hanuszczak)\n             */\n            class UngroupedOverloadsRefactoringInterleaved {\n\n              public void foo() {}\n\n              public void foo(int x) {}\n\n              public void foo(int x, int y) {}\n\n              public void foo(int x, int y, int z) {}\n\n              public void baz() {}\n\n              public void baz(int x) {}\n\n              public void baz(int x, int y) {}\n\n              public void bar() {}\n\n              public void bar(int x) {}\n\n              public void bar(int x, int y) {}\n\n              public void quux() {}\n\n              public void quux(int x) {}\n\n              public void quux(int x, int y) {}\n            }\\"
+    },
+    {
+      "description": "ungroupedOverloadsRefactoringBelowCutoffLimit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        630
+      ],
+      "code": "class BelowLimit {\n              BelowLimit() {}\n\n              void foo() {}\n\n              void bar() {}\n\n              void foo(int x) {}\n            }\n            \n\n            class BelowLimit {\n              BelowLimit() {}\n\n              void foo() {}\n\n              void foo(int x) {}\n\n              void bar() {}\n            }"
+    },
+    {
+      "description": "ungroupedOverloadsRefactoring_fiveMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        663
+      ],
+      "code": "class AboveLimit {\n              AboveLimit() {}\n\n              void foo() {}\n\n              void bar() {}\n\n              void foo(int x) {}\n\n              void baz() {}\n            }\n            \n\n            class AboveLimit {\n              AboveLimit() {}\n\n              void foo() {}\n\n              void foo(int x) {}\n\n              void bar() {}\n\n              void baz() {}\n            }"
+    },
+    {
+      "description": "staticAndNonStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        700
+      ],
+      "code": "class Test {\n              void foo() {}\n\n              void bar() {}\n\n              static void foo(int x) {}\n            }"
+    },
+    {
+      "description": "staticAndNonStaticInterspersed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        718
+      ],
+      "code": "class Test {\n              private void foo(int x) {}\n\n              private static void foo(int x, int y, int z) {}\n\n              private void foo(int x, int y) {}\n            }"
+    },
+    {
+      "description": "suppressOnAnyMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        735
+      ],
+      "code": "class Test {\n              void foo() {}\n\n              void bar() {}\n\n              @SuppressWarnings(\"UngroupedOverloads\")\n              void foo(int x) {}\n            }"
+    },
+    {
+      "description": "javadoc",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        753
+      ],
+      "code": "class Test {\n              void foo() {}\n\n              void bar() {}\n\n              /** doc */\n              void foo(int x) {}\n            }\n            \n\n            class Test {\n\n              void foo() {}\n\n              /** doc */\n              void foo(int x) {}\n\n              void bar() {}\n            }"
+    },
+    {
+      "description": "diagnostic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        784
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo' on line(s): 11, 14, 17\n              private void foo() {}\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo' on line(s): 11, 14, 17\n              private void foo(int a) {}\n\n              private void bar() {}\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo' on line(s): 3, 6\n              private void foo(int a, int b) {}\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo' on line(s): 3, 6\n              private void foo(int a, int b, int c) {}\n\n              // BUG: Diagnostic contains: ungrouped overloads of 'foo' on line(s): 3, 6\n              private void foo(int a, int b, int c, int d) {}\n            }"
+    },
+    {
+      "description": "interleavedUngroupedOverloads",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        812
+      ],
+      "code": "class Test {\n              void foo() {\n                System.err.println();\n              }\n\n              void bar() {\n                System.err.println();\n              }\n\n              void foo(int x) {\n                System.err.println();\n              }\n\n              void bar(int x) {\n                System.err.println();\n              }\n            }\n            \n\n            class Test {\n\n              void foo() {\n                System.err.println();\n              }\n\n              void foo(int x) {\n                System.err.println();\n              }\n\n              void bar() {\n                System.err.println();\n              }\n\n              void bar(int x) {\n                System.err.println();\n              }\n            }"
+    },
+    {
+      "description": "describingConstructors",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        862
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: constructor overloads\n              Test() {}\n\n              private void bar() {}\n\n              // BUG: Diagnostic contains: constructor overloads\n              Test(int i) {}\n            }"
+    },
+    {
+      "description": "recordConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        881
+      ],
+      "code": "import com.google.common.collect.ImmutableSet;\n            import java.util.Set;\n\n            record MyRecord(ImmutableSet<String> strings) {\n              MyRecord(Set<String> strings) {\n                this(strings == null ? ImmutableSet.of() : ImmutableSet.copyOf(strings));\n              }\n            }"
+    }
+  ]
+}

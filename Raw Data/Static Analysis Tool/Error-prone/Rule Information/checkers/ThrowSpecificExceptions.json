@@ -1,0 +1,54 @@
+{
+  "name": "ThrowSpecificExceptions",
+  "language": "java",
+  "description": "Base exception classes should be treated as abstract. If the exception is intended to be caught, throw a domain-specific exception. Otherwise, prefer a more specific exception for clarity. Common alternatives include: AssertionError, IllegalArgumentException, IllegalStateException, and (Guava's) VerifyException.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 78,
+  "branches": 7,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "public class Test {\n              void test() {\n                // BUG: Diagnostic contains: new VerifyException\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "public class Test {\n              void test() {\n                throw new RuntimeException();\n              }\n            }\n            \n\n            import com.google.common.base.VerifyException;\n\n            public class Test {\n              void test() {\n                throw new VerifyException();\n              }\n            }"
+    },
+    {
+      "description": "anonymousClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "public class Test {\n              void test() {\n                throw new RuntimeException() {};\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "public class Test {\n              void test() {\n                throw new IllegalStateException();\n              }\n            }"
+    },
+    {
+      "description": "dontMatchIfNotThrown",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "public class Test {\n              StackTraceElement[] getStackTrace() {\n                return new Throwable().getStackTrace();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "BanJNDI",
+  "language": "java",
+  "description": "Using JNDI may deserialize user input via the `Serializable` API which is extremely dangerous",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 69,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.io.IOException;\nimport java.util.Hashtable;\nimport javax.management.remote.JMXConnector;\nimport javax.management.remote.JMXConnectorFactory;\nimport javax.management.remote.JMXServiceURL;\nimport javax.management.remote.rmi.RMIConnector;\nimport javax.naming.Context;\nimport javax.naming.InitialContext;\nimport javax.naming.Name;\nimport javax.naming.NamingException;\nimport javax.naming.directory.Attributes;\nimport javax.naming.directory.DirContext;\nimport javax.sql.rowset.spi.SyncFactory;\nimport javax.sql.rowset.spi.SyncFactoryException;\n\n/**\n * {@link BanJNDITest}\n *\n * @author tshadwell@google.com (Thomas Shadwell)\n */\nclass BanJNDIPositiveCases {\n  private static DirContext FakeDirContext = ((DirContext) new Object());\n\n  private void callsModifyAttributes() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.modifyAttributes(((Name) new Object()), 0, ((Attributes) new Object()));\n  }\n\n  private void callsGetAttributes() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.getAttributes(((Name) new Object()));\n  }\n\n  private void callsSearch() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.search(((Name) new Object()), ((Attributes) new Object()));\n  }\n\n  private void callsGetSchema() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.getSchema(((Name) new Object()));\n  }\n\n  private void callsGetSchemaClassDefinition() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.getSchemaClassDefinition(((Name) new Object()));\n  }\n\n  private static Context FakeContext = ((Context) new Object());\n\n  private void callsLookup() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeContext.lookup(\"hello\");\n  }\n\n  private void callsSubclassLookup() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.lookup(\"hello\");\n  }\n\n  private void callsBind() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeContext.bind(((Name) new Object()), new Object());\n  }\n\n  private void subclassCallsBind() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.bind(((Name) new Object()), new Object());\n  }\n\n  private void callsRebind() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeContext.rebind(((Name) new Object()), new Object());\n  }\n\n  private void subclassCallsRebind() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.rebind(((Name) new Object()), new Object());\n  }\n\n  private void callsCreateSubcontext() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeContext.createSubcontext((Name) new Object());\n  }\n\n  private void subclassCallsCreateSubcontext() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    FakeDirContext.createSubcontext((Name) new Object());\n  }\n\n  RMIConnector fakeRMIConnector = ((RMIConnector) new Object());\n\n  private void callsRMIConnect() throws IOException {\n    // BUG: Diagnostic contains: BanJNDI\n    fakeRMIConnector.connect();\n  }\n\n  private void callsEnumerateBindings() throws SyncFactoryException {\n    // BUG: Diagnostic contains: BanJNDI\n    SyncFactory.getInstance(\"fear is the little-death\");\n  }\n\n  // unable to load javax.jdo for testing (must be some super optional pkg?)\n\n  private void callsJMXConnectorFactoryConnect() throws IOException {\n    // BUG: Diagnostic contains: BanJNDI\n    JMXConnectorFactory.connect(((JMXServiceURL) new Object()));\n  }\n\n  private void callsDoLookup() throws NamingException {\n    // BUG: Diagnostic contains: BanJNDI\n    InitialContext.doLookup(((Name) new Object()));\n  }\n\n  private static boolean callToJMXConnectorFactoryConnect()\n      throws java.net.MalformedURLException, java.io.IOException {\n    JMXConnector connector =\n        // BUG: Diagnostic contains: BanJNDI\n        JMXConnectorFactory.connect(\n            new JMXServiceURL(\"service:jmx:rmi:///jndi/rmi:// fake data 123 \"));\n    connector.connect();\n\n    return false;\n  }\n\n  private Object subclassesJavaNamingcontext() throws NamingException {\n    InitialContext c = new InitialContext(new Hashtable(0));\n    // BUG: Diagnostic contains: BanJNDI\n    return c.lookup(\"hello\");\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport javax.naming.Name;\nimport javax.naming.NamingException;\nimport javax.naming.directory.DirContext;\n\n/**\n * {@link BanJNDITest}\n *\n * @author tshadwell@google.com (Thomas Shadwell)\n */\nclass BanJNDIPositiveCases {\n  private static DirContext FakeDirContext = ((DirContext) new Object());\n\n  // Check we didn't ban all of Context by accident.\n  private void callsList() throws NamingException {\n    FakeDirContext.list(((Name) new Object()));\n  }\n}"
+    },
+    {
+      "description": "negativeCaseUnchanged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        206
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport javax.naming.Name;\nimport javax.naming.NamingException;\nimport javax.naming.directory.DirContext;\n\n/**\n * {@link BanJNDITest}\n *\n * @author tshadwell@google.com (Thomas Shadwell)\n */\nclass BanJNDIPositiveCases {\n  private static DirContext FakeDirContext = ((DirContext) new Object());\n\n  // Check we didn't ban all of Context by accident.\n  private void callsList() throws NamingException {\n    FakeDirContext.list(((Name) new Object()));\n  }\n}"
+    }
+  ]
+}

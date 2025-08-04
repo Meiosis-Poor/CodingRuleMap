@@ -1,0 +1,70 @@
+{
+  "name": "LockOnBoxedPrimitive",
+  "language": "java",
+  "description": "It is dangerous to use a boxed primitive as a lock as it can unintentionally lead to sharing a lock with another piece of code.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 122,
+  "branches": 8,
+  "apis": 3,
+  "test": [
+    {
+      "description": "detectsSynchronizedBoxedLocks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": ""
+    },
+    {
+      "description": "ignoresSynchronizedObjectLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "class Test {\n              private Object okLock;\n\n              private void test() {\n                synchronized (okLock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "ignoresSynchronizedObjectLock_initialized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "class Test {\n              private final Object okLock = Test.class;\n\n              private void test() {\n                synchronized (okLock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "detectsMonitorMethodBoxedLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": ""
+    },
+    {
+      "description": "ignoresMonitorMethodObjectLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "class Test {\n              private Object okLock;\n\n              private void test() throws InterruptedException {\n                okLock.wait();\n                okLock.wait(1);\n                okLock.wait(1, 2);\n                okLock.notify();\n                okLock.notifyAll();\n              }\n            }"
+    },
+    {
+      "description": "ignoresMonitorMethodObjectLock_initialized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "class Test {\n              private final Object okLock = new Object();\n\n              private void test() throws InterruptedException {\n                okLock.wait();\n                okLock.wait(1);\n                okLock.wait(1, 2);\n                okLock.notify();\n                okLock.notifyAll();\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "class Test {\n              private Boolean myBoolean;\n\n              void test(boolean value) {\n                synchronized (myBoolean) {\n                  myBoolean = value;\n                }\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              private final Object myBooleanLock = new Object();\n\n              @GuardedBy(\"myBooleanLock\")\n              private boolean myBoolean;\n\n              void test(boolean value) {\n                synchronized (myBooleanLock) {\n                  myBoolean = value;\n                }\n              }\n            }"
+    }
+  ]
+}

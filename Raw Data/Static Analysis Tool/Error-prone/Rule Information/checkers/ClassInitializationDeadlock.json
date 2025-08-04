@@ -1,0 +1,174 @@
+{
+  "name": "ClassInitializationDeadlock",
+  "language": "java",
+  "description": "Possible class initialization deadlock",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 195,
+  "branches": 23,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "public class A {\n              // BUG: Diagnostic contains:\n              private static Object cycle = new B();\n\n              public static class B extends A {}\n            }"
+    },
+    {
+      "description": "negativeMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47
+      ],
+      "code": "public class A {\n              private static Object cycle =\n                  new Object() {\n                    void f() {\n                      new B();\n                    }\n                  };\n\n              public static class B extends A {}\n            }"
+    },
+    {
+      "description": "negativeEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "enum E {\n              ONE(0),\n              TWO {\n                void f() {}\n              };\n\n              E(int x) {}\n\n              E() {}\n            }"
+    },
+    {
+      "description": "negativePrivate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "public class A {\n              private static Object benign_cycle = new B.C();\n\n              private static class B {\n                public static class C extends A {}\n              }\n            }"
+    },
+    {
+      "description": "negativeAutoValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Animal {\n              private static final Animal WALLABY = new AutoValue_Animal(\"Wallaby\", 4);\n\n              static Animal create(String name, int numberOfLegs) {\n                return new AutoValue_Animal(name, numberOfLegs);\n              }\n\n              abstract String name();\n\n              abstract int numberOfLegs();\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        129
+      ],
+      "code": "public class A {\n              static Object constant = 1;\n              Object nonStatic = new B();\n              static Class<?> classLiteral = B.class;\n\n              static class B extends A {}\n            }"
+    },
+    {
+      "description": "negativeInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "public interface A {\n              Object cycle = new B();\n\n              public static class B implements A {}\n            }"
+    },
+    {
+      "description": "positiveInterfaceDefaultMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161
+      ],
+      "code": "public interface A {\n              // BUG: Diagnostic contains:\n              Object cycle = new B();\n\n              default void f() {}\n\n              public static class B implements A {}\n            }"
+    },
+    {
+      "description": "negativePrivateConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "public class A {\n              private static Object cycle = new B();\n\n              public static final class B extends A {\n                private B() {}\n              }\n            }"
+    },
+    {
+      "description": "positivePrivateConstructorFactoryMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        196
+      ],
+      "code": "public class A {\n              // BUG: Diagnostic contains:\n              private static Object cycle = new B();\n\n              public static final class B extends A {\n                private B() {}\n\n                public static B create() {\n                  return new B();\n                }\n              }\n            }"
+    },
+    {
+      "description": "positivePrivateConstructorFactoryMethodNonStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        218
+      ],
+      "code": "public class A {\n              private static Object cycle = new B();\n\n              public static final class B extends A {\n                private B() {}\n\n                public B create() {\n                  return new B();\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeNonStaticInner",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        239
+      ],
+      "code": "public class A {\n              private static Object cycle = new A().new B();\n\n              public class B extends A {}\n            }"
+    },
+    {
+      "description": "negativeSelf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        254
+      ],
+      "code": "public class A {\n              public static class B extends A {\n                private static B self = new B();\n              }\n            }"
+    },
+    {
+      "description": "negativePrivateInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "public class A {\n              private interface I {}\n\n              static final I i = new I() {};\n            }"
+    },
+    {
+      "description": "intermediateNonPrivate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": "public class A {\n  // BUG: Diagnostic contains: C is a subclass of the containing class A (via B, which can be\n  // initialized from outside the current file)\n  public static final C i = new C();\n\n  public static class B extends A {}\n\n  private static class C extends B {}\n}"
+    },
+    {
+      "description": "negativeNonPrivateUnrelatedSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        303
+      ],
+      "code": "public class A {\n              public static final C i = new C();\n\n              public interface B {\n                default void f() {}\n              }\n\n              private static class C extends A implements B {}\n            }"
+    },
+    {
+      "description": "nestedEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": "public interface TestInterface {\n              default Object foo() {\n                return null;\n              }\n\n              enum TestEnum implements TestInterface {\n                INSTANCE;\n              }\n            }"
+    },
+    {
+      "description": "nestedInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        341
+      ],
+      "code": "interface Foo {\n              default void foo() {}\n\n              interface Sub extends Foo {\n                final Sub INSTANCE = new Sub() {};\n              }\n            }"
+    },
+    {
+      "description": "nonNestedSubclass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        358
+      ],
+      "code": "class A {\n              // BUG: Diagnostic contains:\n              private static Object cycle = new B();\n            }\n\n            class B extends A {}"
+    },
+    {
+      "description": "negativeAutoValueExtension",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        374
+      ],
+      "code": "class $$AutoValue_Foo extends Foo {}\n            \n\n            import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Foo {\n              private static final Foo FOO = new $$AutoValue_Foo();\n            }"
+    }
+  ]
+}

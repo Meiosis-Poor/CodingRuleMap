@@ -1,0 +1,30 @@
+{
+  "name": "TypeToString",
+  "language": "java",
+  "description": "TypeMirror#toString shouldn't be used for comparison as it is expensive and fragile.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 76,
+  "branches": 3,
+  "apis": 2,
+  "test": [
+    {
+      "description": "noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import com.google.errorprone.BugPattern;\n            import com.google.errorprone.BugPattern.SeverityLevel;\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;\n            import com.google.errorprone.matchers.Description;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.tools.javac.code.Types;\n\n            @BugPattern(name = \"Example\", summary = \"\", severity = SeverityLevel.ERROR)\n            public class ExampleChecker extends BugChecker implements ClassTreeMatcher {\n              @Override\n              public Description matchClass(ClassTree t, VisitorState s) {\n                return Description.NO_MATCH;\n              }\n            }"
+    },
+    {
+      "description": "matchInABugChecker",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import com.google.errorprone.BugPattern;\n            import com.google.errorprone.BugPattern.SeverityLevel;\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;\n            import com.google.errorprone.fixes.SuggestedFix;\n            import com.google.errorprone.matchers.Description;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.tools.javac.tree.TreeMaker;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.code.Types;\n            import com.sun.tools.javac.tree.JCTree;\n            import com.sun.tools.javac.tree.JCTree.JCClassDecl;\n\n            @BugPattern(name = \"Example\", summary = \"\", severity = SeverityLevel.ERROR)\n            public class ExampleChecker extends BugChecker implements ClassTreeMatcher {\n              @Override\n              public Description matchClass(ClassTree tree, VisitorState state) {\n                Type type = ((JCTree) tree).type;\n                if (type.toString().contains(\"matcha\")) {\n                  return describeMatch(tree);\n                }\n                // BUG: Diagnostic contains: TypeToString\n                if (type.toString().equals(\"match\")) {\n                  return describeMatch(tree);\n                }\n                if (new InnerClass().matchaMatcher(type)) {\n                  return describeMatch(tree);\n                }\n                return Description.NO_MATCH;\n              }\n\n              class InnerClass {\n                boolean matchaMatcher(Type type) {\n                  // BUG: Diagnostic contains: TypeToString\n                  return type.toString().equals(\"match\");\n                }\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "name": "FunctionalInterfaceClash",
+  "language": "java",
+  "description": "Overloads will be ambiguous when passing lambda arguments.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 173,
+  "branches": 19,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class Test {\n              // BUG: Diagnostic contains: foo(Function<String, String>)\n              void foo(Consumer<String> x) {}\n\n              void foo(Function<String, String> c) {}\n            }"
+    },
+    {
+      "description": "positiveNullary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "import java.util.concurrent.Callable;\n\n            public class Test {\n              interface MyCallable {\n                String call();\n              }\n\n              // BUG: Diagnostic contains: foo(MyCallable)\n              void foo(Callable<String> x) {}\n\n              void foo(MyCallable c) {}\n            }"
+    },
+    {
+      "description": "positiveInherited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "import java.util.function.Function;\n\n            class Super {\n              void foo(Function<String, String> x) {}\n            }\n            \n\n            import java.util.function.Consumer;\n\n            public class Test extends Super {\n              // BUG: Diagnostic contains: Super.foo(Function<String, String>)\n              void foo(Consumer<String> c) {}\n            }"
+    },
+    {
+      "description": "positiveArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100
+      ],
+      "code": "import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class Test {\n              // BUG: Diagnostic contains: foo(Function<String, Integer>)\n              void foo(Consumer<String> c) {}\n\n              void foo(Function<String, Integer> f) {}\n            }"
+    },
+    {
+      "description": "negativeOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "import java.util.function.Consumer;\n\n            class Super {\n              void foo(Consumer<String> x) {}\n            }\n            \n\n            import java.util.function.Consumer;\n\n            public class Test extends Super {\n              void foo(Consumer<String> x) {}\n            }"
+    },
+    {
+      "description": "negativeSuperConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "import java.util.function.Function;\n\n            class Super {\n              Super(Function<String, String> r) {}\n            }\n            \n\n            import java.util.function.Consumer;\n\n            public class Test extends Super {\n              Test(Consumer<String> r) {\n                super(null);\n              }\n            }"
+    },
+    {
+      "description": "positiveConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        169
+      ],
+      "code": "import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class Test {\n              // BUG: Diagnostic contains: Test(Function<String, String>)\n              Test(Consumer<String> r) {}\n\n              Test(Function<String, String> c) {}\n            }"
+    },
+    {
+      "description": "positiveStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class Test {\n              // BUG: Diagnostic contains: foo(Function<String, String>)\n              static void foo(Consumer<String> x) {}\n\n              void foo(Function<String, String> c) {}\n            }"
+    },
+    {
+      "description": "suppressWarningsOnMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "import java.lang.SuppressWarnings;\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class Test {\n              @SuppressWarnings(\"FunctionalInterfaceClash\")\n              void foo(Consumer<String> x) {}\n\n              void foo(Function<String, String> c) {}\n            }"
+    },
+    {
+      "description": "shouldIgnore_transitiveInheritanceWithExpandedVisibility",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "package pkg1;\n\n            public interface FunctionalInterface {\n              String apply(String s);\n            }\n            \n\n            package pkg2;\n\n            import pkg1.FunctionalInterface;\n\n            public abstract class BaseClass {\n              abstract String doIt(FunctionalInterface fi);\n            }\n            \n\n            package pkg2;\n\n            import pkg1.FunctionalInterface;\n\n            public class DerivedClass extends BaseClass {\n              @Override\n              public String doIt(FunctionalInterface fi) {\n                return null;\n              }\n            }\n            \n\n            package pkg3;\n\n            import pkg1.FunctionalInterface;\n            import pkg2.DerivedClass;\n\n            public class Test {\n              DerivedClass getDerivedClass() {\n                return new DerivedClass() {\n                  @Override\n                  public String doIt(FunctionalInterface fi) {\n                    return null;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "negative_multipleClashingOverriddenMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        286
+      ],
+      "code": "package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public abstract class BaseClass {\n              // BUG: Diagnostic contains: When passing lambda arguments to this function\n              abstract void baz(Consumer<String> c);\n\n              abstract void baz(Function<String, Integer> f);\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class DerivedClass extends BaseClass {\n              @Override\n              void baz(Consumer<String> c) {}\n\n              @Override\n              void baz(Function<String, Integer> f) {}\n            }"
+    },
+    {
+      "description": "negative_singleClashingOverriddenMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        323
+      ],
+      "code": "package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public abstract class BaseClass {\n              abstract void bar(Consumer<String> c);\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class DerivedClass extends BaseClass {\n              @Override\n              void bar(Consumer<String> c) {}\n            }"
+    },
+    {
+      "description": "positive_overriddenAndNewClashingMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        354
+      ],
+      "code": "package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class BaseClass {\n              void conduct(Consumer<String> c) {}\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class ConductClass extends BaseClass {\n              @Override\n              // BUG: Diagnostic contains: disambiguate with:\n              void conduct(Consumer<String> c) {}\n\n              void conduct(Function<String, Integer> f) {}\n            }"
+    },
+    {
+      "description": "negative_overriddenMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        388
+      ],
+      "code": "package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class BaseClass {\n              void conduct(Consumer<String> c) {}\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Function;\n            import java.util.function.Consumer;\n\n            public class ConductClass extends BaseClass {\n              @Override\n              void conduct(Consumer<String> c) {}\n            }"
+    },
+    {
+      "description": "positive_overriddenInClassAndNewClashingMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        419
+      ],
+      "code": "package pkg2;\n\n            import java.util.function.Consumer;\n\n            public abstract class Super {\n              void barr(Consumer<String> c) {}\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Consumer;\n\n            public abstract class BaseClass extends Super {\n              void barr(Consumer<String> c) {}\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Function;\n\n            public class MyDerivedClass extends BaseClass {\n              // BUG: Diagnostic contains: disambiguate with:\n              void barr(Function<String, Integer> f) {}\n            }"
+    },
+    {
+      "description": "positive_overridesInClassAndNewClashingPairInSameClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        459
+      ],
+      "code": "package pkg2;\n\n            import java.util.function.Consumer;\n            import java.util.function.Function;\n\n            public abstract class Super {\n              // BUG: Diagnostic contains: When passing lambda arguments to this function\n              void barr(Function<String, Integer> f) {}\n\n              void barr(Consumer<String> c) {}\n            }\n            \n\n            package pkg2;\n\n            import java.util.function.Consumer;\n            import java.util.function.Function;\n\n            public abstract class BaseClass extends Super {\n              void barr(Function<String, Integer> f) {}\n\n              void barr(Consumer<String> c) {}\n\n              // BUG: Diagnostic contains: When passing lambda arguments to this function\n              void foo(Function<Integer, Integer> f) {}\n\n              void foo(Consumer<Integer> c) {}\n            }"
+    },
+    {
+      "description": "oneIsMoreSpecific_notAmbiguous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        499
+      ],
+      "code": "import java.util.function.Consumer;\n\n            public class Test {\n              void foo(Consumer<String> c) {}\n\n              void foo(SubConsumer<String> c) {}\n\n              interface SubConsumer<T> extends Consumer<T> {}\n            }"
+    }
+  ]
+}

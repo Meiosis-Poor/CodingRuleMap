@@ -1,0 +1,54 @@
+{
+  "name": "AddressSelection",
+  "language": "java",
+  "description": "Prefer InetAddress.getAllByName to APIs that convert a hostname to a single IP address",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 116,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.net.InetAddress;\n            import java.net.InetSocketAddress;\n            import java.net.Socket;\n\n            class Test {\n              void f() throws Exception {\n                // BUG: Diagnostic contains:\n                InetAddress.getByName(\"example.com\");\n                // BUG: Diagnostic contains:\n                new Socket(\"example.com\", 80);\n                // BUG: Diagnostic contains:\n                new InetSocketAddress(\"example.com\", 80);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "import java.net.InetAddress;\n            import java.net.InetSocketAddress;\n            import java.net.Socket;\n\n            class Test {\n              void f() throws Exception {\n                new Socket(InetAddress.getLoopbackAddress(), 80);\n                InetAddress.getAllByName(\"example.com\");\n                new InetSocketAddress(InetAddress.getLoopbackAddress(), 80);\n              }\n            }"
+    },
+    {
+      "description": "negativeLocalhost",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import java.net.InetAddress;\n            import java.net.InetSocketAddress;\n            import java.net.Socket;\n\n            class Test {\n              void f() throws Exception {\n                new Socket(\"localhost\", 80);\n                InetAddress.getByName(\"localhost\");\n                new InetSocketAddress(\"localhost\", 80);\n              }\n            }"
+    },
+    {
+      "description": "negativeNumeric",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100
+      ],
+      "code": "import java.net.InetAddress;\n            import java.net.InetSocketAddress;\n            import java.net.Socket;\n\n            class Test {\n              void f() throws Exception {\n                new Socket(\"1.2.3.4\", 80);\n                InetAddress.getByName(\"2001:db8:85a3:8d3:1319:8a2e:370:7348\");\n                new InetSocketAddress(\"::ffff:192.0.2.128\", 80);\n              }\n            }"
+    },
+    {
+      "description": "refactor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "import java.net.InetAddress;\n            import java.net.InetSocketAddress;\n            import java.net.Socket;\n\n            class Test {\n              void f() throws Exception {\n                new Socket(\"127.0.0.1\", 80);\n                InetAddress.getByName(\"127.0.0.1\");\n                new InetSocketAddress(\"127.0.0.1\", 80);\n                new Socket(\"::1\", 80);\n                InetAddress.getByName(\"::1\");\n                new InetSocketAddress(\"::1\", 80);\n              }\n            }\n            \n\n            import java.net.InetAddress;\n            import java.net.InetSocketAddress;\n            import java.net.Socket;\n\n            class Test {\n              void f() throws Exception {\n                new Socket(InetAddress.getLoopbackAddress(), 80);\n                InetAddress.getLoopbackAddress();\n                new InetSocketAddress(InetAddress.getLoopbackAddress(), 80);\n                new Socket(InetAddress.getLoopbackAddress(), 80);\n                InetAddress.getLoopbackAddress();\n                new InetSocketAddress(InetAddress.getLoopbackAddress(), 80);\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,774 @@
+{
+  "name": "StatementSwitchToExpressionSwitch",
+  "language": "java",
+  "description": "This statement switch can be converted to a new-style arrow switch",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 1501,
+  "branches": 356,
+  "apis": 23,
+  "test": [
+    {
+      "description": "switchByEnum_removesRedundantBreak_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART /* left comment */ /* and there is more: */ // to end of line\n                  :\n                    // Explanatory comment\n                    System.out.println(\"the best suit is called the\");\n                    // Middle comment\n                    System.out.println(\"heart\");\n                    // Break comment\n                    break;\n                  // End comment\n                  case SPADE:\n                  case CLUB:\n                  case DIAMOND:\n                    System.out.println(\"non-heart\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    /* left comment */\n                    /* and there is more: */\n                    // to end of line\n                    // Explanatory comment\n                    System.out.println(\"the best suit is called the\");\n                    // Middle comment\n                    System.out.println(\"heart\");\n                    // Break comment\n                    // End comment\n                  }\n                  case SPADE, CLUB, DIAMOND -> System.out.println(\"non-heart\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumWithCompletionAnalysis_removesRedundantBreak_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  // Comment before first case\n                  case HEART:\n                    // Explanatory comment\n                    System.out.println(\"this block cannot complete normally\");\n                    {\n                      throw new NullPointerException();\n                    }\n                  case CLUB:\n                  case DIAMOND:\n                  case SPADE:\n                    System.out.println(\"non-heart\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    // Comment before first case\n                    // Explanatory comment\n                    System.out.println(\"this block cannot complete normally\");\n                    {\n                      throw new NullPointerException();\n                    }\n                  }\n                  case CLUB, DIAMOND, SPADE -> System.out.println(\"non-heart\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumExhaustiveWithoutDefault_removesDefault_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  // Comment before first case\n                  case HEART:\n                    // Explanatory comment\n                    System.out.println(\"this block cannot complete normally\");\n                    {\n                      throw new NullPointerException();\n                    }\n                  case CLUB:\n                  case SPADE:\n                  case DIAMOND:\n                    System.out.println(\"non-heart\");\n                    break;\n                  default:\n                    System.out.println(\"default\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    // Comment before first case\n                    // Explanatory comment\n                    System.out.println(\"this block cannot complete normally\");\n                    {\n                      throw new NullPointerException();\n                    }\n                  }\n                  case CLUB, SPADE, DIAMOND -> System.out.println(\"non-heart\");\n                  default -> System.out.println(\"default\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  // Comment before first case\n                  case HEART:\n                    // Explanatory comment\n                    System.out.println(\"this block cannot complete normally\");\n                    {\n                      throw new NullPointerException();\n                    }\n                  case CLUB:\n                  case SPADE:\n                  case DIAMOND:\n                    System.out.println(\"non-heart\");\n                    break;\n                  default:\n                    System.out.println(\"default\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    // Comment before first case\n                    // Explanatory comment\n                    System.out.println(\"this block cannot complete normally\");\n                    {\n                      throw new NullPointerException();\n                    }\n                  }\n                  case CLUB, SPADE, DIAMOND -> System.out.println(\"non-heart\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumCard_combinesCaseComments_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        261
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart2\");\n                    break;\n                  case /* sparkly */ DIAMOND /* Sparkly */:\n                  // Empty block comment 1\n                  // Fall through\n                  case SPADE:\n                  // Empty block comment 2\n                  case CLUB:\n                    // Start of block comment 1\n                    System.out.println(\"what's not a heart is \");\n                    System.out.println(\"everything else\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> System.out.println(\"heart2\");\n                  case DIAMOND, SPADE, CLUB -> {\n                    /* sparkly */\n                    /* Sparkly */\n                    // Empty block comment 1\n                    // Empty block comment 2\n                    // Start of block comment 1\n                    System.out.println(\"what's not a heart is \");\n                    System.out.println(\"everything else\");\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumCard2_removesRedundantBreaks_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        311
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    // Pre break comment\n                    break;\n                  // Post break comment\n                  case DIAMOND:\n                    // Diamond break comment\n                    break;\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> System.out.println(\"heart\");\n                  // Pre break comment\n                  // Post break comment\n                  case DIAMOND -> {\n                    // Diamond break comment\n                  }\n                  case SPADE, CLUB -> System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumCard_onlyExpressionsAndThrowAreBraceless_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      System.out.println(\"heart\");\n                      break;\n                    case DIAMOND:\n                      continue;\n                    case SPADE:\n                      return;\n                    case CLUB:\n                      throw new AssertionError();\n                  }\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART -> System.out.println(\"heart\");\n                    case DIAMOND -> {\n                      continue;\n                    }\n                    case SPADE -> {\n                      return;\n                    }\n                    case CLUB -> throw new AssertionError();\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchFallsThruToDefault_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        406
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    break;\n                  case DIAMOND:\n                    break;\n                  case SPADE:\n                  default:\n                    System.out.println(\"spade or club\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchFallsThruFromDefault_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        431
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    break;\n                  case DIAMOND:\n                    System.out.println(\"diamond\");\n                  default:\n                    System.out.println(\"club\");\n                    break;\n                  case SPADE:\n                    System.out.println(\"spade\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchWithDefaultInMiddle_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        459
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    break;\n                  case DIAMOND:\n                    System.out.println(\"diamond\");\n                    return;\n                  default /* comment: */:\n                    System.out.println(\"club\");\n                    break;\n                  case SPADE:\n                    System.out.println(\"spade\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> System.out.println(\"heart\");\n                  case DIAMOND -> {\n                    System.out.println(\"diamond\");\n                    return;\n                  }\n                  default ->\n                      /* comment: */\n                      System.out.println(\"club\");\n                  case SPADE -> System.out.println(\"spade\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchWithLabelledBreak_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        510
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                outer:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      System.out.println(\"will return\");\n                      return;\n                    case DIAMOND:\n                      break outer;\n                    case SPADE:\n                    case CLUB:\n                      System.out.println(\"everything else\");\n                  }\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                outer:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART -> {\n                      System.out.println(\"will return\");\n                      return;\n                    }\n                    case DIAMOND -> {\n                      break outer;\n                    }\n                    case SPADE, CLUB -> System.out.println(\"everything else\");\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_statementSwitchWithMultipleExpressions_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        560
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"will return\");\n                    return;\n                  case DIAMOND:\n                  case SPADE, CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    System.out.println(\"will return\");\n                    return;\n                  }\n                  case DIAMOND, SPADE, CLUB -> System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumCardWithThrow_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        599
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                // BUG: Diagnostic contains:\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"will return\");\n                    return;\n                  case DIAMOND:\n                    break;\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchInSwitch_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        625
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                // BUG: Diagnostic contains:\n                switch (suit) {\n                  case HEART:\n                    switch (suit) {\n                      case HEART:\n                      case SPADE:\n                        System.out.println(\"non-default\");\n                        break;\n                      default:\n                        System.out.println(\"do nothing\");\n                    }\n                    break;\n                  case DIAMOND:\n                    break;\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumCardWithReturnNested1_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        659
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    break;\n                  case DIAMOND:\n                    {\n                      System.out.println(\"nested1\");\n                      break;\n                    }\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> System.out.println(\"heart\");\n                  case DIAMOND -> System.out.println(\"nested1\");\n                  case SPADE, CLUB -> System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumCardWithReturnNested2_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        701
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                // BUG: Diagnostic contains:\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    break;\n                  case DIAMOND:\n                    {\n                      System.out.println(\"nested2a\");\n                      {\n                        System.out.println(\"nested2b\");\n                        break;\n                      }\n                    }\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumWithConditionalControl_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        733
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    if (true) {\n                      break;\n                    }\n                  case DIAMOND:\n                    break;\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumWithLambda_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        760
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    // Last statement in the HEART block is a return, but we don't want to conclude that\n                    // the block has definite control flow based on that\n                    Function<Integer, Integer> x =\n                        (i) -> {\n                          while (true) {\n                            break;\n                          }\n                          return i;\n                        };\n                  case DIAMOND:\n                    break;\n                  case SPADE:\n                  case CLUB:\n                    System.out.println(\"everything else\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "singleCaseConvertible_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        795
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                // BUG: Diagnostic contains:\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"heart\");\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "emptyExpressionSwitchCases_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        816
+      ],
+      "code": "class Test {\n              void foo(int value) {\n                switch (value) {\n                  case 0 -> {}\n                  default -> {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonEmptyExpressionSwitchCases_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        834
+      ],
+      "code": "class Test {\n              void foo(int value) {\n                switch (value) {\n                  case 0 -> System.out.println(\"zero\");\n                  default -> {\n                    System.out.println(\"non-zero\");\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "dynamicWithThrowableDuringInitializationFromMethod_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        854
+      ],
+      "code": "class Test {\n              Throwable foo = bar();\n\n              private static Throwable bar() {\n                return new NullPointerException(\"initialized with return value\");\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_exampleInDocumentation_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        872
+      ],
+      "code": "class Test {\n              private void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"Red hearts\");\n                    break;\n                  case DIAMOND:\n                    System.out.println(\"Red diamonds\");\n                    break;\n                  case SPADE:\n                  // Fall through\n                  case CLUB:\n                    bar();\n                    System.out.println(\"Black suit\");\n                }\n              }\n\n              private void bar() {}\n            }\n            \n\n            class Test {\n              private void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> System.out.println(\"Red hearts\");\n                  case DIAMOND -> System.out.println(\"Red diamonds\");\n                  case SPADE, CLUB -> {\n                    bar();\n                    System.out.println(\"Black suit\");\n                  }\n                }\n              }\n\n              private void bar() {}\n            }"
+    },
+    {
+      "description": "switchByEnum_caseHasOnlyComments_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        921
+      ],
+      "code": "class Test {\n              private void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  // A comment here\n                  // more comments.\n                  case DIAMOND:\n                    // Diamond comment\n                    System.out.println(\"Heart or diamond\");\n                    break;\n                  case SPADE:\n                  // Fall through\n                  case CLUB:\n                    bar();\n                    System.out.println(\"Black suit\");\n                }\n              }\n\n              private void bar() {}\n            }\n            \n\n            class Test {\n              private void foo(Suit suit) {\n                switch (suit) {\n                  case HEART, DIAMOND ->\n                      // A comment here\n                      // more comments.\n                      // Diamond comment\n                      System.out.println(\"Heart or diamond\");\n                  case SPADE, CLUB -> {\n                    bar();\n                    System.out.println(\"Black suit\");\n                  }\n                }\n              }\n\n              private void bar() {}\n            }"
+    },
+    {
+      "description": "switchByEnum_accumulatedComments_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        976
+      ],
+      "code": "class Test {\n              private void foo(Suit suit) {\n                switch (suit) {\n                  case /* red */ HEART:\n                  // A comment here\n                  // more comments.\n                  case /* red */ DIAMOND:\n                  // Diamonds comment\n                  case /* black */ SPADE:\n                  // Spades comment\n                  case /* black */ CLUB:\n                    bar();\n                    System.out.println(\"Any suit\");\n                }\n              }\n\n              private void bar() {}\n            }\n            \n\n            class Test {\n              private void foo(Suit suit) {\n                switch (suit) {\n                  case HEART, DIAMOND, SPADE, CLUB -> {\n                    /* red */\n                    // A comment here\n                    // more comments.\n                    /* red */\n                    // Diamonds comment\n                    /* black */\n                    // Spades comment\n                    /* black */\n                    bar();\n                    System.out.println(\"Any suit\");\n                  }\n                }\n              }\n\n              private void bar() {}\n            }"
+    },
+    {
+      "description": "switchByEnum_surroundingBracesCannotRemove_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1031
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    {\n                      // The quick brown fox, jumps over the lazy dog, etc.\n                      break;\n                    }\n\n                  default:\n                    {\n                      throw new RuntimeException(\"Invalid type.\");\n                    }\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    // The quick brown fox, jumps over the lazy dog, etc.\n                  }\n                  default -> throw new RuntimeException(\"Invalid type.\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_surroundingBracesEmpty_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1075
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    {\n                      // The quick brown fox, jumps over the lazy dog, etc.\n                      throw new RuntimeException(\"Invalid.\");\n                    }\n\n                  default:\n                    {\n                    }\n                }\n              }\n            }\n            \n\n            class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART ->\n                      // The quick brown fox, jumps over the lazy dog, etc.\n                      throw new RuntimeException(\"Invalid.\");\n                  default -> {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_afterReturnComments_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1118
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    // before return comment\n                    return 123;\n                  // after return comment\n                  /* more comments */\n                  default:\n                    // default comment\n                }\n                return 0;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART -> {\n                    // before return comment\n                    return 123;\n                    // after return comment\n                    /* more comments */\n                  }\n                  default -> {\n                    // default comment\n                  }\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "i4222",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1164
+      ],
+      "code": "public class Test {\n              public static void main(String[] args) {\n                switch (args.length) {\n                  case 0:\n                    {\n                      System.out.println(0);\n                      break;\n                    }\n                  case 1:\n                    System.out.println(1);\n                    break;\n                  case 2:\n                    System.out.println(2);\n                    System.out.println(2);\n                    break;\n                }\n              }\n            }\n            \n\n            public class Test {\n              public static void main(String[] args) {\n                switch (args.length) {\n                  case 0 -> System.out.println(0);\n                  case 1 -> System.out.println(1);\n                  case 2 -> {\n                    System.out.println(2);\n                    System.out.println(2);\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "unnecessaryBreaks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1209
+      ],
+      "code": "public class Test {\n              public static void main(String[] args) {\n                switch (args.length) {\n                  case 0:\n                    System.out.println(0);\n                    break;\n                  default:\n                    // hello\n                    // world\n                    break;\n                }\n              }\n            }\n            \n\n            public class Test {\n              public static void main(String[] args) {\n                switch (args.length) {\n                  case 0 -> System.out.println(0);\n                  default -> {\n                    // hello\n                    // world\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitch_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1254
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return invoke();\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART, DIAMOND -> invoke();\n                  case SPADE -> throw new RuntimeException();\n                  default -> throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_multipleStatementsAndTheLastNotReturn_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1302
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return 1;\n                  case SPADE:\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART, DIAMOND -> 1;\n                  case SPADE -> {\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  }\n                  default -> throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_middleNullCase_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1347
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case null:\n                  case DIAMOND:\n                    return invoke();\n                  case SPADE:\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_firstNullCase_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1380
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case null:\n                  case DIAMOND:\n                    return 123;\n                  case SPADE:\n                    throw new RuntimeException(\"Spade\");\n                  case HEART:\n                    throw new RuntimeException(\"Heart\");\n                  case CLUB:\n                    throw new NullPointerException(\"Club\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_nullGroupedWithDefault_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1410
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return 1;\n                  case SPADE:\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  case null:\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART, DIAMOND -> 1;\n                  case SPADE -> {\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  }\n                  case null, default -> throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_middleNullCase3_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1457
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return 1;\n                  case SPADE:\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  case null:\n                    throw new RuntimeException(\"single null case\");\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART, DIAMOND -> 1;\n                  case SPADE -> {\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  }\n                  case null -> throw new RuntimeException(\"single null case\");\n                  default -> throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchWithShouldNeverHappen_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1506
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return invoke();\n                  case SPADE:\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                // This should never happen\n                int z = invoke();\n                z++;\n                throw new RuntimeException(\"Switch was not exhaustive at runtime \" + z);\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART, DIAMOND -> invoke();\n                  case SPADE -> throw new RuntimeException();\n                  case CLUB -> throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchCommentsBeforeFirstCase_errorAndRetained",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1559
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  // Abracadabra\n                  /* foo */ case HEART:\n                  // Card trick\n                  case DIAMOND:\n                    return invoke();\n                  case SPADE:\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                // This should never happen\n                int z = invoke();\n                z++;\n                throw new RuntimeException(\"Switch was not exhaustive at runtime \" + z);\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART, DIAMOND ->\n                      // Abracadabra\n                      /* foo */\n                      // Card trick\n                      invoke();\n                  case SPADE -> throw new RuntimeException();\n                  case CLUB -> throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_switchInReturnSwitchWithShouldNeverHappen_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1617
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    System.out.println(\"hi\");\n                    switch (suit) {\n                      case HEART:\n                      case DIAMOND:\n                        return invoke();\n                      case SPADE:\n                        throw new RuntimeException();\n                      case CLUB:\n                        throw new NullPointerException();\n                    }\n                    // This should never happen\n                    int z = invoke();\n                    z++;\n                    throw new RuntimeException(\"Switch was not exhaustive at runtime \" + z);\n\n                  default:\n                    System.out.println(\"default\");\n                    return 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_exhaustiveWithDefault_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1660
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                String z = \"dkfj\";\n                switch (z) {\n                  case \"\":\n                  case \"DIAMOND\":\n                  // Custom comment\n                  case \"SPADE\":\n                    return invoke();\n                  default:\n                    return 2;\n                }\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                String z = \"dkfj\";\n                return switch (z) {\n                  case \"\", \"DIAMOND\", \"SPADE\" ->\n                      // Custom comment\n                      invoke();\n                  default -> 2;\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_defaultFallThru_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1711
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return invoke();\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    // Fall through\n                }\n                return -2;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_alwaysThrows_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1743
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    throw new NullPointerException();\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchWithShouldNeverHappen_errorAndRemoveShouldNeverHappen",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1774
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  switch (suit) {\n                    case HEART /* lhs comment */: // rhs comment\n                    // Fall through\n                    case DIAMOND:\n                      return invoke();\n                    case SPADE:\n                      throw new RuntimeException();\n                    case CLUB:\n                      throw new NullPointerException();\n                  }\n                  // Custom comment - should never happen\n                  int z = invoke(/* block comment 0 */ );\n                  // Custom comment 2\n                  {\n                    z++;\n                  }\n                  throw new RuntimeException(\"Switch was not exhaustive at runtime \" + z);\n                }\n                System.out.println(\"don't delete 2\");\n                return 0;\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  return switch (suit) {\n                    case HEART, DIAMOND ->\n                        /* lhs comment */\n                        // rhs comment\n                        invoke();\n                    case SPADE -> throw new RuntimeException();\n                    case CLUB -> throw new NullPointerException();\n                  };\n                }\n                System.out.println(\"don't delete 2\");\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_deadCodeAnalysis_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1849
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                try {\n                  System.out.println(\"don't delete 1\");\n                  System.out.println(\"don't delete 11\");\n                  switch (suit) {\n                    case HEART:\n                    case DIAMOND:\n                    case SPADE:\n                      return 1;\n                    case CLUB:\n                      throw new NullPointerException();\n                  }\n                  System.out.println(\"delete me\");\n                } catch (Throwable e) {\n                  throw new RuntimeException(\"rethrew\");\n                }\n\n                // Becomes unreachable\n                System.out.println(\"uh-oh\");\n                return -1;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                try {\n                  System.out.println(\"don't delete 1\");\n                  System.out.println(\"don't delete 11\");\n                  return switch (suit) {\n                    case HEART, DIAMOND, SPADE -> 1;\n                    case CLUB -> throw new NullPointerException();\n                  };\n                } catch (Throwable e) {\n                  throw new RuntimeException(\"rethrew\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_deadCodeAnalysis2_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1908
+      ],
+      "code": "class Test {\n              int x = 3;\n\n              public int foo(Suit suit) {\n                if (x < 4) {\n                  try {\n                    System.out.println(\"don't delete 0\");\n                    synchronized (this) {\n                      try {\n                        System.out.println(\"don't delete 1\");\n                        System.out.println(\"don't delete 11\");\n                        switch (suit) {\n                          case HEART:\n                          case DIAMOND:\n                          case SPADE:\n                            return 1;\n                          case CLUB:\n                            throw new NullPointerException();\n                        }\n                        System.out.println(\"delete me\");\n                      } catch (Throwable e) {\n                        throw new RuntimeException(\"rethrew\");\n                      }\n                    }\n\n                    // Becomes unreachable\n                    System.out.println(\"uh-oh\");\n                  } catch (Throwable e) {\n                    throw new RuntimeException(\"rethrew\");\n                  }\n                  // Also becomes unreachable\n                  System.out.println(\"delete me too\");\n                  System.out.println(\"delete me three\");\n                  return 3;\n                }\n                System.out.println(\"I'm always reachable\");\n                return 4;\n              }\n            }\n            \n\n            class Test {\n              int x = 3;\n\n              public int foo(Suit suit) {\n                if (x < 4) {\n                  try {\n                    System.out.println(\"don't delete 0\");\n                    synchronized (this) {\n                      try {\n                        System.out.println(\"don't delete 1\");\n                        System.out.println(\"don't delete 11\");\n                        return switch (suit) {\n                          case HEART, DIAMOND, SPADE -> 1;\n                          case CLUB -> throw new NullPointerException();\n                        };\n                      } catch (Throwable e) {\n                        throw new RuntimeException(\"rethrew\");\n                      }\n                    }\n                  } catch (Throwable e) {\n                    throw new RuntimeException(\"rethrew\");\n                  }\n                }\n                System.out.println(\"I'm always reachable\");\n                return 4;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchWithAllEnumValuesAndDefault_errorRemoveDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1994
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  switch (suit) {\n                    case HEART /* lhs comment */: // rhs comment\n                    // Fall through\n                    case DIAMOND:\n                      return invoke();\n                    case SPADE:\n                      throw new RuntimeException();\n                    case CLUB:\n                      throw new NullPointerException();\n                    default:\n                      throw new NullPointerException();\n                  }\n                  // Trailing comment\n                }\n                System.out.println(\"don't delete 2\");\n                return 0;\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  return switch (suit) {\n                    case HEART, DIAMOND ->\n                        /* lhs comment */\n                        // rhs comment\n                        invoke();\n                    case SPADE -> throw new RuntimeException();\n                    case CLUB -> throw new NullPointerException();\n                    default -> throw new NullPointerException();\n                  };\n                  // Trailing comment\n                }\n                System.out.println(\"don't delete 2\");\n                return 0;\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  switch (suit) {\n                    case HEART /* lhs comment */: // rhs comment\n                    // Fall through\n                    case DIAMOND:\n                      return invoke();\n                    case SPADE:\n                      throw new RuntimeException();\n                    case CLUB:\n                      throw new NullPointerException();\n                    default:\n                      throw new NullPointerException();\n                  }\n                }\n                System.out.println(\"don't delete 2\");\n                return 0;\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  return switch (suit) {\n                    case HEART, DIAMOND ->\n                        /* lhs comment */\n                        // rhs comment\n                        invoke();\n                    case SPADE -> throw new RuntimeException();\n                    case CLUB -> throw new NullPointerException();\n                  };\n                }\n                System.out.println(\"don't delete 2\");\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchWithAllEnumValues_retainTrailingLintComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2135
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                // LINT.\n                switch (suit) {\n                  case HEART:\n                    return 1;\n                  case DIAMOND:\n                    return 2;\n                  case SPADE:\n                    return 3;\n                  case CLUB:\n                    return 4;\n                }\n                // LINT.\n                throw new AssertionError(\"unreachable!\");\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                // LINT.\n                return switch (suit) {\n                  case HEART -> 1;\n                  case DIAMOND -> 2;\n                  case SPADE -> 3;\n                  case CLUB -> 4;\n                };\n                // LINT.\n\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchNoFollowingStatementsInBlock_errorAndNoRemoval",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2182
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  switch (suit) {\n                    case HEART /* lhs comment */: // rhs comment\n                    // Fall through\n                    case DIAMOND:\n                      return invoke();\n                    case SPADE:\n                      throw new RuntimeException();\n                    case CLUB:\n                      throw new NullPointerException();\n                  }\n                }\n                // Custom comment - should never happen because invoke returns 123\n                int z = invoke(/* block comment 0 */ );\n                {\n                  z++;\n                }\n                throw new RuntimeException(\"Invoke <= 0 at runtime \");\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  return switch (suit) {\n                    case HEART, DIAMOND ->\n                        /* lhs comment */\n                        // rhs comment\n                        invoke();\n                    case SPADE -> throw new RuntimeException();\n                    case CLUB -> throw new NullPointerException();\n                  };\n                }\n                // Custom comment - should never happen because invoke returns 123\n                int z = invoke(/* block comment 0 */ );\n                {\n                  z++;\n                }\n                throw new RuntimeException(\"Invoke <= 0 at runtime \");\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_groupedComments_errorAndNoRemoval",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2258
+      ],
+      "code": "class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  switch (suit) {\n                    case HEART /* lhs comment */: // rhs comment\n                    // Another comment\n                    case /* sparkly */ DIAMOND /* Sparkly */:\n                    // Diamond\n                    case SPADE:\n                      // Before invoke\n                      return invoke();\n                    // After invoke\n                    /* More after invoke */\n                    case CLUB:\n                      throw new NullPointerException();\n                      // After last case\n                  }\n                }\n                // Custom comment - should never happen because invoke returns 123 or throws\n                int z = invoke(/* block comment 0 */ );\n                {\n                  z++;\n                }\n                throw new RuntimeException(\"Invoke <= 0 at runtime \");\n              }\n            }\n            \n\n            class Test {\n              public int invoke() {\n                return 123;\n              }\n\n              public int foo(Suit suit) {\n                System.out.println(\"don't delete 0\");\n                if (invoke() > 0) {\n                  System.out.println(\"don't delete 1\");\n                  // Preceding comment\n                  return switch (suit) {\n                    case HEART, DIAMOND, SPADE ->\n                        /* lhs comment */\n                        // rhs comment\n                        // Another comment\n                        /* sparkly */\n                        /* Sparkly */\n                        // Diamond\n                        // Before invoke\n                        invoke();\n                    // After invoke\n                    /* More after invoke */\n                    case CLUB -> throw new NullPointerException();\n                      // After last case\n                  };\n                }\n                // Custom comment - should never happen because invoke returns 123 or throws\n                int z = invoke(/* block comment 0 */ );\n                {\n                  z++;\n                }\n                throw new RuntimeException(\"Invoke <= 0 at runtime \");\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_removesBracesFromSingleStatement_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2345
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n\n                switch (suit) {\n                  case HEART:\n                    {\n                      return 0;\n                    }\n                  case SPADE:\n                    {\n                      return 1;\n                    }\n                  case DIAMOND:\n                    {\n                      return 2;\n                    }\n                  default:\n                    {\n                      throw new IllegalArgumentException(\n                          \"Error error error error error error error error\"\n                              + \"Error error error error error error error error\"\n                              + \" type\");\n                    }\n                }\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n\n                return switch (suit) {\n                  case HEART -> 0;\n                  case SPADE -> 1;\n                  case DIAMOND -> 2;\n                  default ->\n                      throw new IllegalArgumentException(\n                          \"Error error error error error error error error\"\n                              + \"Error error error error error error error error\"\n                              + \" type\");\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnSwitchVoid_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2404
+      ],
+      "code": "class Test {\n              public void foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  // Fall through\n                  case DIAMOND:\n                    return;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnLabelledContinue_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2432
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      continue before;\n                    case DIAMOND:\n                      return 3;\n                    case SPADE:\n                      throw new RuntimeException();\n                    default:\n                      throw new NullPointerException();\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnUnlabelledContinue_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2463
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      continue;\n                    case DIAMOND:\n                      return 3;\n                    case SPADE:\n                      throw new RuntimeException();\n                    default:\n                      throw new NullPointerException();\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnLabelledBreak_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2494
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      break before;\n                    case DIAMOND:\n                      return 3;\n                    case SPADE:\n                      throw new RuntimeException();\n                    default:\n                      throw new NullPointerException();\n                  }\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_returnYield_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2526
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case HEART:\n                    yield 2;\n                  case DIAMOND:\n                    yield 3;\n                  case SPADE:\n                  // Fall through\n                  default:\n                    throw new NullPointerException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnumExhaustive_qualifiedCaseLabels",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2554
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case Suit.HEART:\n                    return 1;\n                  case Suit.CLUB:\n                    return 2;\n                  case Suit.DIAMOND:\n                    return 3;\n                  case Suit.SPADE:\n                    return 4;\n                }\n                throw new AssertionError();\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                return switch (suit) {\n                  case Suit.HEART -> 1;\n                  case Suit.CLUB -> 2;\n                  case Suit.DIAMOND -> 3;\n                  case Suit.SPADE -> 4;\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToVarInVariableDeclaratorList_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2604
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                var a = 0;\n                String b = \"b\";\n                int y = 0, x;\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    x = ((y + 1) * (y * y)) << 1;\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                var a = 0;\n                String b = \"b\";\n                int y = 0, x;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND -> ((y + 1) * (y * y)) << 1;\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchCombinedWithPrecedingVariableDeclaration_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2658
+      ],
+      "code": "import java.lang.annotation.Repeatable;\n            import java.util.HashMap;\n            import java.util.Map;\n            import java.util.Set;\n\n            class Test {\n              @interface MyAnnos {\n                Test.MyAnno[] value();\n              }\n\n              @Repeatable(Test.MyAnnos.class)\n              @interface MyAnno {\n                String v() default \"\";\n              }\n\n              @interface MyOtherAnno {}\n\n              public int y = 0;\n\n              public int foo(Suit suit) {\n                @MyAnno(v = \"foo\")\n                // alpha\n                /* beta */ @MyOtherAnno\n                @MyAnno\n                final /* chi */ int /* gamma */ x /* delta */; // epsilon\n                // zeta\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    x = ((y + 1) * (y * y)) << 1;\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                Map<? extends String, ? super Test> map = null;\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    map = new HashMap<>();\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            import java.lang.annotation.Repeatable;\n            import java.util.HashMap;\n            import java.util.Map;\n            import java.util.Set;\n\n            class Test {\n              @interface MyAnnos {\n                Test.MyAnno[] value();\n              }\n\n              @Repeatable(Test.MyAnnos.class)\n              @interface MyAnno {\n                String v() default \"\";\n              }\n\n              @interface MyOtherAnno {}\n\n              public int y = 0;\n\n              public int foo(Suit suit) {\n                // epsilon\n                // zeta\n                // alpha\n                /* beta */\n                /* chi */\n                /* gamma */\n                /* delta */\n                @MyAnno(v = \"foo\")\n                @MyOtherAnno\n                @MyAnno\n                final int x =\n                    switch (suit) {\n                      case HEART, DIAMOND -> ((y + 1) * (y * y)) << 1;\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n\n                Map<? extends String, ? super Test> map =\n                    switch (suit) {\n                      case HEART, DIAMOND -> new HashMap<>();\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "variableInTransitiveEnclosingBlock_shouldNotBeMoved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2776
+      ],
+      "code": "import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              public Map<Object, Object> foo(Suit suit) {\n                Map<Object, Object> map = null;\n                if (toString().length() == 2)\n                  switch (suit) {\n                    case HEART:\n                    case DIAMOND:\n                      map = new HashMap<>();\n                      break;\n                    case SPADE:\n                      throw new RuntimeException();\n                    default:\n                      throw new NullPointerException();\n                  }\n                return map;\n              }\n            }\n            \n\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              public Map<Object, Object> foo(Suit suit) {\n                Map<Object, Object> map = null;\n                if (toString().length() == 2)\n                  map =\n                      switch (suit) {\n                        case HEART, DIAMOND -> new HashMap<>();\n                        case SPADE -> throw new RuntimeException();\n                        default -> throw new NullPointerException();\n                      };\n                return map;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToInitializedtAsConstant_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2829
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int y = 0;\n                var x = 999;\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    x = ((y + 1) * (y * y)) << 1;\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int y = 0;\n\n                var x =\n                    switch (suit) {\n                      case HEART, DIAMOND -> ((y + 1) * (y * y)) << 1;\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToNearbyDefined_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2880
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int z = 3;\n                int x;\n                int y;\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    x = ((z + 1) * (z * z)) << 1;\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int z = 3;\n                int x;\n                int y;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND -> ((z + 1) * (z * z)) << 1;\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchDifferentBlockScope_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2933
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int z = 3;\n                int x;\n                {\n                  {\n                    switch (suit) {\n                      case HEART:\n                      case DIAMOND:\n                        x = ((z + 1) * (z * z)) << 1;\n                        break;\n                      case SPADE:\n                        throw new RuntimeException();\n                      default:\n                        throw new NullPointerException();\n                    }\n                  }\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int z = 3;\n                int x;\n                {\n                  {\n                    x =\n                        switch (suit) {\n                          case HEART, DIAMOND -> ((z + 1) * (z * z)) << 1;\n                          case SPADE -> throw new RuntimeException();\n                          default -> throw new NullPointerException();\n                        };\n                  }\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToLocalHasDefaultVolatile_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2993
+      ],
+      "code": "class Test {\n              volatile int v = 0;\n\n              public int foo(Suit suit) {\n                int z = 3;\n                int x = v;\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    x = ((z + 1) * (z * z)) << 1;\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              volatile int v = 0;\n\n              public int foo(Suit suit) {\n                int z = 3;\n                int x = v;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND -> ((z + 1) * (z * z)) << 1;\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchMixedReferences_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3053
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  /* Comment before first case */\n                  case /* LHS comment */ HEART:\n                    // Inline comment\n                    this.x <<= 2;\n                    break;\n                  case DIAMOND:\n                    x <<= (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                this.x <<=\n                    switch (suit) {\n                      case HEART ->\n                          /* Comment before first case */\n                          /* LHS comment */\n                          // Inline comment\n                          2;\n                      case DIAMOND -> (((x + 1) * (x * x)) << 1);\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchMixedReferences_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3120
+      ],
+      "code": "class Test {\n              int x, y;\n\n              public Test(int foo) {\n                x = -1;\n                y = -1;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    x = 2;\n                    break;\n                  case DIAMOND:\n                    this.y = (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchTwoAssignments_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3158
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    x = 2;\n                    x = 3;\n                    break;\n                  case DIAMOND:\n                    this.x = (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToSingleArray_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3196
+      ],
+      "code": "class Test {\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    throw new RuntimeException();\n                  case DIAMOND:\n                    x[6] <<= (((x[6] + 1) * (x[6] * x[5]) << 1));\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo(Suit suit) {\n                x[6] <<=\n                    switch (suit) {\n                      case HEART -> throw new RuntimeException();\n                      case DIAMOND -> (((x[6] + 1) * (x[6] * x[5]) << 1));\n                      case SPADE -> throw new RuntimeException();\n                      default -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToMultipleArray_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3254
+      ],
+      "code": "class Test {\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    // Inline comment\n                    x[6] <<= 2;\n                    break;\n                  case DIAMOND:\n                    x[6] <<= (((x[6] + 1) * (x[6] * x[5]) << 1));\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchToMultipleDistinct_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3294
+      ],
+      "code": "class Test {\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    // Inline comment\n                    x[6] <<= 2;\n                    break;\n                  case DIAMOND:\n                    x[5] <<= (((x[6] + 1) * (x[6] * x[5]) << 1));\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentSwitchMixedKinds_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3332
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                    x += 2;\n                    break;\n                  case DIAMOND:\n                    x = (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentLabelledContinue_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3370
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      x = 2;\n                      break;\n                    case DIAMOND:\n                      x = (((x + 1) * (x * x)) << 1);\n                      break;\n                    case SPADE:\n                      continue before;\n                    default:\n                      throw new NullPointerException();\n                  }\n                  break;\n                }\n                after:\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentLabelledBreak_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3411
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      x = 2;\n                      break;\n                    case DIAMOND:\n                      x = (((x + 1) * (x * x)) << 1);\n                      break;\n                    case SPADE:\n                      break before;\n                    default:\n                      throw new NullPointerException();\n                  }\n                  break;\n                }\n                after:\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentLabelledBreak2_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3453
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      x = 2;\n                      break;\n                    case DIAMOND:\n                      x = (((x + 1) * (x * x)) << 1);\n                      break;\n                    case SPADE:\n                      x = 3;\n                      break before;\n                    default:\n                      throw new NullPointerException();\n                  }\n                  break;\n                }\n                after:\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentUnlabelledContinue_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3496
+      ],
+      "code": "class Test {\n              int x;\n\n              public Test(int foo) {\n                x = -1;\n              }\n\n              public int foo(Suit suit) {\n                before:\n                for (; ; ) {\n                  switch (suit) {\n                    case HEART:\n                      x = 2;\n                      break;\n                    case DIAMOND:\n                      x = (((x + 1) * (x * x)) << 1);\n                      break;\n                    case SPADE:\n                      continue;\n                    default:\n                      throw new NullPointerException();\n                  }\n                  break;\n                }\n                after:\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_assignmentYield_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3537
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x =\n                    switch (suit) {\n                      case HEART:\n                        yield 2;\n                      case DIAMOND:\n                        yield 3;\n                      case SPADE:\n                      // Fall through\n                      default:\n                        throw new NullPointerException();\n                    };\n                x <<= 1;\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_exhaustiveAssignmentSwitch_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3568
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case HEART:\n                  // Heart comment\n                  // Fall through\n                  case DIAMOND:\n                    x = (((x + 1) * (x * x)) << 2);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND ->\n                          // Heart comment\n                          (((x + 1) * (x * x)) << 2);\n                      case SPADE -> throw new RuntimeException();\n                      case CLUB -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_canRemoveDefault_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3627
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case HEART:\n                  // Heart comment\n                  // Fall through\n                  case DIAMOND:\n                    x = (((x + 1) * (x * x)) << 2);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    // This is unlikely to be reached\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND ->\n                          // Heart comment\n                          (((x + 1) * (x * x)) << 2);\n                      case SPADE -> throw new RuntimeException();\n                      default ->\n                          // This is unlikely to be reached\n                          throw new RuntimeException();\n                      case CLUB -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case HEART:\n                  // Heart comment\n                  // Fall through\n                  case DIAMOND:\n                    x = (((x + 1) * (x * x)) << 2);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  default:\n                    // This is unlikely to be reached\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND ->\n                          // Heart comment\n                          (((x + 1) * (x * x)) << 2);\n                      case SPADE -> throw new RuntimeException();\n                      case CLUB -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_exhaustiveCompoundAssignmentSwitch_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3737
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    x += (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                x +=\n                    switch (suit) {\n                      case HEART, DIAMOND -> (((x + 1) * (x * x)) << 1);\n                      case SPADE -> throw new RuntimeException();\n                      case CLUB -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_groupedComments_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3784
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case /* red suit */ HEART:\n                  // Heart comment\n                  case /* red suit */ DIAMOND: // sparkles\n                  // Diamond comment\n                  // Fall through\n                  case /* black suit */ SPADE:\n                    x *= 2;\n                    // Before break comment\n                    break;\n                  // After break comment\n                  case /* black suit */ CLUB:\n                    // Club comment\n                    throw new NullPointerException();\n                    // Club after throw comment\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                x *=\n                    switch (suit) {\n                      case HEART, DIAMOND, SPADE ->\n                          /* red suit */\n                          // Heart comment\n                          /* red suit */\n                          // sparkles\n                          // Diamond comment\n                          /* black suit */\n                          2;\n                      // Before break comment\n                      // After break comment\n                      case CLUB ->\n                          /* black suit */\n                          // Club comment\n                          throw new NullPointerException();\n                        // Club after throw comment\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_compoundAssignmentExampleInDocumentation_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3849
+      ],
+      "code": "class Test {\n              int score = 0;\n\n              private void updateScore(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  // Fall through\n                  case DIAMOND:\n                    score += -1;\n                    break;\n                  case SPADE:\n                    score += 2;\n                    break;\n                  case CLUB:\n                    score += 3;\n                }\n              }\n            }\n            \n\n            class Test {\n              int score = 0;\n\n              private void updateScore(Suit suit) {\n                score +=\n                    switch (suit) {\n                      case HEART, DIAMOND -> -1;\n                      case SPADE -> 2;\n                      case CLUB -> 3;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_exhaustiveAssignmentSwitchCaseList_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3898
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case HEART, DIAMOND:\n                    x = (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE, CLUB:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                x =\n                    switch (suit) {\n                      case HEART, DIAMOND -> (((x + 1) * (x * x)) << 1);\n                      case SPADE, CLUB -> throw new NullPointerException();\n                    };\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_nonExhaustiveAssignmentSwitch_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3941
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                int x = 0;\n                switch (suit) {\n                  case DIAMOND:\n                    x = (((x + 1) * (x * x)) << 1);\n                    break;\n                  case SPADE:\n                    throw new RuntimeException();\n                  case CLUB:\n                    throw new NullPointerException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "mixedExpressionsAndYields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3970
+      ],
+      "code": "public class Test {\n              String f(int x) {\n                switch (x) {\n                  case 0:\n                    return \"ZERO\";\n                  case 1:\n                    return \"ONE\";\n                  case 2: // hello\n                    // world\n                    System.err.println();\n                    System.err.println();\n                    return \"TWO\";\n                  // hello\n                  // world\n                  default:\n                    return \"\";\n                }\n              }\n            }\n            \n\n            public class Test {\n              String f(int x) {\n                return switch (x) {\n                  case 0 -> \"ZERO\";\n                  case 1 -> \"ONE\";\n                  case 2 -> {\n                    // hello\n                    // world\n                    System.err.println();\n                    System.err.println();\n                    yield \"TWO\";\n                  }\n                  // hello\n                  // world\n                  default -> \"\";\n                };\n              }\n            }"
+    },
+    {
+      "description": "fallOutComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4024
+      ],
+      "code": "public class Test {\n              String f(int x) {\n                switch (x) {\n                  case 0:\n                    return \"ZERO\";\n                  default: // fall out\n                }\n                return \"\";\n              }\n            }\n            \n\n            public class Test {\n              String f(int x) {\n                switch (x) {\n                  case 0 -> {\n                    return \"ZERO\";\n                  }\n                  default -> {}\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "directConversion_casePatternWithGuard_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4062
+      ],
+      "code": "class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo(String s) {\n                switch (s) {\n                  case String str\n                  when str.equals(\"good\"):\n                    break;\n                  case String str\n                  when str.equals(\"bad\"):\n                    break;\n                  default:\n                    throw new RuntimeException();\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_nullDefaultFallsOut_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4100
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART:\n                  case DIAMOND:\n                    return 1;\n                  case SPADE:\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  case null:\n                  default:\n                    System.out.println(\"fall out\");\n                }\n                return 2;\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  case HEART, DIAMOND -> {\n                    return 1;\n                  }\n                  case SPADE -> {\n                    System.out.println(\"hello\");\n                    throw new RuntimeException();\n                  }\n                  case null, default -> System.out.println(\"fall out\");\n                }\n                return 2;\n              }\n            }"
+    },
+    {
+      "description": "switchByEnum_onlyDefault_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4149
+      ],
+      "code": "class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  default:\n                    throw new NullPointerException();\n                }\n              }\n            }\n            \n\n            class Test {\n              public int foo(Suit suit) {\n                switch (suit) {\n                  default -> throw new NullPointerException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "directConversion_casePatternWithoutGuard_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4181
+      ],
+      "code": "class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo(String s) {\n                switch (s) {\n                  case String str:\n                    String[] foo = {\"hello\", \"world\"};\n                    break;\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_lexicalScopeOverlap_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4214
+      ],
+      "code": "class Test {\n              int[] x = null;\n\n              public int[] foo() {\n                int z = 0;\n                switch (z) {\n                  case 1:\n                    String foo = \"hello\";\n                    break;\n                  case 2:\n                    // Here, foo is defined but maybe uninitialized\n                    foo = \"there\";\n                    // Here, foo is defined and initialized\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n              int[] x = null;\n\n              public int[] foo() {\n                int z = 0;\n                String foo;\n                switch (z) {\n                  case 1 -> {\n                    foo = \"hello\";\n                  }\n                  case 2 ->\n                      // Here, foo is defined but maybe uninitialized\n                      foo = \"there\";\n                    // Here, foo is defined and initialized\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_lexicalScopeOverlap2_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4265
+      ],
+      "code": "import java.lang.annotation.Repeatable;\n            import java.util.ArrayList;\n            import java.util.Map;\n\n            class Test {\n              @interface MyAnnos {\n                Test.MyAnno[] value();\n              }\n\n              @Repeatable(Test.MyAnnos.class)\n              @interface MyAnno {\n                String v() default \"\";\n              }\n\n              @interface MyOtherAnno {}\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo() {\n                int z = 0;\n                switch (z) {\n                  case 0:\n                  case 1:\n                    @MyAnno(v = \"foo\")\n                    // alpha\n                    /* beta */ @MyOtherAnno\n                    @MyAnno\n                    /* aa */ String /* bb */ foo /* cc */ = /* dd */ \"hello\" /* ee */; // ff\n                    var anotherString = \"salut\";\n                    var listInt = new ArrayList<Integer>();\n                    double dontHoistMe = 2.0d;\n                    dontHoistMe += 1.0d;\n                    int alsoDontHoistMe = 1;\n                    System.out.println(alsoDontHoistMe);\n                    Map<? extends String, ? super Test> map = null;\n                    break;\n                  case 2:\n                    map = null;\n                    foo = \"there\";\n                    anotherString = \"bonjour\";\n                    listInt = null;\n                    break;\n                  case 3:\n                    anotherString = \"just this var\";\n                    int staysHere;\n                }\n                return x;\n              }\n            }\n            \n\n            import java.lang.annotation.Repeatable;\n            import java.util.ArrayList;\n            import java.util.Map;\n\n            class Test {\n              @interface MyAnnos {\n                Test.MyAnno[] value();\n              }\n\n              @Repeatable(Test.MyAnnos.class)\n              @interface MyAnno {\n                String v() default \"\";\n              }\n\n              @interface MyOtherAnno {}\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo() {\n                int z = 0;\n                // alpha\n                /* beta */\n                /* aa */\n                /* bb */\n                /* cc */\n                /* dd */\n                /* ee */\n                @MyAnno(v = \"foo\")\n                @MyOtherAnno\n                @MyAnno\n                String foo;\n                String anotherString;\n                ArrayList<Integer> listInt;\n                Map<? extends String, ? super Test> map;\n                switch (z) {\n                  case 0, 1 -> {\n                    foo = \"hello\";\n                    anotherString = \"salut\";\n                    listInt = new ArrayList<Integer>();\n                    double dontHoistMe = 2.0d;\n                    dontHoistMe += 1.0d;\n                    int alsoDontHoistMe = 1;\n                    System.out.println(alsoDontHoistMe);\n                    map = null;\n                  }\n                  case 2 -> {\n                    map = null;\n                    foo = \"there\";\n                    anotherString = \"bonjour\";\n                    listInt = null;\n                  }\n                  case 3 -> {\n                    anotherString = \"just this var\";\n                    int staysHere;\n                  }\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_hoistArray_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4399
+      ],
+      "code": "class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo() {\n                int z = 0;\n                switch (z) {\n                  case 1:\n                    String[] foo = {\"hello\", \"world\"};\n                    break;\n                  case 2:\n                    foo = null;\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_hoistWithNamingConflictAbove_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4432
+      ],
+      "code": "class Test {\n\n              public Test() {}\n\n              public void foo() {\n                int z = 0;\n                switch (z) {\n                  case 0:\n                  // Fall thru\n                  case 1:\n                    var anotherString = \"salut\";\n                    if (anotherString.length() > 0) {\n                      // Note that this would pose a naming conflict with `foo` below (if hoisted)\n                      String foo = \"salut salut\";\n                      anotherString = foo;\n                    }\n                    double dontHoistMe = 2.0d;\n                    break;\n                  case 2:\n                    String foo = \"there\";\n                    anotherString = \"bonjour\";\n                    break;\n                  case 3:\n                    anotherString = \"just this var\";\n                    foo = \"baz\";\n                    int staysHere;\n                }\n                return;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_hoistWithNamingConflictSameCase_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4476
+      ],
+      "code": "class Test {\n\n              public Test() {}\n\n              public void foo() {\n                int z = 0;\n                switch (z) {\n                  case 0:\n                  // Fall thru\n                  case 1:\n                    var anotherString = \"salut\";\n                    double dontHoistMe = 2.0d;\n                    break;\n                  case 2:\n                    anotherString = \"bonjour\";\n                    if (anotherString.length() > 0) {\n                      // Note that this would pose a naming conflict with `foo` below (if hoisted)\n                      String foo = \"salut salut\";\n                      anotherString = foo;\n                    }\n                    String foo = \"there\";\n                    break;\n                  case 3:\n                    anotherString = \"just this var\";\n                    foo = \"baz\";\n                    int staysHere;\n                }\n                return;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_hoistIntersectionType_noError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4520
+      ],
+      "code": "class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo() {\n                int z = 1;\n                switch (z) {\n                  case 1:\n                    var foo = (CharSequence & Comparable<String>) \"hello\";\n                    break;\n                  case 2:\n                    foo = \"there\";\n                }\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "directConversion_typeParameterWithIntersection_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4552
+      ],
+      "code": "class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public static <T extends CharSequence & Comparable<String>> int[] foo() {\n                int z = 1;\n                switch (z) {\n                  case 1:\n                    T foo = null;\n                    break;\n                  case 2:\n                    System.out.println(\"Somehow, z was 2.\");\n                    foo = null;\n                }\n                return new int[0];\n              }\n            }\n            \n\n            class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public static <T extends CharSequence & Comparable<String>> int[] foo() {\n                int z = 1;\n                T foo;\n                switch (z) {\n                  case 1 -> {\n                    foo = null;\n                  }\n                  case 2 -> {\n                    System.out.println(\"Somehow, z was 2.\");\n                    foo = null;\n                  }\n                }\n                return new int[0];\n              }\n            }"
+    },
+    {
+      "description": "directConversion_lexicalScopeOverlap3_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4613
+      ],
+      "code": "class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo() {\n                int z = 0;\n                myLabel:\n                switch (z) {\n                  case 1:\n                    String foo = \"hello\";\n                    break;\n                  case 2:\n                    foo = \"there\";\n                }\n                return x;\n              }\n            }\n            \n\n            class Test {\n\n              int[] x;\n\n              public Test(int foo) {\n                x = null;\n              }\n\n              public int[] foo() {\n                int z = 0;\n                myLabel:\n                {\n                  String foo;\n                  switch (z) {\n                    case 1 -> {\n                      foo = \"hello\";\n                    }\n                    case 2 -> foo = \"there\";\n                  }\n                }\n                return x;\n              }\n            }"
+    }
+  ]
+}

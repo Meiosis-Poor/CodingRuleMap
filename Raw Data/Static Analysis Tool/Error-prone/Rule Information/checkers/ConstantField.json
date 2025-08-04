@@ -1,0 +1,70 @@
+{
+  "name": "ConstantField",
+  "language": "java",
+  "description": "Fields with CONSTANT_CASE names should be both static and final",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 80,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: static final Object CONSTANT1 = 42;\n              Object CONSTANT1 = 42;\n              // BUG: Diagnostic contains: @Deprecated static final Object CONSTANT2 = 42;\n              @Deprecated Object CONSTANT2 = 42;\n              // BUG: Diagnostic contains: static final Object CONSTANT3 = 42;\n              static Object CONSTANT3 = 42;\n              // BUG: Diagnostic contains: static final Object CONSTANT4 = 42;\n              final Object CONSTANT4 = 42;\n              // BUG: Diagnostic contains: @Deprecated private static final Object CONSTANT5 = 42;\n              @Deprecated private Object CONSTANT5 = 42;\n            }"
+    },
+    {
+      "description": "rename",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: 'Object constantCaseName = 42;'\n              Object CONSTANT_CASE_NAME = 42;\n            }"
+    },
+    {
+      "description": "skipStaticFixOnInners",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "class Test {\n              class Inner {\n                // BUG: Diagnostic matches: F\n                final String CONSTANT_CASE_NAME = \"a\";\n              }\n\n              enum InnerEnum {\n                FOO {\n                  // BUG: Diagnostic matches: F\n                  final String CONSTANT_CASE_NAME = \"a\";\n                };\n                // BUG: Diagnostic contains: static final String CAN_MAKE_STATIC\n                final String CAN_MAKE_STATIC = \"\";\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "class Test {\n              static final Object CONSTANT = 42;\n              Object nonConst = 42;\n              public static final Object FLAG_foo = new Object();\n              protected static final int FOO_BAR = 100;\n              static final int FOO_BAR2 = 100;\n              private static final int[] intArray = {0};\n              private static final Object mutable = new Object();\n            }"
+    },
+    {
+      "description": "renameUsages",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "class Test {\n              Object CONSTANT_CASE = 42;\n\n              void f() {\n                System.err.println(CONSTANT_CASE);\n              }\n            }\n            \n\n            class Test {\n              Object constantCase = 42;\n\n              void f() {\n                System.err.println(constantCase);\n              }\n            }"
+    },
+    {
+      "description": "primitivesAreConstant_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "class Test {\n              static final int CONSTANT = 42;\n              static final Integer BOXED_CONSTANT = 42;\n              static final String STRING_CONSTANT = \"\";\n            }"
+    },
+    {
+      "description": "primitivesAreConstant_serializable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        158
+      ],
+      "code": "import java.io.ObjectStreamField;\n            import java.io.Serializable;\n\n            class Test implements Serializable {\n              private static final long serialVersionUID = 1L;\n              private static final ObjectStreamField[] serialPersistentFields = {};\n            }"
+    }
+  ]
+}

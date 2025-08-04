@@ -1,0 +1,102 @@
+{
+  "name": "UnnecessaryOptionalGet",
+  "language": "java",
+  "description": "This code can be simplified by directly using the lambda parameters instead of calling get..() on optional.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 5,
+  "apis": 1,
+  "test": [
+    {
+      "description": "genericOptionalVars_sameVarGet_replacesWithLambdaArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.ifPresent(x -> System.out.println(op.get()));\n                op.map(x -> Long.parseLong(op.get()));\n                op.filter(x -> op.get().isEmpty());\n                op.flatMap(x -> Optional.of(op.get()));\n                op.flatMap(x -> Optional.of(op.orElseThrow()));\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.ifPresent(x -> System.out.println(x));\n                op.map(x -> Long.parseLong(x));\n                op.filter(x -> x.isEmpty());\n                op.flatMap(x -> Optional.of(x));\n                op.flatMap(x -> Optional.of(x));\n              }\n            }"
+    },
+    {
+      "description": "guava_sameVarGet_replacesWithLambdaArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.transform(x -> Long.parseLong(op.get()));\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.transform(x -> Long.parseLong(x));\n              }\n            }"
+    },
+    {
+      "description": "genericOptionalVars_orElseVariations_replacesWithLambdaArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.ifPresent(x -> System.out.println(op.orElse(\"other\")));\n                op.ifPresent(x -> System.out.println(op.orElseGet(() -> \"other\")));\n                op.ifPresent(x -> System.out.println(op.orElseThrow(RuntimeException::new)));\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.ifPresent(x -> System.out.println(x));\n                op.ifPresent(x -> System.out.println(x));\n                op.ifPresent(x -> System.out.println(x));\n              }\n            }"
+    },
+    {
+      "description": "guava_orVariations_replacesWithLambdaArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        132
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.transform(x -> Long.parseLong(op.or(\"other\")));\n                op.transform(x -> Long.parseLong(op.or(() -> \"other\")));\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.transform(x -> Long.parseLong(x));\n                op.transform(x -> Long.parseLong(x));\n              }\n            }"
+    },
+    {
+      "description": "genericOptionalVars_sameVarGet_lamdaBlocks_replacesWithLamdaArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.ifPresent(\n                    x -> {\n                      System.out.println(op.get());\n                    });\n                op.map(\n                    x -> {\n                      return Long.parseLong(op.get());\n                    });\n                op.filter(\n                    x -> {\n                      return op.get().isEmpty();\n                    });\n                op.flatMap(\n                    x -> {\n                      return Optional.of(op.get());\n                    });\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.ifPresent(\n                    x -> {\n                      System.out.println(x);\n                    });\n                op.map(\n                    x -> {\n                      return Long.parseLong(x);\n                    });\n                op.filter(\n                    x -> {\n                      return x.isEmpty();\n                    });\n                op.flatMap(\n                    x -> {\n                      return Optional.of(x);\n                    });\n              }\n            }"
+    },
+    {
+      "description": "genericOptionalVars_differentOptionalVarGet_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        224
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op1 = Optional.of(\"hello\");\n                Optional<String> op2 = Optional.of(\"hello\");\n                op1.ifPresent(x -> System.out.println(op2.get()));\n              }\n            }"
+    },
+    {
+      "description": "genericOptionalVars_differentMethodGet_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        244
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                myOpFunc1().ifPresent(x -> System.out.println(myOpFunc2().get()));\n              }\n\n              private Optional<String> myOpFunc1() {\n                return Optional.of(\"hello\");\n              }\n\n              private Optional<String> myOpFunc2() {\n                return Optional.of(\"hello\");\n              }\n            }"
+    },
+    {
+      "description": "genericOptionalMethods_sameMethodInvocation_replacesWithLamdaArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        270
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                myOpFunc().ifPresent(x -> System.out.println(myOpFunc().get()));\n              }\n\n              private Optional<String> myOpFunc() {\n                return Optional.of(\"hello\");\n              }\n            }"
+    },
+    {
+      "description": "primitiveOptionals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        292
+      ],
+      "code": "import java.util.OptionalDouble;\n            import java.util.OptionalInt;\n            import java.util.OptionalLong;\n\n            public class Test {\n              private void home() {\n                OptionalDouble opDouble = OptionalDouble.of(1.0);\n                OptionalInt opInt = OptionalInt.of(1);\n                OptionalLong opLong = OptionalLong.of(1L);\n                opDouble.ifPresent(x -> System.out.println(opDouble.getAsDouble()));\n                opInt.ifPresent(x -> System.out.println(opInt.getAsInt()));\n                opLong.ifPresent(x -> System.out.println(opLong.getAsLong()));\n              }\n            }\n            \n\n            import java.util.OptionalDouble;\n            import java.util.OptionalInt;\n            import java.util.OptionalLong;\n\n            public class Test {\n              private void home() {\n                OptionalDouble opDouble = OptionalDouble.of(1.0);\n                OptionalInt opInt = OptionalInt.of(1);\n                OptionalLong opLong = OptionalLong.of(1L);\n                opDouble.ifPresent(x -> System.out.println(x));\n                opInt.ifPresent(x -> System.out.println(x));\n                opLong.ifPresent(x -> System.out.println(x));\n              }\n            }"
+    },
+    {
+      "description": "differentReceivers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        334
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              abstract static class T {\n                abstract Optional<String> getValue();\n              }\n\n              static void test(T actual, T expected) {\n                actual\n                    .getValue()\n                    .ifPresent(\n                        actualValue -> {\n                          String expectedValue = expected.getValue().get();\n                          actualValue.equals(expectedValue);\n                        });\n              }\n            }"
+    },
+    {
+      "description": "orElseThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        362
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.flatMap(x -> Optional.of(op.orElseThrow()));\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            public class Test {\n              private void home() {\n                Optional<String> op = Optional.of(\"hello\");\n                op.flatMap(x -> Optional.of(x));\n              }\n            }"
+    }
+  ]
+}

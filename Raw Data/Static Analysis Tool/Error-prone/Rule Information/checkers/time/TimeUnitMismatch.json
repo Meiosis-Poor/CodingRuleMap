@@ -1,0 +1,78 @@
+{
+  "name": "TimeUnitMismatch",
+  "language": "java",
+  "description": "An value that appears to be represented in one unit is used where another appears to be required (e.g., seconds where nanos are needed)",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 654,
+  "branches": 83,
+  "apis": 31,
+  "test": [
+    {
+      "description": "testPositiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        43
+      ],
+      "code": "package com.google.errorprone.bugpatterns.time.testdata;\n\n            import static java.util.concurrent.TimeUnit.NANOSECONDS;\n\n            import java.util.Optional;\n\n            /**\n             * @author cpovirk@google.com (Chris Povirk)\n             */\n            public class TimeUnitMismatchPositiveCases {\n              int startMicros;\n              int stopMillis;\n\n              void fields() {\n                // BUG: Diagnostic contains: expected microseconds but was milliseconds\n                startMicros = stopMillis;\n\n                // BUG: Diagnostic contains: If it instead means microseconds\n                startMicros = stopMillis;\n\n                // BUG: Diagnostic contains: MILLISECONDS.toMicros(stopMillis)\n                startMicros = stopMillis;\n              }\n\n              void memberSelect() {\n                // BUG: Diagnostic contains: expected microseconds but was milliseconds\n                this.startMicros = this.stopMillis;\n              }\n\n              void locals() {\n                int millis = 0;\n                // BUG: Diagnostic contains: expected microseconds but was milliseconds\n                startMicros = millis;\n              }\n\n              long getMicros() {\n                return 0;\n              }\n\n              void returns() {\n                // BUG: Diagnostic contains: expected nanoseconds but was microseconds\n                long fooNano = getMicros();\n              }\n\n              void doSomething(double startSec, double endSec) {}\n\n              void setMyMillis(int timeout) {}\n\n              void args() {\n                double ms = 0;\n                double ns = 0;\n                // BUG: Diagnostic contains: expected seconds but was milliseconds\n                doSomething(ms, ns);\n                // BUG: Diagnostic contains: expected seconds but was nanoseconds\n                doSomething(ms, ns);\n\n                // BUG: Diagnostic contains: expected milliseconds but was nanoseconds\n                setMyMillis((int) ns);\n              }\n\n              void timeUnit() {\n                int micros = 0;\n                // BUG: Diagnostic contains: expected nanoseconds but was microseconds\n                NANOSECONDS.toMillis(micros);\n              }\n\n              class Foo {\n                Foo(long seconds) {}\n              }\n\n              void constructor() {\n                int nanos = 0;\n                // BUG: Diagnostic contains: expected seconds but was nanoseconds\n                new Foo(nanos);\n              }\n\n              void boxed() {\n                Long nanos = 0L;\n                // BUG: Diagnostic contains: expected milliseconds but was nanoseconds\n                long millis = nanos;\n              }\n\n              void optionalGet() {\n                Optional<Long> maybeNanos = Optional.of(0L);\n                // BUG: Diagnostic contains: expected milliseconds but was nanoseconds\n                long millis = maybeNanos.get();\n              }\n            }\\"
+    },
+    {
+      "description": "testNegativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "package com.google.errorprone.bugpatterns.time.testdata;\n\n            import static java.util.concurrent.TimeUnit.NANOSECONDS;\n\n            import java.util.Optional;\n\n            /**\n             * @author cpovirk@google.com (Chris Povirk)\n             */\n            public class TimeUnitMismatchNegativeCases {\n              static final int THE_MILLIS = 0;\n              int startMillis;\n              int stopMillis;\n\n              void fields() {\n                startMillis = THE_MILLIS;\n\n                startMillis = stopMillis;\n              }\n\n              void memberSelect() {\n                this.startMillis = this.stopMillis;\n              }\n\n              void locals() {\n                int millis = 0;\n                startMillis = millis;\n              }\n\n              long getMicros() {\n                return 0;\n              }\n\n              void returns() {\n                long fooUs = getMicros();\n              }\n\n              void doSomething(double startSec, double endSec) {}\n\n              void args() {\n                double seconds = 0;\n                doSomething(seconds, seconds);\n              }\n\n              void timeUnit() {\n                int nanos = 0;\n                NANOSECONDS.toMillis(nanos);\n              }\n\n              class Foo {\n                Foo(long seconds) {}\n              }\n\n              void constructor() {\n                int seconds = 0;\n                new Foo(seconds);\n              }\n\n              String milliseconds() {\n                return \"0\";\n              }\n\n              void nonNumeric() {\n                String seconds = milliseconds();\n              }\n\n              void boxed() {\n                Long startNanos = 0L;\n                long endNanos = startNanos;\n              }\n\n              void optionalGet() {\n                Optional<Long> maybeNanos = Optional.of(0L);\n                long nanos = maybeNanos.get();\n              }\n            }\\"
+    },
+    {
+      "description": "mismatchedTypeAfterManualConversion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: MICROSECONDS.toMillis(getMicros())\n              long fooMillis = getMicros() * 1000;\n              // BUG: Diagnostic contains: MICROSECONDS.toMillis(getMicros())\n              long barMillis = 1000 * getMicros();\n              // BUG: Diagnostic contains:\n              long fooNanos = getMicros() / 1000;\n              // BUG: Diagnostic contains: SECONDS.toNanos(getSeconds())\n              long barNanos = getSeconds() * 1000 * 1000;\n\n              long getMicros() {\n                return 1;\n              }\n\n              long getSeconds() {\n                return 1;\n              }\n\n              void setMillis(long x) {}\n\n              void test(int timeMicros) {\n                // BUG: Diagnostic contains:\n                setMillis(timeMicros * 1000);\n              }\n            }"
+    },
+    {
+      "description": "noopConversion_isRemoved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "class Test {\n              long fooMicros = getMicros() * 1000;\n\n              long getMicros() {\n                return 1;\n              }\n            }\n            \n\n            class Test {\n              long fooMicros = getMicros();\n\n              long getMicros() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "zeroMultiplier_noComplaint",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        290
+      ],
+      "code": "class Test {\n              static int MILLIS_PER_MINUTE = 42;\n              long fooMicros = 0 * MILLIS_PER_MINUTE;\n            }"
+    },
+    {
+      "description": "matchedTypeAfterManualConversion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        304
+      ],
+      "code": "class Test {\n              long fooNanos = getMicros() * 1000;\n              long fooMillis = getMicros() / 1000;\n\n              long getMicros() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "binaryTree",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": "abstract class Test {\n              abstract long getStartMillis();\n\n              abstract long getEndMillis();\n\n              abstract long getStartNanos();\n\n              abstract long getEndNanos();\n\n              void test() {\n                var b1 = getStartMillis() < getEndMillis();\n                var b2 = getStartNanos() + getEndNanos();\n                // BUG: Diagnostic contains: MILLISECONDS.toNanos(getStartMillis()) < getEndNanos()\n                var b3 = getStartMillis() < getEndNanos();\n                // BUG: Diagnostic contains: MILLISECONDS.toNanos(getStartMillis()) + getEndNanos()\n                var b4 = getStartMillis() + getEndNanos();\n                // BUG: Diagnostic contains: MILLISECONDS.toNanos(getStartMillis()) + getEndNanos()\n                var b5 = getStartMillis() * 1000 + getEndNanos();\n                var b6 = getStartMillis() * 1_000_000 + getEndNanos();\n              }\n            }"
+    },
+    {
+      "description": "testUnitSuggestedByName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        353
+      ],
+      "code": ""
+    }
+  ]
+}

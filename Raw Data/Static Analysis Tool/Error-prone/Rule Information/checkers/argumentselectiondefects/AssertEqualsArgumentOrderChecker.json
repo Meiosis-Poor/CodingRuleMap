@@ -1,0 +1,126 @@
+{
+  "name": "AssertEqualsArgumentOrderChecker",
+  "language": "java",
+  "description": "Arguments are swapped in assertEquals-like call",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 122,
+  "branches": 18,
+  "apis": 3,
+  "test": [
+    {
+      "description": "assertEqualsCheck_makesNoSuggestion_withOrderExpectedActual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Object expected, Object actual) {\n                assertEquals(expected, actual);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makesNoSuggestion_withOrderExpectedActualAndMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(String message, Object expected, Object actual) {}\n              ;\n\n              void test(Object expected, Object actual) {\n                assertEquals(\"\", expected, actual);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_swapsArguments_withOrderActualExpected",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Object expected, Object actual) {\n                // BUG: Diagnostic contains: assertEquals(expected, actual)\n                // assertEquals(/* expected= */actual, /* actual= */expected)\n                assertEquals(actual, expected);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_swapsArguments_withOrderActualExpectedAndMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(String message, Object expected, Object actual) {}\n              ;\n\n              void test(Object expected, Object actual) {\n                // BUG: Diagnostic contains: assertEquals(\"\", expected, actual)\n                assertEquals(\"\", actual, expected);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_swapsArguments_withOnlyExpectedAsPrefix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              abstract Object get();\n\n              void test(Object expectedValue) {\n                // BUG: Diagnostic contains: assertEquals(expectedValue, get())\n                assertEquals(get(), expectedValue);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_swapsArguments_withLiteralForActual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Object other) {\n                // BUG: Diagnostic contains: assertEquals(1, other)\n                assertEquals(other, 1);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_doesntSwap_withLiteralForExpected",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(String message, Object expected, Object actual) {}\n              ;\n\n              void test(Object other) {\n                assertEquals(\"\", 1, other);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makeNoChange_withLiteralForBoth",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test() {\n                assertEquals(2, 1);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makeNoChange_ifSwapCreatesDuplicateCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Object expected, Object actual) {\n                assertEquals(expected, actual);\n                assertEquals(actual, expected);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makesNoChange_withNothingMatching",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Object other1, Object other2) {\n                assertEquals(other1, other2);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makesNoChange_whenArgumentExtendsThrowable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Exception exception) {\n                try {\n                  throw exception;\n                } catch (Exception expected) {\n                  assertEquals(exception, expected);\n                }\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makesNoChange_whenArgumentIsEnumMember",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        241
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              enum MyEnum {\n                VALUE\n              }\n\n              void test(MyEnum expected) {\n                assertEquals(MyEnum.VALUE, expected);\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makesNoChange_withReturnedEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              enum MyEnum {}\n\n              abstract MyEnum enumValue();\n\n              void test(Object other) {\n                assertEquals(other, enumValue());\n              }\n            }"
+    },
+    {
+      "description": "assertEqualsCheck_makesNoChange_withCommentedNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        285
+      ],
+      "code": "abstract class ErrorProneTest {\n              static void assertEquals(Object expected, Object actual) {}\n              ;\n\n              void test(Object expected, Object actual) {\n                assertEquals(/* expected= */ actual, /* actual= */ expected);\n              }\n            }"
+    }
+  ]
+}

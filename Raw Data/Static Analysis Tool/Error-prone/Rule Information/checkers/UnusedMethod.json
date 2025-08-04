@@ -1,0 +1,230 @@
+{
+  "name": "UnusedMethod",
+  "language": "java",
+  "description": "Unused.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 373,
+  "branches": 35,
+  "apis": 11,
+  "test": [
+    {
+      "description": "unusedNative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package unusedvars;\n\n            public class UnusedNative {\n              private native void aNativeMethod();\n            }"
+    },
+    {
+      "description": "unusedPrivateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "package unusedvars;\n\n            import com.google.errorprone.annotations.Keep;\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n            import javax.inject.Inject;\n\n            public class UnusedPrivateMethod {\n              public void test() {\n                used();\n              }\n\n              private void used() {}\n\n              // BUG: Diagnostic contains: Method 'notUsed' is never used.\n              private void notUsed() {}\n\n              @Inject\n              private void notUsedExempted() {}\n\n              @Keep\n              @Target(ElementType.METHOD)\n              @Retention(RetentionPolicy.SOURCE)\n              private @interface ProvidesCustom {}\n            }"
+    },
+    {
+      "description": "unuseds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "package unusedvars;\n\n            import java.io.IOException;\n            import java.io.ObjectStreamException;\n            import java.util.List;\n            import javax.inject.Inject;\n\n            public class Unuseds {\n              // BUG: Diagnostic contains:\n              private void notUsedMethod() {}\n\n              // BUG: Diagnostic contains:\n              private static void staticNotUsedMethod() {}\n\n              @SuppressWarnings({\"deprecation\", \"unused\"})\n              class UsesSuppressWarning {\n                private int f1;\n\n                private void test1() {\n                  int local;\n                }\n\n                @SuppressWarnings(value = \"unused\")\n                private void test2() {\n                  int local;\n                }\n              }\n            }"
+    },
+    {
+      "description": "exemptedMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "package unusedvars;\n\n            import java.io.IOException;\n            import java.io.ObjectStreamException;\n\n            public class Unuseds implements java.io.Serializable {\n              private void readObject(java.io.ObjectInputStream in) throws IOException {\n                in.hashCode();\n              }\n\n              private void writeObject(java.io.ObjectOutputStream out) throws IOException {\n                out.writeInt(123);\n              }\n\n              private Object readResolve() {\n                return null;\n              }\n\n              private void readObjectNoData() throws ObjectStreamException {}\n            }"
+    },
+    {
+      "description": "exemptedByName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "package unusedvars;\n\n            class ExemptedByName {\n              private void unused1(\n                  int a,\n                  int unusedParam,\n                  int customUnused1,\n                  int customUnused2,\n                  int prefixUnused1Param,\n                  int prefixUnused2Param) {\n                int unusedLocal = a;\n              }\n            }"
+    },
+    {
+      "description": "exemptedByCustomAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "package example;\n\n            @interface Foo {}\n            \n\n            package example;\n\n            class ExemptedByCustomAnnotation {\n              @Foo\n              private void bar() {}\n            }"
+    },
+    {
+      "description": "suppressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "package unusedvars;\n\n            class Suppressed {\n              @SuppressWarnings({\"deprecation\", \"unused\"})\n              class UsesSuppressWarning {\n                private void test1() {\n                  int local;\n                }\n\n                @SuppressWarnings(value = \"unused\")\n                private void test2() {\n                  int local;\n                }\n              }\n            }"
+    },
+    {
+      "description": "removal_javadocsAndNonJavadocs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        228
+      ],
+      "code": "package unusedvars;\n\n            public class UnusedWithComment {\n              /** Method comment */\n              private void test1() {}\n\n              /** Method comment */\n              private void test2() {}\n\n              // Non javadoc comment\n              private void test3() {}\n            }\n            \n\n            package unusedvars;\n\n            public class UnusedWithComment {}"
+    },
+    {
+      "description": "usedInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        257
+      ],
+      "code": "package unusedvars;\n\n            import java.util.Arrays;\n            import java.util.List;\n            import java.util.function.Function;\n            import java.util.stream.Collectors;\n\n            /** Method parameters used in lambdas and anonymous classes */\n            public class UsedInLambda {\n              private Function<Integer, Integer> usedInLambda() {\n                return x -> 1;\n              }\n\n              private String print(Object o) {\n                return o.toString();\n              }\n\n              public List<String> print(List<Object> os) {\n                return os.stream().map(this::print).collect(Collectors.toList());\n              }\n\n              public static void main(String[] args) {\n                System.err.println(new UsedInLambda().usedInLambda());\n                System.err.println(new UsedInLambda().print(Arrays.asList(1, 2, 3)));\n              }\n            }"
+    },
+    {
+      "description": "onlyForMethodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        293
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test {\n              private static boolean foo(int a) {\n                return true;\n              }\n\n              Predicate<Integer> pred = Test::foo;\n            }"
+    },
+    {
+      "description": "methodSource",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        312
+      ],
+      "code": "package org.junit.jupiter.params.provider;\n\n            public @interface MethodSource {\n              String[] value();\n            }\n            \n\n            import java.util.stream.Stream;\n            import org.junit.jupiter.params.provider.MethodSource;\n\n            class Test {\n              @MethodSource(\"parameters\")\n              void test() {}\n\n              private static Stream<String> parameters() {\n                return Stream.of();\n              }\n            }"
+    },
+    {
+      "description": "qualifiedMethodSource",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        342
+      ],
+      "code": "package org.junit.jupiter.params.provider;\n\n            public @interface MethodSource {\n              String[] value();\n            }\n            \n\n            import java.util.stream.Stream;\n            import org.junit.jupiter.params.provider.MethodSource;\n\n            class Test {\n              @MethodSource(\"Test#parameters\")\n              void test() {}\n\n              private static Stream<String> parameters() {\n                return Stream.of();\n              }\n            }"
+    },
+    {
+      "description": "nestedQualifiedMethodSource",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        372
+      ],
+      "code": "package org.junit.jupiter.params.provider;\n\n            public @interface MethodSource {\n              String[] value();\n            }\n            \n\n            import java.util.stream.Stream;\n            import org.junit.jupiter.params.provider.MethodSource;\n\n            class Test {\n              // @Nested\n              public class NestedTest {\n                @MethodSource(\"Test#parameters\")\n                void test() {}\n              }\n\n              private static Stream<String> parameters() {\n                return Stream.of();\n              }\n            }"
+    },
+    {
+      "description": "overriddenMethodNotCalledWithinClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        405
+      ],
+      "code": "class Test {\n              private class Inner {\n                @Override\n                public String toString() {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "methodWithinPrivateInnerClass_isEligible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        423
+      ],
+      "code": "class Test {\n              private class Inner {\n                // BUG: Diagnostic contains:\n                public void foo() {}\n              }\n            }"
+    },
+    {
+      "description": "unusedConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        439
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: Constructor 'Test'\n              private Test(int a) {}\n            }"
+    },
+    {
+      "description": "unusedConstructor_refactoredToPrivateNoArgVersion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        453
+      ],
+      "code": "class Test {\n              private Test(int a) {}\n            }\n            \n\n            class Test {\n              private Test() {}\n            }"
+    },
+    {
+      "description": "unusedConstructor_finalFieldsLeftDangling_noFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        473
+      ],
+      "code": "class Test {\n              private final int a;\n\n              private Test(int a) {\n                this.a = a;\n              }\n            }"
+    },
+    {
+      "description": "unusedConstructor_nonFinalFields_stillRefactored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        491
+      ],
+      "code": "class Test {\n              private int a;\n\n              private Test(int a) {}\n            }\n            \n\n            class Test {\n              private int a;\n\n              private Test() {}\n            }"
+    },
+    {
+      "description": "unusedConstructor_removed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        515
+      ],
+      "code": "class Test {\n              private Test(int a) {}\n\n              private Test(String a) {}\n\n              public Test of() {\n                return new Test(1);\n              }\n            }\n            \n\n            class Test {\n              private Test(int a) {}\n\n              public Test of() {\n                return new Test(1);\n              }\n            }"
+    },
+    {
+      "description": "privateConstructor_calledWithinClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        545
+      ],
+      "code": "class Test {\n              private Test(int a) {}\n\n              public Test of(int a) {\n                return new Test(a);\n              }\n            }"
+    },
+    {
+      "description": "zeroArgConstructor_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        562
+      ],
+      "code": "class Test {\n              private Test() {}\n            }"
+    },
+    {
+      "description": "annotationProperty_assignedByname",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        575
+      ],
+      "code": "class Test {\n              private @interface Anno {\n                int value() default 1;\n              }\n\n              @Anno(value = 1)\n              int b;\n            }"
+    },
+    {
+      "description": "annotationProperty_assignedAsDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        593
+      ],
+      "code": "class Test {\n              private @interface Anno {\n                int value();\n              }\n\n              @Anno(1)\n              int a;\n            }"
+    },
+    {
+      "description": "effectivelyPrivateMethodMadeVisible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        611
+      ],
+      "code": "class Test {\n              private class A {\n                public void foo() {}\n              }\n\n              public class B extends A {}\n            }"
+    },
+    {
+      "description": "effectivelyPrivateMethodMadeVisible_bySubclassImplementingPublicInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        628
+      ],
+      "code": "class Test {\n              private static class A {\n                public void a() {}\n              }\n\n              public interface B {\n                public void a();\n              }\n\n              public static final class C extends A implements B {}\n            }"
+    },
+    {
+      "description": "anonymousClassMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        649
+      ],
+      "code": "class T {\n              void f() {\n                var r =\n                    new Runnable() {\n                      public void foo() {}\n\n                      @Override\n                      public void run() {}\n                    };\n              }\n\n              enum E implements Runnable {\n                ONE {\n                  public void foo() {}\n\n                  @Override\n                  public void run() {}\n                };\n              }\n            }\n            \n\n            class T {\n              void f() {\n                var r =\n                    new Runnable() {\n                      @Override\n                      public void run() {}\n                    };\n              }\n\n              enum E implements Runnable {\n                ONE {\n                  @Override\n                  public void run() {}\n                };\n              }\n            }"
+    }
+  ]
+}

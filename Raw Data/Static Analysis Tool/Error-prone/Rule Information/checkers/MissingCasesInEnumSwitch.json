@@ -1,0 +1,166 @@
+{
+  "name": "MissingCasesInEnumSwitch",
+  "language": "java",
+  "description": "Switches on enum types should either handle all values, or have a default case.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 126,
+  "branches": 26,
+  "apis": 2,
+  "test": [
+    {
+      "description": "exhaustive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case ONE:\n                  case TWO:\n                  case THREE:\n                    System.err.println(\"found it!\");\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "exhaustive_allowsQualifying",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case Case.ONE:\n                  case Case.TWO:\n                  case Case.THREE:\n                    System.err.println(\"found it!\");\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "exhaustive_multipleCaseExpressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case ONE, TWO -> {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_withDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case ONE:\n                  case TWO:\n                    System.err.println(\"found it!\");\n                    break;\n                  default:\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_withCombinedDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case ONE, TWO -> System.err.println(\"found it!\");\n                  case null, default -> {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_withDefaultForSkew",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                // BUG: Diagnostic contains:\n                // Non-exhaustive switch; either add a default or handle the remaining cases\n                // THREE\n                switch (c) {\n                  case ONE:\n                  case TWO:\n                    System.err.println(\"found it!\");\n                    break;\n                  default: // fallback for library skew\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                // BUG: Diagnostic contains: THREE\n                switch (c) {\n                  case ONE:\n                  case TWO:\n                    System.err.println(\"found it!\");\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_manyCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE,\n                FOUR,\n                FIVE,\n                SIX,\n                SEVEN,\n                EIGHT\n              }\n\n              void m(Case c) {\n                // BUG: Diagnostic contains: TWO, THREE, FOUR, and 4 others\n                switch (c) {\n                  case ONE:\n                    System.err.println(\"found it!\");\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_nonEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "class Test {\n              void m(int i) {\n                switch (i) {\n                  case 1:\n                  case 2:\n                    System.err.println(\"found it!\");\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "empty",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO\n              }\n\n              void m(Case e) {\n                // BUG: Diagnostic contains: ONE, TWO\n                switch (e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_arrowStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        293
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO\n              }\n\n              void m(Case c) {\n                // BUG: Diagnostic contains: TWO\n                switch (c) {\n                  case ONE -> {\n                    System.err.println(\"found it!\");\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_multi",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        318
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                // BUG: Diagnostic contains: THREE\n                switch (c) {\n                  case ONE, TWO:\n                    System.err.println(\"found it!\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonExhaustive_multiArrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                // BUG: Diagnostic contains: THREE\n                switch (c) {\n                  case ONE, TWO -> {\n                    System.err.println(\"found it!\");\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "i4684",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        369
+      ],
+      "code": "public class ErrorProneBug {\n              enum A {\n                A1,\n                A2,\n                A3\n              }\n\n              public static void main(String[] args) {\n                A a = null;\n\n                switch (a) {\n                  case null -> {\n                    System.out.println(\"null\");\n                  }\n                  case A1 -> {\n                    System.out.println(\"A1\");\n                  }\n                  case A2 -> {\n                    System.out.println(\"A2\");\n                  }\n                  case A3 -> {\n                    System.out.println(\"A3\");\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchExpression_exhaustive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        406
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                int x =\n                    switch (c) {\n                      case ONE -> 1;\n                      case TWO -> 2;\n                      case THREE -> 3;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "switchExpression_hasDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        432
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                int x =\n                    switch (c) {\n                      case ONE -> 1;\n                      default -> -1;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "switchExpression_onlyDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        457
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                int x =\n                    switch (c) {\n                      default -> -1;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "switchExpression_nonExhaustive_withDefaultForSkew",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        481
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO,\n                THREE\n              }\n\n              void m(Case c) {\n                int x =\n                    // BUG: Diagnostic contains:\n                    // Non-exhaustive switch; ensure all cases are handled in addition to the default case\n                    // THREE\n                    switch (c) {\n                      case ONE -> 1;\n                      case TWO -> 2;\n                      // fallback for library skew\n                      default -> -1;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "defaultInRuleCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        511
+      ],
+      "code": "public class Test {\n              public enum E {\n                A,\n                B\n              }\n\n              public static Object test(E e) {\n                return switch (e) {\n                  case A:\n                    yield new Object();\n                  default:\n                    yield null;\n                };\n              }\n            }"
+    }
+  ]
+}

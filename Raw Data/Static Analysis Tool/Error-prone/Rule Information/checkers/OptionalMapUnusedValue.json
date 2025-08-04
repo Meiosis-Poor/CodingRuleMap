@@ -1,0 +1,70 @@
+{
+  "name": "OptionalMapUnusedValue",
+  "language": "java",
+  "description": "Optional.ifPresent is preferred over Optional.map when the return value is unused",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 5,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive_methodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        28
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public void bar(Optional<Integer> optional) {\n                optional.map(this::foo);\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public void bar(Optional<Integer> optional) {\n                optional.ifPresent(this::foo);\n              }\n            }"
+    },
+    {
+      "description": "positive_statementLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public void bar(Optional<Integer> optional) {\n                optional.map(v -> foo(v));\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public void bar(Optional<Integer> optional) {\n                optional.ifPresent(v -> foo(v));\n              }\n            }"
+    },
+    {
+      "description": "negative_resultReturned",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public Optional<Integer> bar(Optional<Integer> optional) {\n                return optional.map(this::foo);\n              }\n            }"
+    },
+    {
+      "description": "negative_resultAssigned",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        122
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public void bar(Optional<Integer> optional) {\n                Optional<Integer> result = optional.map(this::foo);\n              }\n            }"
+    },
+    {
+      "description": "negative_resultMethodCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        144
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              private Integer foo(Integer v) {\n                return v;\n              }\n\n              public void bar(Optional<Integer> optional) {\n                optional.map(this::foo).orElse(42);\n              }\n            }"
+    },
+    {
+      "description": "negative_nonStatementLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        166
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              public void bar(Optional<Integer> optional) {\n                optional.map(v -> v + 1);\n              }\n            }"
+    },
+    {
+      "description": "negative_voidIncompatibleLambdaBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              public void bar(Optional<Integer> optional) {\n                optional.map(\n                    v -> {\n                      return 2;\n                    });\n              }\n            }"
+    }
+  ]
+}

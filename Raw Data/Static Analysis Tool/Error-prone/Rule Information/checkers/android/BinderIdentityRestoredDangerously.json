@@ -1,0 +1,30 @@
+{
+  "name": "BinderIdentityRestoredDangerously",
+  "language": "java",
+  "description": "A call to Binder.clearCallingIdentity() should be followed by Binder.restoreCallingIdentity() in a finally block. Otherwise the wrong Binder identity may be used by subsequent code.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 60,
+  "branches": 6,
+  "apis": 1,
+  "test": [
+    {
+      "description": "releasedInFinallyBlock_shouldBeOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "import android.os.Binder;\n\n            public class InFinally {\n              void foo() {\n                long identity = Binder.clearCallingIdentity();\n                try {\n                  // Do something (typically Binder IPC)\n                } finally {\n                  Binder.restoreCallingIdentity(identity);\n                }\n              }\n            }"
+    },
+    {
+      "description": "releasedInFinallyBlock_shouldWarn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import android.os.Binder;\n\n            public class InFinally {\n              void foo() {\n                long identity = Binder.clearCallingIdentity();\n                // Do something (typically Binder IPC)\n                // BUG: Diagnostic contains: Binder.restoreCallingIdentity() in a finally block\n                Binder.restoreCallingIdentity(identity);\n              }\n            }"
+    }
+  ]
+}

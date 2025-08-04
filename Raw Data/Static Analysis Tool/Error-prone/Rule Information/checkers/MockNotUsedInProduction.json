@@ -1,0 +1,118 @@
+{
+  "name": "MockNotUsedInProduction",
+  "language": "java",
+  "description": "This mock is instantiated and configured, but is never passed to production code. It should be either removed or used.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 188,
+  "branches": 14,
+  "apis": 2,
+  "test": [
+    {
+      "description": "neverUsed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n\n            class Test {\n              public Object test() {\n                // BUG: Diagnostic contains:\n                Test test = mock(Test.class);\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "neverUsed_butInitializedSeparately",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n\n            class Test {\n              private Test test;\n\n              public Object test() {\n                // BUG: Diagnostic contains:\n                test = mock(Test.class);\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "spyNeverUsed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "import static org.mockito.Mockito.spy;\n            import static org.mockito.Mockito.verify;\n\n            class Test {\n              public Object test() {\n                // BUG: Diagnostic contains:\n                Test test = spy(new Test());\n                verify(test).test();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "nonStaticVerify_countsAsUse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "import static org.mockito.Mockito.spy;\n\n            class Test {\n              public Object test() {\n                Test test = spy(new Test());\n                verify(test).test();\n                return null;\n              }\n\n              Test verify(Test t) {\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "passedToProduction",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                when(test.test()).thenCallRealMethod();\n                return test.test();\n              }\n            }"
+    },
+    {
+      "description": "possiblyBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import com.google.inject.testing.fieldbinder.Bind;\n            import org.mockito.Mock;\n\n            class Test {\n              @Bind @Mock public Test test;\n\n              public Object test() {\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "publicField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock public Test test;\n\n              public Object test() {\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "qualifiedWithThis_stillSeen",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        186
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock private Test test;\n\n              public Test test() {\n                return this.test;\n              }\n            }"
+    },
+    {
+      "description": "privateField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              @Mock private Test test;\n\n              public Object test() {\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "injectMocks_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.InjectMocks;\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock private Test test;\n              @InjectMocks Test t;\n\n              public Object test() {\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "suppressionWorks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        254
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              @SuppressWarnings(\"MockNotUsedInProduction\")\n              @Mock\n              private Test test;\n\n              public Object test() {\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock private Test test;\n\n              public Object test() {\n                when(test.test()).thenCallRealMethod();\n                return null;\n              }\n            }\n            \n\n            import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              public Object test() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "refactoringNested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        313
+      ],
+      "code": "import static org.mockito.Mockito.doAnswer;\n            import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock private Test test;\n\n              public Object test() {\n                doAnswer(\n                        a -> {\n                          when(test.test()).thenReturn(null);\n                          return null;\n                        })\n                    .when(test)\n                    .test();\n                return null;\n              }\n            }\n            \n\n            import static org.mockito.Mockito.doAnswer;\n            import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n            import org.mockito.Mock;\n\n            class Test {\n              public Object test() {\n                return null;\n              }\n            }"
+    }
+  ]
+}

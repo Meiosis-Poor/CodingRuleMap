@@ -1,0 +1,142 @@
+{
+  "name": "ConstantPatternCompile",
+  "language": "java",
+  "description": "Variables initialized with Pattern#compile calls on constants can be constants",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 376,
+  "branches": 38,
+  "apis": 4,
+  "test": [
+    {
+      "description": "inlineExpressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isCar(String input) {\n                return Pattern.compile(\"car\").matcher(input).matches();\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isCar(String input) {\n                return INPUT_PATTERN.matcher(input).matches();\n              }\n\n              private static final Pattern INPUT_PATTERN = Pattern.compile(\"car\");\n            }"
+    },
+    {
+      "description": "variableNameFromField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              private static final String INPUT = null;\n\n              boolean isCar() {\n                return Pattern.compile(\"car\").matcher(INPUT).matches();\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              private static final String INPUT = null;\n\n              boolean isCar() {\n                return INPUT_PATTERN.matcher(INPUT).matches();\n              }\n\n              private static final Pattern INPUT_PATTERN = Pattern.compile(\"car\");\n            }"
+    },
+    {
+      "description": "inlineExpression_argumentIsMethodCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              String getText() {\n                return null;\n              }\n\n              boolean isCar() {\n                return Pattern.compile(\"car\").matcher(getText()).matches();\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              String getText() {\n                return null;\n              }\n\n              boolean isCar() {\n                return GET_TEXT_PATTERN.matcher(getText()).matches();\n              }\n\n              private static final Pattern GET_TEXT_PATTERN = Pattern.compile(\"car\");\n            }"
+    },
+    {
+      "description": "inlineExpression_nameDefaultsToPattern",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isCar() {\n                return Pattern.compile(\"car\").matcher(\"\").matches();\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isCar() {\n                return PATTERN.matcher(\"\").matches();\n              }\n\n              private static final Pattern PATTERN = Pattern.compile(\"car\");\n            }"
+    },
+    {
+      "description": "multipleInlineExpressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isBlueCar(String input) {\n                return Pattern.compile(\"car\").matcher(input).matches()\n                    && Pattern.compile(\"blue\").matcher(input).matches();\n              }\n            }\n            \n\nimport java.util.regex.Matcher;\nimport java.util.regex.Pattern;\n\nclass Test {\n  boolean isBlueCar(String input) {\n    return INPUT_PATTERN.matcher(input).matches() && INPUT_PATTERN2.matcher(input).matches();\n  }\n\n  private static final Pattern INPUT_PATTERN = Pattern.compile(\"car\");\n  private static final Pattern INPUT_PATTERN2 = Pattern.compile(\"blue\");\n}"
+    },
+    {
+      "description": "sameNameInDifferentMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isCar(String input) {\n                return Pattern.compile(\"car\").matcher(input).matches();\n              }\n\n              boolean isDog(String input) {\n                return Pattern.compile(\"dog\").matcher(input).matches();\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              boolean isCar(String input) {\n                return INPUT_PATTERN.matcher(input).matches();\n              }\n\n              boolean isDog(String input) {\n                return INPUT_PATTERN2.matcher(input).matches();\n              }\n\n              private static final Pattern INPUT_PATTERN = Pattern.compile(\"car\");\n              private static final Pattern INPUT_PATTERN2 = Pattern.compile(\"dog\");\n            }"
+    },
+    {
+      "description": "fixGenerationStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              static final String MY_COOL_PATTERN = \"a+\";\n\n              public static void myPopularStaticMethod() {\n                Pattern somePattern = Pattern.compile(MY_COOL_PATTERN);\n                Matcher m = somePattern.matcher(\"aaaaab\");\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              static final String MY_COOL_PATTERN = \"a+\";\n\n              public static void myPopularStaticMethod() {\n                Matcher m = SOME_PATTERN.matcher(\"aaaaab\");\n              }\n\n              private static final Pattern SOME_PATTERN = Pattern.compile(MY_COOL_PATTERN);\n            }"
+    },
+    {
+      "description": "fixGeneration_multiplePatterns",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        289
+      ],
+      "code": "import java.util.regex.Pattern;\n\n            class Test {\n              public static boolean match() {\n                String line = \"abcd\";\n                Pattern p1 = Pattern.compile(\"a+\");\n                Pattern p2 = Pattern.compile(\"b+\");\n                if (p1.matcher(line).matches() && p2.matcher(line).matches()) {\n                  return true;\n                }\n                Pattern p3 = Pattern.compile(\"c+\");\n                Pattern p4 = Pattern.compile(\"d+\");\n                return p3.matcher(line).matches() && p4.matcher(line).matches();\n              }\n            }\n            \n\n            import java.util.regex.Pattern;\n\n            class Test {\n              public static boolean match() {\n                String line = \"abcd\";\n                if (P1.matcher(line).matches() && P2.matcher(line).matches()) {\n                  return true;\n                }\n                return P3.matcher(line).matches() && P4.matcher(line).matches();\n              }\n\n              private static final Pattern P1 = Pattern.compile(\"a+\");\n              private static final Pattern P2 = Pattern.compile(\"b+\");\n              private static final Pattern P3 = Pattern.compile(\"c+\");\n              private static final Pattern P4 = Pattern.compile(\"d+\");\n            }"
+    },
+    {
+      "description": "fixGenerationWithJavadoc",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        334
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              /** This is a javadoc. * */\n              public static void myPopularStaticMethod() {\n                Pattern myPattern = Pattern.compile(\"a+\");\n                Matcher m = myPattern.matcher(\"aaaaab\");\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              /** This is a javadoc. * */\n              public static void myPopularStaticMethod() {\n                Matcher m = MY_PATTERN.matcher(\"aaaaab\");\n              }\n\n              private static final Pattern MY_PATTERN = Pattern.compile(\"a+\");\n            }"
+    },
+    {
+      "description": "fixGeneration_nonStaticInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        369
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              static final String MY_COOL_PATTERN = \"a+\";\n\n              class Inner {\n                public void myPopularStaticMethod() {\n                  Pattern myPattern = Pattern.compile(MY_COOL_PATTERN);\n                  Matcher m = myPattern.matcher(\"aaaaab\");\n                }\n              }\n            }\n            \n\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              static final String MY_COOL_PATTERN = \"a+\";\n\n              class Inner {\n                public void myPopularStaticMethod() {\n                  Matcher m = MY_PATTERN.matcher(\"aaaaab\");\n                }\n\n                private final Pattern MY_PATTERN = Pattern.compile(MY_COOL_PATTERN);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        410
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.regex.Pattern;\n\n            class Test {\n              private static String pattern;\n              private static final Pattern MY_COOL_PATTERN = Pattern.compile(pattern);\n              private static final Pattern LOWER_CASE_ONLY =\n                  Pattern.compile(\"^([a-z]+)$\", Pattern.CASE_INSENSITIVE);\n\n              private void myPopularNonStaticMethod(String arg) {\n                Pattern pattern = Pattern.compile(arg + \"+\");\n              }\n\n              private void myPopularMethod(@CompileTimeConstant String arg) {\n                Pattern pattern = Pattern.compile(arg);\n              }\n\n              private final String patString = \"a+\";\n\n              private void patternCompileOnNonStaticArg() {\n                Pattern pattern = Pattern.compile(patString);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_multiArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        443
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              public static int getMatchCount(CharSequence content, String regex) {\n                int count = 0;\n                Pattern pattern = Pattern.compile(regex, Pattern.MULTILINE);\n                Matcher matcher = pattern.matcher(content);\n                while (matcher.find()) {\n                  count++;\n                }\n                return count;\n              }\n            }"
+    },
+    {
+      "description": "negativeCase_staticBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        468
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.regex.Pattern;\n\n            class Test {\n              private static final String pattern = \"a+\";\n\n              static {\n                Pattern MY_COOL_PATTERN = Pattern.compile(pattern);\n              }\n            }"
+    },
+    {
+      "description": "onlyCode_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        491
+      ],
+      "code": "import java.util.regex.Pattern;\n\n            class Test {\n              public static void test() {\n                Pattern pattern = Pattern.compile(\".*\");\n              }\n            }"
+    },
+    {
+      "description": "withinList_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        509
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\nimport java.util.regex.Pattern;\n\nclass Test {\n  private static final ImmutableList<Pattern> patterns = ImmutableList.of(Pattern.compile(\".*\"));\n}"
+    },
+    {
+      "description": "suppressible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        525
+      ],
+      "code": "import java.util.regex.Matcher;\n            import java.util.regex.Pattern;\n\n            class Test {\n              @SuppressWarnings(\"ConstantPatternCompile\")\n              boolean isCar(String input) {\n                return Pattern.compile(\"car\").matcher(input).matches();\n              }\n            }"
+    }
+  ]
+}

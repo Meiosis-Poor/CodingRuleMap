@@ -1,0 +1,118 @@
+{
+  "name": "JdkObsolete",
+  "language": "java",
+  "description": "Suggests alternatives to obsolete JDK classes.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 385,
+  "branches": 52,
+  "apis": 14,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.nio.file.Path;\n\n            class Test {\n              {\n                // BUG: Diagnostic contains:\n                new java.util.LinkedList<>();\n                // BUG: Diagnostic contains:\n                new java.util.Stack<>();\n                // BUG: Diagnostic contains:\n                new java.util.Vector<>();\n                // BUG: Diagnostic contains:\n                new java.util.Hashtable<>();\n                // BUG: Diagnostic contains:\n                new StringBuffer();\n                // BUG: Diagnostic contains:\n                new java.util.Hashtable<Object, Object>() {};\n              }\n            }"
+    },
+    {
+      "description": "stringBuffer_appendReplacement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "import java.util.regex.Matcher;\n\n            class Test {\n              void f(Matcher m) {\n                StringBuffer sb = new StringBuffer();\n                m.appendReplacement(sb, null);\n              }\n            }"
+    },
+    {
+      "description": "stringBuffer_appendTail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        80
+      ],
+      "code": "import java.util.regex.Matcher;\n\n            class Test {\n              void f(Matcher m) {\n                StringBuffer sb = new StringBuffer();\n                m.appendTail(sb);\n              }\n            }"
+    },
+    {
+      "description": "positiveExtends",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "import java.nio.file.Path;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              abstract class A implements java.util.Enumeration<Object> {}\n\n              // BUG: Diagnostic contains:\n              abstract class B implements java.util.SortedSet<Object> {}\n\n              // BUG: Diagnostic contains:\n              abstract class C implements java.util.SortedMap<Object, Object> {}\n\n              // BUG: Diagnostic contains:\n              abstract class D extends java.util.Dictionary<Object, Object> {}\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "import java.util.*;\n\n            class Test {\n              Deque<Object> d = new LinkedList<>();\n              List<Object> l = new LinkedList<>();\n\n              {\n                l = new LinkedList<>();\n              }\n\n              LinkedList<Object> ll = new LinkedList<>();\n              List<Object> lll =\n                  new LinkedList<Object>() {\n                    {\n                      add(null); // yikes\n                    }\n                  };\n            }\n            \n\n            import java.util.*;\n\n            class Test {\n              Deque<Object> d = new ArrayDeque<>();\n              List<Object> l = new ArrayList<>();\n\n              {\n                l = new ArrayList<>();\n              }\n\n              LinkedList<Object> ll = new LinkedList<>();\n              List<Object> lll =\n                  new LinkedList<Object>() {\n                    {\n                      add(null); // yikes\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "stringBufferRefactoringTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173
+      ],
+      "code": "class Test {\n              String f() {\n                StringBuffer sb = new StringBuffer();\n                return sb.append(42).toString();\n              }\n            }\n            \n\n            class Test {\n              String f() {\n                StringBuilder sb = new StringBuilder();\n                return sb.append(42).toString();\n              }\n            }"
+    },
+    {
+      "description": "stringBufferRefactoringTest_usingVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        199
+      ],
+      "code": "class Test {\n              String f() {\n                var sb = new StringBuffer();\n                return sb.append(42).toString();\n              }\n            }\n            \n\n            class Test {\n              String f() {\n                var sb = new StringBuilder();\n                return sb.append(42).toString();\n              }\n            }"
+    },
+    {
+      "description": "obsoleteOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": ""
+    },
+    {
+      "description": "additionalRefactorings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        248
+      ],
+      "code": "import java.util.*;\n            import java.util.function.*;\n\n            class Test {\n              Supplier<Deque<Object>> a = () -> new LinkedList<>();\n              Supplier<Deque<Object>> b =\n                  () -> {\n                    return new LinkedList<>();\n                  };\n              Supplier<Deque<Object>> c = LinkedList::new;\n\n              Deque<Object> f() {\n                return new LinkedList<>();\n              }\n\n              void g(Deque<Object> x) {}\n\n              {\n                g(new LinkedList<>());\n              }\n\n              {\n                List<LinkedList<String>> xs = new ArrayList<>();\n                List<List<String>> ys = new ArrayList<>();\n                xs.add(new LinkedList<>());\n                ys.add(new LinkedList<>());\n              }\n            }\n            \n\n            import java.util.*;\n            import java.util.function.*;\n\n            class Test {\n              Supplier<Deque<Object>> a = () -> new ArrayDeque<>();\n              Supplier<Deque<Object>> b =\n                  () -> {\n                    return new ArrayDeque<>();\n                  };\n              Supplier<Deque<Object>> c = ArrayDeque::new;\n\n              Deque<Object> f() {\n                return new ArrayDeque<>();\n              }\n\n              void g(Deque<Object> x) {}\n\n              {\n                g(new ArrayDeque<>());\n              }\n\n              {\n                List<LinkedList<String>> xs = new ArrayList<>();\n                List<List<String>> ys = new ArrayList<>();\n                xs.add(new LinkedList<>());\n                ys.add(new ArrayList<>());\n              }\n            }"
+    },
+    {
+      "description": "obsoleteMocking",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        318
+      ],
+      "code": ""
+    },
+    {
+      "description": "navigableSetRepro",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "import java.util.NavigableSet;\n            import java.util.Optional;\n\n            class Test {\n              Optional<Object> fail1(Optional<NavigableSet<Object>> myOptionalSet) {\n                return myOptionalSet.map(NavigableSet::first);\n              }\n\n              Optional<Object> fail2(Optional<NavigableSet<Object>> myOptionalSet) {\n                return myOptionalSet.map(NavigableSet::last);\n              }\n            }"
+    },
+    {
+      "description": "navigableMapInheritedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        365
+      ],
+      "code": "import java.util.Map;\n            import java.util.Set;\n            import java.util.NavigableMap;\n\n            class Test {\n              void f(NavigableMap<String, Integer> m) {\n                for (Integer e : m.values()) {}\n              }\n            }"
+    },
+    {
+      "description": "indirect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        384
+      ],
+      "code": "import com.google.common.collect.SortedSetMultimap;\n            import com.google.common.collect.TreeMultimap;\n\n            class Test {\n              void f() {\n                SortedSetMultimap<String, String> myMultimap = TreeMultimap.create();\n                String myValue = myMultimap.get(\"foo\").first();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "name": "OperatorPrecedence",
+  "language": "java",
+  "description": "Use grouping parenthesis to make the operator precedence explicit",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 135,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class Test {\n              boolean f(boolean a, boolean b, boolean c) {\n                // BUG: Diagnostic contains: (a && b) || c\n                boolean r = a && b || c;\n                // BUG: Diagnostic contains: a || (b && c)\n                r = a || b && c;\n                // BUG: Diagnostic contains: a || (b && c) || !(b && c)\n                r = a || b && c || !(b && c);\n                return r;\n              }\n\n              int f(int a, int b) {\n                // BUG: Diagnostic contains: (a + b) << 2\n                return a + b << 2;\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "class Test {\n              int f(int a, int b) {\n                int r = a + a * b;\n                return r;\n              }\n\n              boolean f(boolean a, boolean b) {\n                boolean r = (a && b) || (!a && !b);\n                r = (a = a && b);\n                return r;\n              }\n            }"
+    },
+    {
+      "description": "positiveNotSpecialParenthesisCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83
+      ],
+      "code": "class Test {\n              boolean f(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean r = a || (b && c) && (d && e);\n                return r;\n              }\n\n              int f2(int a, int b, int c, int d) {\n                int e = a << (b + c) + d;\n                return e;\n              }\n\n              boolean f3(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean r = a || b && c;\n                return r;\n              }\n            }\n            \n\n            class Test {\n              boolean f(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean r = a || ((b && c) && (d && e));\n                return r;\n              }\n\n              int f2(int a, int b, int c, int d) {\n                int e = a << (b + c + d);\n                return e;\n              }\n\n              boolean f3(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean r = a || (b && c);\n                return r;\n              }\n            }"
+    },
+    {
+      "description": "extraParenthesis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        129
+      ],
+      "code": "class Test {\n              void f(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean g = (a || (b && c && d) && e);\n              }\n            }\n            \n\n            class Test {\n              void f(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean g = (a || (b && c && d && e));\n              }\n            }"
+    },
+    {
+      "description": "rightAndParenthesis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "class Test {\n              void f(boolean a, boolean b, boolean c, boolean d) {\n                boolean g = a || b && (c && d);\n              }\n            }\n            \n\n            class Test {\n              void f(boolean a, boolean b, boolean c, boolean d) {\n                boolean g = a || (b && c && d);\n              }\n            }"
+    },
+    {
+      "description": "leftAndParenthesis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "class Test {\n              void f(boolean a, boolean b, boolean c, boolean d) {\n                boolean g = a || (b && c) && d;\n              }\n            }\n            \n\n            class Test {\n              void f(boolean a, boolean b, boolean c, boolean d) {\n                boolean g = a || (b && c && d);\n              }\n            }"
+    },
+    {
+      "description": "aLotOfParenthesis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "class Test {\n              void f(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean g = (a || (b && c && d) && e);\n              }\n            }\n            \n\n            class Test {\n              void f(boolean a, boolean b, boolean c, boolean d, boolean e) {\n                boolean g = (a || (b && c && d && e));\n              }\n            }"
+    },
+    {
+      "description": "conditionalBoolean",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "class Test {\n              void f(boolean a, boolean b, boolean c, boolean d) {\n                boolean g = a || b ? c : d;\n                g = a && b ? c : d;\n                g = a == b ? c : d;\n              }\n            }\n            \n\n            class Test {\n              void f(boolean a, boolean b, boolean c, boolean d) {\n                boolean g = (a || b) ? c : d;\n                g = (a && b) ? c : d;\n                g = a == b ? c : d;\n              }\n            }"
+    },
+    {
+      "description": "conditionOtherType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        253
+      ],
+      "code": "class Test {\n              void f(boolean a, boolean b, String c, String d) {\n                String g = a || b ? c : d;\n              }\n            }"
+    }
+  ]
+}

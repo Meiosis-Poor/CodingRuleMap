@@ -1,0 +1,166 @@
+{
+  "name": "UnsafeWildcard",
+  "language": "java",
+  "description": "Certain wildcard types can confuse the compiler.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 308,
+  "branches": 66,
+  "apis": 4,
+  "test": [
+    {
+      "description": "unsoundGenericMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness.testdata;\n\n            import static java.util.stream.Collectors.toList;\n\n            import java.util.List;\n            import java.util.function.Function;\n            import java.util.stream.Stream;\n\n            public class UnsoundGenericMethod {\n              public interface Marker {}\n\n              public interface Converter<T extends Marker> {\n                List<?> convert(T input);\n              }\n\n              // error below can be avoided here with \"class Impl<T extends Marker> ...\"\n              private static class Impl<T> implements Function<T, List<?>> {\n                private final Stream<Converter<? super T>> cs;\n\n                private Impl(Stream<Converter<? super T>> cs) {\n                  this.cs = cs;\n                }\n\n                @Override\n                public List<?> apply(T input) {\n                  // BUG: Diagnostic contains: Unsafe wildcard in inferred type argument\n                  return cs.map(c -> new Wrap<>(c).handle(input)).collect(toList());\n                }\n              }\n\n              private static class Wrap<T extends Marker> {\n                Wrap(Converter<? super T> unused) {}\n\n                T handle(T input) {\n                  return input;\n                }\n              }\n\n              public static void main(String... args) {\n                // BUG: Diagnostic contains: impossible\n                new Impl<>(Stream.of(null, null)).apply(\"boom\");\n              }\n            }\\"
+    },
+    {
+      "description": "positiveExpressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84
+      ],
+      "code": "import java.util.List;\n\n            class Test<T> {\n              static class WithBound<U extends Number> {}\n\n              public WithBound<? super T> basic() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return null;\n              }\n\n              public WithBound<? super T> inParens() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return (null);\n              }\n\n              public WithBound<? super T> cast() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return (WithBound<? super T>) null;\n              }\n\n              public WithBound<? super T> inTernary(boolean x, WithBound<? super T> dflt) {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return x ? null : dflt;\n              }\n\n              public WithBound<? super T> allNullTernary(boolean x) {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return x ? null : null;\n              }\n\n              public WithBound<? super T> parensInTernary(boolean x) {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return x ? (null) : null;\n              }\n\n              public WithBound<? super T> parensAroundTernary(boolean x) {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return (x ? null : null);\n              }\n\n              public List<WithBound<? super T>> nestedWildcard() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return null;\n              }\n\n              public List<? extends WithBound<? super T>> extendsWildcard() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return null;\n              }\n\n              public List<? super WithBound<? super T>> superWildcard() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeReturns",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              public String basic() {\n                return null;\n              }\n\n              public String inParens() {\n                return (null);\n              }\n\n              public String inTernary(boolean x) {\n                return x ? null : \"foo\";\n              }\n\n              public String allNullTernary(boolean x) {\n                return x ? null : null;\n              }\n\n              public String parensInTernary(boolean x) {\n                return x ? (null) : \"foo\";\n              }\n\n              public String parensAroundTernary(boolean x) {\n                return (x ? null : \"foo\");\n              }\n\n              public List<String> typearg() {\n                return null;\n              }\n\n              public List<? extends String> extendsWildcard() {\n                return null;\n              }\n\n              public List<? super String> superWildcardNoImplicitBound() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeLambdas",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        198
+      ],
+      "code": "import java.util.List;\n            import java.util.function.Function;\n\n            class Test {\n              public Function<String, String> basic() {\n                return x -> null;\n              }\n\n              public Function<String, String> inParens() {\n                return x -> (null);\n              }\n\n              public Function<Boolean, String> inTernary() {\n                return x -> x ? null : \"foo\";\n              }\n\n              public Function<String, String> returnInLambda() {\n                return x -> {\n                  return null;\n                };\n              }\n            }"
+    },
+    {
+      "description": "lambdasWithTypeParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "import java.util.List;\n            import java.util.function.Function;\n\n            class Test {\n              class WithBound<T extends Number> {}\n\n              public Function<String, List<? super String>> contra() {\n                return s -> null;\n              }\n\n              public Function<Integer, WithBound<? super Integer>> implicitOk() {\n                return i -> null;\n              }\n\n              public <U> Function<U, WithBound<? super U>> implicitPositive() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return u -> null;\n              }\n\n              public <U> Function<U, WithBound<? super U>> returnInLambda() {\n                return u -> {\n                  // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                  return null;\n                };\n              }\n\n              public <U> Function<U, WithBound<? super U>> nestedWildcard() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "typeParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "import java.util.List;\n\n            class Test<S> {\n              static class WithBound<U extends Number> {}\n\n              class WildcardBound<T extends WithBound<? super S>> {\n                T bad() {\n                  // We allow this and instead check instantiations below\n                  return null;\n                }\n              }\n\n              WildcardBound<WithBound<? super S>> diamond() {\n                // BUG: Diagnostic contains: Unsafe wildcard type argument\n                return new WildcardBound<>();\n              }\n\n              WildcardBound<WithBound<? super S>> create() {\n                // BUG: Diagnostic contains: Unsafe wildcard type argument\n                return new WildcardBound<WithBound<? super S>>();\n              }\n\n              WildcardBound<WithBound<? super S>> none() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "variables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        308
+      ],
+      "code": "import java.util.List;\n\n            class Test<T> {\n              class WithBound<T extends Number> {}\n\n              private String s;\n              private List<String> xs = null;\n              private List<? super String> ys;\n              private WithBound<? super Integer> zs = null;\n              // BUG: Diagnostic contains: Cast to wildcard type unsafe\n              private WithBound<? super T> initialized = null;\n              // BUG: Diagnostic contains: Cast to wildcard type unsafe\n              private final WithBound<? super T> initializedFinal = null;\n              // BUG: Diagnostic contains: Uninitialized field with unsafe wildcard\n              private WithBound<? super T> uninitialized;\n              private final WithBound<? super T> uninitializedFinal;\n\n              Test() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                uninitializedFinal = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                uninitialized = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                initialized = null;\n              }\n\n              public void foo() {\n                List<? extends String> covariant = null;\n                List<? super String> contravariant = null;\n                WithBound<? super Integer> inBounds = null;\n                WithBound<? super T> uninitializedLocal;\n                final WithBound<? super T> uninitializedFinalLocal;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                WithBound<? super T> implicitBounds = null;\n                covariant = null;\n                contravariant = null;\n                inBounds = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                uninitializedLocal = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                uninitializedFinalLocal = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                implicitBounds = null;\n              }\n            }"
+    },
+    {
+      "description": "calls",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        363
+      ],
+      "code": ""
+    },
+    {
+      "description": "inferredParamType_flaggedIfProblematic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        388
+      ],
+      "code": ""
+    },
+    {
+      "description": "constructors",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        409
+      ],
+      "code": "class Test<U> {\n              class WithBound<T extends Number> {}\n\n              public Test() {\n                this(null, null);\n              }\n\n              public Test(WithBound<? super U> implicit) {}\n\n              public Test(WithBound<Integer> xs, WithBound<? super Integer> contra) {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                this(null);\n              }\n\n              class Sub<S> extends Test<S> {\n                Sub(WithBound<? super U> implicit) {\n                  // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                  super(null);\n                }\n              }\n\n              static <U> Test<U> newClass() {\n                new Test<U>(null, null);\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                new Test<U>(null);\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                return new Test<>(null);\n              }\n\n              static <U> Test<U> anonymous() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                new Test<U>(null) {};\n                return null;\n              }\n\n              void inner() {\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                new Sub<U>(null);\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                new Sub<U>(null) {};\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                this.new Sub<U>(null) {};\n              }\n            }"
+    },
+    {
+      "description": "supertypes_problematicWildcards_flagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        463
+      ],
+      "code": "import java.io.Serializable;\n            import java.util.AbstractList;\n            import java.util.List;\n\n            class Test {\n              class WithBound<T extends Number> {}\n\n              // BUG: Diagnostic contains: Unsafe wildcard type\n              abstract class BadList<U> extends AbstractList<WithBound<? super U>> {}\n\n              abstract class BadListImpl<U>\n                  implements Serializable,\n                      // BUG: Diagnostic contains: Unsafe wildcard type\n                      List<WithBound<? super U>> {}\n\n              interface BadListItf<U>\n                  extends Serializable,\n                      // BUG: Diagnostic contains: Unsafe wildcard type\n                      List<WithBound<? super U>> {}\n            }"
+    },
+    {
+      "description": "varargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        493
+      ],
+      "code": ""
+    },
+    {
+      "description": "arrays",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        522
+      ],
+      "code": ""
+    },
+    {
+      "description": "genericArrays_isCompilerError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        548
+      ],
+      "code": "class Test {\n              class WithBound<T extends Number> {}\n\n              // BUG: Diagnostic matches: X\n              WithBound<? super Integer>[] simpleInitializer = {null};\n              // BUG: Diagnostic matches: X\n              WithBound<? super Integer>[][] nestedInitializer = {{null}, {null}};\n              // BUG: Diagnostic matches: X\n              WithBound<? super Integer>[][] emptyInitializer = {};\n\n              void newArrays() {\n                // BUG: Diagnostic matches: X\n                Object[] a1 = new WithBound<? super Integer>[] {};\n                // BUG: Diagnostic matches: X\n                Object[] a2 = new WithBound<? super Integer>[0];\n                // BUG: Diagnostic matches: X\n                Object[] a3 = new WithBound<? super Integer>[][] {};\n                // BUG: Diagnostic matches: X\n                Object[] a4 = new WithBound<? super Integer>[0][];\n              }\n            }"
+    },
+    {
+      "description": "arrays_rawTypes_futureWork",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        582
+      ],
+      "code": ""
+    },
+    {
+      "description": "boundedTypeVar_validLowerBound_isIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        608
+      ],
+      "code": "import java.util.List;\n\n            interface MyIterable<E, T extends Iterable<E>> {\n              static class Test<F, S extends List<F>> implements MyIterable<F, S> {\n                MyIterable<F, ? super S> parent;\n\n                public Test() {\n                  this.parent = null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "boundedTypeVar_questionableLowerBound_isCompilerError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        629
+      ],
+      "code": "import java.util.List;\n\n            interface MyIterable<E, T extends List<E>> {\n              // BUG: Diagnostic matches: X\n              static class Test<F, S extends Iterable<F>> implements MyIterable<F, S> {\n                MyIterable<F, ? super S> parent;\n\n                public Test() {\n                  this.parent = null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "fBoundedImplicitUpperBound_validLowerBound_isIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        661
+      ],
+      "code": "abstract class FBounded<T extends FBounded<T>> {\n              public static final class Coll<E> extends FBounded<Coll<E>> {}\n\n              public interface Listener<U extends FBounded<U>> {}\n\n              public static <K> void shouldWork() {\n                Listener<? super Coll<K>> validListener = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                Listener<? super K> invalidListener = null;\n                // BUG: Diagnostic contains: Cast to wildcard type unsafe\n                Iterable<Listener<? super K>> invalidListeners = java.util.List.of(null, null);\n              }\n            }"
+    },
+    {
+      "description": "fBoundedImplicitUpperBound_invalidLowerBound_isCompilerError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        684
+      ],
+      "code": "abstract class FBounded<T extends FBounded<T>> {\n              public static final class Coll<E> extends FBounded<Coll<E>> {}\n\n              public interface Listener<U extends FBounded<U>> {}\n\n              public static <K> void shouldWork() {\n                // BUG: Diagnostic matches: X\n                Listener<? super String> listener = null;\n              }\n            }"
+    }
+  ]
+}

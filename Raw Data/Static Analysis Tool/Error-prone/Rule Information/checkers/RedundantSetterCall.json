@@ -1,0 +1,70 @@
+{
+  "name": "RedundantSetterCall",
+  "language": "java",
+  "description": "A field was set twice in the same chained expression.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 326,
+  "branches": 25,
+  "apis": 7,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\nfinal class ProtoRedundantSetPositiveCases {\n  private static final TestFieldProtoMessage foo = TestFieldProtoMessage.getDefaultInstance();\n  private static final TestFieldProtoMessage bar = TestFieldProtoMessage.getDefaultInstance();\n\n  private void singleField() {\n    TestProtoMessage twice =\n        TestProtoMessage.newBuilder()\n            .setMessage(foo)\n            .addMultiField(bar)\n            // BUG: Diagnostic contains: setMessage\n            .setMessage(foo)\n            .addMultiField(bar)\n            .build();\n    TestProtoMessage nestedField =\n        TestProtoMessage.newBuilder()\n            .setMessage(\n                // BUG: Diagnostic contains: setField\n                TestFieldProtoMessage.newBuilder().setField(foo).setField(foo))\n            .addMultiField(bar)\n            .build();\n  }\n\n  private void repeatedField() {\n    TestProtoMessage.Builder again =\n        TestProtoMessage.newBuilder()\n            .setMessage(foo)\n            .setMessage(foo)\n            // BUG: Diagnostic contains: setMessage\n            .setMessage(foo)\n            .setMultiField(0, bar)\n            .setMultiField(1, foo)\n            // BUG: Diagnostic contains: setMultiField\n            .setMultiField(1, bar);\n  }\n}"
+    },
+    {
+      "description": "singleField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            final class ProtoRedundantSetNegativeCases {\n              private void singleField() {\n                TestProtoMessage.Builder builder =\n                    TestProtoMessage.newBuilder()\n                        .setMessage(TestFieldProtoMessage.getDefaultInstance())\n                        .addMultiField(TestFieldProtoMessage.getDefaultInstance())\n                        .addMultiField(TestFieldProtoMessage.getDefaultInstance());\n              }\n            }"
+    },
+    {
+      "description": "repeatedField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            final class ProtoRedundantSetNegativeCases {\n              private void repeatedField() {\n                TestProtoMessage.Builder builder =\n                    TestProtoMessage.newBuilder()\n                        .setMessage(TestFieldProtoMessage.getDefaultInstance())\n                        .setMultiField(0, TestFieldProtoMessage.getDefaultInstance())\n                        .setMultiField(1, TestFieldProtoMessage.getDefaultInstance());\n              }\n            }"
+    },
+    {
+      "description": "complexChaining",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            final class ProtoRedundantSetNegativeCases {\n              private void intermediateBuild() {\n                TestProtoMessage message =\n                    TestProtoMessage.newBuilder()\n                        .setMessage(TestFieldProtoMessage.getDefaultInstance())\n                        .build()\n                        .toBuilder()\n                        .setMessage(TestFieldProtoMessage.getDefaultInstance())\n                        .build();\n              }\n            }"
+    },
+    {
+      "description": "fixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\nfinal class ProtoRedundantSetPositiveCases {\n  private static final TestFieldProtoMessage foo = TestFieldProtoMessage.getDefaultInstance();\n  private static final TestFieldProtoMessage bar = TestFieldProtoMessage.getDefaultInstance();\n\n  private void singleField() {\n    TestProtoMessage twice =\n        TestProtoMessage.newBuilder()\n            .setMessage(foo)\n            .addMultiField(bar)\n            .setMessage(foo)\n            .addMultiField(bar)\n            .build();\n  }\n\n  private void repeatedField() {\n    TestProtoMessage.Builder again =\n        TestProtoMessage.newBuilder()\n            .setMessage(foo)\n            .setMessage(foo)\n            .setMessage(foo)\n            .setMultiField(0, bar)\n            .setMultiField(1, foo)\n            .setMultiField(1, bar);\n  }\n}\n\n\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\nfinal class ProtoRedundantSetPositiveCases {\n  private static final TestFieldProtoMessage foo = TestFieldProtoMessage.getDefaultInstance();\n  private static final TestFieldProtoMessage bar = TestFieldProtoMessage.getDefaultInstance();\n\n  private void singleField() {\n    TestProtoMessage twice =\n        TestProtoMessage.newBuilder().addMultiField(bar).setMessage(foo).addMultiField(bar).build();\n  }\n\n  private void repeatedField() {\n    TestProtoMessage.Builder again =\n        TestProtoMessage.newBuilder()\n            .setMessage(foo)\n            .setMultiField(0, bar)\n            .setMultiField(1, foo)\n            .setMultiField(1, bar);\n  }\n}"
+    },
+    {
+      "description": "autovalue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        212
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Animal {\n              abstract String name();\n\n              static Builder builder() {\n                return null;\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String name);\n\n                public Builder nonAbstractMethod(String foo) {\n                  return null;\n                }\n\n                abstract Animal build();\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                // BUG: Diagnostic contains:\n                Animal.builder().setName(\"foo\").setName(\"bar\").build();\n                Animal.builder().nonAbstractMethod(\"foo\").nonAbstractMethod(\"bar\").build();\n              }\n            }"
+    },
+    {
+      "description": "builderOfWildcardType_noFindings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        254
+      ],
+      "code": "import com.google.protobuf.Descriptors.FieldDescriptor;\n            import com.google.protobuf.GeneratedMessage.Builder;\n\n            class Test {\n              public void clear(final Builder<?> builder, FieldDescriptor fieldDescriptor) {\n                builder.clearField(fieldDescriptor);\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "CollectorShouldNotUseState",
+  "language": "java",
+  "description": "Collector.of() should not use state",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 70,
+  "branches": 4,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableList.Builder;\n            import java.util.function.BiConsumer;\n            import java.util.stream.Collector;\n\n            /**\n             * @author sulku@google.com (Marsela Sulku)\n             */\n            public class CollectorShouldNotUseStatePositiveCases {\n              public void test() {\n                // BUG: Diagnostic contains: Collector.of() should not use state\n                Collector.of(\n                    ImmutableList::builder,\n                    new BiConsumer<ImmutableList.Builder<Object>, Object>() {\n\n                      boolean isFirst = true;\n                      private static final String bob = \"bob\";\n\n                      @Override\n                      public void accept(Builder<Object> objectBuilder, Object o) {\n                        if (isFirst) {\n                          System.out.println(\"it's first\");\n                        } else {\n                          objectBuilder.add(o);\n                        }\n                      }\n                    },\n                    (left, right) -> left.addAll(right.build()),\n                    ImmutableList.Builder::build);\n\n                // BUG: Diagnostic contains: Collector.of() should not use state\n                Collector.of(\n                    ImmutableList::builder,\n                    new BiConsumer<ImmutableList.Builder<Object>, Object>() {\n\n                      boolean isFirst = true;\n                      private final String bob = \"bob\";\n                      private final String joe = \"joe\";\n\n                      @Override\n                      public void accept(Builder<Object> objectBuilder, Object o) {\n                        if (isFirst) {\n                          System.out.println(\"it's first\");\n                        } else {\n                          objectBuilder.add(o);\n                        }\n                      }\n                    },\n                    (left, right) -> left.addAll(right.build()),\n                    ImmutableList.Builder::build);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableList.Builder;\n            import java.util.function.BiConsumer;\n            import java.util.stream.Collector;\n\n            /**\n             * @author sulku@google.com (Marsela Sulku)\n             */\n            public class CollectorShouldNotUseStateNegativeCases {\n              public void test() {\n                Collector.of(\n                    ImmutableList::builder,\n                    new BiConsumer<ImmutableList.Builder<Object>, Object>() {\n                      private static final String bob = \"bob\";\n\n                      @Override\n                      public void accept(Builder<Object> objectBuilder, Object o) {\n                        if (bob.equals(\"bob\")) {\n                          System.out.println(\"bob\");\n                        } else {\n                          objectBuilder.add(o);\n                        }\n                      }\n                    },\n                    (left, right) -> left.addAll(right.build()),\n                    ImmutableList.Builder::build);\n              }\n            }\\"
+    }
+  ]
+}

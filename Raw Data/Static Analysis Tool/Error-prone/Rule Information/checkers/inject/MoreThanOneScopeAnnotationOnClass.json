@@ -1,0 +1,30 @@
+{
+  "name": "MoreThanOneScopeAnnotationOnClass",
+  "language": "java",
+  "description": "A class can be annotated with at most one scope annotation.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 71,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import com.google.inject.Singleton;\n            import com.google.inject.servlet.SessionScoped;\n            import javax.inject.Scope;\n\n            /**\n             * @author sgoldfeder@google.com(Steven Goldfeder)\n             */\n            public class MoreThanOneScopeAnnotationOnClassPositiveCases {\n\n              /** Class has two scope annotations */\n              @Singleton\n              @SessionScoped\n              // BUG: Diagnostic contains:\n              class TestClass1 {}\n\n              /** Class has three annotations, two of which are scope annotations. */\n              @Singleton\n              @SuppressWarnings(\"foo\")\n              @SessionScoped\n              // BUG: Diagnostic contains:\n              class TestClass2 {}\n\n              @Scope\n              @interface CustomScope {}\n\n              @Singleton\n              @CustomScope\n              @SessionScoped\n              // BUG: Diagnostic contains:\n              class TestClass3 {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport com.google.inject.Provides;\nimport com.google.inject.Singleton;\nimport com.google.inject.servlet.SessionScoped;\nimport dagger.Component;\nimport dagger.Subcomponent;\nimport dagger.producers.ProductionComponent;\nimport dagger.producers.ProductionSubcomponent;\n\n/**\n * @author sgoldfeder@google.com(Steven Goldfeder)\n */\npublic class MoreThanOneScopeAnnotationOnClassNegativeCases {\n\n  /** Class has no annotation. */\n  public class TestClass1 {}\n\n  /** Class has a single non scoping annotation. */\n  @SuppressWarnings(\"foo\")\n  public class TestClass2 {}\n\n  /** Class hasa single scoping annotation. */\n  @Singleton\n  public class TestClass3 {}\n\n  /** Class has two annotations, one of which is a scoping annotation. */\n  @Singleton\n  @SuppressWarnings(\"foo\")\n  public class TestClass4 {}\n\n  /**\n   * Class has two annotations, one of which is a scoping annotation. Class also has a method with a\n   * scoping annotation.\n   */\n  @SuppressWarnings(\"foo\")\n  public class TestClass5 {\n    @Singleton\n    @Provides\n    public void foo() {}\n  }\n\n  /** Class has two scoped annotations, but is a Dagger component */\n  @Singleton\n  @SessionScoped\n  @Component\n  public class DaggerComponent {}\n\n  /** Class has two scoped annotations, but is a Dagger subcomponent */\n  @Singleton\n  @SessionScoped\n  @Subcomponent\n  public class DaggerSubcomponent {}\n\n  /** Class has two scoped annotations, but is a Dagger component */\n  @Singleton\n  @SessionScoped\n  @ProductionComponent\n  public class DaggerProductionComponent {}\n\n  /** Class has two scoped annotations, but is a Dagger subcomponent */\n  @Singleton\n  @SessionScoped\n  @ProductionSubcomponent\n  public class DaggerProductionSubcomponent {}\n\n  /** Suppression through secondary name */\n  @SuppressWarnings(\"MoreThanOneScopeAnnotationOnClass\")\n  public class TestClass6 {}\n}"
+    }
+  ]
+}

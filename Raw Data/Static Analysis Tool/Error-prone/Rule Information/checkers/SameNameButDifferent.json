@@ -1,0 +1,78 @@
+{
+  "name": "SameNameButDifferent",
+  "language": "java",
+  "description": "This type name shadows another in a way that may be confusing.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 226,
+  "branches": 31,
+  "apis": 2,
+  "test": [
+    {
+      "description": "simpleNameClash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "class A {\n              class Supplier {}\n            }\n            \n\n            import java.util.function.Supplier;\n\n            class B {\n              // BUG: Diagnostic contains:\n              Supplier<Integer> supplier = () -> 1;\n\n              class C extends A {\n                // BUG: Diagnostic contains:\n                Supplier supplier2 = new Supplier();\n              }\n            }"
+    },
+    {
+      "description": "simpleNameRefactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "package foo;\n\n            class A {\n              class Supplier {}\n            }\n            \n\n            package foo;\n\n            import java.util.function.Supplier;\n\n            class B {\n              Supplier<Integer> supplier = () -> 1;\n\n              class C extends A {\n                Supplier supplier2 = new Supplier();\n                Class<Supplier> clazz = Supplier.class;\n              }\n            }\n            \n\n            package foo;\n\n            import java.util.function.Supplier;\n\n            class B {\n              Supplier<Integer> supplier = () -> 1;\n\n              class C extends A {\n                A.Supplier supplier2 = new A.Supplier();\n                Class<A.Supplier> clazz = A.Supplier.class;\n              }\n            }"
+    },
+    {
+      "description": "nestedClassNameClash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "package foo;\n\n            class A {\n              static class B {\n                static class C {}\n              }\n            }\n            \n\n            package foo;\n\n            class D {\n              static class B {\n                static class C {}\n              }\n            }\n            \n\n            package foo;\n\n            import foo.A.B;\n\n            class E {\n              B.C foo = new B.C();\n\n              class C extends D {\n                B.C bar = new B.C();\n              }\n            }\n            \n\n            package foo;\n\n            import foo.A.B;\n\n            class E {\n              A.B.C foo = new A.B.C();\n\n              class C extends D {\n                D.B.C bar = new D.B.C();\n              }\n            }"
+    },
+    {
+      "description": "negativeAlreadyQualified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "class A {\n              class Supplier {}\n            }\n            \n\n            import java.util.function.Supplier;\n\n            class B {\n              Supplier<Integer> supplier = () -> 1;\n\n              class C extends A {\n                A.Supplier supplier2 = new A.Supplier();\n              }\n            }"
+    },
+    {
+      "description": "neverShadowing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        198
+      ],
+      "code": "class A {\n              public void foo() {\n                class B {}\n                B b = new B();\n              }\n\n              public void bar() {\n                class B {}\n                B b = new B();\n              }\n            }"
+    },
+    {
+      "description": "doesNotThrowConcurrentModification_whenFilteringNonShadowingTypeNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "class A {\n              public void foo() {\n                class B {}\n                B b = new B();\n              }\n\n              public void bar() {\n                class B {}\n                class C {}\n                C c = new C();\n                B b = new B();\n              }\n            }"
+    },
+    {
+      "description": "referencesSelf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        242
+      ],
+      "code": "import java.util.function.Supplier;\n\n            class B {\n              Supplier<Integer> supplier = () -> 1;\n\n              class C {\n                class Supplier {\n                  Supplier s = new Supplier();\n                }\n              }\n            }"
+    },
+    {
+      "description": "ungroupedOverloadsPositiveCasesCoveringOnlyFirstOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "import java.util.function.Supplier;\n\n            class Test {\n              class One {\n                class Clash {}\n\n                // BUG: Diagnostic contains:\n                Clash a;\n                Clash b;\n              }\n\n              class Two {\n                class Clash {}\n\n                Clash a;\n                Clash b;\n              }\n            }"
+    }
+  ]
+}

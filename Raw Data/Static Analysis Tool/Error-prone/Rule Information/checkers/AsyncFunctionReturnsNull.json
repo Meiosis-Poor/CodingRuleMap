@@ -1,0 +1,30 @@
+{
+  "name": "AsyncFunctionReturnsNull",
+  "language": "java",
+  "description": "AsyncFunction should not return a null Future, only a Future whose result is null.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 28,
+  "branches": 1,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.util.concurrent.Futures.immediateFuture;\n\n            import com.google.common.util.concurrent.AsyncFunction;\n            import com.google.common.util.concurrent.ListenableFuture;\n\n            /** Positive cases for {@link AsyncFunctionReturnsNull}. */\n            public class AsyncFunctionReturnsNullPositiveCases {\n              static void listenableFutures() {\n                new AsyncFunction<String, Object>() {\n                  @Override\n                  public ListenableFuture<Object> apply(String input) throws Exception {\n                    // BUG: Diagnostic contains: immediateFuture(null)\n                    return null;\n                  }\n                };\n\n                new AsyncFunction<Object, String>() {\n                  @Override\n                  public ListenableFuture<String> apply(Object o) {\n                    if (o instanceof String) {\n                      return immediateFuture((String) o);\n                    }\n                    // BUG: Diagnostic contains: immediateFuture(null)\n                    return null;\n                  }\n                };\n              }\n\n              static class MyAsyncFunction implements AsyncFunction<Object, String> {\n                @Override\n                public ListenableFuture<String> apply(Object input) throws Exception {\n                  return immediateFuture(input.toString());\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.util.concurrent.Futures.immediateFuture;\n\n            import com.google.common.base.Function;\n            import com.google.common.util.concurrent.AsyncFunction;\n            import com.google.common.util.concurrent.ListenableFuture;\n            import java.util.function.Supplier;\n            import org.jspecify.annotations.Nullable;\n\n            /** Negative cases for {@link AsyncFunctionReturnsNull}. */\n            public class AsyncFunctionReturnsNullNegativeCases {\n              static {\n                new AsyncFunction<String, Object>() {\n                  @Override\n                  public ListenableFuture<Object> apply(String input) throws Exception {\n                    return immediateFuture(null);\n                  }\n                };\n\n                new Function<String, Object>() {\n                  @Override\n                  public Object apply(String input) {\n                    return null;\n                  }\n                };\n\n                new AsyncFunction<String, Object>() {\n                  @Override\n                  public ListenableFuture<Object> apply(String input) throws Exception {\n                    return apply(input, input);\n                  }\n\n                  public ListenableFuture<Object> apply(String input1, String input2) {\n                    return null;\n                  }\n                };\n\n                new MyNonAsyncFunction<String, Object>() {\n                  @Override\n                  public ListenableFuture<Object> apply(String input) throws Exception {\n                    return null;\n                  }\n                };\n\n                new AsyncFunction<String, Object>() {\n                  @Override\n                  public ListenableFuture<Object> apply(String input) throws Exception {\n                    Supplier<String> s =\n                        () -> {\n                          return null;\n                        };\n                    return immediateFuture(s.get());\n                  }\n                };\n              }\n\n              interface MyNonAsyncFunction<I, O> {\n                ListenableFuture<O> apply(@Nullable I input) throws Exception;\n              }\n            }\\"
+    }
+  ]
+}

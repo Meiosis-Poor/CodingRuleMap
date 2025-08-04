@@ -1,0 +1,70 @@
+{
+  "name": "SuperCallToObjectMethod",
+  "language": "java",
+  "description": "`super.equals(obj)` and `super.hashCode()` are often bugs when they call the methods defined in `java.lang.Object`",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 110,
+  "branches": 10,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        28
+      ],
+      "code": "class Foo {\n              int i;\n\n              @Override\n              public boolean equals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i == ((Foo) obj).i;\n                }\n                // BUG: Diagnostic contains: equals\n                return super.equals(obj);\n              }\n            }"
+    },
+    {
+      "description": "positiveOtherSupertypeWithoutEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "class Foo extends Exception {\n              int i;\n\n              @Override\n              public boolean equals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i == ((Foo) obj).i;\n                }\n                // BUG: Diagnostic contains:\n                return super.equals(obj);\n              }\n            }"
+    },
+    {
+      "description": "negativeOtherSupertypeWithEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "import java.util.AbstractSet;\n\n            abstract class Foo extends AbstractSet<String> {\n              int i;\n\n              @Override\n              public boolean equals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i == ((Foo) obj).i;\n                }\n                return super.equals(obj);\n              }\n            }"
+    },
+    {
+      "description": "negativePureSuperDelegation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "class Foo {\n              @Override\n              public boolean equals(Object obj) {\n                return super.equals(obj);\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "class Foo {\n              int i;\n\n              @Override\n              public boolean equals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i == ((Foo) obj).i;\n                }\n                return super.equals(obj);\n              }\n            }\n            \n\n            class Foo {\n              int i;\n\n              @Override\n              public boolean equals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i == ((Foo) obj).i;\n                }\n                return this == obj;\n              }\n            }"
+    },
+    {
+      "description": "refactoringNeedsParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "class Foo {\n              int i;\n\n              boolean notEquals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i != ((Foo) obj).i;\n                }\n                return !super.equals(obj);\n              }\n            }\n            \n\n            class Foo {\n              int i;\n\n              boolean notEquals(Object obj) {\n                if (obj instanceof Foo) {\n                  return i != ((Foo) obj).i;\n                }\n                return !(this == obj);\n              }\n            }"
+    },
+    {
+      "description": "refactoringHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        181
+      ],
+      "code": "class Foo {\n              int i;\n\n              @Override\n              public int hashCode() {\n                return super.hashCode() * 31 + i;\n              }\n            }\n            \n\n            class Foo {\n              int i;\n\n              @Override\n              public int hashCode() {\n                return System.identityHashCode(this) * 31 + i;\n              }\n            }"
+    }
+  ]
+}

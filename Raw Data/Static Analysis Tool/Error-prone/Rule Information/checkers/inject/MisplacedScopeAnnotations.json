@@ -1,0 +1,70 @@
+{
+  "name": "MisplacedScopeAnnotations",
+  "language": "java",
+  "description": "Scope annotations used as qualifier annotations don't have any effect. Move the scope annotation to the binding location or delete it.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 95,
+  "branches": 6,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase_methodInjection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject\n              // BUG: Diagnostic contains: void someMethod( String foo) {}\n              void someMethod(@Singleton String foo) {}\n            }"
+    },
+    {
+      "description": "positiveCase_providerMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        52
+      ],
+      "code": "import com.google.inject.Provides;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Provides\n              String provideString(@Singleton @Named(\"foo\") String foo) {\n                return foo;\n              }\n            }\n            \n\n            import com.google.inject.Provides;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Provides\n              String provideString(@Named(\"foo\") String foo) {\n                return foo;\n              }\n            }"
+    },
+    {
+      "description": "positiveCase_injectConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject\n              Foo(@Singleton @Named(\"bar\") String bar) {}\n            }\n            \n\n            import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject\n              Foo(@Named(\"bar\") String bar) {}\n            }"
+    },
+    {
+      "description": "positiveCase_injectConstructorMultipleAnnotations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject\n              Foo(@Singleton String bar, Integer i, @Singleton Long c) {}\n            }\n            \n\n            import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject\n              Foo(String bar, Integer i, Long c) {}\n            }"
+    },
+    {
+      "description": "positiveCase_fieldInjection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject @Singleton String foo;\n            }\n            \n\n            import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject String foo;\n            }"
+    },
+    {
+      "description": "negativeCase_noScopeAnnotationOnInjectedParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "import dagger.Provides;\n            import dagger.Module;\n            import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            @Module\n            class Foo {\n              @Provides\n              @Singleton\n              @Named(\"bar\")\n              int something(@Named(\"bar\") Integer bar) {\n                return 42;\n              }\n            }"
+    },
+    {
+      "description": "negativeCase_scopeAnnotationIsAlsoQualifier",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        199
+      ],
+      "code": "import dagger.Provides;\n            import dagger.Module;\n            import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Qualifier;\n            import javax.inject.Scope;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n\n            @Module\n            class Foo {\n              @Qualifier\n              @Scope\n              @Retention(RetentionPolicy.RUNTIME)\n              @interface RequestScoped {}\n\n              @Provides\n              int something(@RequestScoped Integer bar) {\n                return 42;\n              }\n            }"
+    }
+  ]
+}

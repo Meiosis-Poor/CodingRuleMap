@@ -1,0 +1,54 @@
+{
+  "name": "EmptyCatch",
+  "language": "java",
+  "description": "Caught exceptions should not be ignored",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 46,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns;\n\n            import static org.junit.Assert.fail;\n\n            import org.junit.Test;\n\n            /**\n             * @author yuan@ece.toronto.edu (Ding Yuan)\n             */\n            public class EmptyCatchPositiveCases {\n              public void error() throws IllegalArgumentException {\n                throw new IllegalArgumentException(\"Fake exception.\");\n              }\n\n              public void catchIsCompleteEmpty() {\n                try {\n                  error();\n                } // BUG: Diagnostic contains:\n                catch (Throwable t) {\n\n                }\n              }\n\n              @Test\n              public void expectedException() {\n                try {\n                  System.err.println();\n                  fail();\n                  // BUG: Diagnostic contains:\n                } catch (Exception expected) {\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "expectedException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": ""
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "package com.google.errorprone.bugpatterns;\n\n            import java.io.FileNotFoundException;\n\n            /**\n             * @author yuan@ece.toronto.edu (Ding Yuan)\n             */\n            public class EmptyCatchNegativeCases {\n              public void error() throws IllegalArgumentException {\n                throw new IllegalArgumentException(\"Fake exception.\");\n              }\n\n              public void harmlessError() throws FileNotFoundException {\n                throw new FileNotFoundException(\"harmless exception.\");\n              }\n\n              public void close() throws IllegalArgumentException {\n                // close() is an allowed method, so any exceptions\n                // thrown by this method can be ignored!\n                throw new IllegalArgumentException(\"Fake exception.\");\n              }\n\n              public void handledException() {\n                int a = 0;\n                try {\n                  error();\n                } catch (Exception e) {\n                  a++; // handled here\n                }\n              }\n\n              public void exceptionHandledByDataflow() {\n                int a = 0;\n                try {\n                  error();\n                  a = 10;\n                } catch (Throwable t) {\n                  /* Although the exception is ignored here, it is actually\n                   * handled by the if check below.\n                   */\n                }\n                if (a != 10) {\n                  System.out.println(\"Exception is handled here..\");\n                  a++;\n                }\n              }\n\n              public void exceptionHandledByControlFlow() {\n                try {\n                  error();\n                  return;\n                } catch (Throwable t) {\n                  /* Although the exception is ignored here, it is actually\n                   * handled by the return statement in the try block.\n                   */\n                }\n                System.out.println(\"Exception is handled here..\");\n              }\n\n              public void alreadyInCatch() {\n                try {\n                  error();\n                } catch (Throwable t) {\n                  try {\n                    error();\n                  } catch (Exception e) {\n                    // Although e is ignored, it is OK b/c we're already\n                    // in a nested catch block.\n                  }\n                }\n              }\n\n              public void harmlessException() {\n                try {\n                  harmlessError();\n                } catch (FileNotFoundException e) {\n                  /* FileNotFoundException is a harmless exception and\n                   * it is OK to ignore it.\n                   */\n                }\n              }\n\n              public void exemptedMethod() {\n                try {\n                  close();\n                } catch (Exception e) {\n                  // Although the exception is ignored, we can allow this b/c\n                  // it is thrown by an exempted method.\n                }\n              }\n\n              public void comment() {\n                int a = 0; // TODO\n                try {\n                  error();\n                  // TODO\n                  /* FIXME */\n                } catch (Throwable t) {\n                  // ignored\n                }\n              }\n\n              public void catchIsLoggedOnly() {\n                try {\n                  error();\n                } catch (Throwable t) {\n                  System.out.println(\"Caught an exception: \" + t);\n                }\n              }\n            }"
+    },
+    {
+      "description": "addTestNgTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        196
+      ],
+      "code": "package org.testng.annotations;\n\n            public @interface Test {}\n            \n\n            import org.testng.annotations.Test;\n\n            public class SomeTest {\n              @Test\n              public void testNG() {\n                try {\n                  System.err.println();\n                  // BUG: Diagnostic contains:\n                } catch (Exception doNotCare) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "testNG",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        212
+      ],
+      "code": ""
+    }
+  ]
+}

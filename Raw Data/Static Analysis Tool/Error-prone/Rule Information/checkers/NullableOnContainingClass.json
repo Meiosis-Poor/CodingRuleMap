@@ -1,0 +1,70 @@
+{
+  "name": "NullableOnContainingClass",
+  "language": "java",
+  "description": "Type-use nullability annotations should annotate the inner class, not the outer class (e.g., write `A.@Nullable B` instead of `@Nullable A.B`).",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 104,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "annotationNotNamedNullable_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n\n            class A {\n              @Target(TYPE_USE)\n              @interface Anno {}\n\n              class B {}\n\n              void test(@Anno A.B x) {}\n\n              void test2(A.@Anno B x) {}\n            }"
+    },
+    {
+      "description": "annotationNotExclusivelyTypeUse_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "import static java.lang.annotation.ElementType.PARAMETER;\n            import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n\n            class A {\n              @Target({PARAMETER, TYPE_USE})\n              @interface Nullable {}\n\n              static class B {}\n\n              void test(@Nullable A.B x) {}\n            }"
+    },
+    {
+      "description": "annotationParameterOnly_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "import static java.lang.annotation.ElementType.PARAMETER;\n            import java.lang.annotation.Target;\n\n            class A {\n              @Target(PARAMETER)\n              @interface Nullable {}\n\n              class B {}\n\n              void test(@Nullable A.B x) {}\n            }"
+    },
+    {
+      "description": "annotationNamedNullable_annotatingOuterClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n            import java.util.List;\n\n            class A {\n              @Target(TYPE_USE)\n              @interface Nullable {}\n\n              class B {}\n\n              // BUG: Diagnostic contains: A.@Nullable B\n              void test(@Nullable A.B x) {}\n\n              // BUG: Diagnostic contains: List< A.@Nullable B>\n              void test2(List<@Nullable A.B> x) {}\n            }"
+    },
+    {
+      "description": "annotationNamedNullable_annotatingOuterClass_canAnnotateTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        122
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_PARAMETER;\n            import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n            import java.util.List;\n\n            class A {\n              @Target({TYPE_USE, TYPE_PARAMETER})\n              @interface Nullable {}\n\n              class B {}\n\n              // BUG: Diagnostic contains: A.@Nullable B\n              void test(@Nullable A.B x) {}\n\n              // BUG: Diagnostic contains: List< A.@Nullable B>\n              void test2(List<@Nullable A.B> x) {}\n            }"
+    },
+    {
+      "description": "annotationNamedNullable_annotatingInImplements",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n            import java.util.List;\n\n            interface A {\n              @Target(TYPE_USE)\n              @interface Nullable {}\n\n              // BUG: Diagnostic contains: A.@Nullable B\n              abstract class B implements List<@Nullable A.B> {}\n            }"
+    },
+    {
+      "description": "annotationNamedNullable_annotatingInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        170
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n\n            class A {\n              @Target(TYPE_USE)\n              @interface Nullable {}\n\n              class B {}\n\n              void test(A.@Nullable B x) {}\n            }"
+    }
+  ]
+}

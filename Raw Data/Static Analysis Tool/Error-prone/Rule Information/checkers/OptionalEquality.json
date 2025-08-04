@@ -1,0 +1,62 @@
+{
+  "name": "OptionalEquality",
+  "language": "java",
+  "description": "Comparison using reference equality instead of value equality",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 41,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase_equal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                // BUG: Diagnostic contains: a.equals(b)\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "positiveCase_notEqual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                // BUG: Diagnostic contains: !a.equals(b)\n                return a != b;\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> b) {\n                return b == null;\n              }\n            }"
+    },
+    {
+      "description": "maybeNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a) {\n                Optional<Integer> b = Optional.of(42);\n                // BUG: Diagnostic contains: Did you mean 'return Objects.equals(a, b);' or 'return\n                // a.equals(b);'?\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "maybeNull_prefersAlreadyImportedHelper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "import com.google.common.base.Objects;\n            import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a) {\n                Optional<Integer> b = Optional.of(42);\n                // BUG: Diagnostic contains: Did you mean 'return Objects.equal(a, b);' or 'return\n                // a.equals(b);'?\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "definitelyNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f() {\n                Optional<Integer> a = null;\n                Optional<Integer> b = Optional.of(42);\n                // BUG: Diagnostic contains: Did you mean 'return Objects.equals(a, b);'?\n                return a == b;\n              }\n            }"
+    }
+  ]
+}

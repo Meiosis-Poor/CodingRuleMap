@@ -1,0 +1,78 @@
+{
+  "name": "HashtableContains",
+  "language": "java",
+  "description": "contains() is a legacy method that is equivalent to containsValue()",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 12,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive_cHM",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package test;\n\n            import java.util.concurrent.ConcurrentHashMap;\n\n            class Test {\n              void f(ConcurrentHashMap<String, Integer> m, Integer v) {\n                // BUG: Diagnostic contains: containsValue(v)\n                m.contains(v);\n              }\n            }"
+    },
+    {
+      "description": "positive_hashtable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class Test {\n              void f(Hashtable<String, Integer> m, Integer v) {\n                // BUG: Diagnostic contains: containsValue(v)\n                m.contains(v);\n              }\n            }"
+    },
+    {
+      "description": "positive_wildcardUpperBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class Test {\n              void f(Hashtable<String, ? extends Number> m, Integer v) {\n                // BUG: Diagnostic contains: containsValue(v)\n                m.contains(v);\n              }\n            }"
+    },
+    {
+      "description": "positive_wildcardLowerBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class Test {\n              void f(Hashtable<String, ? super Integer> m, Integer v) {\n                // BUG: Diagnostic contains: containsValue(v)\n                m.contains(v);\n              }\n            }"
+    },
+    {
+      "description": "positive_wildcard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class Test {\n              void f(Hashtable<String, ?> m, String k) {\n                // BUG: Diagnostic contains: 'java.lang.String' could be a key or a value\n                // Did you mean 'm.containsValue(k);' or 'm.containsKey(k);'?\n                m.contains(k);\n              }\n            }"
+    },
+    {
+      "description": "positive_containsKey",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class Test {\n              void f(Hashtable<String, Integer> m, String k) {\n                // BUG: Diagnostic contains:\n                // argument type 'java.lang.String' looks like a key\n                // Did you mean 'm.containsKey(k);'\n                m.contains(k);\n              }\n            }"
+    },
+    {
+      "description": "positive_extendsHashtable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class MyHashTable<K, V> extends Hashtable<K, V> {\n              @Override\n              public boolean contains(Object v) {\n                // BUG: Diagnostic contains:\n                // Did you mean 'return containsValue(v);' or 'return containsKey(v);'?\n                return contains(v);\n              }\n            }"
+    },
+    {
+      "description": "negative_containsAmbiguous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        175
+      ],
+      "code": "package test;\n\n            import java.util.Hashtable;\n\n            class Test {\n              void f(Hashtable<Number, Integer> m, Integer v) {\n                // BUG: Diagnostic contains: 'java.lang.Number' could be a key or a value\n                // Did you mean 'm.containsValue(v);' or 'm.containsKey(v);'?\n                m.contains(v);\n              }\n            }"
+    }
+  ]
+}

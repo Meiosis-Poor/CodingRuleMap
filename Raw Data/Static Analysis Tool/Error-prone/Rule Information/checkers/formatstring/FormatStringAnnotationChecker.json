@@ -1,0 +1,126 @@
+{
+  "name": "FormatStringAnnotationChecker",
+  "language": "java",
+  "description": "Invalid format string passed to formatting method.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 136,
+  "branches": 15,
+  "apis": 1,
+  "test": [
+    {
+      "description": "matches_failsWithNonMatchingFormatArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public static void log(@FormatString String s, Object... args) {}\n\n              @FormatMethod\n              public static void callLog(@FormatString String s, Object arg, Object arg2) {\n                // BUG: Diagnostic contains: The number of format arguments passed with an\n                log(s, \"test\");\n                // BUG: Diagnostic contains: The format argument types passed with an\n                log(s, \"test1\", \"test2\");\n              }\n            }"
+    },
+    {
+      "description": "matches_succeedsWithMatchingFormatStringAndArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public static void log(@FormatString String s, Object... args) {}\n\n              @FormatMethod\n              public static void callLog(@FormatString String s, Object arg) {\n                log(s, arg);\n              }\n            }"
+    },
+    {
+      "description": "matches_succeedsForMatchingFormatMethodWithImplicitFormatString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public static void log(@FormatString String s, Object... args) {}\n\n              @FormatMethod\n              public static void callLog(String s, Object arg) {\n                log(s, arg);\n              }\n            }"
+    },
+    {
+      "description": "matches_failsWithMismatchedFormatString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public static void log(@FormatString String s, Object... args) {}\n\n              public static void callLog() {\n                // BUG: Diagnostic contains: extra format arguments: used 1, provided 2\n                log(\"%s\", new Object(), new Object());\n              }\n            }"
+    },
+    {
+      "description": "matches_succeedsForCompileTimeConstantFormatString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public static void log(@FormatString String s, Object... args) {}\n\n              public static void callLog() {\n                final String formatString = \"%d\";\n                log(formatString, Integer.valueOf(0));\n              }\n            }"
+    },
+    {
+      "description": "matches_failsWhenExpressionGivenForFormatString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        154
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              static void log(String s, Object... args) {}\n\n              public static String formatString() {\n                return \"\";\n              }\n\n              public static void callLog() {\n                String format = \"log: \";\n                // BUG: Diagnostic contains: Format strings must be either literals or\n                log(format + 3);\n                // BUG: Diagnostic contains: Format strings must be either literals or\n                log(formatString());\n              }\n            }"
+    },
+    {
+      "description": "matches_failsForInvalidMethodHeaders",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              // BUG: Diagnostic contains: A method cannot have more than one @FormatString\n              void log1(@FormatString String s1, @FormatString String s2) {}\n\n              @FormatMethod\n              // BUG: Diagnostic contains: An @FormatMethod must contain at least one String\n              void log2(Object o) {}\n\n              @FormatMethod\n              // BUG: Diagnostic contains: Only strings can be annotated @FormatString.\n              void log3(@FormatString Object o) {}\n\n              // BUG: Diagnostic contains: A parameter can only be annotated @FormatString in a\n              void log4(@FormatString Object o) {}\n            }"
+    },
+    {
+      "description": "matches_failsForIncorrectStringParameterUsedWithImplicitFormatString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public static void log(@FormatString String s, Object... args) {}\n\n              @FormatMethod\n              public static void callLog1(String format, String s, Object arg) {\n                // BUG: Diagnostic contains: Format strings must be compile time constants or\n                log(s, arg);\n              }\n\n              @FormatMethod\n              public static void callLog2(String s, @FormatString String format, Object arg) {\n                // BUG: Diagnostic contains: Format strings must be compile time constants or\n                log(s, arg);\n              }\n            }"
+    },
+    {
+      "description": "matches_succeedsForNonParameterFinalOrEffectivelyFinalFormatStrings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        246
+      ],
+      "code": ""
+    },
+    {
+      "description": "matches_failsForNonFinalParametersOrNonMatchingFinalParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": ""
+    },
+    {
+      "description": "matches_failsForBadCallToConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        318
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public FormatStringTestCase(String s, Object... args) {}\n\n              public static void createTestCase(String s, Object arg) {\n                // BUG: Diagnostic contains: Format strings must be compile time constants or\n                new FormatStringTestCase(s, arg);\n              }\n            }"
+    },
+    {
+      "description": "matches_succeedsForMockitoMatchers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        342
+      ],
+      "code": "package test;\n\n            import static org.mockito.ArgumentMatchers.any;\n            import static org.mockito.ArgumentMatchers.eq;\n            import static org.mockito.Mockito.verify;\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public void log(@FormatString String s, Object... args) {}\n\n              public void callLog(String s, Object... args) {\n                verify(this).log(any(String.class), eq(args));\n              }\n            }"
+    },
+    {
+      "description": "matches_succeedsForMockitoArgumentMatchers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        368
+      ],
+      "code": "package test;\n\n            import static org.mockito.ArgumentMatchers.any;\n            import static org.mockito.ArgumentMatchers.eq;\n            import static org.mockito.Mockito.verify;\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              public void log(@FormatString String s, Object... args) {}\n\n              public void callLog(String s, Object... args) {\n                verify(this).log(any(String.class), eq(args));\n              }\n            }"
+    },
+    {
+      "description": "negative_noFormatString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        394
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.FormatMethod;\n\n            public class FormatStringTestCase {\n              @FormatMethod\n              // BUG: Diagnostic contains: must contain at least one String parameter\n              public static void log(int x, int y) {}\n\n              void test() {\n                log(1, 2);\n              }\n            }"
+    }
+  ]
+}

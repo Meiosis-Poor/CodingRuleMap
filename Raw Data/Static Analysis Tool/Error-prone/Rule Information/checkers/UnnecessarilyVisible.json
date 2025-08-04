@@ -1,0 +1,86 @@
+{
+  "name": "UnnecessarilyVisible",
+  "language": "java",
+  "description": "Some methods (such as those annotated with @Inject or @Provides) are only intended to be called by a framework, and so should have default visibility.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 111,
+  "branches": 6,
+  "apis": 1,
+  "test": [
+    {
+      "description": "publicConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              public Test() {}\n            }\n            \n\n            import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              Test() {}\n            }"
+    },
+    {
+      "description": "annotationAppearsInFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              // BUG: Diagnostic contains: annotated with @Inject\n              public Test() {}\n            }"
+    },
+    {
+      "description": "caveatOnInject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              // BUG: Diagnostic contains: VisibleForTesting\n              public Test() {}\n            }"
+    },
+    {
+      "description": "caveatNotOnProvides",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "import com.google.inject.Provides;\n\n            class Test {\n              @Provides\n              // BUG: Diagnostic matches: X\n              public int foo() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "protectedConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              protected Test() {}\n            }\n            \n\n            import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              Test() {}\n            }"
+    },
+    {
+      "description": "providesMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        140
+      ],
+      "code": "import com.google.inject.Provides;\n\n            class Test {\n              @Provides\n              public int foo() {\n                return 1;\n              }\n            }\n            \n\n            import com.google.inject.Provides;\n\n            class Test {\n              @Provides\n              int foo() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "unannotated_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        170
+      ],
+      "code": "class Test {\n              public int foo() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "visibleForTesting_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        186
+      ],
+      "code": "import com.google.common.annotations.VisibleForTesting;\n            import javax.inject.Inject;\n\n            class Test {\n              @Inject\n              @VisibleForTesting\n              public Test() {}\n            }"
+    },
+    {
+      "description": "overridesPublicMethod_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205
+      ],
+      "code": "class A {\n              public void foo() {}\n            }\n            \n\n            import com.google.inject.Provides;\n\n            class Test extends A {\n              @Provides\n              public void foo() {}\n            }"
+    }
+  ]
+}

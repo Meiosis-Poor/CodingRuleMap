@@ -1,0 +1,318 @@
+{
+  "name": "DoNotCallChecker",
+  "language": "java",
+  "description": "This method should not be called.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 396,
+  "branches": 32,
+  "apis": 4,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        40
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            class Test {\n              @DoNotCall(\"satisfying explanation\")\n              final void f() {}\n\n              @DoNotCall\n              final void g() {}\n\n              void m() {\n                // BUG: Diagnostic contains:\n                // Test.f() should not be called: satisfying explanation\n                f();\n                // BUG: Diagnostic contains:\n                // Test.g() should not be called, see its documentation for details.\n                g();\n                // BUG: Diagnostic contains:\n                // Test.g() should not be called, see its documentation for details.\n                Runnable r = this::g;\n              }\n            }"
+    },
+    {
+      "description": "positiveWhereDeclaredTypeIsSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              void foo() {\n                List<Integer> xs = ImmutableList.of();\n                // BUG: Diagnostic contains:\n                xs.add(1);\n                xs.get(1);\n              }\n            }"
+    },
+    {
+      "description": "positiveWhereDeclaredTypeIsSuper_butAssignedMultipleTimes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              void foo() {\n                List<Integer> xs;\n                if (hashCode() == 0) {\n                  xs = ImmutableList.of();\n                } else {\n                  xs = ImmutableList.of();\n                }\n                // BUG: Diagnostic contains:\n                xs.add(1);\n                xs.get(1);\n              }\n            }"
+    },
+    {
+      "description": "positiveWhereDeclaredTypeIsSuper_butNotAssignedOnce",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void foo() {\n                List<Integer> xs;\n                if (true) {\n                  xs = ImmutableList.of();\n                } else {\n                  xs = new ArrayList<>();\n                  xs.add(2);\n                }\n              }\n            }"
+    },
+    {
+      "description": "concreteFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            public class Test {\n              @DoNotCall\n              // BUG: Diagnostic contains: should be final\n              public void f() {}\n\n              @DoNotCall\n              public final void g() {}\n            }"
+    },
+    {
+      "description": "requiredOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        192
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            public interface A {\n              @DoNotCall\n              public void f();\n            }\n            \n\n            public class B implements A {\n              @Override\n              // BUG: Diagnostic contains: overrides f in A which is annotated\n              public void f() {}\n            }"
+    },
+    {
+      "description": "annotatedOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        217
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            public interface A {\n              @DoNotCall\n              public void f();\n            }\n            \n\n            import com.google.errorprone.annotations.DoNotCall;\n\n            public class B implements A {\n              @DoNotCall\n              @Override\n              public final void f() {}\n            }"
+    },
+    {
+      "description": "interfaceRedeclaresObjectMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            public interface I {\n              @DoNotCall\n              public String toString();\n            }\n            \n\n            public class B implements I {}\n            \n\n            public class Test {\n              void f(B b) {\n                b.toString();\n                I i = b;\n                // BUG: Diagnostic contains:\n                i.toString();\n              }\n            }"
+    },
+    {
+      "description": "finalClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        283
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            public final class Test {\n              @DoNotCall\n              public void f() {}\n            }"
+    },
+    {
+      "description": "privateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        299
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n\n            public final class Test {\n              @DoNotCall\n              // BUG: Diagnostic contains: private method\n              private void f() {}\n            }"
+    },
+    {
+      "description": "noDNConClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        324
+      ],
+      "code": "class Test {\n  void m() {\n    // BUG: Diagnostic contains: com.google.errorprone.bugpatterns.DoNotCallCheckerTest.DNCTest.f()\n    // should not be called, see its documentation for details.\n    com.google.errorprone.bugpatterns.DoNotCallCheckerTest.DNCTest.f();\n  }\n}"
+    },
+    {
+      "description": "thirdParty",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        342
+      ],
+      "code": ""
+    },
+    {
+      "description": "javaSqlDate_toInstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        362
+      ],
+      "code": "import java.sql.Date;\n            import java.time.Instant;\n\n            public class TestClass {\n              public void badApis(Date date) {\n                // BUG: Diagnostic contains: toLocalDate()\n                Instant instant = date.toInstant();\n              }\n            }"
+    },
+    {
+      "description": "javaSqlDate_timeGetters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        382
+      ],
+      "code": "import java.sql.Date;\n\n            public class TestClass {\n              public void badApis(Date date) {\n                // BUG: Diagnostic contains: DoNotCall\n                int hour = date.getHours();\n                // BUG: Diagnostic contains: DoNotCall\n                int mins = date.getMinutes();\n                // BUG: Diagnostic contains: DoNotCall\n                int secs = date.getSeconds();\n              }\n            }"
+    },
+    {
+      "description": "javaSqlDate_timeSetters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        408
+      ],
+      "code": "import java.sql.Date;\n\n            public class TestClass {\n              public void badApis(Date date) {\n                // BUG: Diagnostic contains: DoNotCall\n                date.setHours(1);\n                // BUG: Diagnostic contains: DoNotCall\n                date.setMinutes(1);\n                // BUG: Diagnostic contains: DoNotCall\n                date.setSeconds(1);\n              }\n            }"
+    },
+    {
+      "description": "javaSqlDate_staticallyTypedAsJavaUtilDate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        434
+      ],
+      "code": "import java.time.Instant;\n            import java.util.Date;\n\n            public class TestClass {\n              public void badApis() {\n                Date date = new java.sql.Date(1234567890L);\n                Instant instant = date.toInstant();\n                int hour = date.getHours();\n                int mins = date.getMinutes();\n                int secs = date.getSeconds();\n                date.setHours(1);\n                date.setMinutes(1);\n                date.setSeconds(1);\n              }\n            }"
+    },
+    {
+      "description": "javaSqlTime_toInstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        459
+      ],
+      "code": "import java.sql.Time;\n            import java.time.Instant;\n\n            public class TestClass {\n              public void badApis(Time time) {\n                // BUG: Diagnostic contains: toLocalTime()\n                Instant instant = time.toInstant();\n              }\n            }"
+    },
+    {
+      "description": "javaSqlTime_dateGetters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        479
+      ],
+      "code": "import java.sql.Time;\n\n            public class TestClass {\n              public void badApis(Time time) {\n                // BUG: Diagnostic contains: DoNotCall\n                int year = time.getYear();\n                // BUG: Diagnostic contains: DoNotCall\n                int month = time.getMonth();\n                // BUG: Diagnostic contains: DoNotCall\n                int day = time.getDay();\n                // BUG: Diagnostic contains: DoNotCall\n                int date = time.getDate();\n              }\n            }"
+    },
+    {
+      "description": "javaSqlTime_dateSetters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        508
+      ],
+      "code": "import java.sql.Time;\n\n            public class TestClass {\n              public void badApis(Time time) {\n                // BUG: Diagnostic contains: DoNotCall\n                time.setYear(1);\n                // BUG: Diagnostic contains: DoNotCall\n                time.setMonth(1);\n                // BUG: Diagnostic contains: DoNotCall\n                time.setDate(1);\n              }\n            }"
+    },
+    {
+      "description": "javaSqlTime_staticallyTypedAsJavaUtilDate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        534
+      ],
+      "code": "import java.time.Instant;\n            import java.util.Date;\n\n            public class TestClass {\n              public void badApis() {\n                Date time = new java.sql.Time(1234567890L);\n                Instant instant = time.toInstant();\n                int year = time.getYear();\n                int month = time.getMonth();\n                int date = time.getDate();\n                int day = time.getDay();\n                time.setYear(1);\n                time.setMonth(1);\n                time.setDate(1);\n              }\n            }"
+    },
+    {
+      "description": "sortedCollectionSequencedCollectionMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        560
+      ],
+      "code": "import java.util.TreeMap;\n            import java.util.TreeSet;\n\n            public class Test {\n              public void foo(TreeMap<String, String> map, TreeSet<String> set) {\n                // BUG: Diagnostic contains: DoNotCall\n                map.putFirst(\"foo\", \"bar\");\n                // BUG: Diagnostic contains: DoNotCall\n                map.putLast(\"foo\", \"bar\");\n                // BUG: Diagnostic contains: DoNotCall\n                set.addFirst(\"foo\");\n                // BUG: Diagnostic contains: DoNotCall\n                set.addLast(\"foo\");\n              }\n            }"
+    },
+    {
+      "description": "readLock_newCondition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        586
+      ],
+      "code": "import java.util.concurrent.locks.ReentrantReadWriteLock;\n\n            public class Test {\n              public void foo() {\n                ReentrantReadWriteLock.ReadLock lock = new ReentrantReadWriteLock().readLock();\n                // BUG: Diagnostic contains: DoNotCall\n                lock.newCondition();\n              }\n            }"
+    },
+    {
+      "description": "threadLocalRandom_setSeed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        608
+      ],
+      "code": "import java.util.concurrent.ThreadLocalRandom;\n\n            public class Test {\n              public void foo() {\n                ThreadLocalRandom random = ThreadLocalRandom.current();\n                // BUG: Diagnostic contains: DoNotCall\n                random.setSeed(42L);\n              }\n            }"
+    },
+    {
+      "description": "memberReferencesOnThirdPartyMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        629
+      ],
+      "code": "import java.util.concurrent.ThreadLocalRandom;\n            import java.util.Optional;\n\n            public class Test {\n              public void foo(Optional<Long> x) {\n                ThreadLocalRandom random = ThreadLocalRandom.current();\n                // BUG: Diagnostic contains: DoNotCall\n                x.ifPresent(random::setSeed);\n              }\n            }"
+    },
+    {
+      "description": "typeArgs_dontCrash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        649
+      ],
+      "code": "import java.util.List;\n\n            class Test<T extends java.util.Collection<Object>> {\n              @Override\n              public boolean equals(Object o) {\n                T foo = (T) o;\n                return foo.equals(1);\n              }\n            }"
+    },
+    {
+      "description": "positive_getSimpleName_refactoredToGetClassName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        668
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  throw new Exception();\n                } catch (Exception ex) {\n                  // BUG: Diagnostic contains: getClassName\n                  ex.getStackTrace()[0].getClass().getSimpleName();\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive_stackWalkerGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        688
+      ],
+      "code": "class Test {\n              void f(StackWalker w) {\n                // BUG: Diagnostic contains: getCallerClass\n                w.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_stackFrameGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        704
+      ],
+      "code": "import java.lang.StackWalker.StackFrame;\n\n            class Test {\n              void f(StackFrame f) {\n                // BUG: Diagnostic contains: getClassName\n                f.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_constructorGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        722
+      ],
+      "code": "import java.lang.reflect.Constructor;\n\n            class Test {\n              void f(Constructor<?> c) {\n                // BUG: Diagnostic contains: getDeclaringClass\n                c.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_fieldGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        740
+      ],
+      "code": "import java.lang.reflect.Field;\n\n            class Test {\n              void f(Field f) {\n                // BUG: Diagnostic contains: getDeclaringClass\n                f.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_methodGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        758
+      ],
+      "code": "import java.lang.reflect.Method;\n\n            class Test {\n              void f(Method m) {\n                // BUG: Diagnostic contains: getDeclaringClass\n                m.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_beanDescriptorGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        776
+      ],
+      "code": "import java.beans.BeanDescriptor;\n\n            class Test {\n              void f(BeanDescriptor b) {\n                // BUG: Diagnostic contains: getBeanClass\n                b.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_lockInfoGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        794
+      ],
+      "code": "import java.lang.management.LockInfo;\n            import java.lang.management.MonitorInfo;\n\n            class Test {\n              void f(LockInfo l, MonitorInfo m) {\n                // BUG: Diagnostic contains: getClassName\n                l.getClass();\n                // BUG: Diagnostic contains: getClassName\n                m.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_parameterizedTypeGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        815
+      ],
+      "code": "import java.lang.reflect.ParameterizedType;\n\n            class Test {\n              void f(ParameterizedType t) {\n                // BUG: Diagnostic contains: getRawType\n                t.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_classInfoGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        833
+      ],
+      "code": "import com.google.common.reflect.ClassPath.ClassInfo;\n\n            class Test {\n              void f(ClassInfo i) {\n                // BUG: Diagnostic contains: getName\n                i.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_typeTokenGetClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        851
+      ],
+      "code": "import com.google.common.reflect.TypeToken;\n\n            class Test {\n              void f(TypeToken<?> t) {\n                // BUG: Diagnostic contains: getRawType\n                t.getClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_threadRun",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        869
+      ],
+      "code": "class Test {\n              void f(Thread t) {\n                // BUG: Diagnostic contains: start\n                t.run();\n              }\n            }"
+    },
+    {
+      "description": "negative_threadSuperRun",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        885
+      ],
+      "code": "class Test extends Thread {\n              @Override\n              public void run() {\n                super.run();\n              }\n            }"
+    }
+  ]
+}

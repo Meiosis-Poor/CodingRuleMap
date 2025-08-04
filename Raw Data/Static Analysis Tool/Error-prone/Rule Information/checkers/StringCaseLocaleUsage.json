@@ -1,0 +1,46 @@
+{
+  "name": "StringCaseLocaleUsage",
+  "language": "java",
+  "description": "Specify a `Locale` when calling `String#to{Lower,Upper}Case`. (Note: there are multiple suggested fixes; the third may be most appropriate if you're dealing with ASCII Strings.)",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 100,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "identification",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "import static java.util.Locale.ROOT;\n\n            import java.util.Locale;\n\n            class A {\n              void m() {\n                \"a\".toLowerCase(Locale.ROOT);\n                \"a\".toUpperCase(Locale.ROOT);\n                \"b\".toLowerCase(ROOT);\n                \"b\".toUpperCase(ROOT);\n                \"c\".toLowerCase(Locale.getDefault());\n                \"c\".toUpperCase(Locale.getDefault());\n                \"d\".toLowerCase(Locale.ENGLISH);\n                \"d\".toUpperCase(Locale.ENGLISH);\n                \"e\".toLowerCase(new Locale(\"foo\"));\n                \"e\".toUpperCase(new Locale(\"foo\"));\n\n                // BUG: Diagnostic contains:\n                \"f\".toLowerCase();\n                // BUG: Diagnostic contains:\n                \"g\".toUpperCase();\n\n                String h = \"h\";\n                // BUG: Diagnostic contains:\n                h.toLowerCase();\n                String i = \"i\";\n                // BUG: Diagnostic contains:\n                i.toUpperCase();\n              }\n            }"
+    },
+    {
+      "description": "replacementFirstSuggestedFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "class A {\n              void m() {\n                \"a\".toLowerCase(/* Comment with parens: (). */ );\n                \"b\".toUpperCase();\n                \"c\".toLowerCase().toString();\n\n                toString().toLowerCase();\n                toString().toUpperCase /* Comment with parens: (). */();\n\n                this.toString().toLowerCase() /* Comment with parens: (). */;\n                this.toString().toUpperCase();\n              }\n            }\n            \n\n            import java.util.Locale;\n\n            class A {\n              void m() {\n                \"a\".toLowerCase(/* Comment with parens: (). */ Locale.ROOT);\n                \"b\".toUpperCase(Locale.ROOT);\n                \"c\".toLowerCase(Locale.ROOT).toString();\n\n                toString().toLowerCase(Locale.ROOT);\n                toString().toUpperCase /* Comment with parens: (). */(Locale.ROOT);\n\n                this.toString().toLowerCase(Locale.ROOT) /* Comment with parens: (). */;\n                this.toString().toUpperCase(Locale.ROOT);\n              }\n            }"
+    },
+    {
+      "description": "replacementSecondSuggestedFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "class A {\n              void m() {\n                \"a\".toLowerCase();\n                \"b\".toUpperCase(/* Comment with parens: (). */ );\n                \"c\".toLowerCase().toString();\n\n                toString().toLowerCase();\n                toString().toUpperCase /* Comment with parens: (). */();\n\n                this.toString().toLowerCase() /* Comment with parens: (). */;\n                this.toString().toUpperCase();\n              }\n            }\n            \n\n            import java.util.Locale;\n\n            class A {\n              void m() {\n                \"a\".toLowerCase(Locale.getDefault());\n                \"b\".toUpperCase(/* Comment with parens: (). */ Locale.getDefault());\n                \"c\".toLowerCase(Locale.getDefault()).toString();\n\n                toString().toLowerCase(Locale.getDefault());\n                toString().toUpperCase /* Comment with parens: (). */(Locale.getDefault());\n\n                this.toString().toLowerCase(Locale.getDefault()) /* Comment with parens: (). */;\n                this.toString().toUpperCase(Locale.getDefault());\n              }\n            }"
+    },
+    {
+      "description": "replacementThirdSuggestedFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        160
+      ],
+      "code": "class A {\n              void m() {\n                \"a\".toLowerCase();\n                \"c\".toLowerCase().toString();\n              }\n            }\n            \n\n            import com.google.common.base.Ascii;\n\n            class A {\n              void m() {\n                Ascii.toLowerCase(\"a\");\n                Ascii.toLowerCase(\"c\").toString();\n              }\n            }"
+    }
+  ]
+}

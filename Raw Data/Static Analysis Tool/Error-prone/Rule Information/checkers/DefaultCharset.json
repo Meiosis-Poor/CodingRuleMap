@@ -1,0 +1,182 @@
+{
+  "name": "DefaultCharset",
+  "language": "java",
+  "description": "Implicit use of the platform default charset, which can result in differing behaviour between JVM executions or incorrect behavior if the encoding of the data source doesn't match expectations.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 519,
+  "branches": 53,
+  "apis": 11,
+  "test": [
+    {
+      "description": "bothFixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              byte[] f(String s) {\n                // BUG: Diagnostic contains: 'return s.getBytes(UTF_8);' or 'return\n                // s.getBytes(Charset.defaultCharset());'\n                return s.getBytes();\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f(String s, byte[] b, OutputStream out, InputStream in) throws Exception {\n                // BUG: Diagnostic contains: s.getBytes(UTF_8);\n                s.getBytes();\n                // BUG: Diagnostic contains: new String(b, UTF_8);\n                new String(b);\n                // BUG: Diagnostic contains: new String(b, 0, 0, UTF_8);\n                new String(b, 0, 0);\n                // BUG: Diagnostic contains: new OutputStreamWriter(out, UTF_8);\n                new OutputStreamWriter(out);\n                // BUG: Diagnostic contains: new InputStreamReader(in, UTF_8);\n                new InputStreamReader(in);\n              }\n            }"
+    },
+    {
+      "description": "reader",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                // BUG: Diagnostic contains: Files.newBufferedReader(Paths.get(s), UTF_8);\n                new FileReader(s);\n                // BUG: Diagnostic contains: Files.newBufferedReader(f.toPath(), UTF_8);\n                new FileReader(f);\n              }\n            }"
+    },
+    {
+      "description": "writer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102
+      ],
+      "code": "import java.io.*;\n\nclass Test {\n  static final boolean CONST = true;\n\n  void f(File f, String s, boolean flag) throws Exception {\n    // BUG: Diagnostic contains: Files.newBufferedWriter(Paths.get(s), UTF_8);\n    new FileWriter(s);\n    // BUG: Diagnostic contains: Files.newBufferedWriter(Paths.get(s), UTF_8, CREATE, APPEND);\n    new FileWriter(s, true);\n    // BUG: Diagnostic contains: Files.newBufferedWriter(Paths.get(s), UTF_8, CREATE, APPEND);\n    new FileWriter(s, CONST);\n    // BUG: Diagnostic contains: Files.newBufferedWriter(f.toPath(), UTF_8);\n    new FileWriter(f);\n    // BUG: Diagnostic contains: Files.newBufferedWriter(f.toPath(), UTF_8, CREATE, APPEND);\n    new FileWriter(f, true);\n    // BUG: Diagnostic contains: Files.newBufferedWriter(f.toPath(), UTF_8);\n    new FileWriter(f, false);\n    // BUG: Diagnostic contains: Files.newBufferedWriter(f.toPath(), UTF_8, flag ? new\n    // StandardOpenOption[] {CREATE, APPEND} : new StandardOpenOption[] {CREATE}\n    new FileWriter(f, flag);\n  }\n}"
+    },
+    {
+      "description": "buffered",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "import java.io.*;\n\nclass Test {\n  void f(String s) throws Exception {\n    // BUG: Diagnostic contains: try (BufferedReader reader = Files.newBufferedReader(Paths.get(s),\n    // UTF_8)) {}'\n    try (BufferedReader reader = new BufferedReader(new FileReader(s))) {}\n    // BUG: Diagnostic contains: try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(s),\n    // UTF_8)) {}\n    try (BufferedWriter writer = new BufferedWriter(new FileWriter(s))) {}\n  }\n}"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "import static java.nio.charset.StandardCharsets.UTF_8;\nimport java.io.*;\n\nclass Test {\n  void f(String s, byte[] b, OutputStream out, InputStream in, File f) throws Exception {\n    s.getBytes(UTF_8);\n    new String(b, UTF_8);\n    new String(b, 0, 0, UTF_8);\n    new OutputStreamWriter(out, UTF_8);\n    new InputStreamReader(in, UTF_8);\n  }\n}"
+    },
+    {
+      "description": "ignoreFileDescriptor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f(FileDescriptor fd) throws Exception {\n                try (BufferedReader reader = new BufferedReader(new FileReader(fd))) {}\n                try (BufferedWriter writer = new BufferedWriter(new FileWriter(fd))) {}\n              }\n            }"
+    },
+    {
+      "description": "guavaReader",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "import java.io.*;\n            import com.google.common.io.Files;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                new FileReader(s);\n                new FileReader(f);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import com.google.common.io.Files;\n            import java.io.*;\n            import java.io.File;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                Files.newReader(new File(s), UTF_8);\n                Files.newReader(f, UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "guavaWriterImportAppend",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        231
+      ],
+      "code": "import java.io.*;\n            import com.google.common.io.Files;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                new FileWriter(s, true);\n                new FileWriter(f, true);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import static java.nio.file.StandardOpenOption.APPEND;\n            import static java.nio.file.StandardOpenOption.CREATE;\n            import com.google.common.io.Files;\n            import java.io.*;\n            import java.nio.file.Paths;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                java.nio.file.Files.newBufferedWriter(Paths.get(s), UTF_8, CREATE, APPEND);\n                java.nio.file.Files.newBufferedWriter(f.toPath(), UTF_8, CREATE, APPEND);\n              }\n            }"
+    },
+    {
+      "description": "guavaWriter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        267
+      ],
+      "code": "import java.io.*;\n            import com.google.common.io.Files;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                new FileWriter(s);\n                new FileWriter(f);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import com.google.common.io.Files;\n            import java.io.*;\n            import java.io.File;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                Files.newWriter(new File(s), UTF_8);\n                Files.newWriter(f, UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "androidReader",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        301
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                new FileReader(s);\n                new FileReader(f);\n              }\n            }"
+    },
+    {
+      "description": "androidWriter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        321
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f(String s, File f) throws Exception {\n                new FileWriter(s);\n                new FileWriter(f);\n              }\n            }"
+    },
+    {
+      "description": "variableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        341
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f(File f) throws Exception {\n                FileWriter w = new FileWriter(f);\n                FileReader r = new FileReader(f);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import java.io.*;\n            import java.io.Reader;\n            import java.io.Writer;\n            import java.nio.file.Files;\n\n            class Test {\n              void f(File f) throws Exception {\n                Writer w = Files.newBufferedWriter(f.toPath(), UTF_8);\n                Reader r = Files.newBufferedReader(f.toPath(), UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "variableFixAtADistance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        375
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              FileWriter w = null;\n              FileReader r = null;\n\n              void f(File f) throws Exception {\n                w = new FileWriter(f);\n                r = new FileReader(f);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import java.io.*;\n            import java.io.Reader;\n            import java.io.Writer;\n            import java.nio.file.Files;\n\n            class Test {\n              Writer w = null;\n              Reader r = null;\n\n              void f(File f) throws Exception {\n                w = Files.newBufferedWriter(f.toPath(), UTF_8);\n                r = Files.newBufferedReader(f.toPath(), UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "printWriter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        415
+      ],
+      "code": "import java.io.File;\n            import java.io.PrintWriter;\n\n            class Test {\n              void f() throws Exception {\n                PrintWriter pw1 = new PrintWriter(System.err, true);\n                PrintWriter pw2 = new PrintWriter(System.err);\n                PrintWriter pw3 = new PrintWriter(\"test\");\n                PrintWriter pw4 = new PrintWriter(new File(\"test\"));\n              }\n            }\n            \n\nimport static java.nio.charset.StandardCharsets.UTF_8;\nimport java.io.BufferedWriter;\nimport java.io.File;\nimport java.io.OutputStreamWriter;\nimport java.io.PrintWriter;\n\nclass Test {\n  void f() throws Exception {\n    PrintWriter pw1 =\n        new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.err, UTF_8)), true);\n    PrintWriter pw2 =\n        new PrintWriter(new BufferedWriter(new OutputStreamWriter(System.err, UTF_8)));\n    PrintWriter pw3 = new PrintWriter(\"test\", UTF_8);\n    PrintWriter pw4 = new PrintWriter(new File(\"test\"), UTF_8);\n  }\n}"
+    },
+    {
+      "description": "byteString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        456
+      ],
+      "code": "import com.google.protobuf.ByteString;\n\n            class Test {\n              void f() throws Exception {\n                ByteString.copyFrom(\"hello\".getBytes());\n              }\n            }\n            \n\n            import com.google.protobuf.ByteString;\n\n            class Test {\n              void f() throws Exception {\n                ByteString.copyFromUtf8(\"hello\");\n              }\n            }"
+    },
+    {
+      "description": "byteStringDefaultCharset",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        484
+      ],
+      "code": "import com.google.protobuf.ByteString;\n\n            class Test {\n              void f() throws Exception {\n                ByteString.copyFrom(\"hello\".getBytes());\n              }\n            }\n            \n\n            import com.google.protobuf.ByteString;\n            import java.nio.charset.Charset;\n\n            class Test {\n              void f() throws Exception {\n                ByteString.copyFrom(\"hello\", Charset.defaultCharset());\n              }\n            }"
+    },
+    {
+      "description": "byteStringDefaultCharset_staticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        514
+      ],
+      "code": "import static com.google.protobuf.ByteString.copyFrom;\n\n            class Test {\n              void f() throws Exception {\n                copyFrom(\"hello\".getBytes());\n              }\n            }\n            \n\n            import static com.google.protobuf.ByteString.copyFrom;\n            import java.nio.charset.Charset;\n\n            class Test {\n              void f() throws Exception {\n                copyFrom(\"hello\", Charset.defaultCharset());\n              }\n            }"
+    },
+    {
+      "description": "scannerDefaultCharset",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        544
+      ],
+      "code": "import java.util.Scanner;\n            import java.io.File;\n            import java.io.InputStream;\n            import java.nio.channels.ReadableByteChannel;\n            import java.nio.file.Path;\n\n            class Test {\n              void f() throws Exception {\n                new Scanner((InputStream) null);\n                new Scanner((File) null);\n                new Scanner((Path) null);\n                new Scanner((ReadableByteChannel) null);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import java.io.File;\n            import java.io.InputStream;\n            import java.nio.channels.ReadableByteChannel;\n            import java.nio.file.Path;\n            import java.util.Scanner;\n\n            class Test {\n              void f() throws Exception {\n                new Scanner((InputStream) null, UTF_8);\n                new Scanner((File) null, UTF_8);\n                new Scanner((Path) null, UTF_8);\n                new Scanner((ReadableByteChannel) null, UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "withVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        587
+      ],
+      "code": "import java.io.File;\n            import java.io.FileWriter;\n\n            class Test {\n              void f(File file) throws Exception {\n                var fileWriter = new FileWriter(file);\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import java.io.File;\n            import java.io.FileWriter;\n            import java.nio.file.Files;\n\n            class Test {\n              void f(File file) throws Exception {\n                var fileWriter = Files.newBufferedWriter(file.toPath(), UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "byteArrayOutputStream",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        619
+      ],
+      "code": "import java.io.ByteArrayOutputStream;\n\n            class Test {\n              String f(ByteArrayOutputStream b) throws Exception {\n                return b.toString();\n              }\n            }\n            \n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n            import java.io.ByteArrayOutputStream;\n\n            class Test {\n              String f(ByteArrayOutputStream b) throws Exception {\n                return b.toString(UTF_8);\n              }\n            }"
+    }
+  ]
+}

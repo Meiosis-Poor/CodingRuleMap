@@ -1,0 +1,62 @@
+{
+  "name": "MissingRuntimeRetention",
+  "language": "java",
+  "description": "Scoping and qualifier annotations must have runtime retention.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 144,
+  "branches": 11,
+  "apis": 4,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import static java.lang.annotation.ElementType.METHOD;\n            import static java.lang.annotation.ElementType.TYPE;\n            import static java.lang.annotation.RetentionPolicy.SOURCE;\n\n            import com.google.inject.BindingAnnotation;\n            import com.google.inject.ScopeAnnotation;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n            import javax.inject.Qualifier;\n            import javax.inject.Scope;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class MissingRuntimeRetentionPositiveCases {\n              /** A scoping (@Scope) annotation with SOURCE retention */\n              @Scope\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              @Retention(SOURCE)\n              public @interface TestAnnotation1 {}\n\n              /** A scoping (@ScopingAnnotation) annotation with SOURCE retention. */\n              @ScopeAnnotation\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              @Retention(SOURCE)\n              public @interface TestAnnotation2 {}\n\n              /** A qualifier (@Qualifier) annotation with SOURCE retention. */\n              @Qualifier\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              @Retention(SOURCE)\n              public @interface TestAnnotation3 {}\n\n              /** A qualifier (@BindingAnnotation) annotation with SOURCE retention. */\n              @BindingAnnotation\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              @Retention(SOURCE)\n              public @interface TestAnnotation4 {}\n\n              /** A qualifier annotation with default retention. */\n              @BindingAnnotation\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              public @interface TestAnnotation5 {}\n\n              /** A dagger map key annotation with default retention. */\n              @dagger.MapKey\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              public @interface TestAnnotation6 {}\n\n              /** A Guice map key annotation with default retention. */\n              @com.google.inject.multibindings.MapKey\n              @Target({TYPE, METHOD})\n              // BUG: Diagnostic contains: @Retention(RUNTIME)\n              public @interface TestAnnotation7 {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import static java.lang.annotation.ElementType.METHOD;\n            import static java.lang.annotation.ElementType.TYPE;\n            import static java.lang.annotation.RetentionPolicy.RUNTIME;\n            import static java.lang.annotation.RetentionPolicy.SOURCE;\n\n            import com.google.inject.BindingAnnotation;\n            import com.google.inject.ScopeAnnotation;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n            import javax.inject.Qualifier;\n            import javax.inject.Scope;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class MissingRuntimeRetentionNegativeCases {\n              /** A scoping (@Scope) annotation with runtime retention */\n              @Scope\n              @Target({TYPE, METHOD})\n              @Retention(RUNTIME)\n              public @interface TestAnnotation1 {}\n\n              /** A scoping (@ScopingAnnotation) annotation with runtime retention. */\n              @ScopeAnnotation\n              @Target({TYPE, METHOD})\n              @Retention(RUNTIME)\n              public @interface TestAnnotation2 {}\n\n              /** A qualifier (@Qualifier) annotation with runtime retention. */\n              @Qualifier\n              @Target({TYPE, METHOD})\n              @Retention(RUNTIME)\n              public @interface TestAnnotation3 {}\n\n              /** A qualifier (@BindingAnnotation) annotation with runtime retention. */\n              @BindingAnnotation\n              @Target({TYPE, METHOD})\n              @Retention(RUNTIME)\n              public @interface TestAnnotation4 {}\n\n              /** A non-qualifier, non-scoping annotation without runtime retention. */\n              @Retention(SOURCE)\n              public @interface TestAnnotation5 {}\n\n              /** A dagger map key annotation. */\n              @dagger.MapKey\n              @Retention(RUNTIME)\n              public @interface TestAnnotation6 {}\n\n              /** A Guice map key annotation. */\n              @com.google.inject.multibindings.MapKey\n              @Retention(RUNTIME)\n              public @interface TestAnnotation7 {}\n            }\\"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "import static java.lang.annotation.ElementType.METHOD;\n            import static java.lang.annotation.ElementType.TYPE;\n\n            import java.lang.annotation.Target;\n            import javax.inject.Qualifier;\n\n            @Qualifier\n            @Target({TYPE, METHOD})\n            public @interface Anno {}\n            \n\n            import static java.lang.annotation.ElementType.METHOD;\n            import static java.lang.annotation.ElementType.TYPE;\n            import static java.lang.annotation.RetentionPolicy.RUNTIME;\n\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n            import javax.inject.Qualifier;\n\n            @Qualifier\n            @Target({TYPE, METHOD})\n            @Retention(RUNTIME)\n            public @interface Anno {}"
+    },
+    {
+      "description": "nestedQualifierInDaggerModule",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        212
+      ],
+      "code": "@dagger.Module\n            class DaggerModule {\n              @javax.inject.Scope\n              public @interface TestAnnotation {}\n            }"
+    },
+    {
+      "description": "ignoredOnAndroid",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "@javax.inject.Scope\n            public @interface TestAnnotation {}"
+    },
+    {
+      "description": "sourceRetentionStillFiringOnAndroid",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        240
+      ],
+      "code": "import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n\n            @javax.inject.Scope\n            // BUG: Diagnostic contains: @Retention(RUNTIME)\n            @Retention(RetentionPolicy.SOURCE)\n            public @interface TestAnnotation {}"
+    }
+  ]
+}

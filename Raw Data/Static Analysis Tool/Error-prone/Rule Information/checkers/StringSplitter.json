@@ -1,0 +1,174 @@
+{
+  "name": "StringSplitter",
+  "language": "java",
+  "description": "String.split(String) has surprising behavior",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 285,
+  "branches": 38,
+  "apis": 4,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "class Test {\n              void f() {\n                for (String s : \"\".split(\":\")) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n\n            class Test {\n              void f() {\n                for (String s : Splitter.on(':').split(\"\")) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_localVarTypeInference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "class Test {\n              void f() {\n                var lines = \"\".split(\":\");\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n\n            class Test {\n              void f() {\n                var lines = Splitter.on(':').split(\"\");\n              }\n            }"
+    },
+    {
+      "description": "positive_patternIsSymbol",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "class Test {\n              static final String NON_REGEX_PATTERN_STRING = \":\";\n              static final String REGEX_PATTERN_STRING = \".*\";\n              static final String CONVERTIBLE_PATTERN_STRING = \"\\\\\\\\Q\\\\\\\\E:\";\n\n              void f() {\n                for (String s : \"\".split(NON_REGEX_PATTERN_STRING)) {}\n                for (String s : \"\".split(REGEX_PATTERN_STRING)) {}\n                for (String s : \"\".split(CONVERTIBLE_PATTERN_STRING)) {}\n                for (String s : \"\".split((CONVERTIBLE_PATTERN_STRING))) {}\n              }\n            }\n            \n\nimport com.google.common.base.Splitter;\nimport java.util.regex.Pattern;\n\nclass Test {\n  static final String NON_REGEX_PATTERN_STRING = \":\";\n  static final String REGEX_PATTERN_STRING = \".*\";\n  static final String CONVERTIBLE_PATTERN_STRING = \"\\\\\\\\Q\\\\\\\\E:\";\n\n  void f() {\n    for (String s : Splitter.on(Pattern.compile(NON_REGEX_PATTERN_STRING)).split(\"\")) {}\n    for (String s : Splitter.on(Pattern.compile(REGEX_PATTERN_STRING)).split(\"\")) {}\n    for (String s : Splitter.on(Pattern.compile(CONVERTIBLE_PATTERN_STRING)).split(\"\")) {}\n    for (String s : Splitter.on(Pattern.compile((CONVERTIBLE_PATTERN_STRING))).split(\"\")) {}\n  }\n}"
+    },
+    {
+      "description": "positive_patternIsConcatenation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "class Test {\n              void f() {\n                for (String s : \"\".split(\":\" + 0)) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import java.util.regex.Pattern;\n\n            class Test {\n              void f() {\n                for (String s : Splitter.on(Pattern.compile(\":\" + 0)).split(\"\")) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_patternNotConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        154
+      ],
+      "code": "class Test {\n              void f() {\n                String pattern = \":\";\n                for (String s : \"\".split(pattern)) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import java.util.regex.Pattern;\n\n            class Test {\n              void f() {\n                String pattern = \":\";\n                for (String s : Splitter.on(Pattern.compile(pattern)).split(\"\")) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_singleEscapedCharacter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        183
+      ],
+      "code": "class Test {\n              void f() {\n                for (String s : \"\".split(\"\\\\u0000\")) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n\n            class Test {\n              void f() {\n                for (String s : Splitter.on('\\\\u0000').split(\"\")) {}\n              }\n            }"
+    },
+    {
+      "description": "varLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        209
+      ],
+      "code": "class Test {\n              void f() {\n                String[] pieces = \"\".split(\":\");\n                for (String s : pieces) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n\n            class Test {\n              void f() {\n                Iterable<String> pieces = Splitter.on(':').split(\"\");\n                for (String s : pieces) {}\n              }\n            }"
+    },
+    {
+      "description": "varLoopLength",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        237
+      ],
+      "code": "class Test {\n              void f() {\n                String[] pieces = \"\".split(\":\");\n                for (int i = 0; i < pieces.length; i++) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import java.util.List;\n\n            class Test {\n              void f() {\n                List<String> pieces = Splitter.on(':').splitToList(\"\");\n                for (int i = 0; i < pieces.size(); i++) {}\n              }\n            }"
+    },
+    {
+      "description": "varList",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        266
+      ],
+      "code": "class Test {\n              void f() {\n                String[] pieces = \"\".split(\":\");\n                System.err.println(pieces[0]);\n                System.err.println(pieces[1]);\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import java.util.List;\n\n            class Test {\n              void f() {\n                List<String> pieces = Splitter.on(':').splitToList(\"\");\n                System.err.println(pieces.get(0));\n                System.err.println(pieces.get(1));\n              }\n            }"
+    },
+    {
+      "description": "positiveRegex",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        297
+      ],
+      "code": "class Test {\n              void f() {\n                for (String s : \"\".split(\".*foo\\\\\\\\t\")) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import java.util.regex.Pattern;\n\n            class Test {\n              void f() {\n                for (String s : Splitter.on(Pattern.compile(\".*foo\\\\\\\\t\")).split(\"\")) {}\n              }\n            }"
+    },
+    {
+      "description": "character",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        324
+      ],
+      "code": "class Test {\n              void f() {\n                for (String s : \"\".split(\"c\")) {}\n                for (String s : \"\".split(\"abc\")) {}\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n\n            class Test {\n              void f() {\n                for (String s : Splitter.on('c').split(\"\")) {}\n                for (String s : Splitter.on(\"abc\").split(\"\")) {}\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        352
+      ],
+      "code": ""
+    },
+    {
+      "description": "mutation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        366
+      ],
+      "code": "class Test {\n              void f() {\n                String[] xs = \"\".split(\"c\");\n                xs[0] = null;\n                System.err.println(xs[0]);\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void f() {\n                List<String> xs = new ArrayList<>(Splitter.on('c').splitToList(\"\"));\n                xs.set(0, null);\n                System.err.println(xs.get(0));\n              }\n            }"
+    },
+    {
+      "description": "b72088500",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        399
+      ],
+      "code": "class Test {\n              void f(String input) {\n                String[] lines = input.split(\"\\\\\\\\r?\\\\\\\\n\");\n                System.err.println(lines[0]);\n              }\n            }\n            \n\nimport com.google.common.base.Splitter;\nimport java.util.List;\nimport java.util.regex.Pattern;\n\nclass Test {\n  void f(String input) {\n    List<String> lines = Splitter.on(Pattern.compile(\"\\\\\\\\r?\\\\\\\\n\")).splitToList(input);\n    System.err.println(lines.get(0));\n  }\n}"
+    },
+    {
+      "description": "escape",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        429
+      ],
+      "code": "class Test {\n              void f() {\n                String[] pieces = \"\".split(\"\\\\n\\\\t\\\\r\\\\f\");\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n\n            class Test {\n              void f() {\n                Iterable<String> pieces = Splitter.on(\"\\\\n\\\\t\\\\r\\\\f\").split(\"\");\n              }\n            }"
+    },
+    {
+      "description": "immediateArrayAccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        455
+      ],
+      "code": "class Test {\n              void f() {\n                String x = \"\".split(\"c\")[0];\n                x = \"\".split(\"c\")[1];\n              }\n            }\n            \n\n            import com.google.common.base.Splitter;\n            import com.google.common.collect.Iterables;\n\n            class Test {\n              void f() {\n                String x = Iterables.get(Splitter.on('c').split(\"\"), 0);\n                x = Iterables.get(Splitter.on('c').split(\"\"), 1);\n              }\n            }"
+    },
+    {
+      "description": "stringSplitPositive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        484
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * Positive test cases for StringSplitter check.\n             *\n             * @author dturner@twosigma.com (David Turner)\n             */\n            public class StringSplitterPositiveCases {\n\n              public void StringSplitOneArg() {\n                String foo = \"a:b\";\n                // BUG: Diagnostic contains:\n                String[] xs = foo.split(\":\");\n              }\n            }\\"
+    },
+    {
+      "description": "stringSplitNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        509
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * Negative test cases for StringSplitter check.\n             *\n             * @author dturner@twosigma.com (David Turner)\n             */\n            public class StringSplitterNegativeCases {\n              public void StringSplitTwoArgs() {\n                String foo = \"a:b\";\n                foo.split(\":\", 1);\n              }\n\n              public void StringSplitTwoArgsOneNegative() {\n                String foo = \"a:b\";\n                foo.split(\":\", -1);\n              }\n            }\\"
+    },
+    {
+      "description": "noSplitterOnClassPath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        538
+      ],
+      "code": "class Test {\n              void f() {\n                for (String s : \"\".split(\":\")) {}\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                for (String s : \"\".split(\":\", -1)) {}\n              }\n            }"
+    },
+    {
+      "description": "patternSplit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        563
+      ],
+      "code": "import java.util.regex.Pattern;\n\n            class Test {\n              void f() {\n                String x = Pattern.compile(\"\").split(\"c\")[0];\n                for (String s : Pattern.compile(\"\").split(\":\")) {}\n                String[] xs = Pattern.compile(\"c\").split(\"\");\n                xs[0] = null;\n                System.err.println(xs[0]);\n                String[] pieces = Pattern.compile(\":\").split(\"\");\n                for (int i = 0; i < pieces.length; i++) {}\n              }\n            }\n            \n\nimport com.google.common.base.Splitter;\nimport com.google.common.collect.Iterables;\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.regex.Pattern;\n\nclass Test {\n  void f() {\n    String x = Iterables.get(Splitter.on(Pattern.compile(\"\")).split(\"c\"), 0);\n    for (String s : Splitter.on(Pattern.compile(\"\")).split(\":\")) {}\n    List<String> xs = new ArrayList<>(Splitter.on(Pattern.compile(\"c\")).splitToList(\"\"));\n    xs.set(0, null);\n    System.err.println(xs.get(0));\n    List<String> pieces = Splitter.on(Pattern.compile(\":\")).splitToList(\"\");\n    for (int i = 0; i < pieces.size(); i++) {}\n  }\n}"
+    }
+  ]
+}

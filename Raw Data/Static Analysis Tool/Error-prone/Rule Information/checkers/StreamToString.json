@@ -1,0 +1,46 @@
+{
+  "name": "StreamToString",
+  "language": "java",
+  "description": "Calling toString on a Stream does not provide useful information",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 50,
+  "branches": 2,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.util.Arrays;\n\n            class Test {\n              public static void main(String[] args) {\n                // BUG: Diagnostic contains:\n                System.err.println(Arrays.asList(42).stream());\n                // BUG: Diagnostic contains:\n                Arrays.asList(42).stream().toString();\n                // BUG: Diagnostic contains:\n                String.valueOf(Arrays.asList(42).stream());\n                // BUG: Diagnostic contains:\n                String s = \"\" + Arrays.asList(42).stream();\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        55
+      ],
+      "code": "import java.util.Arrays;\nimport java.util.stream.Collectors;\n\nclass Test {\n  public static void main(String[] args) {\n    System.err.println(\n        Arrays.asList(42).stream().map(String::valueOf).collect(Collectors.joining(\", \")));\n    String.valueOf(\n        Arrays.asList(42).stream().map(String::valueOf).collect(Collectors.joining(\", \")));\n    String s =\n        \"\" + Arrays.asList(42).stream().map(String::valueOf).collect(Collectors.joining(\", \"));\n    String.format(\"%s %s\", null, null);\n  }\n}"
+    },
+    {
+      "description": "withinStreamClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "public abstract class Test implements java.util.stream.Stream {\n              public String s() {\n                return toString();\n              }\n            }"
+    },
+    {
+      "description": "viaJoiner",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "import com.google.common.base.Joiner;\n            import java.util.stream.Stream;\n\n            class Test {\n              public void s(Stream<String> xs) {\n                // BUG: Diagnostic contains:\n                var x = Joiner.on(\"foo\").join(xs, xs);\n                // BUG: Diagnostic contains:\n                var y = Joiner.on(\"foo\").join(null, null, new Stream[] {xs});\n              }\n            }"
+    }
+  ]
+}

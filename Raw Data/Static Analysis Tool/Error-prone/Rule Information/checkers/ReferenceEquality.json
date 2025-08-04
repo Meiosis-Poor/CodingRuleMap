@@ -1,0 +1,206 @@
+{
+  "name": "ReferenceEquality",
+  "language": "java",
+  "description": "Comparison using reference equality instead of value equality",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 131,
+  "branches": 22,
+  "apis": 1,
+  "test": [
+    {
+      "description": "protoGetter_nonnull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Foo {\n              void something(TestProtoMessage f1, TestProtoMessage f2) {\n                // BUG: Diagnostic contains: boolean b = Objects.equals(f1, f2);\n                boolean b = f1 == f2;\n                // BUG: Diagnostic contains: b = f1.getMessage().equals(f2.getMessage())\n                b = f1.getMessage() == f2.getMessage();\n              }\n            }"
+    },
+    {
+      "description": "negative_const",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "class Foo {}\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              public static final Foo CONST = new Foo();\n\n              boolean f(Foo a) {\n                return a == CONST;\n              }\n\n              boolean f(Object o, Foo a) {\n                return o == a;\n              }\n            }"
+    },
+    {
+      "description": "negative_extends_equalsObject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "class Sup {\n              public boolean equals(Object o) {\n                return false;\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test extends Sup {\n              boolean f(Object a, Test b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "positive_extendsAbstract_equals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "abstract class Sup {\n              public abstract boolean equals(Object o);\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            abstract class Test extends Sup {\n              boolean f(Test a, Test b) {\n                // BUG: Diagnostic contains: a.equals(b)\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "negative_implementsInterface_equals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "interface Sup {\n              public boolean equals(Object o);\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test implements Sup {\n              boolean f(Test a, Test b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "negative_noEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Test a, Test b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "positive_equal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                // BUG: Diagnostic contains: a.equals(b)\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "positive_equalWithOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        192
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                return a == b || (a.equals(b));\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                return a.equals(b);\n              }\n            }"
+    },
+    {
+      "description": "positive_equalWithOr_objectsEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "import com.google.common.base.Optional;\n            import com.google.common.base.Objects;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                boolean eq = a == b || Objects.equal(a, b);\n                return a == b || (java.util.Objects.equals(a, b));\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n            import com.google.common.base.Objects;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                boolean eq = Objects.equal(a, b);\n                return java.util.Objects.equals(a, b);\n              }\n            }"
+    },
+    {
+      "description": "positive_notEqual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> a, Optional<Integer> b) {\n                // BUG: Diagnostic contains: !a.equals(b)\n                return a != b;\n              }\n            }"
+    },
+    {
+      "description": "negative_impl",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        270
+      ],
+      "code": "class Test {\n              public boolean equals(Object o) {\n                return this == o;\n              }\n            }"
+    },
+    {
+      "description": "negative_enum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        285
+      ],
+      "code": "import javax.lang.model.element.ElementKind;\n\n            class Test {\n              boolean f(ElementKind a, ElementKind b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "customEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": "enum Kind {\n              FOO(42);\n              private final int x;\n\n              Kind(int x) {\n                this.x = x;\n              }\n            }\n            \n\n            class Test {\n              boolean f(Kind a, Kind b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "negative_null",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        329
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<Integer> b) {\n                return b == null;\n              }\n            }"
+    },
+    {
+      "description": "negative_abstractEq",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        346
+      ],
+      "code": "interface Sup {\n              public abstract boolean equals(Object o);\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test implements Sup {\n              boolean f(Object a, Test b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "negativeCase_class",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        370
+      ],
+      "code": "class Test {\n              boolean f(String s) {\n                return s.getClass() == String.class;\n              }\n            }"
+    },
+    {
+      "description": "transitiveEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        385
+      ],
+      "code": "public class Super {\n              public boolean equals(Object o) {\n                return false;\n              }\n            }\n            \n\n            public class Mid extends Super {}\n            \n\n            public class Sub extends Mid {}\n            \n\n            abstract class Test {\n              boolean f(Sub a, Sub b) {\n                // BUG: Diagnostic contains: a.equals(b)\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "erroneous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        429
+      ],
+      "code": ""
+    },
+    {
+      "description": "typaram",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        446
+      ],
+      "code": "class Test<T extends String, X> {\n              boolean f(T t) {\n                return t == null;\n              }\n\n              boolean g(T t1, T t2) {\n                // BUG: Diagnostic contains:\n                return t1 == t2;\n              }\n\n              boolean g(X x1, X x2) {\n                return x1 == x2;\n              }\n            }"
+    },
+    {
+      "description": "negative_compareTo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        470
+      ],
+      "code": "class Test implements Comparable<Test> {\n              public int compareTo(Test o) {\n                return this == o ? 0 : -1;\n              }\n\n              public boolean equals(Object obj) {\n                return obj instanceof Test;\n              }\n\n              public int hashCode() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "likeCompareToButDifferentName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        493
+      ],
+      "code": "class Test implements Comparable<Test> {\n              public int compareTo(Test o) {\n                return this == o ? 0 : -1;\n              }\n\n              public int notCompareTo(Test o) {\n                // BUG: Diagnostic contains:\n                return this == o ? 0 : -1;\n              }\n\n              public boolean equals(Object obj) {\n                return obj instanceof Test;\n              }\n\n              public int hashCode() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "positive_compareTo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        521
+      ],
+      "code": "class Test implements Comparable<String> {\n              String f;\n\n              public int compareTo(String o) {\n                // BUG: Diagnostic contains:\n                return f == o ? 0 : -1;\n              }\n            }"
+    },
+    {
+      "description": "negative_implementsComparator",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        539
+      ],
+      "code": "import java.util.Comparator;\n\n            class Test {\n              static class Comparator1 implements Comparator<String> {\n                @Override\n                public int compare(String o1, String o2) {\n                  if (o1 == o2) {\n                    return 0;\n                  } else if (o1 == null) {\n                    return -1;\n                  } else if (o2 == null) {\n                    return 1;\n                  } else {\n                    return -1;\n                  }\n                }\n              }\n\n              static class Comparator2 implements Comparator<String> {\n                @Override\n                public int compare(String o1, String o2) {\n                  return o1 == o2 ? 0 : -1;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_lambdaComparator",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        575
+      ],
+      "code": "import java.util.Comparator;\n\n            class Test {\n              private static final Comparator<String> comparator1 =\n                  (o1, o2) -> {\n                    if (o1 == o2) {\n                      return 0;\n                    } else if (o1 == null) {\n                      return -1;\n                    } else if (o2 == null) {\n                      return 1;\n                    } else {\n                      return -1;\n                    }\n                  };\n              private static final Comparator<String> comparator2 =\n                  (o1, o2) -> {\n                    return o1 == o2 ? 0 : -1;\n                  };\n              private static final Comparator<String> comparator3 = (o1, o2) -> o1 == o2 ? 0 : -1;\n            }"
+    }
+  ]
+}

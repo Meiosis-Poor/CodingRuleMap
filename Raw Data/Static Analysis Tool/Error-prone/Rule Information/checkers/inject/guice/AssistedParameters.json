@@ -1,0 +1,30 @@
+{
+  "name": "AssistedParameters",
+  "language": "java",
+  "description": "A constructor cannot have two @Assisted parameters of the same type unless they are disambiguated with named @Assisted annotations.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 160,
+  "branches": 18,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\nimport com.google.inject.assistedinject.Assisted;\nimport java.util.List;\nimport javax.inject.Inject;\n\n/**\n * @author sgoldfeder@google.com(Steven Goldfeder)\n */\npublic class AssistedParametersPositiveCases {\n\n  /** Class has constructor with two @Assisted parameters of the same type. */\n  public class TestClass1 {\n    @Inject\n    // BUG: Diagnostic contains: java.lang.String: x, y\n    public TestClass1(int n, @Assisted String x, @Assisted String y, int z) {}\n\n    @Inject\n    // BUG: Diagnostic contains: java.lang.String, @Assisted(\"baz\"): x, z\n    public TestClass1(\n        @Assisted(\"foo\") int a,\n        @Assisted(\"foo\") int b,\n        @Assisted(\"baz\") String x,\n        @Assisted(\"baz\") String z) {}\n  }\n\n  /** Class has constructor with two @Assisted parameters of the same type and same value. */\n  public class TestClass2 {\n    @Inject\n    // BUG: Diagnostic contains: int, @Assisted(\"foo\"): x, y\n    public TestClass2(int n, @Assisted(\"foo\") int x, @Assisted(\"foo\") int y, String z) {}\n  }\n\n  /** Class has constructor with two @Assisted parameters of the same parameterized type. */\n  public class TestClass3 {\n    private static final String FOO = \"foo\";\n\n    @Inject\n    // BUG: Diagnostic contains: java.util.List<java.lang.String>, @Assisted(\"foo\"): x, y\n    public TestClass3(\n        int n, @Assisted(\"foo\") List<String> x, @Assisted(FOO) List<String> y, String z) {}\n\n    @Inject\n    // BUG: Diagnostic contains: int, @Assisted(\"bar\"): x, y\n    public TestClass3(\n        @Assisted() int n, @Assisted(\"bar\") int x, @Assisted(\"bar\") int y, String z) {}\n  }\n\n  class GenericClass<T> {\n    @Inject\n    // BUG: Diagnostic contains: T: a, b\n    GenericClass(@Assisted T a, @Assisted T b) {}\n\n    @Inject\n    // BUG: Diagnostic contains: int: a, b\n    GenericClass(@Assisted Integer a, @Assisted int b) {}\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\nimport com.google.inject.assistedinject.Assisted;\nimport java.util.List;\nimport javax.inject.Inject;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class AssistedParametersNegativeCases {\n\n  /** Class has constructor with two @Assisted parameters of different types. */\n  public class TestClass1 {\n    @Inject\n    public TestClass1(@Assisted int x, @Assisted String y, long z) {}\n  }\n\n  /**\n   * Class has constructor with two @Assisted parameters, but the @Assisted annotations have\n   * different values.\n   */\n  public class TestClass2 {\n    @Inject\n    public TestClass2(@Assisted(\"foo\") int x, @Assisted(\"bar\") int y, String z) {}\n  }\n\n  /**\n   * Class has constructor with one @Assisted parameter with no value specified and another\n   * parameter of the same type.\n   */\n  public class TestClass3 {\n    @Inject\n    public TestClass3(@Assisted int x, int y, String z) {}\n  }\n\n  /**\n   * Class has constructor with one @Assisted parameters with a value specified and another\n   * parameter of the same type.\n   */\n  public class TestClass4 {\n    @Inject\n    public TestClass4(@Assisted(\"foo\") int x, int y, String z) {}\n  }\n\n  /**\n   * Class has constructor with two @Assisted parameters with the same value and generic type and\n   * different type parameters.\n   */\n  public class TestClass5 {\n    @Inject\n    public TestClass5(\n        @Assisted(\"foo\") List<String> x, @Assisted(\"foo\") List<Integer> y, String z) {}\n  }\n}\\"
+    }
+  ]
+}

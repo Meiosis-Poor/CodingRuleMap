@@ -1,0 +1,54 @@
+{
+  "name": "DeeplyNested",
+  "language": "java",
+  "description": "Very deeply nested code may lead to StackOverflowErrors during compilation",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 169,
+  "branches": 20,
+  "apis": 3,
+  "test": [
+    {
+      "description": "refactoringReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static ImmutableList<Integer> createXs() {\n                return ImmutableList.<Integer>builder()\n                    .add(1)\n                    .add(2)\n                    .add(3)\n                    .add(4)\n                    // comment\n                    .add(5)\n                    .add(6)\n                    .add(7)\n                    .add(8)\n                    .add(9)\n                    .add(10)\n                    .build();\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static ImmutableList<Integer> createXs() {\n                ImmutableList.Builder<Integer> builder = ImmutableList.<Integer>builder();\n                builder.add(1);\n                builder.add(2);\n                builder.add(3);\n                builder.add(4);\n                // comment\n                builder.add(5);\n                builder.add(6);\n                builder.add(7);\n                builder.add(8);\n                builder.add(9);\n                builder.add(10);\n                return builder.build();\n              }\n            }"
+    },
+    {
+      "description": "refactoringField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static final ImmutableList<Integer> XS =\n                  ImmutableList.<Integer>builder()\n                      .add(1)\n                      .add(2)\n                      .add(3)\n                      .add(4)\n                      .add(5)\n                      .add(6)\n                      .add(7)\n                      .add(8)\n                      .add(9)\n                      .add(10)\n                      .build();\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static final ImmutableList<Integer> XS = createXs();\n\n              private static ImmutableList<Integer> createXs() {\n                ImmutableList.Builder<Integer> builder = ImmutableList.<Integer>builder();\n                builder.add(1);\n                builder.add(2);\n                builder.add(3);\n                builder.add(4);\n                builder.add(5);\n                builder.add(6);\n                builder.add(7);\n                builder.add(8);\n                builder.add(9);\n                builder.add(10);\n                return builder.build();\n              }\n            }"
+    },
+    {
+      "description": "refactoringNewBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static final ImmutableList<Integer> XS =\n                  new ImmutableList.Builder<Integer>()\n                      .add(1)\n                      .add(2)\n                      .add(3)\n                      .add(4)\n                      .add(5)\n                      .add(6)\n                      .add(7)\n                      .add(8)\n                      .add(9)\n                      .add(10)\n                      .build();\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static final ImmutableList<Integer> XS = createXs();\n\n              private static ImmutableList<Integer> createXs() {\n                ImmutableList.Builder<Integer> builder = new ImmutableList.Builder<Integer>();\n                builder.add(1);\n                builder.add(2);\n                builder.add(3);\n                builder.add(4);\n                builder.add(5);\n                builder.add(6);\n                builder.add(7);\n                builder.add(8);\n                builder.add(9);\n                builder.add(10);\n                return builder.build();\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        191
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              ImmutableList<Integer> xs =\n                  ImmutableList.<Integer>builder()\n                      .add(1)\n                      .add(2)\n                      .add(3)\n                      .add(4)\n                      .add(5)\n                      .add(6)\n                      // BUG: Diagnostic contains:\n                      .add(7)\n                      .add(8)\n                      .add(9)\n                      .add(10)\n                      .build();\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\nclass Test {\n  ImmutableList<Integer> xs = ImmutableList.<Integer>builder().add(1).add(2).add(3).build();\n}"
+    }
+  ]
+}

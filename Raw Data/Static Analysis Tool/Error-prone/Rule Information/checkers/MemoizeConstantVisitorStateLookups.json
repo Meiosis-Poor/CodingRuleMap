@@ -1,0 +1,62 @@
+{
+  "name": "MemoizeConstantVisitorStateLookups",
+  "language": "java",
+  "description": "Anytime you need to look up a constant value from VisitorState, improve performance by creating a cache for it with VisitorState.memoize",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 218,
+  "branches": 22,
+  "apis": 4,
+  "test": [
+    {
+      "description": "replaceSingleUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "import com.google.errorprone.VisitorState;\n            import com.sun.tools.javac.util.Name;\n\n            class Test {\n              public Test(VisitorState state) {\n                Name me = state.getName(\"Test\");\n              }\n            }\n            \n\nimport com.google.errorprone.VisitorState;\nimport com.google.errorprone.suppliers.Supplier;\nimport com.sun.tools.javac.util.Name;\n\nclass Test {\n  public Test(VisitorState state) {\n    Name me = TEST.get(state);\n  }\n\n  private static final Supplier<Name> TEST = VisitorState.memoize(state -> state.getName(\"Test\"));\n}"
+    },
+    {
+      "description": "prefersExistingStringConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "import com.google.errorprone.VisitorState;\n            import com.sun.tools.javac.code.Type;\n\n            class Test {\n              private static final String MAP = \"java.util.Map\";\n\n              public Test(VisitorState state) {\n                Type map = state.getTypeFromString(MAP);\n                Type map2 = state.getTypeFromString(\"java.util.Map\");\n              }\n            }\n            \n\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.suppliers.Supplier;\n            import com.sun.tools.javac.code.Type;\n\n            class Test {\n              private static final String MAP = \"java.util.Map\";\n\n              public Test(VisitorState state) {\n                Type map = JAVA_UTIL_MAP.get(state);\n                Type map2 = JAVA_UTIL_MAP.get(state);\n              }\n\n              private static final Supplier<Type> JAVA_UTIL_MAP =\n                  VisitorState.memoize(state -> state.getTypeFromString(MAP));\n            }"
+    },
+    {
+      "description": "replaceConflictingValues",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "import com.google.errorprone.VisitorState;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.util.Name;\n\n            class Test {\n              public Test(VisitorState state) {\n                Name className = state.getName(\"java.lang.Class\");\n                Type classType = state.getTypeFromString(\"java.lang.Class\");\n                Name lookupAgain = state.getName(\"java.lang.Class\");\n              }\n            }\n            \n\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.suppliers.Supplier;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.util.Name;\n\n            class Test {\n              public Test(VisitorState state) {\n                Name className = JAVA_LANG_CLASS_NAME.get(state);\n                Type classType = JAVA_LANG_CLASS_TYPE.get(state);\n                Name lookupAgain = JAVA_LANG_CLASS_NAME.get(state);\n              }\n\n              private static final Supplier<Name> JAVA_LANG_CLASS_NAME =\n                  VisitorState.memoize(state -> state.getName(\"java.lang.Class\"));\n              private static final Supplier<Type> JAVA_LANG_CLASS_TYPE =\n                  VisitorState.memoize(state -> state.getTypeFromString(\"java.lang.Class\"));\n            }"
+    },
+    {
+      "description": "findingOnLookup",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "import com.google.errorprone.VisitorState;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.util.Name;\n\n            class Test {\n              public Test(VisitorState state) {\n                // BUG: Diagnostic contains:\n                Name className = state.getName(\"java.lang.Class\");\n              }\n            }"
+    },
+    {
+      "description": "negative_doesntMemoizeTwice",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173
+      ],
+      "code": "import com.google.common.collect.ImmutableSet;\n\nimport com.google.errorprone.VisitorState;\nimport com.google.errorprone.suppliers.Supplier;\nimport com.sun.tools.javac.util.Name;\n\nclass Test {\n  private static final Supplier<ImmutableSet<Name>> ALLOWED_NAMES =\n      VisitorState.memoize(state -> ImmutableSet.of(state.getName(\"foo\"), state.getName(\"bar\")));\n}"
+    },
+    {
+      "description": "testSuppressWarnings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        194
+      ],
+      "code": "import com.google.errorprone.VisitorState;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.util.Name;\n\n            class Test {\n              @SuppressWarnings(\"MemoizeConstantVisitorStateLookups\")\n              public Test(VisitorState state) {\n                Name className = state.getName(\"java.lang.Class\");\n              }\n\n              @SuppressWarnings(\"MemoizeConstantVisitorStateLookups\")\n              public void testMethod(VisitorState state) {\n                Name className = state.getName(\"java.lang.Class\");\n              }\n\n              @SuppressWarnings(\"MemoizeConstantVisitorStateLookups\")\n              class InnerClass {\n                void innerMethod(VisitorState state) {\n                  Name className = state.getName(\"java.lang.Class\");\n                }\n              }\n            }"
+    }
+  ]
+}

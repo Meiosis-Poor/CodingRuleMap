@@ -1,0 +1,94 @@
+{
+  "name": "StaticAssignmentOfThrowable",
+  "language": "java",
+  "description": "Saving instances of Throwable in static fields is discouraged, prefer to create them on-demand when an exception is thrown",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 101,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "staticWithThrowableInMethod_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class Test {\n              static Throwable foo;\n\n              public Test(int foo) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: [StaticAssignmentOfThrowable]\n                foo = new NullPointerException(\"assign in method\");\n              }\n            }"
+    },
+    {
+      "description": "staticWithThrowableDuringInitialization_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: [StaticAssignmentOfThrowable]\n              static Throwable foo = new NullPointerException(\"message\");\n\n              public Test(int foo) {}\n            }"
+    },
+    {
+      "description": "staticWithThrowableDuringInitializationFromMethod_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: [StaticAssignmentOfThrowable]\n              static Throwable foo = bar();\n\n              public Test(int foo) {}\n\n              private static Throwable bar() {\n                return new NullPointerException(\"initialized with return value\");\n              }\n            }"
+    },
+    {
+      "description": "dynamicWithThrowableDuringInitializationFromMethod_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "class Test {\n              Throwable foo = bar();\n\n              public Test(int foo) {}\n\n              private static Throwable bar() {\n                return new NullPointerException(\"initialized with return value\");\n              }\n            }"
+    },
+    {
+      "description": "staticWithThrowableDuringConstructor_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "class Test {\n              static Throwable foo;\n\n              public Test(int bar) {\n                foo = new NullPointerException(Integer.toString(bar));\n              }\n            }"
+    },
+    {
+      "description": "staticWithNonThrowableFromMethod_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "class Test {\n              static int foo;\n\n              public Test(int foo) {}\n\n              private void bar() {\n                this.foo = 5;\n              }\n            }"
+    },
+    {
+      "description": "staticWithNonThrowableFromDeclaration_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "class Test {\n              private static final String RULE = \"allow this\";\n\n              public Test(int foo) {}\n            }"
+    },
+    {
+      "description": "dynamic_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161
+      ],
+      "code": "class Test {\n              Throwable foo;\n\n              public Test(int foo) {\n                this.foo = new RuntimeException(\"odd but not an error here\");\n              }\n            }"
+    },
+    {
+      "description": "staticWithThrowableInLambdaInMethod_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        178
+      ],
+      "code": "class Test {\n              static Throwable foo;\n\n              public Test(int a) {}\n\n              void foo(int a) {\n                java.util.Arrays.asList().stream()\n                    .map(\n                        x -> {\n                          // BUG: Diagnostic contains: [StaticAssignmentOfThrowable]\n                          foo = new NullPointerException(\"assign\");\n                          return a;\n                        })\n                    .count();\n              }\n            }"
+    },
+    {
+      "description": "staticWithThrowableInLambdaInLambdaInMethod_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205
+      ],
+      "code": "class Test {\n              static Throwable foo;\n\n              public Test(int a) {}\n\n              void bar(int a) {\n                java.util.Arrays.asList().stream()\n                    .map(\n                        x -> {\n                          java.util.Arrays.asList().stream()\n                              .map(\n                                  y -> {\n                                    // BUG: Diagnostic contains: [StaticAssignmentOfThrowable]\n                                    foo = new NullPointerException(\"inner assign\");\n                                    return y;\n                                  })\n                              .count();\n                          // BUG: Diagnostic contains: [StaticAssignmentOfThrowable]\n                          foo = new NullPointerException(\"outer assign\");\n                          return a;\n                        })\n                    .count();\n              }\n            }"
+    }
+  ]
+}

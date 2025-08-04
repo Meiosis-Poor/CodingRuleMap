@@ -1,0 +1,94 @@
+{
+  "name": "EqualsGetClass",
+  "language": "java",
+  "description": "Prefer instanceof to getClass when implementing Object#equals.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 270,
+  "branches": 36,
+  "apis": 3,
+  "test": [
+    {
+      "description": "fixes_inline",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                return o != null && o.getClass().equals(getClass()) && a == ((Test) o).a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                return o instanceof Test && a == ((Test) o).a;\n              }\n            }"
+    },
+    {
+      "description": "fixes_extraParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                return (o != null) && (o.getClass() == getClass()) && a == ((Test) o).a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                return (o instanceof Test) && a == ((Test) o).a;\n              }\n            }"
+    },
+    {
+      "description": "separateNullCheck",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (o == null) {\n                  return false;\n                }\n                if (o.getClass() != getClass()) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }"
+    },
+    {
+      "description": "separateNullCheck_withElse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (o == null) {\n                  return false;\n                } else {\n                  if (o.getClass() != getClass()) {\n                    return false;\n                  }\n                  return ((Test) o).a == a;\n                }\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }"
+    },
+    {
+      "description": "separateNullCheck_noParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (o == null) return false;\n                else return o.getClass() == getClass() && ((Test) o).a == a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                return o instanceof Test && ((Test) o).a == a;\n              }\n            }"
+    },
+    {
+      "description": "unnecessaryCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (o == null || !o.getClass().equals(((Object) this).getClass())) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }"
+    },
+    {
+      "description": "positive_unfixable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        244
+      ],
+      "code": "import com.google.common.base.Objects;\n\n            class Test {\n              private int a;\n\n              @Override\n              // BUG: Diagnostic matches: NO_FIX\n              public boolean equals(Object o) {\n                if (o == null) {\n                  return false;\n                }\n                if (!Objects.equal(o.getClass(), getClass())) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }"
+    },
+    {
+      "description": "negative_final",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        272
+      ],
+      "code": "final class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (o == null) {\n                  return false;\n                }\n                if (o.getClass() != getClass()) {\n                  return false;\n                }\n                return ((Test) o).a == a;\n              }\n            }"
+    },
+    {
+      "description": "negative_anonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        296
+      ],
+      "code": "final class Test {\n              Object foo =\n                  new Object() {\n                    @Override\n                    public boolean equals(Object o) {\n                      if (o == null) {\n                        return false;\n                      }\n                      return o.getClass() == getClass();\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "negative_notOnParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        318
+      ],
+      "code": "class Test {\n              private Object a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (o == null) {\n                  return false;\n                }\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                return ((Test) o).a.getClass() == a.getClass();\n              }\n            }"
+    }
+  ]
+}

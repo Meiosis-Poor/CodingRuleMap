@@ -1,0 +1,158 @@
+{
+  "name": "CollectionIncompatibleType",
+  "language": "java",
+  "description": "Incompatible type as argument to Object-accepting Java collections method",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 125,
+  "branches": 10,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\nimport com.google.common.collect.ClassToInstanceMap;\nimport java.util.ArrayList;\nimport java.util.Collection;\nimport java.util.Date;\nimport java.util.Deque;\nimport java.util.Dictionary;\nimport java.util.HashMap;\nimport java.util.Hashtable;\nimport java.util.LinkedList;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Stack;\nimport java.util.Vector;\nimport java.util.concurrent.ConcurrentNavigableMap;\nimport java.util.concurrent.ConcurrentSkipListMap;\n\n/** Positive test cases for {@link CollectionIncompatibleType}. */\npublic class CollectionIncompatibleTypePositiveCases {\n\n  /* Tests for API coverage */\n\n  public void collection(Collection<Integer> collection1, Collection<String> collection2) {\n    // BUG: Diagnostic contains: Argument '\"bad\"' should not be passed to this method\n    // its type String is not compatible with its collection's type argument Integer\n    collection1.contains(\"bad\");\n    // BUG: Diagnostic contains:\n    collection1.remove(\"bad\");\n    // BUG: Diagnostic contains: Argument 'collection2' should not be passed to this method\n    // its type Collection<String> has a type argument String that is not compatible with its\n    // collection's type argument Integer\n    collection1.containsAll(collection2);\n    // BUG: Diagnostic contains:\n    collection1.removeAll(collection2);\n    // BUG: Diagnostic contains:\n    collection1.retainAll(collection2);\n  }\n\n  public void collectionSubtype(ArrayList<Integer> arrayList1, ArrayList<String> arrayList2) {\n    // BUG: Diagnostic contains: Argument '\"bad\"' should not be passed to this method\n    // its type String is not compatible with its collection's type argument Integer\n    arrayList1.contains(\"bad\");\n    // BUG: Diagnostic contains:\n    arrayList1.remove(\"bad\");\n    // BUG: Diagnostic contains: Argument 'arrayList2' should not be passed to this method\n    // its type ArrayList<String> has a type argument String that is not compatible with its\n    // collection's type argument Integer\n    arrayList1.containsAll(arrayList2);\n    // BUG: Diagnostic contains:\n    arrayList1.removeAll(arrayList2);\n    // BUG: Diagnostic contains:\n    arrayList1.retainAll(arrayList2);\n  }\n\n  public boolean deque(Deque<Integer> deque) {\n    // BUG: Diagnostic contains:\n    boolean result = deque.removeFirstOccurrence(\"bad\");\n    // BUG: Diagnostic contains:\n    return result && deque.removeLastOccurrence(\"bad\");\n  }\n\n  public boolean dequeSubtype(LinkedList<Integer> linkedList) {\n    // BUG: Diagnostic contains:\n    boolean result = linkedList.removeFirstOccurrence(\"bad\");\n    // BUG: Diagnostic contains:\n    return result && linkedList.removeLastOccurrence(\"bad\");\n  }\n\n  public String dictionary(Dictionary<Integer, String> dictionary) {\n    // BUG: Diagnostic contains:\n    String result = dictionary.get(\"bad\");\n    // BUG: Diagnostic contains:\n    return result + dictionary.remove(\"bad\");\n  }\n\n  public String dictionarySubtype(Hashtable<Integer, String> hashtable) {\n    // BUG: Diagnostic contains:\n    String result = hashtable.get(\"bad\");\n    // BUG: Diagnostic contains:\n    return result + hashtable.remove(\"bad\");\n  }\n\n  public int list() {\n    List<String> list = new ArrayList<String>();\n    // BUG: Diagnostic contains:\n    int result = list.indexOf(1);\n    // BUG: Diagnostic contains:\n    return result + list.lastIndexOf(1);\n  }\n\n  public void listSubtype() {\n    ArrayList<String> arrayList = new ArrayList<>();\n    // BUG: Diagnostic contains:\n    int result = arrayList.indexOf(1);\n    // BUG: Diagnostic contains:\n    result = arrayList.lastIndexOf(1);\n  }\n\n  public boolean map() {\n    Map<Integer, String> map = new HashMap<>();\n    // BUG: Diagnostic contains:\n    String result = map.get(\"bad\");\n    // BUG: Diagnostic contains:\n    result = map.getOrDefault(\"bad\", \"soBad\");\n    // BUG: Diagnostic contains:\n    boolean result2 = map.containsKey(\"bad\");\n    // BUG: Diagnostic contains:\n    result2 = map.containsValue(1);\n    // BUG: Diagnostic contains:\n    result = map.remove(\"bad\");\n    return false;\n  }\n\n  public boolean mapSubtype() {\n    ConcurrentNavigableMap<Integer, String> concurrentNavigableMap = new ConcurrentSkipListMap<>();\n    // BUG: Diagnostic contains:\n    String result = concurrentNavigableMap.get(\"bad\");\n    // BUG: Diagnostic contains:\n    boolean result2 = concurrentNavigableMap.containsKey(\"bad\");\n    // BUG: Diagnostic contains:\n    result2 = concurrentNavigableMap.containsValue(1);\n    // BUG: Diagnostic contains:\n    result = concurrentNavigableMap.remove(\"bad\");\n    return false;\n  }\n\n  public int stack(Stack<Integer> stack) {\n    // BUG: Diagnostic contains:\n    return stack.search(\"bad\");\n  }\n\n  private static class MyStack<E> extends Stack<E> {}\n\n  public int stackSubtype(MyStack<Integer> myStack) {\n    // BUG: Diagnostic contains:\n    return myStack.search(\"bad\");\n  }\n\n  public int vector(Vector<Integer> vector) {\n    // BUG: Diagnostic contains:\n    int result = vector.indexOf(\"bad\", 0);\n    // BUG: Diagnostic contains:\n    return result + vector.lastIndexOf(\"bad\", 0);\n  }\n\n  public int vectorSubtype(Stack<Integer> stack) {\n    // BUG: Diagnostic contains:\n    int result = stack.indexOf(\"bad\", 0);\n    // BUG: Diagnostic contains:\n    return result + stack.lastIndexOf(\"bad\", 0);\n  }\n\n  /* Tests for behavior */\n\n  public boolean errorMessageUsesSimpleNames(Collection<Integer> collection) {\n    // BUG: Diagnostic contains: Argument '\"bad\"' should not be passed to this method\n    // its type String is not compatible with its collection's type argument Integer\n    return collection.contains(\"bad\");\n  }\n\n  private static class Date {}\n\n  public boolean errorMessageUsesFullyQualifedNamesWhenSimpleNamesAreTheSame(\n      Collection<java.util.Date> collection1, Collection<Date> collection2) {\n    // BUG: Diagnostic contains: Argument 'new Date()' should not be passed to this method\n    // its type\n    // com.google.errorprone.bugpatterns.collectionincompatibletype.testdata.CollectionIncompatibleTypePositiveCases.Date is not compatible with its collection's type argument java.util.Date\n    return collection1.contains(new Date());\n  }\n\n  public boolean boundedWildcard() {\n    Collection<? extends Date> collection = new ArrayList<>();\n    // BUG: Diagnostic contains:\n    return collection.contains(\"bad\");\n  }\n\n  private static class Pair<A, B> {\n    public A first;\n    public B second;\n  }\n\n  public boolean declaredTypeVsExpressionType(Pair<Integer, String> pair, List<Integer> list) {\n    // BUG: Diagnostic contains:\n    return list.contains(pair.second);\n  }\n\n  public String subclassHasDifferentTypeParameters(ClassToInstanceMap<String> map, String s) {\n    // BUG: Diagnostic contains:\n    return map.get(s);\n  }\n\n  private static class MyArrayList extends ArrayList<Integer> {}\n\n  public void methodArgumentIsSubclassWithDifferentTypeParameters(\n      Collection<String> collection, MyArrayList myArrayList) {\n    // BUG: Diagnostic contains:\n    collection.containsAll(myArrayList);\n  }\n\n  private static class IncompatibleBounds<K extends String, V extends Number> {\n    private boolean function(Map<K, V> map, K key) {\n      // BUG: Diagnostic contains:\n      return map.containsValue(key);\n    }\n  }\n\n  interface Interface {}\n\n  private static final class FinalClass1 {}\n\n  private static final class FinalClass2 {}\n\n  private static class NonFinalClass1 {}\n\n  private static class NonFinalClass2 {}\n\n  public boolean oneInterfaceAndOneFinalClass(\n      Collection<Interface> collection, FinalClass1 finalClass1) {\n    // BUG: Diagnostic contains:\n    return collection.contains(finalClass1);\n  }\n\n  public boolean oneFinalClassAndOneInterface(Collection<FinalClass1> collection, Interface iface) {\n    // BUG: Diagnostic contains:\n    return collection.contains(iface);\n  }\n\n  public boolean bothNonFinalClasses(\n      Collection<NonFinalClass1> collection, NonFinalClass2 nonFinalClass2) {\n    // BUG: Diagnostic contains:\n    return collection.contains(nonFinalClass2);\n  }\n\n  public boolean bothFinalClasses(Collection<FinalClass1> collection, FinalClass2 finalClass2) {\n    // BUG: Diagnostic contains:\n    return collection.contains(finalClass2);\n  }\n\n  public boolean oneNonFinalClassAndOneFinalClass(\n      Collection<NonFinalClass1> collection, FinalClass1 finalClass1) {\n    // BUG: Diagnostic contains:\n    return collection.contains(finalClass1);\n  }\n\n  public boolean oneFinalClassAndOneNonFinalClass(\n      Collection<FinalClass1> collection, NonFinalClass1 nonFinalClass1) {\n    // BUG: Diagnostic contains:\n    return collection.contains(nonFinalClass1);\n  }\n}\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        300
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\nimport com.google.common.base.Optional;\nimport com.google.common.collect.ClassToInstanceMap;\nimport java.util.ArrayList;\nimport java.util.Collection;\nimport java.util.Date;\nimport java.util.Deque;\nimport java.util.Dictionary;\nimport java.util.HashMap;\nimport java.util.Hashtable;\nimport java.util.LinkedList;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Set;\nimport java.util.Stack;\nimport java.util.Vector;\nimport java.util.concurrent.ConcurrentHashMap;\nimport java.util.concurrent.ConcurrentNavigableMap;\nimport java.util.concurrent.ConcurrentSkipListMap;\n\n/** Negative test cases for {@link CollectionIncompatibleType}. */\npublic class CollectionIncompatibleTypeNegativeCases {\n\n  /* Tests for API coverage */\n\n  public boolean collection(Collection<String> collection1, Collection<String> collection2) {\n    boolean result = collection1.contains(\"ok\");\n    result &= collection1.contains(null);\n    result &= collection1.remove(\"ok\");\n    result &= collection1.remove(null);\n    result &= collection1.containsAll(collection2);\n    result &= collection1.containsAll(null);\n    result &= collection1.removeAll(collection2);\n    result &= collection1.removeAll(null);\n    result &= collection1.retainAll(collection2);\n    return result && collection1.retainAll(null);\n  }\n\n  public boolean collectionSubtype(ArrayList<String> arrayList1, ArrayList<String> arrayList2) {\n    boolean result = arrayList1.contains(\"ok\");\n    result &= arrayList1.contains(null);\n    result &= arrayList1.remove(\"ok\");\n    result &= arrayList1.remove(null);\n    result &= arrayList1.containsAll(arrayList2);\n    result &= arrayList1.containsAll(null);\n    result &= arrayList1.removeAll(arrayList2);\n    result &= arrayList1.removeAll(null);\n    result &= arrayList1.retainAll(arrayList2);\n    return result && arrayList1.retainAll(null);\n  }\n\n  public boolean deque(Deque<String> deque) {\n    boolean result = deque.removeFirstOccurrence(\"ok\");\n    result &= deque.removeFirstOccurrence(null);\n    result &= deque.removeLastOccurrence(\"ok\");\n    return result && deque.removeLastOccurrence(null);\n  }\n\n  public boolean dequeSubtype(LinkedList<String> linkedList) {\n    boolean result = linkedList.removeFirstOccurrence(\"ok\");\n    result &= linkedList.removeFirstOccurrence(null);\n    result &= linkedList.removeLastOccurrence(\"ok\");\n    return result && linkedList.removeLastOccurrence(null);\n  }\n\n  public int dictionary(Dictionary<String, Integer> dictionary) {\n    int result = dictionary.get(\"ok\");\n    result += dictionary.get(null);\n    result += dictionary.remove(\"ok\");\n    return result + dictionary.remove(null);\n  }\n\n  public int dictionarySubtype(Hashtable<String, Integer> hashtable) {\n    int result = hashtable.get(\"ok\");\n    result += hashtable.get(null);\n    result += hashtable.remove(\"ok\");\n    return result + hashtable.remove(null);\n  }\n\n  public int list() {\n    List<String> list = new ArrayList<String>();\n    int result = list.indexOf(\"ok\");\n    result += list.indexOf(null);\n    result += list.lastIndexOf(\"ok\");\n    return result + list.lastIndexOf(null);\n  }\n\n  public int listSubtype() {\n    ArrayList<String> arrayList = new ArrayList<>();\n    int result = arrayList.indexOf(\"ok\");\n    result += arrayList.indexOf(null);\n    result += arrayList.lastIndexOf(\"ok\");\n    return result + arrayList.lastIndexOf(null);\n  }\n\n  public boolean map() {\n    Map<Integer, String> map = new HashMap<>();\n    String result = map.get(1);\n    result = map.getOrDefault(1, \"hello\");\n    boolean result2 = map.containsKey(1);\n    result2 = map.containsValue(\"ok\");\n    result2 &= map.containsValue(null);\n    result = map.remove(1);\n    return result2;\n  }\n\n  public boolean mapSubtype() {\n    ConcurrentNavigableMap<Integer, String> concurrentNavigableMap = new ConcurrentSkipListMap<>();\n    String result = concurrentNavigableMap.get(1);\n    boolean result2 = concurrentNavigableMap.containsKey(1);\n    result2 &= concurrentNavigableMap.containsValue(\"ok\");\n    result2 &= concurrentNavigableMap.containsValue(null);\n    result = concurrentNavigableMap.remove(1);\n    return result2;\n  }\n\n  public int stack(Stack<String> stack) {\n    int result = stack.search(\"ok\");\n    return result + stack.search(null);\n  }\n\n  private static class MyStack<E> extends Stack<E> {}\n\n  public int stackSubtype(MyStack<String> myStack) {\n    int result = myStack.search(\"ok\");\n    return result + myStack.search(null);\n  }\n\n  public int vector(Vector<String> vector) {\n    int result = vector.indexOf(\"ok\", 0);\n    result += vector.indexOf(null, 0);\n    result += vector.lastIndexOf(\"ok\", 0);\n    return result + vector.lastIndexOf(null, 0);\n  }\n\n  public int vectorSubtype(Stack<String> stack) {\n    int result = stack.indexOf(\"ok\", 0);\n    result += stack.indexOf(null, 0);\n    result += stack.lastIndexOf(\"ok\", 0);\n    return result + stack.lastIndexOf(null, 0);\n  }\n\n  /* Tests for behavior */\n\n  private class B extends Date {}\n\n  public boolean argTypeExtendsContainedType() {\n    Collection<Date> collection = new ArrayList<>();\n    return collection.contains(new B());\n  }\n\n  public boolean containedTypeExtendsArgType() {\n    Collection<String> collection = new ArrayList<>();\n    Object actuallyAString = \"ok\";\n    return collection.contains(actuallyAString);\n  }\n\n  public boolean boundedWildcard() {\n    Collection<? extends Date> collection = new ArrayList<>();\n    return collection.contains(new Date()) || collection.contains(new B());\n  }\n\n  public boolean unboundedWildcard() {\n    Collection<?> collection = new ArrayList<>();\n    return collection.contains(\"ok\") || collection.contains(new Object());\n  }\n\n  public boolean rawType() {\n    Collection collection = new ArrayList();\n    return collection.contains(\"ok\");\n  }\n\n  private class DoesntExtendCollection<E> {\n    public boolean contains(Object o) {\n      return true;\n    }\n  }\n\n  public boolean doesntExtendCollection() {\n    DoesntExtendCollection<String> collection = new DoesntExtendCollection<>();\n    return collection.contains(new Date());\n  }\n\n  private static class Pair<A, B> {\n    public A first;\n    public B second;\n  }\n\n  public boolean declaredTypeVsExpressionType(Pair<Integer, String> pair, List<Integer> list) {\n    return list.contains(pair.first);\n  }\n\n  public boolean containsParameterizedType(\n      Collection<Class<? extends String>> collection, Class<?> clazz) {\n    return collection.contains(clazz);\n  }\n\n  public boolean containsWildcard(Collection<String> collection, Optional<?> optional) {\n    return collection.contains(optional.get());\n  }\n\n  public <T extends String> T subclassHasDifferentTypeParameters(\n      ClassToInstanceMap<String> map, Class<T> klass) {\n    return klass.cast(map.get(klass));\n  }\n\n  // Ensure we don't match Hashtable.contains and ConcurrentHashtable.contains because there is a\n  // separate check, HashtableContains, specifically for them.\n  public boolean hashtableContains() {\n    Hashtable<Integer, String> hashtable = new Hashtable<>();\n    ConcurrentHashMap<Integer, String> concurrentHashMap = new ConcurrentHashMap<>();\n    return hashtable.contains(1) || concurrentHashMap.contains(1);\n  }\n\n  private static class MyHashMap<K extends Integer, V extends String> extends HashMap<K, V> {}\n\n  public boolean boundedTypeParameters(MyHashMap<?, ?> myHashMap) {\n    return myHashMap.containsKey(1);\n  }\n\n  interface Interface1 {}\n\n  interface Interface2 {}\n\n  private static class NonFinalClass {}\n\n  public boolean bothInterfaces(Collection<Interface1> collection, Interface2 iface2) {\n    return collection.contains(iface2);\n  }\n\n  public boolean oneInterfaceAndOneNonFinalClass(\n      Collection<Interface1> collection, NonFinalClass nonFinalClass) {\n    return collection.contains(nonFinalClass);\n  }\n\n  public boolean oneNonFinalClassAndOneInterface(\n      Collection<NonFinalClass> collection, Interface1 iface) {\n    return collection.contains(iface);\n  }\n\n  public void methodArgHasSubtypeTypeArgument(\n      Collection<Number> collection1, Collection<Integer> collection2) {\n    collection1.containsAll(collection2);\n  }\n\n  public void methodArgHasSuperTypeArgument(\n      Collection<Integer> collection1, Collection<Number> collection2) {\n    collection1.containsAll(collection2);\n  }\n\n  public void methodArgHasWildcardTypeArgument(\n      Collection<? extends Number> collection1, Collection<? extends Integer> collection2) {\n    collection1.containsAll(collection2);\n  }\n\n  public void methodArgCastToCollectionWildcard(\n      Collection<Integer> collection1, Collection<String> collection2) {\n    collection1.containsAll((Collection<?>) collection2);\n  }\n\n  public void classToken(\n      Set<Class<? extends Iterable<?>>> iterables, Class<ArrayList> arrayListClass) {\n    iterables.contains(arrayListClass);\n  }\n}\\"
+    },
+    {
+      "description": "outOfBounds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        576
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\n            import java.util.Properties;\n\n            /** This is a regression test for Issue 222. */\n            public class CollectionIncompatibleTypeOutOfBounds {\n              public void test() {\n                Properties properties = new Properties();\n                properties.get(\"\");\n              }\n            }\\"
+    },
+    {
+      "description": "classCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        597
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\n            import java.util.HashMap;\n\n            /** This is a regression test for Issue 222. */\n            public class CollectionIncompatibleTypeClassCast<K, V> extends HashMap<K, V> {\n              public void test(K k) {\n                get(k);\n              }\n            }\\"
+    },
+    {
+      "description": "castFixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        617
+      ],
+      "code": "import java.util.Collection;\n\n            public class Test {\n              public void doIt(Collection<String> c1, Collection<Integer> c2) {\n                // BUG: Diagnostic contains: c1.contains((Object) 1);\n                c1.contains(1);\n                // BUG: Diagnostic contains: c1.containsAll((Collection<?>) c2);\n                c1.containsAll(c2);\n              }\n            }"
+    },
+    {
+      "description": "suppressWarningsFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        638
+      ],
+      "code": "import java.util.Collection;\n\n            public class Test {\n              public void doIt(Collection<String> c1, Collection<Integer> c2) {\n                c1.contains(1);\n                c1.containsAll(c2);\n              }\n            }"
+    },
+    {
+      "description": "disjoint",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        690
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n\n            public class Test {\n              void f(List<String> a, List<String> b) {\n                Collections.disjoint(a, b);\n              }\n\n              void g(List<String> a, List<Integer> b) {\n                // BUG: Diagnostic contains: not compatible\n                Collections.disjoint(a, b);\n              }\n\n              void h(List<?> a, List<Integer> b) {\n                Collections.disjoint(a, b);\n              }\n            }"
+    },
+    {
+      "description": "disjoint",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        690
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n\n            public class Test {\n              void f(List<String> a, List<String> b) {\n                Collections.disjoint(a, b);\n              }\n\n              void g(List<String> a, List<Integer> b) {\n                // BUG: Diagnostic contains: not compatible\n                Collections.disjoint(a, b);\n              }\n\n              void h(List<?> a, List<Integer> b) {\n                Collections.disjoint(a, b);\n              }\n            }"
+    },
+    {
+      "description": "difference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        717
+      ],
+      "code": "import java.util.Set;\n            import com.google.common.collect.Sets;\n\n            public class Test {\n              void f(Set<String> a, Set<String> b) {\n                Sets.difference(a, b);\n              }\n\n              void g(Set<String> a, Set<Integer> b) {\n                // BUG: Diagnostic contains: not compatible\n                Sets.difference(a, b);\n              }\n\n              void h(Set<?> a, Set<Integer> b) {\n                Sets.difference(a, b);\n              }\n            }"
+    },
+    {
+      "description": "methodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        744
+      ],
+      "code": "import java.util.List;\n\n            public class Test {\n              java.util.stream.Stream filter(List<Integer> xs, List<String> ss) {\n                // BUG: Diagnostic contains:\n                return xs.stream().filter(ss::contains);\n              }\n            }"
+    },
+    {
+      "description": "methodReferenceBinOp",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        762
+      ],
+      "code": "import java.util.List;\n\n            public class Test {\n              void removeAll(List<List<Integer>> xs, List<String> ss) {\n                // BUG: Diagnostic contains:\n                xs.forEach(ss::removeAll);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_compatibleType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        780
+      ],
+      "code": "import java.util.List;\n\n            public class Test {\n              java.util.stream.Stream filter(List<Integer> xs, List<Object> ss) {\n                return xs.stream().filter(ss::contains);\n              }\n            }"
+    },
+    {
+      "description": "memberReferenceWithBoundedGenerics",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        797
+      ],
+      "code": "import com.google.common.collect.Sets;\n            import java.util.function.BiFunction;\n            import java.util.Set;\n\n            public class Test {\n              <T extends String, M extends Integer> void a(BiFunction<Set<T>, Set<M>, Set<T>> b) {}\n\n              void b() {\n                // BUG: Diagnostic contains:\n                a(Sets::difference);\n              }\n            }"
+    },
+    {
+      "description": "memberReferenceWithBoundedGenericsDependentOnEachOther",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        819
+      ],
+      "code": "import com.google.common.collect.Sets;\n            import java.util.function.BiFunction;\n            import java.util.Set;\n\n            public class Test {\n              <T extends String, M extends T> void a(BiFunction<Set<T>, Set<M>, Set<T>> b) {}\n\n              void b() {\n                a(Sets::difference);\n              }\n            }"
+    },
+    {
+      "description": "memberReferenceWithConcreteIncompatibleTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        840
+      ],
+      "code": "import com.google.common.collect.Sets;\n            import java.util.function.BiFunction;\n            import java.util.Set;\n\n            public class Test {\n              void a(BiFunction<Set<Integer>, Set<String>, Set<Integer>> b) {}\n\n              void b() {\n                // BUG: Diagnostic contains:\n                a(Sets::difference);\n              }\n            }"
+    },
+    {
+      "description": "memberReferenceWithConcreteCompatibleTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        862
+      ],
+      "code": "import com.google.common.collect.Sets;\n            import java.util.function.BiFunction;\n            import java.util.Set;\n\n            public class Test {\n              void a(BiFunction<Set<Integer>, Set<Number>, Set<Integer>> b) {}\n\n              void b() {\n                a(Sets::difference);\n              }\n            }"
+    },
+    {
+      "description": "memberReferenceWithCustomFunctionalInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        883
+      ],
+      "code": "import com.google.common.collect.Sets;\n            import java.util.function.BiFunction;\n            import java.util.Set;\n\n            public interface Test {\n              Set<Integer> test(Set<Integer> a, Set<String> b);\n\n              static void a(Test b) {}\n\n              static void b() {\n                // BUG: Diagnostic contains: Integer is not compatible with String\n                a(Sets::difference);\n              }\n            }"
+    },
+    {
+      "description": "wildcardBoundedCollectionTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        907
+      ],
+      "code": "import java.util.List;\n            import java.util.Set;\n\n            public interface Test {\n              static void test(Set<? extends List<Integer>> xs, Set<? extends Set<Integer>> ys) {\n                // BUG: Diagnostic contains:\n                xs.containsAll(ys);\n              }\n            }"
+    }
+  ]
+}

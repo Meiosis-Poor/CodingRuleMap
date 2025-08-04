@@ -1,0 +1,1414 @@
+{
+  "name": "ImmutableChecker",
+  "language": "java",
+  "description": "Type declaration annotated with @Immutable is not immutable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 529,
+  "branches": 56,
+  "apis": 6,
+  "test": [
+    {
+      "description": "basicFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class Test {\n              final int a = 42;\n              final String b = null;\n              final java.lang.String c = null;\n              final com.google.common.collect.ImmutableList<String> d = null;\n              final ImmutableList<Integer> e = null;\n              final Deprecated dep = null;\n              final Class<?> clazz = Class.class;\n            }"
+    },
+    {
+      "description": "interfacesMutableByDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: 'I' is not annotated with\n              // @com.google.errorprone.annotations.Immutable\n              private final I i = new I() {};\n            }"
+    },
+    {
+      "description": "annotationsAreImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            @interface Test {}"
+    },
+    {
+      "description": "customAnnotationsMightBeMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            @interface Test {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.lang.annotation.Annotation;\n\n            @Immutable\n            final class MyTest implements Test {\n              // BUG: Diagnostic contains: non-final\n              public Object[] xs = {};\n\n              public Class<? extends Annotation> annotationType() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "customImplementionsOfImplicitlyImmutableAnnotationsMustBeImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            final class MyAnno implements Anno {\n              // BUG: Diagnostic contains:\n              public Object[] xs = {};\n\n              public Class<? extends Annotation> annotationType() {\n                return null;\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              private final Anno anno = new MyAnno();\n            }"
+    },
+    {
+      "description": "customAnnotationsSubtype",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        155
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            @interface Test {}\n            \n\n            import java.lang.annotation.Annotation;\n\n            final class MyTest implements Test {\n              // BUG: Diagnostic contains: non-final field 'xs'\n              public Object[] xs = {};\n\n              public Class<? extends Annotation> annotationType() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "annotationsDefaultToImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        183
+      ],
+      "code": "import javax.lang.model.element.ElementKind;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              private final Override override = null;\n            }"
+    },
+    {
+      "description": "enumsDefaultToImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        200
+      ],
+      "code": "import javax.lang.model.element.ElementKind;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              private final ElementKind ek = null;\n            }"
+    },
+    {
+      "description": "enumsMayBeImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        217
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            enum Kind {\n              A,\n              B,\n              C;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              private final Kind k = null;\n            }"
+    },
+    {
+      "description": "mutableArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final int[] xs = {42};\n            }"
+    },
+    {
+      "description": "annotatedImmutableInterfaces",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface Test {}"
+    },
+    {
+      "description": "immutableInterfaceField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        276
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface MyInterface {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final MyInterface i = null;\n            }"
+    },
+    {
+      "description": "deeplyImmutableArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        300
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class Test {\n              final ImmutableList<ImmutableList<ImmutableList<String>>> l = null;\n            }"
+    },
+    {
+      "description": "mutableNonFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        317
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: non-final\n              int a = 42;\n            }"
+    },
+    {
+      "description": "ignoreStaticFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        334
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              static int a = 42;\n            }"
+    },
+    {
+      "description": "mutableField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        350
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.Map;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final Map<String, String> a = null;\n            }"
+    },
+    {
+      "description": "deeplyMutableTypeArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        368
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.Map;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: instantiated with mutable type for 'E'\n              final ImmutableList<ImmutableList<ImmutableList<Map<String, String>>>> l = null;\n            }"
+    },
+    {
+      "description": "rawImpliesImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        387
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final ImmutableList l = null;\n            }"
+    },
+    {
+      "description": "extendsImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        405
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            public class Super {\n              public final int x = 42;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test extends Super {}"
+    },
+    {
+      "description": "extendsMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        429
+      ],
+      "code": "public class Super {\n              public int x = 42;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            // BUG: Diagnostic contains: 'Super' has non-final field 'x'\n            class Test extends Super {}"
+    },
+    {
+      "description": "extendsImmutableAnnotated_substBounds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        451
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            public class SuperMost<B> {\n              public final B x = null;\n            }\n            \n\n            import java.util.List;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"A\"})\n            public class Super<A, B> extends SuperMost<A> {\n              public final int x = 42;\n            }"
+    },
+    {
+      "description": "extendsImmutableAnnotated_mutableBounds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        477
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"A\"})\n            public class SuperMost<A> {\n              public final A x = null;\n            }\n            \n\n            import java.util.List;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            // BUG: Diagnostic contains: instantiated with mutable type for 'A'\n            public class SubClass extends SuperMost<List<String>> {}"
+    },
+    {
+      "description": "withinMutableClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        503
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class A {\n              List<Integer> xs = new ArrayList<>();\n\n              @Immutable\n              // BUG: Diagnostic contains: has mutable enclosing instance\n              class B {\n                int get() {\n                  return xs.get(0);\n                }\n              }\n            }"
+    },
+    {
+      "description": "localClassCapturingMutableState",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        528
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\nimport java.util.ArrayList;\nimport java.util.List;\n\n@Immutable\nclass A {\n  @Immutable\n  interface B {\n    int get();\n  }\n\n  void test() {\n    List<Integer> xs = new ArrayList<>();\n    @Immutable\n    // BUG: Diagnostic contains: This anonymous class implements @Immutable interface 'B', but\n    // closes over 'xs', which is not @Immutable because 'List' is mutable\n    class C implements B {\n      @Override\n      public int get() {\n        return xs.get(0);\n      }\n    }\n  }\n}"
+    },
+    {
+      "description": "typeParameterWithImmutableBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        562
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable(containerOf = \"T\")\n            class Test<T extends ImmutableList<String>> {\n              final T t = null;\n            }"
+    },
+    {
+      "description": "immutableTypeArgumentInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        579
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class Holder<T> {\n              public final T t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final Holder<String> h = null;\n            }"
+    },
+    {
+      "description": "mutableTypeArgumentInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        605
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            public class Holder<T> {\n              public final T t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final Holder<Object> h = null;\n            }"
+    },
+    {
+      "description": "instantiationWithMutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        631
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            public class Holder<T> {\n              public final T t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: not annotated\n              final Holder<Object> h = null;\n            }"
+    },
+    {
+      "description": "transitiveSuperSubstitutionImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        657
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"N\")\n            public class SuperMostType<N> {\n              public final N f = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"M\")\n            public class MiddleClass<M> extends SuperMostType<M> {\n              // Empty\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test extends MiddleClass<String> {\n              final MiddleClass<String> f = null;\n            }"
+    },
+    {
+      "description": "containerOf_extendsImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        694
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class X<V> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            // BUG: Diagnostic contains: 'V' is a mutable type variable\n            @Immutable(containerOf = \"V\")\n            class Test<V> extends X<V> {\n              private final V t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class MutableLeak {\n              private static class Mutable {\n                int mutableInt;\n              }\n\n              private final X<Mutable> bad = new Test<Mutable>();\n            }"
+    },
+    {
+      "description": "containerOf_mutableInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        733
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"V\")\n            class X<V> {\n              private final V t = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test<T> {\n              // BUG: Diagnostic contains:\n              // 'X' was instantiated with mutable type for 'V'\n              // 'T' is a mutable type variable\n              private final X<T> t = null;\n            }"
+    },
+    {
+      "description": "missingContainerOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        762
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test<T> {\n              // BUG: Diagnostic contains: 'T' is a mutable type variable\n              private final T t = null;\n            }"
+    },
+    {
+      "description": "transitiveSuperSubstitutionMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        780
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"N\")\n            public class SuperMostType<N> {\n              public final N f = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"M\")\n            public class MiddleClass<M> extends SuperMostType<M> {\n              // Empty\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            // BUG: Diagnostic contains: instantiated with mutable type for 'M'\n            class Test extends MiddleClass<List> {}"
+    },
+    {
+      "description": "immutableInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        816
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              final ImmutableList<T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        844
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            public class X<T> {\n              final ImmutableList<T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final X<Object> x = null;\n            }"
+    },
+    {
+      "description": "immutableInstantiation_superBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        870
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            public class X<T> {\n              final ImmutableList<? super T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation_superBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        897
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            public class X<T> {\n              final ImmutableList<? super T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: is not annotated\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "immutableInstantiation_extendsBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        924
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              final ImmutableList<? extends T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation_wildcard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        952
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              // BUG: Diagnostic contains: mutable type for 'E', 'Object' is mutable\n              final ImmutableList<?> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              final X<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation_extendsBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        981
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              final ImmutableList<? extends T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: instantiated with mutable type\n              final X<Object> x = null;\n            }"
+    },
+    {
+      "description": "containerOf_noSuchType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1010
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"Z\")\n            // BUG: Diagnostic contains: could not find type(s) referenced by containerOf: Z\n            public class X<T> {\n              final int xs = 1;\n            }"
+    },
+    {
+      "description": "immutableInstantiation_inferredImmutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1027
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              final T xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class Y<T> {\n              final X<? extends T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final Y<String> x = null;\n            }"
+    },
+    {
+      "description": "mutableInstantiation_inferredImmutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1063
+      ],
+      "code": "public class X<T> {\n              final T xs = null;\n            }\n            \n\n            public class Y<T> {\n              final X<? extends T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains:\n              final Y<Object> x = null;\n            }"
+    },
+    {
+      "description": "mutableWildInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1094
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              final ImmutableList<T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: instantiated\n              final X<?> x = null;\n            }"
+    },
+    {
+      "description": "mutableWildcardInstantiation_immutableTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1122
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class B {\n              private final A<?> a;\n\n              public B(A<?> a) {\n                this.a = a;\n              }\n            }"
+    },
+    {
+      "description": "mutableRawType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1151
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public class X<T> {\n              final ImmutableList<T> xs = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: raw\n              final X x = null;\n            }"
+    },
+    {
+      "description": "immutableListImplementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1179
+      ],
+      "code": "package com.google.common.collect;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class ImmutableList<E> {\n              public Object[] veryMutable = null;\n            }"
+    },
+    {
+      "description": "positiveAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1197
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              {\n                new Super() {\n                  // BUG: Diagnostic contains: non-final\n                  int x = 0;\n\n                  {\n                    x++;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "positiveAnonymousInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1233
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              {\n                new Super() {\n                  // BUG: Diagnostic contains: non-final\n                  int x = 0;\n\n                  {\n                    x++;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "negativeParametricAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1269
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class Super<T> {\n              private final T t = null;\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              static <T> Super<T> get() {\n                return new Super<T>() {};\n              }\n            }"
+    },
+    {
+      "description": "interface_containerOf_immutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1300
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public interface MyList<T> {\n              T get(int i);\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            public class Test {\n              private final MyList<Integer> l = null;\n            }"
+    },
+    {
+      "description": "interface_containerOf_mutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1325
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public interface MyList<T> {\n              T get(int i);\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            public class Test<X> {\n              // BUG: Diagnostic contains: mutable type for 'T'\n              private final MyList<X> l = null;\n            }"
+    },
+    {
+      "description": "implementsInterface_containerOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1352
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            public interface MyList<T> {\n              T get(int i);\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            // BUG: Diagnostic contains: 'X' is a mutable type\n            public class Test<X> implements MyList<X> {\n              public X get(int i) {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1383
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Super {}\n            \n\npackage threadsafety;\n\nclass Test extends Super {\n  // BUG: Diagnostic contains: Class extends @Immutable type threadsafety.Super, but is not\n  // immutable: 'Test' has non-final field 'x'\n  public int x = 0;\n}"
+    },
+    {
+      "description": "positiveContainerOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1410
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"T\"})\n            class Super<T> {}\n            \n\n            package threadsafety;\n\n            class Test extends Super<Integer> {\n              // BUG: Diagnostic contains: non-final\n              public int x = 0;\n            }"
+    },
+    {
+      "description": "positiveImplicitContainerOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1436
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"T\"})\n            class Super<T> {}\n            \n\n            package threadsafety;\n\n            class Test<U> extends Super<U> {\n              // BUG: Diagnostic contains: mutable type for 'U'\n              public final Test<Object> x = null;\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1462
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test extends Super {}"
+    },
+    {
+      "description": "transitive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1490
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface I {}\n            \n\n            package threadsafety;\n\n            class Test implements J {\n              // BUG: Diagnostic contains: non-final field 'x'\n              public int x = 0;\n            }\n            \n\n            package threadsafety;\n\n            interface J extends I {}"
+    },
+    {
+      "description": "negativeAnonymousMutableBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1524
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class Super<T> {\n              private final T t = null;\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              {\n                new Super<Object>() {};\n              }\n            }"
+    },
+    {
+      "description": "immutableAnonymousTypeScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1555
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"X\")\n            class Super<X> {\n              private final X t = null;\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class Test<T> {\n              {\n                new Super<T>() {};\n              }\n            }"
+    },
+    {
+      "description": "immutableClassSuperTypeScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1587
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"Y\")\n            class Super<Y> {\n              @Immutable(containerOf = \"X\")\n              class Inner1<X> {\n                private final X x = null;\n                private final Y y = null;\n              }\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"U\")\n            class Test<U> extends Super<U> {\n              @Immutable\n              class Inner2 extends Inner1<U> {}\n            }"
+    },
+    {
+      "description": "immutableClassTypeScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1622
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"X\")\n            class Super<X> {\n              private final X t = null;\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class Test<T> {\n              @Immutable\n              class Inner extends Super<T> {}\n            }"
+    },
+    {
+      "description": "negativeAnonymousBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1653
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class Super<T> {\n              private final T t = null;\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              {\n                new Super<String>() {};\n              }\n            }"
+    },
+    {
+      "description": "negativeAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1684
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Super {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              {\n                new Super() {};\n              }\n            }"
+    },
+    {
+      "description": "positiveEnumConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1713
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface Super {\n              int f();\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            enum Test implements Super {\n              INSTANCE {\n                // BUG: Diagnostic contains: non-final\n                public int x = 0;\n\n                public int f() {\n                  return x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeEnumConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1750
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface Super {\n              void f();\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            enum Test implements Super {\n              INSTANCE {\n                public void f() {}\n              }\n            }"
+    },
+    {
+      "description": "immutableNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1788
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final int[] xs = null;\n            }"
+    },
+    {
+      "description": "suppressOnField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1804
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              @SuppressWarnings(\"Immutable\")\n              final int[] xs = {1};\n            }"
+    },
+    {
+      "description": "suppressOnOneField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1821
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              @SuppressWarnings(\"Immutable\")\n              final int[] xs = {1};\n\n              // BUG: Diagnostic contains: arrays are mutable\n              final int[] ys = {1};\n            }"
+    },
+    {
+      "description": "twoFieldsInSource",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1841
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: arrays are mutable\n              final int[] xs = {1};\n              // BUG: Diagnostic contains: arrays are mutable\n              final int[] ys = {1};\n            }"
+    },
+    {
+      "description": "protosNotOnClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1860
+      ],
+      "code": "package com.google.errorprone.annotations;\n\n            import static java.lang.annotation.ElementType.TYPE;\n            import static java.lang.annotation.RetentionPolicy.RUNTIME;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n\n            @Target(TYPE)\n            @Retention(RUNTIME)\n            public @interface Immutable {\n              String[] containerOf() default {};\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: 'Foo' is not annotated with\n              // @com.google.errorprone.annotations.Immutable\n              final Foo f = null;\n            }"
+    },
+    {
+      "description": "mutableEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1897
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            enum Test {\n              ;\n              // BUG: Diagnostic contains: @Immutable class has mutable field\n              private final Object o = null;\n            }"
+    },
+    {
+      "description": "mutableEnumMember",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1915
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            enum Test {\n              ONE {\n                // BUG: Diagnostic contains: @Immutable class has mutable field\n                private final Object o = null;\n              }\n            }"
+    },
+    {
+      "description": "mutableExtendsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1934
+      ],
+      "code": "abstract class Test implements Anno {\n              // BUG: Diagnostic contains: @Immutable class has mutable field\n              final Object o = null;\n            }"
+    },
+    {
+      "description": "mutableEnclosing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1951
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            public class Test {\n              int x = 0;\n\n              @Immutable\n              // BUG: Diagnostic contains: 'Inner' has mutable enclosing instance 'Test'\n              public class Inner {\n                public int count() {\n                  return x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "superFieldSuppression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1983
+      ],
+      "code": ""
+    },
+    {
+      "description": "rawClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1994
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final Class clazz = Test.class;\n            }"
+    },
+    {
+      "description": "incompleteClassPath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2014
+      ],
+      "code": ""
+    },
+    {
+      "description": "knownImmutableFlag",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2028
+      ],
+      "code": "package threadsafety;\n\n            class SomeImmutable {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              public final SomeImmutable s = new SomeImmutable();\n            }"
+    },
+    {
+      "description": "knownUnsafeFlag",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2054
+      ],
+      "code": "package threadsafety;\n\n            class SomeUnsafe {}\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: 'SomeUnsafe' is mutable\n              public final SomeUnsafe s = new SomeUnsafe();\n            }"
+    },
+    {
+      "description": "lazyInit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2081
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.errorprone.annotations.concurrent.LazyInit;\n\n            @Immutable\n            class Test {\n              @LazyInit int a = 42;\n            }"
+    },
+    {
+      "description": "lazyInitMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2098
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.errorprone.annotations.concurrent.LazyInit;\n            import java.util.List;\n\n            @Immutable\n            class Test {\n              // BUG: Diagnostic contains: 'List' is mutable\n              @LazyInit List<Integer> a = null;\n            }"
+    },
+    {
+      "description": "immutableTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2117
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class Test<@ImmutableTypeParameter T> {\n              final T t = null;\n            }"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_immutableGenericFromContext_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2135
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class Test<@ImmutableTypeParameter T> {\n              A<T> n() {\n                return new A<>();\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_mutableGenericFromContext_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2162
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\nclass Test<T> {\n  A<T> n() {\n    // BUG: Diagnostic contains: instantiation of 'T' is mutable, 'T' is a mutable type variable\n    return new A<>();\n  }\n}"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_staticMethod_genericParamNotAnnotated_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2188
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\nclass Test {\n  static <T> A<T> m() {\n    // BUG: Diagnostic contains: instantiation of 'T' is mutable, 'T' is a mutable type variable\n    return new A<>();\n  }\n}"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_staticMethod_genericParamAnnotated_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2215
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class Test {\n              static <@ImmutableTypeParameter T> A<T> l() {\n                return new A<>();\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_genericParamNotAnnotated_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2242
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\nclass Test {\n  <T> A<T> k() {\n    // BUG: Diagnostic contains: instantiation of 'T' is mutable, 'T' is a mutable type variable\n    return new A<>();\n  }\n}"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_genericParamAnnotated_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2268
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class Test {\n              <@ImmutableTypeParameter T> A<T> k() {\n                return new A<>();\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_genericParamExtendsMutable_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2295
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            class MyMutableType {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\nclass Test {\n  <T extends MyMutableType> A<T> i() {\n    // BUG: Diagnostic contains: instantiation of 'T' is mutable, 'T' is a mutable type variable\n    return new A<>();\n  }\n}"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_genericParamExtendsImmutable_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2328
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class MyImmutableType {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            class Test {\n              <T extends MyImmutableType> A<T> h() {\n                return new A<>();\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2361
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            class Test {\n              A<Object> g() {\n                // BUG: Diagnostic contains: instantiation of 'T' is mutable, 'Object' is mutable\n                return new A<>();\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameterInstantiation_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2387
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class A<@ImmutableTypeParameter T> {}\n            \n\n            class Test {\n              A<String> f() {\n                return new A<>();\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameterUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2412
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class T {\n              static <@ImmutableTypeParameter T> void f() {}\n            }"
+    },
+    {
+      "description": "immutableTypeParameterUsage_interface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2427
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            @Immutable\n            interface T<@ImmutableTypeParameter T> {}"
+    },
+    {
+      "description": "immutableTypeParameterMutableClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2442
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class A<@ImmutableTypeParameter T> {}"
+    },
+    {
+      "description": "immutableTypeParameter_notAllTypeVarsInstantiated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2455
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.function.Function;\n\n            class Test {\n              public final <A> void f1(A transform) {}\n\n              public <B, @ImmutableTypeParameter C> C f2(Function<B, C> fn) {\n                return null;\n              }\n\n              public final <D, E> void f3(Function<D, E> fn) {\n                // BUG: Diagnostic contains: instantiation of 'C' is mutable\n                // 'E' is a mutable type variable\n                f1(f2(fn));\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameter_notAllTypeVarsInstantiated_shouldFail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2485
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import java.util.function.Function;\n\n            class Test {\n              public final <A> void f1(A transform) {}\n\n              public <@ImmutableTypeParameter B, C> C f2(Function<B, C> fn) {\n                return null;\n              }\n\n              public final <D, E> void f3(Function<D, E> fn) {\n                // BUG: Diagnostic contains: instantiation of 'B' is mutable\n                // 'D' is a mutable type variable\n                f1(f2(fn));\n              }\n            }"
+    },
+    {
+      "description": "containerOf_extendsThreadSafe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2512
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class X<V> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"Y\"})\n            // BUG: Diagnostic contains: 'X' is not a container of 'V'\n            class Test<Y> extends X<Y> {\n              private final Y t = null;\n            }"
+    },
+    {
+      "description": "containerOf_extendsThreadSafeContainerOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2537
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"V\"})\n            class X<V> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"Y\"})\n            class Test<Y> extends X<Y> {\n              private final Y t = null;\n            }"
+    },
+    {
+      "description": "containerOf_extendsThreadSafe_nonContainer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2561
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"V\"})\n            class X<U, V> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"Y\"})\n            class Test<Y> extends X<Object, Y> {\n              private final Y t = null;\n            }"
+    },
+    {
+      "description": "containerOf_extendsThreadSafe_interface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2585
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface X<V> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"Y\"})\n            // BUG: Diagnostic contains: 'X' is not a container of 'V'\n            class Test<Y> implements X<Y> {\n              private final Y t = null;\n            }"
+    },
+    {
+      "description": "containerOf_field",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2610
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface X<Y> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"V\")\n            class Test<V> {\n              private final X<V> t = null;\n            }"
+    },
+    {
+      "description": "annotatedClassType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2634
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n\n            @Target(TYPE_USE)\n            @interface A {}\n\n            class Test {\n              Object o = new @A Object();\n            }"
+    },
+    {
+      "description": "immutableInterfaceImplementationCapturesMutableState",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2654
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface I {\n              int f();\n            }\n\n            class Test {\n              int x;\n              I one =\n                  new I() {\n                    public int f() {\n                      return x++;\n                    }\n                  };\n              I two = () -> x++;\n            }"
+    },
+    {
+      "description": "immutableUpperBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2681
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class MyImmutableType {}\n            \n\n            import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test<T extends MyImmutableType, U extends T> {\n              final T t = null;\n              final U u = null;\n              final ImmutableList<? extends U> v = null;\n            }"
+    },
+    {
+      "description": "immutableRecursiveUpperBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2708
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            abstract class Recursive<T extends Recursive<T>> {\n              final T x = null;\n            }"
+    },
+    {
+      "description": "immutableRecursiveUpperBound_notImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2724
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n\n            @Immutable\n            abstract class Recursive<T extends Recursive<T>> {\n              final T x = null;\n              // BUG: Diagnostic contains: 'Recursive' has field 'y' of type 'java.util.List<T>'\n              final List<T> y = null;\n            }"
+    },
+    {
+      "description": "immutableUpperBoundAndContainerOfInconsistency",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2743
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface ImmutableInterface {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @SuppressWarnings(\"Immutable\")\n            class MutableImpl implements ImmutableInterface {\n              int mutableField;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class WithContainerOf<T extends ImmutableInterface> {\n              final T x = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class WithoutContainerOf<T extends ImmutableInterface> {\n              final T x = null;\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test {\n              final WithContainerOf<ImmutableInterface> a = null;\n              final WithoutContainerOf<ImmutableInterface> b = null;\n              // BUG: Diagnostic contains: field 'c' of type 'WithContainerOf<MutableImpl>'\n              final WithContainerOf<MutableImpl> c = null;\n              final WithoutContainerOf<MutableImpl> d = null;\n            }"
+    },
+    {
+      "description": "immutableTypeParameter_twoInstantiations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2802
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n            import com.google.common.collect.ImmutableList;\n\n            @Immutable\n            class Test<@ImmutableTypeParameter T> {\n              <@ImmutableTypeParameter T> T f(T t) {\n                return t;\n              }\n\n              <@ImmutableTypeParameter T> void g(T a, T b) {}\n\n              @Immutable\n              interface I {}\n\n              void test(I i) {\n                g(f(i), f(i));\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameter_instantiations_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2832
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n\n            abstract class T {\n              interface S<T> {}\n\n              interface L<T> {}\n\n              interface A {}\n\n              @Immutable\n              interface B extends A {}\n\n              @Immutable\n              interface C extends B {}\n\n              abstract <X, Y, Z> void h(S<X> firstType, S<Y> secondType, S<Z> thirdType);\n\n              abstract <@ImmutableTypeParameter E extends A> S<E> f(Class<E> entityClass);\n\n              abstract <T> S<L<T>> g(S<T> element);\n\n              void test() {\n                // BUG: Diagnostic contains: the declaration of type 'T.A' is not annotated\n                h(f(A.class), g(f(B.class)), g(f(C.class)));\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameter_rawSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2870
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class S<@ImmutableTypeParameter X> {}\n            \n\nimport com.google.errorprone.annotations.ImmutableTypeParameter;\nimport com.google.errorprone.annotations.Immutable;\n\n@Immutable\n// BUG: Diagnostic contains: 'S' required instantiation of 'X' with type parameters, but was raw\nclass T<@ImmutableTypeParameter X> extends S {}"
+    },
+    {
+      "description": "mutable_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2895
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "containerOf_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2911
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = \"T\")\n            class ImmutableContainer<T> {}"
+    },
+    {
+      "description": "nestedImmutableTypeParameter_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2930
+      ],
+      "code": ""
+    },
+    {
+      "description": "localVariable_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2938
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "parameter_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2956
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "returnValue_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2972
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "genericStaticMethodParam_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2988
+      ],
+      "code": ""
+    },
+    {
+      "description": "genericStaticMethodReturnValue_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2999
+      ],
+      "code": ""
+    },
+    {
+      "description": "methodParameter_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3010
+      ],
+      "code": ""
+    },
+    {
+      "description": "methodReturnValue_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3021
+      ],
+      "code": ""
+    },
+    {
+      "description": "constructorParam_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3033
+      ],
+      "code": ""
+    },
+    {
+      "description": "typecast_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3045
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "new_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3063
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "typeParameterExtendsMutable_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3084
+      ],
+      "code": "class MutableClass {}"
+    },
+    {
+      "description": "typeParameterExtendsImmutable_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3102
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class ImmutableClass {}"
+    },
+    {
+      "description": "typeParameterSuper_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3123
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class ImmutableClass {}"
+    },
+    {
+      "description": "extendsImmutable_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3144
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class ImmutableClass {}\n            \n\n            class ChildGenericWithImmutableParam<T extends ImmutableClass>\n                extends GenericWithImmutableParam<T> {}"
+    },
+    {
+      "description": "methodInvocation_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3164
+      ],
+      "code": "class MutableClass {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class Clazz {\n              public <@ImmutableTypeParameter T> void method(int m, T v) {}\n            }\n            \n\nclass Invoker {\n  public void method() {\n    // BUG: Diagnostic contains: instantiation of 'T' is mutable, the declaration of type\n    // 'MutableClass' is not annotated with @com.google.errorprone.annotations.Immutable\n    new Clazz().method(78, new MutableClass());\n  }\n}"
+    },
+    {
+      "description": "containerOfAsImmutableTypeParameter_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3195
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"T\"})\n            class Container<T> {}\n            \n\n            class Clazz<T> {\n              private GenericWithImmutableParam<Container<T>> container;\n            }"
+    },
+    {
+      "description": "containerOfAsImmutableTypeParameterInSameClass_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3216
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable(containerOf = {\"T\"})\n            class Container<T> {\n              GenericWithImmutableParam<T> method() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "immutableTypeParameter_recursiveUpperBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3234
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            abstract class B<T extends B<T>> {}"
+    },
+    {
+      "description": "immutableTypeParameter_recursiveUpperBoundUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3248
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface B<T extends B<T>> {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class A implements B<A> {\n              final B<A> value = null;\n            }"
+    },
+    {
+      "description": "wildcard_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3272
+      ],
+      "code": ""
+    },
+    {
+      "description": "immutableTypeParameter_anonymousInstantiation_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3283
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class Clazz {\n              private static final GenericWithImmutableParam<String> value =\n                  new GenericWithImmutableParam<String>() {};\n            }"
+    },
+    {
+      "description": "immutableTypeParameter_anonymousInstantiation_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3299
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\nclass Clazz {\n  private static final GenericWithImmutableParam<MutableClass> value =\n      // BUG: Diagnostic contains: instantiation of 'T' is mutable, the declaration of type\n      // 'Clazz.MutableClass' is not annotated with @com.google.errorprone.annotations.Immutable\n      new GenericWithImmutableParam<MutableClass>() {};\n\n  private static class MutableClass {}\n}"
+    },
+    {
+      "description": "nonGeneric_inheritanceClass_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3319
+      ],
+      "code": "class ChildGenericWithImmutableParam extends GenericWithImmutableParam<String> {}"
+    },
+    {
+      "description": "nonGeneric_inheritanceClass_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3330
+      ],
+      "code": "// BUG: Diagnostic contains: instantiation of 'T' is mutable, the declaration of type 'MutableClass'\n// is not annotated with @com.google.errorprone.annotations.Immutable\nclass ChildGenericWithImmutableParam extends GenericWithImmutableParam<MutableClass> {}"
+    },
+    {
+      "description": "nonGeneric_inheritanceInterface_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3344
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            interface GenericWithImmutableParamIface<@ImmutableTypeParameter T> {}\n            \n\nclass ChildGenericWithImmutableParam implements GenericWithImmutableParamIface<String> {}"
+    },
+    {
+      "description": "nonGeneric_inheritanceInterface_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3362
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            interface GenericWithImmutableParamIface<@ImmutableTypeParameter T> {}\n            \n\n// BUG: Diagnostic contains: instantiation of 'T' is mutable, the declaration of type 'MutableClass'\n// is not annotated with @com.google.errorprone.annotations.Immutable\nclass ChildGenericWithImmutableParam implements GenericWithImmutableParamIface<MutableClass> {}"
+    },
+    {
+      "description": "inheritanceClass_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3383
+      ],
+      "code": "// BUG: Diagnostic contains: instantiation of 'T' is mutable, 'T' is a mutable type variable\nclass ChildGenericWithImmutableParam<T> extends GenericWithImmutableParam<T> {}"
+    },
+    {
+      "description": "inheritanceClass_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3395
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class ChildGenericWithImmutableParam<@ImmutableTypeParameter T>\n                extends GenericWithImmutableParam<T> {}"
+    },
+    {
+      "description": "inheritanceInterface_violation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3409
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            interface GenericWithImmutableParamIface<@ImmutableTypeParameter T> {}\n            \n\n// BUG: Diagnostic contains: instantiation of 'T' is mutable, 'T' is a mutable type variable\nclass ChildGenericWithImmutableParam<T> implements GenericWithImmutableParamIface<T> {}"
+    },
+    {
+      "description": "inheritanceInterface_noViolation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3428
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            interface GenericWithImmutableParamIface<@ImmutableTypeParameter T> {}\n            \n\n            import com.google.errorprone.annotations.ImmutableTypeParameter;\n\n            class ChildGenericWithImmutableParam<@ImmutableTypeParameter T>\n                implements GenericWithImmutableParamIface<T> {}"
+    },
+    {
+      "description": "lambda_cannotCloseAroundMutableField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3460
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              private int a = 0;\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                // BUG: Diagnostic contains:\n                test(x -> ++a);\n              }\n            }"
+    },
+    {
+      "description": "lambda_canCloseAroundImmutableField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3487
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              private final int b = 1;\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                test(x -> b);\n                test(x -> this.b);\n              }\n            }"
+    },
+    {
+      "description": "lambda_cannotCloseAroundMutableFieldQualifiedWithThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3514
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              private int b = 1;\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                // BUG: Diagnostic contains:\n                test(x -> this.b);\n              }\n            }"
+    },
+    {
+      "description": "lambda_cannotCloseAroundMutableLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3541
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                List<Integer> xs = new ArrayList<>();\n                // BUG: Diagnostic contains:\n                test(x -> xs.get(x));\n              }\n            }"
+    },
+    {
+      "description": "notImmutableAnnotatedLambda_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3567
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n            import java.util.function.Function;\n\n            class Test {\n              void test(Function<Integer, Integer> f) {\n                List<Integer> xs = new ArrayList<>();\n                test(x -> xs.get(x));\n              }\n            }"
+    },
+    {
+      "description": "lambda_canHaveMutableVariablesWithin",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3587
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                test(\n                    x -> {\n                      List<Integer> xs = new ArrayList<>();\n                      return xs.get(x);\n                    });\n              }\n            }"
+    },
+    {
+      "description": "lambda_canAccessStaticField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3615
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              static class A {\n                public static int FOO = 1;\n              }\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                test(x -> A.FOO);\n              }\n            }"
+    },
+    {
+      "description": "lambda_cannotCallMethodOnMutableClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3641
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\nabstract class Test {\n  @Immutable\n  interface ImmutableFunction<A, B> {\n    A apply(B b);\n  }\n\n  abstract int mutable(int a);\n\n  void test(ImmutableFunction<Integer, Integer> f) {\n    // BUG: Diagnostic contains: This lambda implements @Immutable interface 'ImmutableFunction',\n    // but accesses instance method(s) 'mutable' on 'Test' which is not @Immutable\n    test(x -> mutable(x));\n    // BUG: Diagnostic contains: This lambda implements @Immutable interface 'ImmutableFunction',\n    // but closes over 'this', which is not @Immutable because 'Test' has field 'this' of type\n    // 'Test', the declaration of type 'Test' is not annotated with\n    // @com.google.errorprone.annotations.Immutable\n    test(x -> this.mutable(x));\n  }\n}"
+    },
+    {
+      "description": "lambda_canCallMethodOnImmutableClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3672
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            abstract class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              abstract int mutable(int a);\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                test(x -> mutable(x));\n                test(x -> this.mutable(x));\n              }\n            }"
+    },
+    {
+      "description": "checksEffectiveTypeOfReceiver",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3698
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.function.Function;\n\n            @Immutable\n            abstract class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> extends Function<A, B> {\n                default <C> ImmutableFunction<A, C> andThen(ImmutableFunction<B, C> fn) {\n                  return x -> fn.apply(apply(x));\n                }\n              }\n            }"
+    },
+    {
+      "description": "checksEffectiveTypeOfReceiver_whenNotDirectOuterClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3720
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.function.Function;\n\n            @Immutable\n            abstract class Test implements Function<String, String> {\n              @Immutable\n              interface ImmutableFunction {\n                String apply(String a);\n              }\n\n              class A {\n                ImmutableFunction asImmutable() {\n                  return x -> apply(x);\n                }\n              }\n            }"
+    },
+    {
+      "description": "methodReference_onImmutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3746
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n            import com.google.errorprone.annotations.Immutable;\n\n            abstract class Test {\n              @Immutable\n              interface ImmutableFunction {\n                String apply(String b);\n              }\n\n              void test(ImmutableFunction f) {\n                ImmutableMap<String, String> map = ImmutableMap.of();\n                test(map::get);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_onMutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3770
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            abstract class Test {\n              @Immutable\n              interface ImmutableFunction {\n                String apply(String b);\n              }\n\n              void test(ImmutableFunction f) {\n                Map<String, String> map = new HashMap<>();\n                // BUG: Diagnostic contains:\n                test(map::get);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_onExpressionWithMutableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3796
+      ],
+      "code": "import com.google.common.collect.Maps;\n            import com.google.errorprone.annotations.Immutable;\n\n            abstract class Test {\n              @Immutable\n              interface ImmutableFunction {\n                String apply(String b);\n              }\n\n              void test(ImmutableFunction f) {\n                // BUG: Diagnostic contains:\n                test(Maps.<String, String>newHashMap()::get);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_toStaticMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3820
+      ],
+      "code": "import com.google.common.collect.Lists;\n            import com.google.errorprone.annotations.Immutable;\n\n            abstract class Test {\n              @Immutable\n              interface ImmutableProvider {\n                Object get();\n              }\n\n              void test(ImmutableProvider f) {\n                test(Lists::newArrayList);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_toUnboundMethodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3843
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.Set;\n\n            abstract class Test {\n              @Immutable\n              interface ImmutableBiConsumer {\n                void accept(Set<String> xs, String x);\n              }\n\n              void test(ImmutableBiConsumer c) {\n                test(Set::add);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_toConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3866
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n\n            abstract class Test {\n              @Immutable\n              interface ImmutableProvider {\n                Object get();\n              }\n\n              void test(ImmutableProvider f) {\n                test(ArrayList::new);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_immutableTypeParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3889
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import java.util.ArrayList;\n\n            abstract class Test {\n              interface ImmutableProvider<@ImmutableTypeParameter T> {\n                T get();\n              }\n\n              void test(ImmutableProvider<?> f) {\n                // BUG: Diagnostic contains:\n                test(ArrayList::new);\n              }\n            }"
+    },
+    {
+      "description": "lambda_immutableTypeParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3912
+      ],
+      "code": "import com.google.errorprone.annotations.ImmutableTypeParameter;\n            import java.util.ArrayList;\n\n            abstract class Test {\n              interface ImmutableProvider<@ImmutableTypeParameter T> {\n                T get();\n              }\n\n              void test(ImmutableProvider<?> f) {\n                // BUG: Diagnostic contains:\n                test(() -> new ArrayList<>());\n              }\n            }"
+    },
+    {
+      "description": "chainedGettersAreAcceptable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3935
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              final Test t = null;\n              final List<String> xs = new ArrayList<>();\n\n              final List<String> getXs() {\n                return xs;\n              }\n\n              @Immutable\n              interface ImmutableFunction {\n                String apply(String b);\n              }\n\n              void test(ImmutableFunction f) {\n                test(\n                    x -> {\n                      Test t = new Test();\n                      return t.xs.get(0) + t.getXs().get(0) + t.t.t.xs.get(0);\n                    });\n              }\n            }"
+    },
+    {
+      "description": "anonymousClass_cannotCloseAroundMutableLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        3970
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                List<Integer> xs = new ArrayList<>();\n                test(\n                    // BUG: Diagnostic contains:\n                    new ImmutableFunction<>() {\n                      @Override\n                      public Integer apply(Integer x) {\n                        return xs.get(x);\n                      }\n                    });\n              }\n            }"
+    },
+    {
+      "description": "anonymousClass_hasMutableFieldSuppressed_noWarningAtUsageSite",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4002
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              @Immutable\n              interface ImmutableFunction<A, B> {\n                A apply(B b);\n              }\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                test(\n                    new ImmutableFunction<>() {\n                      @Override\n                      public Integer apply(Integer x) {\n                        return xs.get(x);\n                      }\n\n                      @SuppressWarnings(\"Immutable\")\n                      List<Integer> xs = new ArrayList<>();\n                    });\n              }\n            }"
+    },
+    {
+      "description": "anonymousClass_canCallSuperMethodOnNonImmutableSuperClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4035
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              interface Function<A, B> {\n                default void foo() {}\n              }\n\n              @Immutable\n              interface ImmutableFunction<A, B> extends Function<A, B> {\n                A apply(B b);\n              }\n\n              void test(ImmutableFunction<Integer, Integer> f) {\n                test(\n                    new ImmutableFunction<>() {\n                      @Override\n                      public Integer apply(Integer x) {\n                        foo();\n                        return 0;\n                      }\n                    });\n              }\n            }"
+    },
+    {
+      "description": "switchExpressionsResultingInGenericTypes_doesNotThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4070
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            enum Kind {\n              A,\n              B;\n            }\n            \n\n            import java.util.Optional;\n            import java.util.function.Supplier;\n\n            class Test {\n              Supplier<Optional<String>> test(Kind kind) {\n                return switch (kind) {\n                  case A -> Optional::empty;\n                  case B -> () -> Optional.of(\"\");\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchExpressionsYieldStatement_doesNotThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4102
+      ],
+      "code": "import java.util.function.Supplier;\n\n            class Test {\n              String test(String mode) {\n                return switch (mode) {\n                  case \"random\" -> {\n                    yield \"foo\";\n                  }\n                  default -> throw new IllegalArgumentException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchExpressionsMethodReference_doesNotThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4124
+      ],
+      "code": "import java.util.function.Supplier;\n\n            class Test {\n              Supplier<Double> test(String mode) {\n                return switch (mode) {\n                  case \"random\" -> Math::random;\n                  default -> throw new IllegalArgumentException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchExpressionsYieldStatementMethodReference_doesNotThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4144
+      ],
+      "code": "import java.util.function.Supplier;\n\n            class Test {\n              Supplier<Double> test(String mode) {\n                return switch (mode) {\n                  case \"random\" -> {\n                    yield Math::random;\n                  }\n                  default -> throw new IllegalArgumentException();\n                };\n              }\n            }"
+    },
+    {
+      "description": "enumBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4166
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            class Test<E extends Enum<E>> {\n              private final E e;\n\n              Test(E e) {\n                this.e = e;\n              }\n            }"
+    },
+    {
+      "description": "mutableRecord",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4186
+      ],
+      "code": "import java.util.List;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            // BUG: Diagnostic contains: 'R' has field 'xs'\n            record R(List<String> xs) {}"
+    },
+    {
+      "description": "immutableRecord",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        4202
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            record R(ImmutableList<String> xs) {}"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "StreamToIterable",
+  "language": "java",
+  "description": "Using stream::iterator creates a one-shot Iterable, which may cause surprising failures.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 97,
+  "branches": 8,
+  "apis": 2,
+  "test": [
+    {
+      "description": "lambdaWithinEnhancedForLoop_recreatedEachTime_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.util.stream.Stream;\n\n            class Test {\n              void test() {\n                for (int i : (Iterable<Integer>) () -> Stream.of(1, 2, 3).iterator()) {}\n              }\n            }"
+    },
+    {
+      "description": "withinEnhancedForLoop_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": ""
+    },
+    {
+      "description": "methodReferenceRefactoredToExplicitCollection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.toImmutableList;\n            import java.util.List;\n            import java.util.stream.Stream;\n\n            class Test {\n              void test(List<Integer> i) {\n                addAll(Stream.of(1, 2, 3)::iterator);\n              }\n\n              void addAll(Iterable<Integer> ints) {}\n            }\n            \n\n            import static com.google.common.collect.ImmutableList.toImmutableList;\n            import java.util.List;\n            import java.util.stream.Stream;\n\n            class Test {\n              void test(List<Integer> i) {\n                addAll(Stream.of(1, 2, 3).collect(toImmutableList()));\n              }\n\n              void addAll(Iterable<Integer> ints) {}\n            }"
+    },
+    {
+      "description": "lambdaRefactoredToExplicitCollection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "import java.util.List;\n            import java.util.stream.Stream;\n\n            class Test {\n              void test(List<Integer> i) {\n                Stream<Integer> stream = Stream.of(1, 2, 3);\n                addAll(() -> stream.iterator());\n              }\n\n              void addAll(Iterable<Integer> ints) {}\n            }\n            \n\n            import static com.google.common.collect.ImmutableList.toImmutableList;\n            import java.util.List;\n            import java.util.stream.Stream;\n\n            class Test {\n              void test(List<Integer> i) {\n                Stream<Integer> stream = Stream.of(1, 2, 3);\n                addAll(stream.collect(toImmutableList()));\n              }\n\n              void addAll(Iterable<Integer> ints) {}\n            }"
+    }
+  ]
+}

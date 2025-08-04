@@ -1,0 +1,30 @@
+{
+  "name": "ProvidesMethodOutsideOfModule",
+  "language": "java",
+  "description": "@Provides methods need to be declared in a Module to have any effect.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 45,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Provides;\n\n            /** Tests for {@code ProvidesMethodOutsideOfModule} */\n            public class ProvidesMethodOutsideOfModulePositiveCases {\n\n              /** Random class contains a provides method. */\n              public class TestClass1 {\n                // BUG: Diagnostic contains: remove\n                @Provides\n                void providesBlah() {}\n              }\n\n              /** Module contains an anonymous inner with a Provides method. */\n              public class TestModule extends AbstractModule {\n                @Override\n                protected void configure() {\n                  Object x =\n                      new Object() {\n                        // BUG: Diagnostic contains: remove\n                        @Provides\n                        void providesBlah() {}\n                      };\n                }\n              }\n\n              /** Class has inner module class */\n              public class TestClass2 {\n                class NestedModule extends AbstractModule {\n                  @Override\n                  protected void configure() {}\n\n                  @Provides\n                  int thisIsOk() {\n                    return 42;\n                  }\n                }\n\n                // BUG: Diagnostic contains: remove\n                @Provides\n                int thisIsNotOk() {\n                  return 42;\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            import com.google.gwt.inject.client.AbstractGinModule;\n            import com.google.gwt.inject.client.GinModule;\n            import com.google.gwt.inject.client.binder.GinBinder;\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Binder;\n            import com.google.inject.Module;\n            import com.google.inject.Provides;\n\n            /** Tests for {@code ProvidesMethodOutsideOfModule} */\n            public class ProvidesMethodOutsideOfModuleNegativeCases {\n\n              /** Regular module */\n              class Module1 extends AbstractModule {\n                @Override\n                protected void configure() {}\n\n                @Provides\n                int providesFoo() {\n                  return 42;\n                }\n              }\n\n              /** implements the Module interface directly */\n              class Module2 implements Module {\n                @Override\n                public void configure(Binder binder) {}\n\n                @Provides\n                int providesFoo() {\n                  return 42;\n                }\n              }\n\n              /** Regular GinModule */\n              class GinModule1 extends AbstractGinModule {\n\n                @Override\n                protected void configure() {}\n\n                @Provides\n                int providesFoo() {\n                  return 42;\n                }\n              }\n\n              /** Implements the GinModule interface directly */\n              class GinModule2 implements GinModule {\n                @Override\n                public void configure(GinBinder binder) {}\n\n                @Provides\n                int providesFoo() {\n                  return 42;\n                }\n              }\n            }\\"
+    }
+  ]
+}

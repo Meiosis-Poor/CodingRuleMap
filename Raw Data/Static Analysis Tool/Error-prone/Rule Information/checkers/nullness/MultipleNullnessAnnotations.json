@@ -1,0 +1,62 @@
+{
+  "name": "MultipleNullnessAnnotations",
+  "language": "java",
+  "description": "This type use has conflicting nullness annotations",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 82,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import org.checkerframework.checker.nullness.compatqual.NonNullDecl;\n            import org.checkerframework.checker.nullness.compatqual.NullableDecl;\n            import org.checkerframework.checker.nullness.qual.NonNull;\n            import org.checkerframework.checker.nullness.qual.Nullable;\n            import java.util.List;\n\n            abstract class Test {\n              // BUG: Diagnostic contains:\n              @Nullable @NonNull Object x;\n              // BUG: Diagnostic contains:\n              @NullableDecl static @NonNull Object y;\n              // BUG: Diagnostic contains:\n              List<@Nullable @NonNull String> z;\n\n              @NullableDecl\n              // BUG: Diagnostic contains:\n              abstract @NonNull Object f();\n\n              // BUG: Diagnostic contains:\n              abstract void f(@NullableDecl Object @NonNull [] x);\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "import org.checkerframework.checker.nullness.compatqual.NonNullDecl;\n            import org.checkerframework.checker.nullness.compatqual.NullableDecl;\n            import org.checkerframework.checker.nullness.qual.NonNull;\n            import org.checkerframework.checker.nullness.qual.Nullable;\n            import java.util.List;\n\n            abstract class Test {\n              @NonNullDecl @NonNull Object x;\n              @NullableDecl static @Nullable Object y;\n            }"
+    },
+    {
+      "description": "disambiguation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        80
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n            import java.util.List;\n\n            abstract class Test {\n              @Nullable Object @Nullable [] x;\n\n              abstract void f(@Nullable Object @Nullable ... x);\n            }"
+    },
+    {
+      "description": "declarationAndType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "import java.lang.annotation.Target;\n            import java.lang.annotation.ElementType;\n\n            @Target({\n              ElementType.METHOD,\n              ElementType.FIELD,\n              ElementType.PARAMETER,\n              ElementType.LOCAL_VARIABLE,\n              ElementType.TYPE_USE\n            })\n            public @interface Nullable {}\n            \n\n            abstract class Test {\n              abstract void f(@Nullable Object x);\n\n              abstract @Nullable Object g();\n\n              @Nullable Object f;\n            }"
+    },
+    {
+      "description": "typeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "import org.checkerframework.checker.nullness.compatqual.NullableDecl;\n            import org.checkerframework.checker.nullness.qual.NonNull;\n\n            class T<X> {\n              // BUG: Diagnostic contains:\n              @NullableDecl @NonNull X f;\n\n              @NullableDecl\n              // BUG: Diagnostic contains:\n              @NonNull X g() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "arrayTypeAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "import javax.annotation.CheckForNull;\n            import org.checkerframework.checker.nullness.qual.NonNull;\n\n            class T {\n              // BUG: Diagnostic contains:\n              @CheckForNull Object @NonNull [] f;\n            }"
+    }
+  ]
+}

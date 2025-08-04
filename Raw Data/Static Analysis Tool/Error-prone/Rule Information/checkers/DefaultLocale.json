@@ -1,0 +1,142 @@
+{
+  "name": "DefaultLocale",
+  "language": "java",
+  "description": "Implicit use of the JVM default locale, which can result in differing behaviour between JVM executions.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 634,
+  "branches": 39,
+  "apis": 6,
+  "test": [
+    {
+      "description": "testOnlyContainsSpecifiersInAllowList",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        43
+      ],
+      "code": ""
+    },
+    {
+      "description": "formatMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import java.io.*;\nimport java.text.*;\nimport java.util.Formattable;\n\nclass Test {\n  static final String PATTERN = \"%d\";\n\n  abstract static class F implements Formattable {}\n  ;\n\n  void f(PrintStream ps, PrintWriter pw, String pattern, F formattable) throws Exception {\n    // BUG: Diagnostic contains: ps.format(Locale.getDefault(FORMAT), PATTERN, 42);\n    ps.format(PATTERN, 42);\n    // BUG: Diagnostic contains: ps.format(Locale.getDefault(FORMAT), \"%s\", formattable);\n    ps.format(\"%s\", formattable);\n    // BUG: Diagnostic contains: ps.format(Locale.getDefault(FORMAT), pattern, formattable);\n    ps.format(pattern, formattable);\n    // BUG: Diagnostic contains: ps.format(Locale.getDefault(FORMAT), \"%d\", 42);\n    ps.format(\"%d\", 42);\n    // BUG: Diagnostic contains: ps.printf(Locale.getDefault(FORMAT), \"%d\", 42);\n    ps.printf(\"%d\", 42);\n    // BUG: Diagnostic contains: pw.format(Locale.getDefault(FORMAT), \"%d\", 42);\n    pw.format(\"%d\", 42);\n    // BUG: Diagnostic contains: pw.printf(Locale.getDefault(FORMAT), \"%d\", 42);\n    pw.printf(\"%d\", 42);\n    // BUG: Diagnostic contains: String.format(Locale.getDefault(FORMAT), \"%d\", 42);\n    String.format(\"%d\", 42);\n    // BUG: Diagnostic contains: new MessageFormat(\"%d\", Locale.getDefault(FORMAT)).format(42);\n    MessageFormat.format(\"%d\", 42);\n  }\n}"
+    },
+    {
+      "description": "formatMethods_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": ""
+    },
+    {
+      "description": "stringFormatted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": ""
+    },
+    {
+      "description": "displayMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        169
+      ],
+      "code": "import java.util.*;\n\n            class Test {\n              void f(Currency currency) throws Exception {\n                // BUG: Diagnostic contains: currency.getSymbol(Locale.getDefault(DISPLAY));\n                currency.getSymbol();\n              }\n            }"
+    },
+    {
+      "description": "factoryMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "import java.text.*;\nimport java.time.format.*;\n\nclass Test {\n  void f(DateTimeFormatterBuilder dtfb) throws Exception {\n    // BUG: Diagnostic contains: BreakIterator.getCharacterInstance(Locale.getDefault());\n    BreakIterator.getCharacterInstance();\n    // BUG: Diagnostic contains: BreakIterator.getLineInstance(Locale.getDefault());\n    BreakIterator.getLineInstance();\n    // BUG: Diagnostic contains: BreakIterator.getSentenceInstance(Locale.getDefault());\n    BreakIterator.getSentenceInstance();\n    // BUG: Diagnostic contains: BreakIterator.getWordInstance(Locale.getDefault());\n    BreakIterator.getWordInstance();\n    // BUG: Diagnostic contains: Collator.getInstance(Locale.getDefault());\n    Collator.getInstance();\n    // BUG: Diagnostic contains: NumberFormat.getCurrencyInstance(Locale.getDefault(FORMAT));\n    NumberFormat.getCurrencyInstance();\n    // BUG: Diagnostic contains: NumberFormat.getInstance(Locale.getDefault(FORMAT));\n    NumberFormat.getInstance();\n    // BUG: Diagnostic contains: NumberFormat.getIntegerInstance(Locale.getDefault(FORMAT));\n    NumberFormat.getIntegerInstance();\n    // BUG: Diagnostic contains: NumberFormat.getNumberInstance(Locale.getDefault(FORMAT));\n    NumberFormat.getNumberInstance();\n    // BUG: Diagnostic contains: NumberFormat.getPercentInstance(Locale.getDefault(FORMAT));\n    NumberFormat.getPercentInstance();\n    // BUG: Diagnostic contains: DateFormatSymbols.getInstance(Locale.getDefault(FORMAT));\n    DateFormatSymbols.getInstance();\n    // BUG: Diagnostic contains: DecimalFormatSymbols.getInstance(Locale.getDefault(FORMAT));\n    DecimalFormatSymbols.getInstance();\n    // BUG: Diagnostic contains: DateTimeFormatter.ofPattern(\"pattern\", Locale.getDefault(FORMAT));\n    DateTimeFormatter.ofPattern(\"pattern\");\n    // BUG: Diagnostic contains: dtfb.toFormatter(Locale.getDefault(FORMAT));\n    dtfb.toFormatter();\n  }\n}"
+    },
+    {
+      "description": "factoryMethodsJdk12plus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        232
+      ],
+      "code": "import java.text.*;\n\nclass Test {\n  void f() throws Exception {\n    // BUG: Diagnostic contains: NumberFormat.getCompactNumberInstance(Locale.getDefault(FORMAT));\n    NumberFormat.getCompactNumberInstance();\n  }\n}"
+    },
+    {
+      "description": "dateFormat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": "import static java.text.DateFormat.*;\nimport java.text.*;\n\nclass Test {\n  void f() throws Exception {\n    // BUG: Diagnostic contains: DateFormat.getDateTimeInstance(SHORT, SHORT,\n    // Locale.getDefault(FORMAT));\n    DateFormat.getInstance();\n    // BUG: Diagnostic contains: DateFormat.getDateInstance(DEFAULT, Locale.getDefault(FORMAT));\n    DateFormat.getDateInstance();\n    // BUG: Diagnostic contains: DateFormat.getDateInstance(SHORT, Locale.getDefault(FORMAT));\n    DateFormat.getDateInstance(SHORT);\n    // BUG: Diagnostic contains: DateFormat.getTimeInstance(DEFAULT, Locale.getDefault(FORMAT));\n    DateFormat.getTimeInstance();\n    // BUG: Diagnostic contains: DateFormat.getTimeInstance(SHORT, Locale.getDefault(FORMAT));\n    DateFormat.getTimeInstance(SHORT);\n    // BUG: Diagnostic contains: DateFormat.getDateTimeInstance(DEFAULT, DEFAULT,\n    // Locale.getDefault(FORMAT));\n    DateFormat.getDateTimeInstance();\n    // BUG: Diagnostic contains: DateFormat.getDateTimeInstance(SHORT, LONG,\n    // Locale.getDefault(FORMAT));\n    DateFormat.getDateTimeInstance(SHORT, LONG);\n  }\n}"
+    },
+    {
+      "description": "resourceBundle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": ""
+    },
+    {
+      "description": "resourceBundleJdk9plus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        309
+      ],
+      "code": ""
+    },
+    {
+      "description": "formatConstructors",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        328
+      ],
+      "code": "import java.io.*;\n            import java.text.*;\n\n            class Test {\n              void f() throws Exception {\n                // BUG: Diagnostic contains: new MessageFormat(\"%d\", Locale.getDefault(FORMAT));\n                new MessageFormat(\"%d\");\n                // BUG: Diagnostic contains: new DateFormatSymbols(Locale.getDefault(FORMAT));\n                new DateFormatSymbols();\n                // BUG: Diagnostic contains: new DecimalFormatSymbols(Locale.getDefault(FORMAT));\n                new DecimalFormatSymbols();\n              }\n            }"
+    },
+    {
+      "description": "decimalFormat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351
+      ],
+      "code": ""
+    },
+    {
+      "description": "simpleDateFormat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        371
+      ],
+      "code": ""
+    },
+    {
+      "description": "formatter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        394
+      ],
+      "code": ""
+    },
+    {
+      "description": "refactoringAddLocaleImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        442
+      ],
+      "code": "import java.text.*;\n\n            class Test {\n              void f() throws Exception {\n                MessageFormat.format(\"%d\", 42);\n              }\n            }\n            \n\n            import java.text.*;\n            import java.util.Locale;\n\n            class Test {\n              void f() throws Exception {\n                new MessageFormat(\"%d\", Locale.ROOT).format(42);\n              }\n            }"
+    },
+    {
+      "description": "refactoringAddLocaleCategoryFormatStaticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        471
+      ],
+      "code": "import java.text.*;\n\n            class Test {\n              void f() throws Exception {\n                MessageFormat.format(\"%d\", 42);\n              }\n            }\n            \n\n            import static java.util.Locale.Category.FORMAT;\n            import java.text.*;\n            import java.util.Locale;\n\n            class Test {\n              void f() throws Exception {\n                new MessageFormat(\"%d\", Locale.getDefault(FORMAT)).format(42);\n              }\n            }"
+    }
+  ]
+}

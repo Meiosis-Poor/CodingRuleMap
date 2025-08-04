@@ -1,0 +1,62 @@
+{
+  "name": "NonCanonicalStaticMemberImport",
+  "language": "java",
+  "description": "Static import of member uses non-canonical name",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 49,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package a;\n\n            public class A {\n              public static final int foo() {\n                return 42;\n              }\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            public class B extends A {}\n            \n\n            package b;\n\n            // BUG: Diagnostic contains: import static a.A.foo;\n            import static b.B.foo;\n\n            class Test {}"
+    },
+    {
+      "description": "positiveField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "package a;\n\n            public class A {\n              public static final int CONST = 42;\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            public class B extends A {}\n            \n\n            package b;\n\n            // BUG: Diagnostic contains: import static a.A.CONST;\n            import static b.B.CONST;\n\n            class Test {}"
+    },
+    {
+      "description": "positiveClassAndField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102
+      ],
+      "code": "package a;\n\n            public class Super {\n              public static final int CONST = 42;\n            }\n            \n\n            package a;\n\n            public class A {\n              public static class Inner extends Super {}\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            public class B extends A {}\n            \n\n            package b;\n\n            // BUG: Diagnostic contains: import static a.Super.CONST;\n            import static a.A.Inner.CONST;\n\n            class Test {}"
+    },
+    {
+      "description": "negativeMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "package a;\n\n            public class A {\n              public static final int foo() {\n                return 42;\n              }\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            public class B extends A {}\n            \n\n            package b;\n\n            import static a.A.foo;\n\n            class Test {}"
+    },
+    {
+      "description": "negativeField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        180
+      ],
+      "code": "package a;\n\n            public class A {\n              public static final int CONST = 42;\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            public class B extends A {}\n            \n\n            package b;\n\n            import static a.A.CONST;\n\n            class Test {}"
+    },
+    {
+      "description": "negativeClassAndField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        213
+      ],
+      "code": "package a;\n\n            public class Super {\n              public static final int CONST = 42;\n            }\n            \n\n            package a;\n\n            public class A {\n              public static class Inner extends Super {}\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            public class B extends A {}\n            \n\n            package b;\n\n            import static a.Super.CONST;\n\n            class Test {}"
+    }
+  ]
+}

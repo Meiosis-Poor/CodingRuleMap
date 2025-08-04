@@ -1,0 +1,222 @@
+{
+  "name": "PreferJavaTimeOverload",
+  "language": "java",
+  "description": "Prefer using java.time-based APIs when available. Note that this checker does not and cannot guarantee that the overloads have equivalent semantics, but that is generally the case with overloaded methods.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 288,
+  "branches": 39,
+  "apis": 9,
+  "test": [
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload_microseconds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import com.google.common.cache.CacheBuilder;\nimport java.util.concurrent.TimeUnit;\n\npublic class TestClass {\n  public CacheBuilder foo(CacheBuilder builder) {\n    // BUG: Diagnostic contains: builder.expireAfterAccess(Duration.of(42, ChronoUnit.MICROS));\n    return builder.expireAfterAccess(42, TimeUnit.MICROSECONDS);\n  }\n}"
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "import com.google.common.cache.CacheBuilder;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              public CacheBuilder foo(CacheBuilder builder) {\n                // BUG: Diagnostic contains: builder.expireAfterAccess(Duration.ofSeconds(42L));\n                return builder.expireAfterAccess(42L, TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload_durationDecompose",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "import com.google.common.cache.CacheBuilder;\n            import java.time.Duration;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              public CacheBuilder foo(CacheBuilder builder) {\n                Duration duration = Duration.ofMillis(12345);\n                // BUG: Diagnostic contains: builder.expireAfterAccess(duration);\n                return builder.expireAfterAccess(duration.toSeconds(), TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload_durationDecompose_getSeconds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "import com.google.common.cache.CacheBuilder;\n            import java.time.Duration;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              public CacheBuilder foo(CacheBuilder builder) {\n                Duration duration = Duration.ofMillis(12345);\n                // BUG: Diagnostic contains: builder.expireAfterAccess(duration);\n                return builder.expireAfterAccess(duration.getSeconds(), TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload_durationHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109
+      ],
+      "code": "import com.google.common.cache.CacheBuilder;\n            import java.time.Duration;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              public CacheBuilder foo(CacheBuilder builder) {\n                Duration duration = Duration.ofMillis(12345);\n                // BUG: Diagnostic contains: return\n                // builder.expireAfterAccess(Duration.ofSeconds(duration.hashCode()));\n                return builder.expireAfterAccess(duration.hashCode(), TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload_intParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "import com.google.common.cache.CacheBuilder;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              public CacheBuilder foo(CacheBuilder builder) {\n                // BUG: Diagnostic contains: builder.expireAfterAccess(Duration.ofSeconds(42));\n                return builder.expireAfterAccess(42, TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callLongTimeUnitInsideImpl",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": ""
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithDurationOverload_privateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        170
+      ],
+      "code": "import java.time.Duration;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              private void bar(long v, TimeUnit tu) {}\n\n              private void bar(Duration d) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: bar(Duration.ofSeconds(42L));\n                bar(42L, TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callingLongTimeUnitMethodWithoutDurationOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "import java.util.concurrent.Future;\n            import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              public String foo(Future<String> future) throws Exception {\n                return future.get(42L, TimeUnit.SECONDS);\n              }\n            }"
+    },
+    {
+      "description": "callingJodaDurationMethodWithDurationOverload_privateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": ""
+    },
+    {
+      "description": "callingJodaInstantMethodWithInstantOverload_privateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": ""
+    },
+    {
+      "description": "callingJodaDurationMethodWithDurationOverload_privateMethod_jodaDurationMillis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "import java.time.Duration;\n\n            public class TestClass {\n              private void bar(org.joda.time.Duration d) {}\n\n              private void bar(Duration d) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: bar(Duration.ofMillis(42));\n                bar(org.joda.time.Duration.millis(42));\n              }\n            }"
+    },
+    {
+      "description": "callingJodaDurationMethodWithDurationOverload_privateMethod_jodaDurationCtor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "import java.time.Duration;\n\n            public class TestClass {\n              private void bar(org.joda.time.Duration d) {}\n\n              private void bar(Duration d) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: bar(Duration.ofMillis(42));\n                bar(new org.joda.time.Duration(42));\n              }\n            }"
+    },
+    {
+      "description": "callingJodaInstantMethodWithInstantOverload_privateMethod_jodaInstantCtor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        293
+      ],
+      "code": "import java.time.Instant;\n\n            public class TestClass {\n              private void bar(org.joda.time.Instant i) {}\n\n              private void bar(Instant i) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: bar(Instant.ofEpochMilli(42));\n                bar(new org.joda.time.Instant(42));\n              }\n            }"
+    },
+    {
+      "description": "callingJodaDurationMethodWithDurationOverload_privateMethod_jodaSeconds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        315
+      ],
+      "code": "import java.time.Duration;\n\n            public class TestClass {\n              private void bar(org.joda.time.Duration d) {}\n\n              private void bar(Duration d) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: bar(Duration.ofSeconds(42));\n                bar(org.joda.time.Duration.standardSeconds(42));\n              }\n            }"
+    },
+    {
+      "description": "callingJodaDurationMethodWithoutDurationOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        337
+      ],
+      "code": "public class TestClass {\n              private void bar(org.joda.time.Duration d) {}\n\n              public void foo(org.joda.time.Duration jodaDuration) {\n                bar(jodaDuration);\n              }\n            }"
+    },
+    {
+      "description": "callingJodaDurationMethodWithSupertypeJavaDurationOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        354
+      ],
+      "code": "public class TestClass extends SuperClass {\n              @Override\n              public void bar(java.time.Duration d) {\n                bar(org.joda.time.Duration.standardSeconds(d.getSeconds()));\n              }\n\n              public void bar(org.joda.time.Duration jodaDuration) {}\n            }\n\n            class SuperClass {\n              public void bar(java.time.Duration d) {}\n            }"
+    },
+    {
+      "description": "callingJodaReadableInstantMethodWithInstantOverload_privateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        376
+      ],
+      "code": ""
+    },
+    {
+      "description": "callingJodaReadableDurationMethodWithoutDurationOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        395
+      ],
+      "code": "public class TestClass {\n              private void bar(org.joda.time.ReadableDuration d) {}\n\n              public void foo(org.joda.time.Duration jodaDuration) {\n                bar(jodaDuration);\n              }\n            }"
+    },
+    {
+      "description": "callingPrimitiveOverloadFromFieldInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        412
+      ],
+      "code": "public class TestClass {\n              static {\n                // BUG: Diagnostic contains: call bar(Duration) instead\n                bar(42);\n              }\n\n              private static void bar(java.time.Duration d) {}\n\n              private static void bar(long d) {}\n            }"
+    },
+    {
+      "description": "callingNumericPrimitiveMethodWithDurationOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        432
+      ],
+      "code": "public class TestClass {\n              private void bar(java.time.Duration d) {}\n\n              private void bar(long d) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: call bar(Duration) instead\n                bar(42);\n              }\n            }"
+    },
+    {
+      "description": "callingNumericPrimitiveMethodWithInstantOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        452
+      ],
+      "code": "public class TestClass {\n              private void bar(java.time.Instant i) {}\n\n              private void bar(long timestamp) {}\n\n              public void foo() {\n                // BUG: Diagnostic contains: call bar(Instant) instead\n                bar(42);\n              }\n            }"
+    },
+    {
+      "description": "ignoredApisAreExcluded",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        472
+      ],
+      "code": ""
+    },
+    {
+      "description": "b138221392",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        475
+      ],
+      "code": ""
+    },
+    {
+      "description": "durationDividedBy",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        478
+      ],
+      "code": "import java.time.Duration;\n\n            public class TestClass {\n              public static Duration dividedBy(long divisor) {\n                return Duration.ZERO;\n              }\n\n              public static long dividedBy(Duration divisor) {\n                return 0L;\n              }\n\n              public void foo() {\n                dividedBy(42L);\n                dividedBy(Duration.ZERO);\n              }\n            }"
+    },
+    {
+      "description": "assertJ",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        507
+      ],
+      "code": "public class TestClass {\n              public void testAssertThat() {\n                org.assertj.core.api.Assertions.assertThat(1).isEqualTo(1);\n              }\n\n              public void testAssumeThat() {\n                org.assertj.core.api.Assumptions.assumeThat(1).isEqualTo(1);\n              }\n            }"
+    }
+  ]
+}

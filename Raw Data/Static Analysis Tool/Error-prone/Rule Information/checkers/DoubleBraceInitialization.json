@@ -1,0 +1,94 @@
+{
+  "name": "DoubleBraceInitialization",
+  "language": "java",
+  "description": "Prefer collection factory methods or builders to the double-brace initialization pattern.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 218,
+  "branches": 23,
+  "apis": 7,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              static final List<Integer> a = new ArrayList<Integer>();\n              static final Object o =\n                  new Object() {\n                    {\n                      System.err.println(hashCode());\n                    }\n                  };\n              static final List<Integer> b =\n                  new ArrayList<Integer>() {\n                    {\n                      add(1);\n                    }\n\n                    @Override\n                    public boolean add(Integer i) {\n                      return true;\n                    }\n                  };\n              static final List<Integer> c =\n                  new ArrayList<Integer>() {\n                    @Override\n                    public boolean add(Integer i) {\n                      return true;\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "positiveNoFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            // BUG: Diagnostic contains:\n            class Test {\n              static final List<Integer> b =\n                  new ArrayList<Integer>() {\n                    {\n                      addAll(this);\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "list",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              static final List<Integer> a =\n                  new ArrayList<Integer>() {\n                    {\n                      add(1);\n                      add(2);\n                    }\n                  };\n              static final List<Integer> b =\n                  Collections.unmodifiableList(\n                      new ArrayList<Integer>() {\n                        {\n                          add(1);\n                          add(2);\n                        }\n                      });\n              List<Integer> c =\n                  new ArrayList<Integer>() {\n                    {\n                      add(1);\n                      add(2);\n                    }\n                  };\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              static final ImmutableList<Integer> a = ImmutableList.of(1, 2);\n              static final ImmutableList<Integer> b = ImmutableList.of(1, 2);\n              List<Integer> c = new ArrayList<Integer>(ImmutableList.of(1, 2));\n            }"
+    },
+    {
+      "description": "set",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "import java.util.Collections;\n            import java.util.HashSet;\n            import java.util.Set;\n\n            class Test {\n              static final Set<Integer> a =\n                  new HashSet<Integer>() {\n                    {\n                      add(1);\n                      add(2);\n                    }\n                  };\n              static final Set<Integer> b =\n                  Collections.unmodifiableSet(\n                      new HashSet<Integer>() {\n                        {\n                          add(1);\n                          add(2);\n                        }\n                      });\n              Set<Integer> c =\n                  new HashSet<Integer>() {\n                    {\n                      add(1);\n                      add(2);\n                    }\n                  };\n            }\n            \n\n            import com.google.common.collect.ImmutableSet;\n            import java.util.Collections;\n            import java.util.HashSet;\n            import java.util.Set;\n\n            class Test {\n              static final ImmutableSet<Integer> a = ImmutableSet.of(1, 2);\n              static final ImmutableSet<Integer> b = ImmutableSet.of(1, 2);\n              Set<Integer> c = new HashSet<Integer>(ImmutableSet.of(1, 2));\n            }"
+    },
+    {
+      "description": "collection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        198
+      ],
+      "code": "import java.util.ArrayDeque;\n            import java.util.Collection;\n            import java.util.Collections;\n            import java.util.Deque;\n\n            class Test {\n              static final Collection<Integer> a =\n                  new ArrayDeque<Integer>() {\n                    {\n                      add(1);\n                      add(2);\n                    }\n                  };\n              static final Collection<Integer> b =\n                  Collections.unmodifiableCollection(\n                      new ArrayDeque<Integer>() {\n                        {\n                          add(1);\n                          add(2);\n                        }\n                      });\n              Deque<Integer> c =\n                  new ArrayDeque<Integer>() {\n                    {\n                      add(1);\n                      add(2);\n                    }\n                  };\n            }\n            \n\n            import com.google.common.collect.ImmutableCollection;\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayDeque;\n            import java.util.Collection;\n            import java.util.Collections;\n            import java.util.Deque;\n\n            class Test {\n              static final ImmutableCollection<Integer> a = ImmutableList.of(1, 2);\n              static final ImmutableCollection<Integer> b = ImmutableList.of(1, 2);\n              Deque<Integer> c = new ArrayDeque<Integer>(ImmutableList.of(1, 2));\n            }"
+    },
+    {
+      "description": "map",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        253
+      ],
+      "code": "import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              static final Map<Integer, String> a =\n                  new HashMap<Integer, String>() {\n                    {\n                      put(1, \"a\");\n                      put(2, \"b\");\n                    }\n                  };\n              static final Map<Integer, String> b =\n                  Collections.unmodifiableMap(\n                      new HashMap<Integer, String>() {\n                        {\n                          put(1, \"a\");\n                          put(2, \"b\");\n                        }\n                      });\n              Map<Integer, String> c =\n                  new HashMap<Integer, String>() {\n                    {\n                      put(1, \"a\");\n                      put(2, \"b\");\n                    }\n                  };\n              static final Map<Integer, String> d =\n                  new HashMap<Integer, String>() {\n                    {\n                      put(1, \"a\");\n                      put(2, \"b\");\n                      put(3, \"c\");\n                      put(4, \"d\");\n                      put(5, \"e\");\n                      put(6, \"f\");\n                    }\n                  };\n            }\n            \n\nimport com.google.common.collect.ImmutableMap;\nimport java.util.Collections;\nimport java.util.HashMap;\nimport java.util.Map;\n\nclass Test {\n  static final ImmutableMap<Integer, String> a = ImmutableMap.of(1, \"a\", 2, \"b\");\n  static final ImmutableMap<Integer, String> b = ImmutableMap.of(1, \"a\", 2, \"b\");\n  Map<Integer, String> c = new HashMap<Integer, String>(ImmutableMap.of(1, \"a\", 2, \"b\"));\n  static final ImmutableMap<Integer, String> d =\n      ImmutableMap.<Integer, String>builder()\n          .put(1, \"a\")\n          .put(2, \"b\")\n          .put(3, \"c\")\n          .put(4, \"d\")\n          .put(5, \"e\")\n          .put(6, \"f\")\n          .buildOrThrow();\n}"
+    },
+    {
+      "description": "nulls",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        325
+      ],
+      "code": "import java.util.*;\n\n            // BUG: Diagnostic contains:\n            class Test {\n              static final List<Integer> a =\n                  new ArrayList<Integer>() {\n                    {\n                      add(null);\n                    }\n                  };\n              static final Set<Integer> b =\n                  new HashSet<Integer>() {\n                    {\n                      add(null);\n                    }\n                  };\n              static final Map<String, Integer> c =\n                  new HashMap<String, Integer>() {\n                    {\n                      put(null, null);\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "returned",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        359
+      ],
+      "code": "import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              private Map<String, Object> test() {\n                return Collections.unmodifiableMap(\n                    new HashMap<String, Object>() {\n                      {\n                      }\n                    });\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableMap;\n            import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              private ImmutableMap<String, Object> test() {\n                return ImmutableMap.of();\n              }\n            }"
+    },
+    {
+      "description": "lambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        396
+      ],
+      "code": "import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n            import java.util.function.Supplier;\n\n            class Test {\n              private Supplier<Map<String, Object>> test() {\n                return () ->\n                    Collections.unmodifiableMap(\n                        new HashMap<String, Object>() {\n                          {\n                          }\n                        });\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableMap;\n            import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n            import java.util.function.Supplier;\n\n            class Test {\n              private Supplier<Map<String, Object>> test() {\n                return () -> ImmutableMap.of();\n              }\n            }"
+    },
+    {
+      "description": "statement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        436
+      ],
+      "code": "import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              private void test() {\n                Collections.unmodifiableMap(\n                    new HashMap<String, Object>() {\n                      {\n                      }\n                    });\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableMap;\n            import java.util.Collections;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              private void test() {\n                ImmutableMap.of();\n              }\n            }"
+    }
+  ]
+}

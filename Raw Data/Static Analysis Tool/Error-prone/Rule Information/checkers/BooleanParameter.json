@@ -1,0 +1,38 @@
+{
+  "name": "BooleanParameter",
+  "language": "java",
+  "description": "Use parameter comments to document ambiguous literals",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 137,
+  "branches": 15,
+  "apis": 1,
+  "test": [
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              Test(boolean foo) {}\n\n              void f(boolean foo) {}\n\n              void f(boolean foo, boolean bar) {}\n\n              void f_boxed(Boolean foo, Boolean bar) {}\n\n              void g(boolean p, boolean q) {}\n\n              void h(boolean arg0, boolean arg1) {}\n\n              {\n                f(/* foo= */ true);\n                f(false); // one arg\n                f(/* foo= */ true, false);\n                f(false, false);\n                f_boxed(false, false);\n                g(false, false); // single-char\n                h(false, false); // synthetic\n                new Test(false);\n              }\n            }\n            \n\n            class Test {\n              Test(boolean foo) {}\n\n              void f(boolean foo) {}\n\n              void f(boolean foo, boolean bar) {}\n\n              void f_boxed(Boolean foo, Boolean bar) {}\n\n              void g(boolean p, boolean q) {}\n\n              void h(boolean arg0, boolean arg1) {}\n\n              {\n                f(/* foo= */ true);\n                f(false); // one arg\n                f(/* foo= */ true, /* bar= */ false);\n                f(/* foo= */ false, /* bar= */ false);\n                f_boxed(/* foo= */ false, /* bar= */ false);\n                g(false, false); // single-char\n                h(false, false); // synthetic\n                new Test(/* foo= */ false);\n              }\n            }"
+    },
+    {
+      "description": "dontRefactorNonBooleanParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "class Test {\n              private static class Generic<T> {\n                private void doIt(T first, T second, T third) {}\n              }\n\n              void f(Object foo, Object bar) {}\n\n              {\n                Generic<Boolean> myGeneric = new Generic<>();\n                myGeneric.doIt(false, false, false);\n                f(false, false);\n              }\n            }"
+    },
+    {
+      "description": "considerAtomicBooleanSelfDocumenting",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicBoolean;\n\n            class Test {\n              private static final AtomicBoolean b = new AtomicBoolean(false);\n            }"
+    }
+  ]
+}

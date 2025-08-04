@@ -1,0 +1,262 @@
+{
+  "name": "PatternMatchingInstanceof",
+  "language": "java",
+  "description": "This code can be simplified to use a pattern-matching instanceof.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 265,
+  "branches": 35,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test) {\n                  Test test = (Test) o;\n                  test(test);\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Test test) {\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "seesThroughParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test) {\n                  Test test = ((((Test) o)));\n                  test(test);\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Test test) {\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "negatedIf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (!(o instanceof Test)) {\n                } else {\n                  Test test = (Test) o;\n                  test(test);\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (!(o instanceof Test test)) {\n                } else {\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "withinIf_elseCannotCompleteNormally_variableInScopeForStatementsAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        120
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test) {\n                } else if (true) {\n                  throw new AssertionError();\n                } else {\n                  return;\n                }\n                Test test = (Test) o;\n                test(test);\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Test test) {\n                } else if (true) {\n                  throw new AssertionError();\n                } else {\n                  return;\n                }\n                test(test);\n              }\n            }"
+    },
+    {
+      "description": "negatedIf_withOrs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (!(o instanceof Test) || o.hashCode() == 0) {\n                  return;\n                }\n                Test test = (Test) o;\n                test(test);\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (!(o instanceof Test test) || o.hashCode() == 0) {\n                  return;\n                }\n                test(test);\n              }\n            }"
+    },
+    {
+      "description": "negatedIfWithReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (!(o instanceof Test)) {\n                  return;\n                }\n                Test test = (Test) o;\n                test(test);\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (!(o instanceof Test test)) {\n                  return;\n                }\n                test(test);\n              }\n            }"
+    },
+    {
+      "description": "negatedIf_butNoDefiniteReturn_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (!(o instanceof Test)) {\n                  test(o);\n                }\n                Test test = (Test) o;\n                test(test);\n              }\n            }"
+    },
+    {
+      "description": "notDefinitelyChecked_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        239
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test || o.hashCode() > 0) {\n                  Test test = (Test) o;\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "moreChecksInIf_stillMatches",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        258
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test && o.hashCode() != 1) {\n                  Test test = (Test) o;\n                  test(test);\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Test test && o.hashCode() != 1) {\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "differentTypeToCheck_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        287
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test) {\n                  Integer test = (Integer) o;\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "noInstanceofAtAll_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o.hashCode() > 0) {\n                  Integer test = (Integer) o;\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "differentVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        325
+      ],
+      "code": "class Test {\n              void test(Object x, Object y) {\n                if (x instanceof Test) {\n                  Test test = (Test) y;\n                  test(test, null);\n                }\n              }\n            }"
+    },
+    {
+      "description": "generic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        344
+      ],
+      "code": "import java.util.Map;\n\n            class Test {\n              void test(Object x, String k) {\n                if (x instanceof Map) {\n                  @SuppressWarnings(\"unchecked\")\n                  Map<String, Integer> m = (Map<String, Integer>) x;\n                  System.err.println(m.get(k));\n                }\n              }\n            }"
+    },
+    {
+      "description": "notImmediatelyAssignedToVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        366
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test) {\n                  test((Test) o);\n                  test(((Test) o).hashCode());\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Test test) {\n                  test(test);\n                  test(test.hashCode());\n                }\n              }\n            }"
+    },
+    {
+      "description": "primitiveType_shortNameChosen",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        396
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Long) {\n                  test((Long) o);\n                  test(((Long) o).hashCode());\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Long l) {\n                  test(l);\n                  test(l.hashCode());\n                }\n              }\n            }"
+    },
+    {
+      "description": "rawType_findingAvoided",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        426
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              void test(Object object) {\n                if (object instanceof List) {\n                  @SuppressWarnings(\"unchecked\")\n                  List<? extends CharSequence> xs = (List) object;\n                }\n              }\n            }"
+    },
+    {
+      "description": "javaKeyword_break",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        447
+      ],
+      "code": "class Break {\n              void test(Object o) {\n                if (o instanceof Break) {\n                  test((Break) o);\n                }\n              }\n            }\n            \n\n            class Break {\n              void test(Object o) {\n                if (o instanceof Break b) {\n                  test(b);\n                }\n              }\n            }"
+    },
+    {
+      "description": "javaKeyword_class",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        475
+      ],
+      "code": "class Class {\n              void test(Object o) {\n                if (o instanceof Class) {\n                  test((Class) o);\n                }\n              }\n            }\n            \n\n            class Class {\n              void test(Object o) {\n                if (o instanceof Class c) {\n                  test(c);\n                }\n              }\n            }"
+    },
+    {
+      "description": "recordPatternMatching",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        503
+      ],
+      "code": "record Foo(int x, int y) {}\n            \n\n            class Test {\n              void test(Object o) {\n                // No finding here, but also no crash.\n                if (o instanceof Foo(int x, int y)) {}\n              }\n            }"
+    },
+    {
+      "description": "newVariableNotInstantlyAssigned_pleasantFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        528
+      ],
+      "code": "class Test {\n              void test(Object o) {\n                if (o instanceof Test) {\n                  test((Test) o);\n                  Test test = (Test) o;\n                  test(test);\n                }\n              }\n            }\n            \n\n            class Test {\n              void test(Object o) {\n                if (o instanceof Test test) {\n                  test(test);\n                  test(test);\n                }\n              }\n            }"
+    },
+    {
+      "description": "reassignedWithinScope_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        559
+      ],
+      "code": "class Test {\n              public void foo(Object o) {\n                if (o instanceof String) {\n                  while (((String) o).hashCode() != 0) {\n                    o = o.toString();\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "withinStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        579
+      ],
+      "code": "class Test {\n              private final int x = 0;\n              private final int y = 1;\n\n              @Override\n              public boolean equals(Object o) {\n                return o instanceof Test && ((Test) o).x == this.x && ((Test) o).y == this.y;\n              }\n            }\n            \n\n            class Test {\n              private final int x = 0;\n              private final int y = 1;\n\n              @Override\n              public boolean equals(Object o) {\n                return o instanceof Test test && test.x == this.x && test.y == this.y;\n              }\n            }"
+    },
+    {
+      "description": "withinIfCondition_andUsedAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        611
+      ],
+      "code": "class Test {\n              private final int x = 0;\n              private final int y = 1;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test) || ((Test) o).x != this.x) {\n                  return false;\n                }\n                Test other = (Test) o;\n                return other.y == this.y;\n              }\n            }\n            \n\n            class Test {\n              private final int x = 0;\n              private final int y = 1;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test other) || other.x != this.x) {\n                  return false;\n                }\n                return other.y == this.y;\n              }\n            }"
+    },
+    {
+      "description": "conditionalExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        650
+      ],
+      "code": "class Test {\n              private String val;\n\n              public String stringify(Object o) {\n                return o instanceof Test ? ((Test) o).val : \"not a test\";\n              }\n            }\n            \n\n            class Test {\n              private String val;\n\n              public String stringify(Object o) {\n                return o instanceof Test test ? test.val : \"not a test\";\n              }\n            }"
+    },
+    {
+      "description": "conditionalExpression_negated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        678
+      ],
+      "code": "class Test {\n              private String val;\n\n              public String stringify(Object o) {\n                return !(o instanceof Test) ? \"not a test\" : ((Test) o).val;\n              }\n            }\n            \n\n            class Test {\n              private String val;\n\n              public String stringify(Object o) {\n                return !(o instanceof Test test) ? \"not a test\" : test.val;\n              }\n            }"
+    },
+    {
+      "description": "generics_includeWildcards",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        706
+      ],
+      "code": "class Test<T> {\n              private String val;\n\n              public String stringify(Object o) {\n                return !(o instanceof Test) ? \"not a test\" : ((Test) o).val;\n              }\n            }\n            \n\n            class Test<T> {\n              private String val;\n\n              public String stringify(Object o) {\n                return !(o instanceof Test<?> test) ? \"not a test\" : test.val;\n              }\n            }"
+    },
+    {
+      "description": "returnTarget",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        734
+      ],
+      "code": "class Test<T> {\n              private String val;\n\n              public Class stringify(Object o) {\n                if (o instanceof Class<?>) {\n                  return (Class) o;\n                }\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "switchExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        755
+      ],
+      "code": "class T {\n              interface Filter {\n                Object child();\n              }\n\n              int f(Object o) {\n                return switch (o) {\n                  case Filter filter -> {\n                    if (!(filter.child() instanceof Integer)) {\n                      yield 0;\n                    }\n                    yield 1;\n                  }\n                  default -> 2;\n                };\n              }\n            }"
+    },
+    {
+      "description": "constantExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        784
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              int f(ImmutableList<Object> xs) {\n                if (xs.get(0) instanceof Integer) {\n                  return (Integer) xs.get(0);\n                }\n                return 0;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              int f(ImmutableList<Object> xs) {\n                if (xs.get(0) instanceof Integer i) {\n                  return i;\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "nonFinalIdentifier",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        818
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              String f(Object o) {\n                o = o.toString();\n                if (o instanceof String) {\n                  return (String) o;\n                }\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "castToSupertypeOfInstanceofCheck_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        909
+      ],
+      "code": "import java.nio.file.Path;\n            import java.util.ArrayList;\n\n            public class Test {\n              void superinterface() {\n                Object o = Path.of(\".\");\n                if (o instanceof Path) {\n                  f((Iterable<?>) o);\n                }\n              }\n\n              void f(Comparable<?> c) {}\n\n              void f(Iterable<?> c) {}\n\n              void f(Path p) {}\n\n              void rawtypes() {\n                Object o = new ArrayList<Integer>();\n                if (o instanceof ArrayList<?>) {\n                  @SuppressWarnings(\"rawtypes\")\n                  ArrayList list = (ArrayList) o;\n                  rawTypeNecessary(list);\n                }\n              }\n\n              void rawTypeNecessary(ArrayList<Integer> l) {}\n            }\n            \n\n            import java.nio.file.Path;\n            import java.util.ArrayList;\n\n            public class Test {\n              void superinterface() {\n                Object o = Path.of(\".\");\n                if (o instanceof Path) {\n                  f((Iterable<?>) o);\n                }\n              }\n\n              void f(Comparable<?> c) {}\n\n              void f(Iterable<?> c) {}\n\n              void f(Path p) {}\n\n              void rawtypes() {\n                Object o = new ArrayList<Integer>();\n                if (o instanceof ArrayList<?>) {\n                  @SuppressWarnings(\"rawtypes\")\n                  ArrayList list = (ArrayList) o;\n                  rawTypeNecessary(list);\n                }\n              }\n\n              void rawTypeNecessary(ArrayList<Integer> l) {}\n            }"
+    }
+  ]
+}

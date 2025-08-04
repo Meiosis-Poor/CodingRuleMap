@@ -1,0 +1,86 @@
+{
+  "name": "InconsistentOverloads",
+  "language": "java",
+  "description": "The ordering of parameters in overloaded methods should be as consistent as possible (when viewed from left to right)",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 145,
+  "branches": 9,
+  "apis": 2,
+  "test": [
+    {
+      "description": "inconsistentOverloadsNegativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\n            public final class InconsistentOverloadsNegativeCases {\n\n              public void foo(Object object) {}\n\n              public void foo(Object object, int x, int y) {}\n\n              public void foo(Object object, int x, int y, String string) {}\n\n              public void bar(int x, int y, int z) {}\n\n              public void bar(int x) {}\n\n              public void bar(int x, int y) {}\n\n              public void baz(String string) {}\n\n              public void baz(int x, int y, String otherString) {}\n\n              public void baz(int x, int y, String otherString, Object object) {}\n\n              public void quux(int x, int y, int z) {}\n\n              public void quux(int x, int y, String string) {}\n\n              public void norf(int x, int y) {}\n\n              public void norf(Object object, String string) {}\n            }\\"
+    },
+    {
+      "description": "inconsistentOverloadsPositiveCasesAnnotations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        74
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\n            import org.jspecify.annotations.Nullable;\n\n            public abstract class InconsistentOverloadsPositiveCasesAnnotations {\n\n              @interface Bar {}\n\n              @interface Baz {}\n\n              // BUG: Diagnostic contains: foo(String x, String y, Object z)\n              abstract void foo(@Nullable Object z, String y, @Nullable String x);\n\n              abstract void foo(@Nullable String x);\n\n              // BUG: Diagnostic contains: foo(String x, String y)\n              abstract void foo(String y, @Nullable String x);\n\n              // BUG: Diagnostic contains: quux(Object object, String string)\n              int quux(String string, @Bar @Baz Object object) {\n                return string.hashCode() + quux(object);\n              }\n\n              int quux(@Bar @Baz Object object) {\n                return object.hashCode();\n              }\n\n              // BUG: Diagnostic contains: quux(Object object, String string, int x, int y)\n              abstract int quux(String string, int x, int y, @Bar @Baz Object object);\n\n              abstract int norf(@Bar @Baz String string);\n\n              // BUG: Diagnostic contains: norf(String string, Object object)\n              abstract int norf(Object object, @Baz @Bar String string);\n            }\\"
+    },
+    {
+      "description": "inconsistentOverloadsPositiveCasesGeneral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\n            public final class InconsistentOverloadsPositiveCasesGeneral {\n\n              public void foo(Object object) {}\n\n              // BUG: Diagnostic contains: foo(Object object, int i)\n              public void foo(int i, Object object) {}\n\n              // BUG: Diagnostic contains: foo(Object object, int i, String string)\n              public void foo(String string, Object object, int i) {}\n\n              // BUG: Diagnostic contains: bar(int i, int j, String x, String y, Object object)\n              public void bar(Object object, String x, String y, int i, int j) {}\n\n              public void bar(int i, int j) {}\n\n              // BUG: Diagnostic contains: bar(int i, int j, String x, String y)\n              public void bar(String x, String y, int i, int j) {}\n\n              public void baz(int i, int j) {}\n\n              public void baz(Object object) {}\n\n              // BUG: Diagnostic contains: baz(int i, int j, String x, Object object)\n              public void baz(String x, int i, int j, Object object) {}\n\n              public void quux(int x, int y, String string) {}\n\n              // BUG: Diagnostic contains: quux(int x, int y, Object object)\n              public void quux(Object object, int y, int x) {}\n            }\\"
+    },
+    {
+      "description": "inconsistentOverloadsPositiveCasesGenerics",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\nimport java.util.List;\n\npublic final class InconsistentOverloadsPositiveCasesGenerics {\n\n  // BUG: Diagnostic contains: foo(List<Integer> numbers, List<List<Integer>> nestedNumbers)\n  public void foo(List<List<Integer>> nestedNumbers, List<Integer> numbers) {}\n\n  public void foo(List<Integer> numbers) {}\n\n  // BUG: Diagnostic contains: foo(Iterable<Integer> numbers, String description)\n  public void foo(String description, Iterable<Integer> numbers) {}\n\n  public void bar(int x) {}\n\n  // BUG: Diagnostic contains: bar(int x, List<? extends java.util.ArrayList<String>> strings)\n  public void bar(List<? extends java.util.ArrayList<String>> strings, int x) {}\n}\\"
+    },
+    {
+      "description": "inconsistentOverloadsPositiveCasesInterleaved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        190
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\n            public final class InconsistentOverloadsPositiveCasesInterleaved {\n\n              // BUG: Diagnostic contains: baz(int x, String string, int y)\n              public void baz(int y, int x, String string) {}\n\n              // BUG: Diagnostic contains: foo(int x, int y, int z, String string)\n              public void foo(int x, int z, int y, String string) {}\n\n              public void foo(int x, int y) {}\n\n              public void bar(String string, Object object) {}\n\n              // BUG: Diagnostic contains: baz(int x, String string)\n              public void baz(String string, int x) {}\n\n              // BUG: Diagnostic contains: foo(int x, int y, int z)\n              public void foo(int z, int x, int y) {}\n\n              // BUG: Diagnostic contains: bar(String string, Object object, int x, int y)\n              public void bar(int x, int y, String string, Object object) {}\n\n              public void baz(int x) {}\n            }\\"
+    },
+    {
+      "description": "inconsistentOverloadsPositiveCasesSimple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\n            public final class InconsistentOverloadsPositiveCasesSimple {\n\n              public void foo(Object object) {}\n\n              // BUG: Diagnostic contains: foo(Object object, int x, int y)\n              public void foo(int x, int y, Object object) {}\n\n              // BUG: Diagnostic contains: foo(Object object, int x, int y, String string)\n              public void foo(String string, int y, Object object, int x) {}\n            }\\"
+    },
+    {
+      "description": "inconsistentOverloadsPositiveCasesVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        247
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\n            public abstract class InconsistentOverloadsPositiveCasesVarargs {\n\n              public void foo(String... rest) {}\n\n              public void foo(int x, String... rest) {}\n\n              // BUG: Diagnostic contains: foo(int x, int y, String... rest)\n              public void foo(int y, int x, String... rest) {}\n\n              abstract void bar(float x, float y);\n\n              // BUG: Diagnostic contains: bar(float x, float y, float z, Object... rest)\n              abstract void bar(float z, float y, float x, Object... rest);\n\n              // BUG: Diagnostic contains: bar(float x, float y, float z, String string)\n              abstract void bar(float y, String string, float x, float z);\n\n              abstract void bar(Object... rest);\n            }\\"
+    },
+    {
+      "description": "inconsistentOverloadsOverrides",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "package com.google.errorprone.bugpatterns.overloading.testdata;\n\nimport java.util.List;\nimport java.util.Map;\n\npublic class InconsistentOverloadsPositiveCasesOverrides {\n\n  class SuperClass {\n\n    void someMethod(String foo, int bar) {}\n\n    // BUG: Diagnostic contains: someMethod(String foo, int bar, List<String> baz)\n    void someMethod(int bar, String foo, List<String> baz) {}\n  }\n\n  class SubClass extends SuperClass {\n\n    @Override // no bug\n    void someMethod(String foo, int bar) {}\n\n    @Override // no bug\n    void someMethod(int bar, String foo, List<String> baz) {}\n\n    // BUG: Diagnostic contains: someMethod(String foo, int bar, List<String> baz, Map<String,\n    // String> fizz)\n    void someMethod(int bar, String foo, List<String> baz, Map<String, String> fizz) {}\n  }\n}\\"
+    },
+    {
+      "description": "suppressOnMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        316
+      ],
+      "code": "class Test {\n              public void foo(Object object) {}\n\n              @SuppressWarnings(\"InconsistentOverloads\")\n              public void foo(int i, Object object) {}\n            }"
+    }
+  ]
+}

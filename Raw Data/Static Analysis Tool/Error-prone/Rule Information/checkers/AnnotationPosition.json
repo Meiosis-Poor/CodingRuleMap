@@ -1,0 +1,262 @@
+{
+  "name": "AnnotationPosition",
+  "language": "java",
+  "description": "Annotations should be positioned after Javadocs, but before modifiers.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 307,
+  "branches": 35,
+  "apis": 4,
+  "test": [
+    {
+      "description": "nonTypeAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "interface Test {\n              public @Override boolean equals(Object o);\n            }\n            \n\n            interface Test {\n              @Override\n              public boolean equals(Object o);\n            }"
+    },
+    {
+      "description": "interspersedJavadoc",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "interface Test {\n              @NonTypeUse\n              /** Javadoc! */\n              public void foo();\n            }\n            \n\n            interface Test {\n              /** Javadoc! */\n              @NonTypeUse\n              public void foo();\n            }"
+    },
+    {
+      "description": "interspersedJavadoc_treeAlreadyHasJavadoc_noSuggestion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "interface Test {\n              /** Actually Javadoc. */\n              @NonTypeUse\n              /** Javadoc! */\n              public void foo();\n            }"
+    },
+    {
+      "description": "interspersedJavadoc_withComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        156
+      ],
+      "code": "interface Test {\n              @NonTypeUse\n              /** Javadoc! */\n              // TODO: fix\n              public void foo();\n            }\n            \n\n            interface Test {\n              /** Javadoc! */\n              @NonTypeUse\n              // TODO: fix\n              public void foo();\n            }"
+    },
+    {
+      "description": "negatives",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "interface Test {\n              /** Javadoc */\n              @NonTypeUse\n              public boolean foo();\n\n              @NonTypeUse\n              public boolean bar();\n\n              public @EitherUse boolean baz();\n\n              /** Javadoc */\n              @NonTypeUse\n              // comment\n              public boolean quux();\n            }"
+    },
+    {
+      "description": "negative_parameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208
+      ],
+      "code": "interface Test {\n              public boolean foo(final @NonTypeUse String s);\n            }\n            \n\n            interface Test {\n              public boolean foo(@NonTypeUse final String s);\n            }"
+    },
+    {
+      "description": "typeAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        228
+      ],
+      "code": "interface Test {\n              /** Javadoc */\n              public @NonTypeUse @EitherUse String foo();\n\n              /** Javadoc */\n              public @EitherUse @NonTypeUse String bar();\n\n              public @EitherUse\n              /** Javadoc */\n              @NonTypeUse String baz();\n\n              public @EitherUse static @NonTypeUse int quux() {\n                return 1;\n              }\n            }\n            \n\n            interface Test {\n              /** Javadoc */\n              @NonTypeUse\n              public @EitherUse String foo();\n\n              /** Javadoc */\n              @NonTypeUse\n              public @EitherUse String bar();\n\n              /** Javadoc */\n              @NonTypeUse\n              public @EitherUse String baz();\n\n              @NonTypeUse\n              public static @EitherUse int quux() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "variables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        275
+      ],
+      "code": "interface Test {\n              public @EitherUse static\n              /** Javadoc */\n              @NonTypeUse int foo = 1;\n            }\n            \n\n            interface Test {\n              /** Javadoc */\n              @NonTypeUse public static @EitherUse int foo = 1;\n            }"
+    },
+    {
+      "description": "classes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        298
+      ],
+      "code": "public @NonTypeUse interface Test {}\n            \n\n            @NonTypeUse\n            public interface Test {}"
+    },
+    {
+      "description": "class_typeUseBeforeModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        315
+      ],
+      "code": "@EitherUse\n            public interface Test {}"
+    },
+    {
+      "description": "class_intermingledJavadoc",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        330
+      ],
+      "code": "@NonTypeUse\n            public\n            /** Javadoc */\n            final class Test {}\n            \n\n            /** Javadoc */\n            @NonTypeUse\n            public final class Test {}"
+    },
+    {
+      "description": "betweenModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351
+      ],
+      "code": "interface Test {\n              public @EitherUse static @NonTypeUse int foo() {\n                return 1;\n              }\n\n              public @EitherUse @NonTypeUse static int bar() {\n                return 1;\n              }\n            }\n            \n\n            interface Test {\n              @NonTypeUse\n              public static @EitherUse int foo() {\n                return 1;\n              }\n\n              @NonTypeUse\n              public static @EitherUse int bar() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "betweenModifiersWithValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        385
+      ],
+      "code": "class Test {\n              public final @EitherUse(\"foo\") int foo(final int a) {\n                return 1;\n              }\n            }\n            \n\n            class Test {\n              public final @EitherUse(\"foo\") int foo(final int a) {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "interspersedComments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        409
+      ],
+      "code": "interface Test {\n  public @EitherUse\n  /** Javadoc */\n  @NonTypeUse String baz();\n\n  /* a */ public /* b */ @EitherUse /* c */ static /* d */ @NonTypeUse /* e */ int quux() {\n    return 1;\n  }\n}\n\n\n            interface Test {\n              /** Javadoc */\n              @NonTypeUse\n              public @EitherUse String baz();\n\n              /* a */ @NonTypeUse\n              public /* b */ /* c */ static @EitherUse /* d */ /* e */ int quux() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "messages",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        442
+      ],
+      "code": "interface Test {\n              // BUG: Diagnostic contains: @Override is not a TYPE_USE annotation\n              public @Override boolean equals(Object o);\n\n              // BUG: Diagnostic contains: @Override, @NonTypeUse are not TYPE_USE annotations\n              public @Override @NonTypeUse int hashCode();\n\n              @NonTypeUse\n              /** Javadoc */\n              // BUG: Diagnostic contains: Javadocs should appear before any modifiers\n              public boolean bar();\n            }"
+    },
+    {
+      "description": "diagnostic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        464
+      ],
+      "code": "interface Test {\n              // BUG: Diagnostic contains: is a TYPE_USE\n              public @EitherUse static int foo = 1;\n            }"
+    },
+    {
+      "description": "sealedInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        479
+      ],
+      "code": "/** Javadoc! */\n            sealed @Deprecated interface Test {\n              final class A implements Test {}\n            }\n            \n\n            /** Javadoc! */\n            sealed @Deprecated interface Test {\n              final class A implements Test {}\n            }"
+    },
+    {
+      "description": "typeArgument_annotationOfEitherUse_canRemainBefore",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        502
+      ],
+      "code": "interface T {\n              @EitherUse\n              <T> T f();\n            }\n            \n\n            interface T {\n              @EitherUse\n              <T> T f();\n            }"
+    },
+    {
+      "description": "typeArgument_typeUseAnnotation_movesAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        524
+      ],
+      "code": "interface T {\n              @TypeUse\n              <T> T f();\n            }\n            \n\n            interface T {\n              <T> @TypeUse T f();\n            }"
+    },
+    {
+      "description": "genericsWithBounds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        545
+      ],
+      "code": "import java.util.List;\n\n            interface T {\n              @TypeUse\n              <T extends List<T>> T f();\n            }\n            \n\n            import java.util.List;\n\n            interface T {\n              <T extends List<T>> @TypeUse T f();\n            }"
+    },
+    {
+      "description": "typeUseAndNonTypeUse_inWrongOrder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        570
+      ],
+      "code": "interface T {\n              @TypeUse\n              @NonTypeUse\n              T f();\n            }\n            \n\n            interface T {\n              @NonTypeUse\n              @TypeUse\n              T f();\n            }"
+    },
+    {
+      "description": "annotationOfEitherUse_isAllowedToRemainBeforeModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        594
+      ],
+      "code": "interface T {\n              @NonTypeUse\n              @EitherUse\n              public T a();\n\n              @NonTypeUse\n              public @EitherUse T b();\n            }"
+    },
+    {
+      "description": "constructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        613
+      ],
+      "code": "import javax.inject.Inject;\n\n            class T {\n              @Inject\n              T(int x) {}\n\n              @Inject\n              T() {\n                System.err.println();\n              }\n            }"
+    },
+    {
+      "description": "parameters_withAnnotationsOutOfOrder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        635
+      ],
+      "code": "class T {\n              Object foo(@TypeUse @NonTypeUse Object a) {\n                return null;\n              }\n            }\n            \n\n            class T {\n              Object foo(@NonTypeUse @TypeUse Object a) {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "parameters_withInterspersedModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        659
+      ],
+      "code": "class T {\n              Object foo(@TypeUse final Object a) {\n                return null;\n              }\n            }\n            \n\n            class T {\n              Object foo(final @TypeUse Object a) {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "varKeyword",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        683
+      ],
+      "code": "import com.google.errorprone.annotations.Var;\n\n            class T {\n              void m() {\n                @Var var x = 1;\n                x = 2;\n              }\n            }"
+    },
+    {
+      "description": "recordAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        702
+      ],
+      "code": "public record Test(String bar) {\n              @SuppressWarnings(\"unused\")\n              public Test {}\n            }"
+    },
+    {
+      "description": "interspersedJavadoc_enum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        717
+      ],
+      "code": "enum Test {\n              @NonTypeUse\n              /** Javadoc! */\n              ONE;\n            }\n            \n\n            enum Test {\n              /** Javadoc! */\n              @NonTypeUse\n              ONE;\n            }"
+    },
+    {
+      "description": "interspersedJavadoc_variableNoModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        741
+      ],
+      "code": "class Test {\n              @NonTypeUse\n              /** Javadoc! */\n              int x;\n            }\n            \n\n            class Test {\n              /** Javadoc! */\n              @NonTypeUse int x;\n            }"
+    },
+    {
+      "description": "variable_genericType_modifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        764
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              @TypeUse private List<?> x;\n              @EitherUse private List<?> y;\n              @NonTypeUse private List<?> z;\n            }\n            \n\n            import java.util.List;\n\n            class Test {\n              private @TypeUse List<?> x;\n              private @EitherUse List<?> y;\n              @NonTypeUse private List<?> z;\n            }"
+    },
+    {
+      "description": "twoNonTypeAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        792
+      ],
+      "code": "interface Test {\n              @NonTypeUse\n              // BUG: Diagnostic contains: [AnnotationPosition] @AnotherNonTypeUse is not\n              public @AnotherNonTypeUse void f();\n            }"
+    }
+  ]
+}

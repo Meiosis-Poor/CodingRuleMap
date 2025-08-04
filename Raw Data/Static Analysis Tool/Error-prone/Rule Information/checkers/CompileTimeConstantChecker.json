@@ -1,0 +1,342 @@
+{
+  "name": "CompileTimeConstantChecker",
+  "language": "java",
+  "description": "Non-compile-time constant expression passed to parameter with @CompileTimeConstant type annotation.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 263,
+  "branches": 38,
+  "apis": 3,
+  "test": [
+    {
+      "description": "matches_fieldAccessFailsWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public void m(String p, @CompileTimeConstant String q) {}\n\n              public void r(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                this.m(\"boo\", s);\n              }\n            }"
+    },
+    {
+      "description": "matches_fieldAccessFailsWithNonConstantExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public void m(String p, @CompileTimeConstant String q) {}\n\n              public void r(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                this.m(\"boo\", s + \"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_fieldAccessSucceedsWithLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public void m(String s, @CompileTimeConstant String p) {}\n\n              public void r(String x) {\n                this.m(x, \"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_fieldAccessSucceedsWithStaticFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static final String S = \"Hello\";\n\n              public void m(String s, @CompileTimeConstant String p) {}\n\n              public void r(String x) {\n                this.m(x, S);\n              }\n            }"
+    },
+    {
+      "description": "matches_fieldAccessSucceedsWithConstantConcatenation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static final String S = \"Hello\";\n\n              public void m(String s, @CompileTimeConstant String p) {}\n\n              public void r(String x) {\n                this.m(x, S + \" World!\");\n              }\n            }"
+    },
+    {
+      "description": "matches_identCallFailsWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public void m(@CompileTimeConstant String p, int i) {}\n\n              public void r(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                m(s, 19);\n              }\n            }"
+    },
+    {
+      "description": "matches_identCallSucceedsWithLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public void m(String s, @CompileTimeConstant String p) {}\n\n              public void r(@CompileTimeConstant final String x) {\n                m(x, x);\n              }\n\n              public void s() {\n                r(\"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_staticCallFailsWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        189
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static void m(@CompileTimeConstant String p, int i) {}\n\n              public static void r(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                m(s, 19);\n              }\n            }"
+    },
+    {
+      "description": "matches_staticCallSucceedsWithLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static void m(String s, @CompileTimeConstant String p) {}\n\n              public static void r(String x) {\n                m(x, \"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_qualifiedStaticCallFailsWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        232
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static class Inner {\n                public static void m(@CompileTimeConstant String p, int i) {}\n              }\n\n              public static void r(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                Inner.m(s, 19);\n              }\n            }"
+    },
+    {
+      "description": "matches_qualifiedStaticCallSucceedsWithLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        256
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static class Inner {\n                public static void m(String s, @CompileTimeConstant String p) {}\n              }\n\n              public static void r(String x) {\n                Inner.m(x, \"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_ctorSucceedsWithLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        279
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public CompileTimeConstantTestCase(String s, @CompileTimeConstant String p) {}\n\n              public static CompileTimeConstantTestCase makeNew(String x) {\n                return new CompileTimeConstantTestCase(x, \"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_ctorFailsWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        300
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public CompileTimeConstantTestCase(String s, @CompileTimeConstant String p) {}\n\n              public static CompileTimeConstantTestCase makeNew(String x) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                return new CompileTimeConstantTestCase(\"boo\", x);\n              }\n            }"
+    },
+    {
+      "description": "matches_identCallSucceedsWithinCtorWithLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public CompileTimeConstantTestCase(String s, @CompileTimeConstant final String p) {\n                m(p);\n              }\n\n              public void m(@CompileTimeConstant String r) {}\n\n              public static CompileTimeConstantTestCase makeNew(String x) {\n                return new CompileTimeConstantTestCase(x, \"boo\");\n              }\n            }"
+    },
+    {
+      "description": "matches_varargsInDifferentCompilationUnit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        354
+      ],
+      "code": ""
+    },
+    {
+      "description": "matches_varargsSuccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        371
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static void m(String s, @CompileTimeConstant String... p) {}\n\n              public static void r(String s) {\n                m(s);\n                m(s, \"foo\");\n                m(s, \"foo\", \"bar\");\n                m(s, \"foo\", \"bar\", \"baz\");\n              }\n            }"
+    },
+    {
+      "description": "matches_effectivelyFinalCompileTimeConstantParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        395
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static void m(@CompileTimeConstant String y) {}\n\n              public static void r(@CompileTimeConstant String x) {\n                m(x);\n              }\n            }"
+    },
+    {
+      "description": "matches_nonFinalCompileTimeConstantParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        416
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              public static void m(@CompileTimeConstant String y) {}\n\n              public static void r(@CompileTimeConstant String x) {\n                x = x + \"!\";\n                // BUG: Diagnostic contains: . Did you mean to make 'x' final?\n                m(x);\n              }\n            }"
+    },
+    {
+      "description": "matches_override",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        439
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            abstract class CompileTimeConstantTestCase {\n              abstract void m(String y);\n\n              static class C extends CompileTimeConstantTestCase {\n                @Override\n                // BUG: Diagnostic contains: Method with @CompileTimeConstant parameter\n                void m(@CompileTimeConstant String s) {}\n              }\n            }"
+    },
+    {
+      "description": "matches_methodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        462
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Consumer;\n\n            public class CompileTimeConstantTestCase {\n              public static void m(@CompileTimeConstant String s) {}\n\n              public static Consumer<String> r(String x) {\n                // BUG: Diagnostic contains: Method with @CompileTimeConstant parameter\n                return CompileTimeConstantTestCase::m;\n              }\n            }"
+    },
+    {
+      "description": "matches_constructorReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        485
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Function;\n\n            public class CompileTimeConstantTestCase {\n              CompileTimeConstantTestCase(@CompileTimeConstant String s) {}\n\n              public static Function<String, CompileTimeConstantTestCase> r(String x) {\n                // BUG: Diagnostic contains: Method with @CompileTimeConstant parameter\n                return CompileTimeConstantTestCase::new;\n              }\n            }"
+    },
+    {
+      "description": "matches_methodReferenceCorrectOverrideMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        508
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Consumer;\n\n            public class CompileTimeConstantTestCase {\n              interface ConstantFn {\n                void apply(@CompileTimeConstant String s);\n              }\n\n              public static void m(@CompileTimeConstant String s) {}\n\n              public static ConstantFn r(String x) {\n                return CompileTimeConstantTestCase::m;\n              }\n            }"
+    },
+    {
+      "description": "matches_methodReferenceCorrectOverrideConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        534
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Consumer;\n\n            public class CompileTimeConstantTestCase {\n              interface ConstantFn {\n                CompileTimeConstantTestCase apply(@CompileTimeConstant String s);\n              }\n\n              CompileTimeConstantTestCase(@CompileTimeConstant String s) {}\n\n              public static ConstantFn r(String x) {\n                return CompileTimeConstantTestCase::new;\n              }\n            }"
+    },
+    {
+      "description": "matches_lambdaExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        560
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Consumer;\n\n            public class CompileTimeConstantTestCase {\n              // BUG: Diagnostic contains: Method with @CompileTimeConstant parameter\n              Consumer<String> c = (@CompileTimeConstant String s) -> {};\n            }"
+    },
+    {
+      "description": "doesNotMatch_lambdaExpression_correctOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        579
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Consumer;\n\n            public class CompileTimeConstantTestCase {\n              interface ConstantFn {\n                void apply(@CompileTimeConstant String s);\n              }\n\n              ConstantFn c =\n                  (@CompileTimeConstant String s) -> {\n                    doFoo(s);\n                  };\n\n              void doFoo(final @CompileTimeConstant String foo) {}\n            }"
+    },
+    {
+      "description": "matches_lambdaExpressionWithoutAnnotatedParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        606
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n            import java.util.function.Consumer;\n\n            public class CompileTimeConstantTestCase {\n              interface ConstantFn {\n                void apply(@CompileTimeConstant String s);\n              }\n\n              ConstantFn c =\n                  s -> {\n                    // BUG: Diagnostic contains: Non-compile-time constant expression\n                    doFoo(s);\n                  };\n\n              void doFoo(final @CompileTimeConstant String foo) {}\n            }"
+    },
+    {
+      "description": "matches_lambdaExpressionWithoutExplicitFormalParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        634
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              @FunctionalInterface\n              interface I {\n                void f(@CompileTimeConstant String x);\n              }\n\n              void f(String s) {\n                I i = x -> {};\n                // BUG: Diagnostic contains: Non-compile-time constant expression passed\n                i.f(s);\n              }\n            }"
+    },
+    {
+      "description": "reportsDiagnostic_whenConstantFieldDeclaredWithoutFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        660
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              // BUG: Diagnostic contains: . Did you mean to make 's' final?\n              @CompileTimeConstant String s = \"s\";\n            }"
+    },
+    {
+      "description": "noDiagnostic_whenConstantFieldDeclaredFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        678
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              @CompileTimeConstant final String s = \"s\";\n            }"
+    },
+    {
+      "description": "reportsDiagnostic_whenInitialisingFinalFieldWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        695
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              @CompileTimeConstant final String s;\n\n              CompileTimeConstantTestCase(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression\n                this.s = s;\n              }\n            }"
+    },
+    {
+      "description": "noDiagnostic_whenInitialisingFinalFieldWithConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        717
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              @CompileTimeConstant final String s;\n\n              CompileTimeConstantTestCase(@CompileTimeConstant String s) {\n                this.s = s;\n              }\n            }"
+    },
+    {
+      "description": "noDiagnostic_whenInvokingMethodWithFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        738
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class CompileTimeConstantTestCase {\n              @CompileTimeConstant final String s;\n\n              CompileTimeConstantTestCase(@CompileTimeConstant String s) {\n                this.s = s;\n              }\n\n              void invokeCTCMethod() {\n                ctcMethod(s);\n              }\n\n              void ctcMethod(@CompileTimeConstant String s) {}\n            }"
+    },
+    {
+      "description": "reportsDiagnostic_whenConstantEnumFieldDeclaredWithoutFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        765
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public enum Test {\n              A(\"A\");\n              // BUG: Diagnostic contains: . Did you mean to make 's' final?\n              @CompileTimeConstant String s;\n\n              Test(@CompileTimeConstant String s) {\n                this.s = s;\n              }\n            }"
+    },
+    {
+      "description": "noDiagnostic_whenConstantEnumFieldDeclaredFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        786
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public enum Test {\n              A(\"A\");\n              @CompileTimeConstant final String s;\n\n              Test(@CompileTimeConstant String s) {\n                this.s = s;\n              }\n            }"
+    },
+    {
+      "description": "reportsDiagnostic_whenInitialisingFinalEnumFieldWithNonConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        806
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public enum Test {\n              A(\"A\");\n              @CompileTimeConstant final String s;\n\n              Test(String s) {\n                // BUG: Diagnostic contains: Non-compile-time constant expression\n                this.s = s;\n              }\n            }"
+    },
+    {
+      "description": "noDiagnostic_whenInvokingMethodWithFinalEnumField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        827
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public enum Test {\n              A(\"A\");\n              @CompileTimeConstant final String s;\n\n              Test(@CompileTimeConstant String s) {\n                this.s = s;\n              }\n\n              void invokeCTCMethod() {\n                ctcMethod(s);\n              }\n\n              void ctcMethod(@CompileTimeConstant String s) {}\n            }"
+    },
+    {
+      "description": "nonConstantField_positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        853
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public abstract class CompileTimeConstantTestCase {\n              abstract String something();\n\n              // BUG: Diagnostic contains: Non-compile-time constant expression\n              @CompileTimeConstant final String x = something();\n            }"
+    },
+    {
+      "description": "constantField_immutableList",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        873
+      ],
+      "code": "package test;\n\n            import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public abstract class CompileTimeConstantTestCase {\n              @CompileTimeConstant final ImmutableList<String> x = ImmutableList.of(\"a\");\n            }"
+    },
+    {
+      "description": "switchExpression_allBranchesConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        891
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class Test {\n              @CompileTimeConstant\n              final String s =\n                  switch (1) {\n                    case 1 -> \"a\";\n                    case 2 -> \"b\";\n                    default -> \"c\";\n                  };\n            }"
+    },
+    {
+      "description": "switchExpression_notAllBranchesConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        912
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class Test {\n              @CompileTimeConstant\n              final String s =\n                  // BUG: Diagnostic contains:\n                  switch (1) {\n                    case 1 -> \"a\";\n                    case 2 -> toString();\n                    default -> \"c\";\n                  };\n            }"
+    },
+    {
+      "description": "switchExpression_onlyConsiderReturningBranches",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        934
+      ],
+      "code": "import com.google.errorprone.annotations.CompileTimeConstant;\n\n            public class Test {\n              @CompileTimeConstant\n              final String s =\n                  switch (1) {\n                    case 1 -> \"a\";\n                    case 2 -> \"b\";\n                    default -> throw new RuntimeException();\n                  };\n            }"
+    }
+  ]
+}

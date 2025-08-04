@@ -1,0 +1,894 @@
+{
+  "name": "ReturnMissingNullable",
+  "language": "java",
+  "description": "Method returns a definitely null value but is not annotated @Nullable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 394,
+  "branches": 44,
+  "apis": 9,
+  "test": [
+    {
+      "description": "literalNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(boolean b) {\n                if (b) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return null;\n                } else {\n                  return \"negative\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "parenthesizedLiteralNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(boolean b) {\n                if (b) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return (null);\n                } else {\n                  return \"negative\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "assignmentOfLiteralNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              String cachedMessage;\n\n              public String getMessage(boolean b) {\n                if (b) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return cachedMessage = null;\n                } else {\n                  return \"negative\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "castLiteralNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(boolean b) {\n                if (b) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return (String) null;\n                } else {\n                  return \"negative\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "conditionalLiteralNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(int x) {\n                // BUG: Diagnostic contains: @Nullable\n                return x >= 0 ? null : \"negative\";\n              }\n            }"
+    },
+    {
+      "description": "parenthesizedConditionalLiteralNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(int x) {\n                // BUG: Diagnostic contains: @Nullable\n                return (x >= 0 ? null : \"negative\");\n              }\n            }"
+    },
+    {
+      "description": "switchExpressionTree",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(int x) {\n                // BUG: Diagnostic contains: @Nullable\n                return switch (x) {\n                  case 0 -> null;\n                  default -> \"non-zero\";\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchExpressionTree_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(int x) {\n                return switch (x) {\n                  case 0 -> \"zero\";\n                  default -> \"non-zero\";\n                };\n              }\n            }"
+    },
+    {
+      "description": "switchStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        200
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(int x) {\n                switch (x) {\n                  case 0:\n                    // BUG: Diagnostic contains: @Nullable\n                    return null;\n                  default:\n                    return \"non-zero\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "switchStatement_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        223
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage(int x) {\n                switch (x) {\n                  case 0:\n                    return \"zero\";\n                  default:\n                    return \"non-zero\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "voidReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return getVoid();\n              }\n\n              abstract Void getVoid();\n            }"
+    },
+    {
+      "description": "subtypeOfVoidReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        265
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get(Supplier<? extends Void> s) {\n                // BUG: Diagnostic contains: @Nullable\n                return s.get();\n              }\n\n              interface Supplier<T> {\n                T get();\n              }\n            }"
+    },
+    {
+      "description": "staticFinalFieldAboveUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        287
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              static final Object NULL = null;\n\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return NULL;\n              }\n            }"
+    },
+    {
+      "description": "staticFinalFieldBelowUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        307
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return NULL;\n              }\n\n              static final Object NULL = null;\n            }"
+    },
+    {
+      "description": "instanceFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        327
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              final Object nullObject = null;\n\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return nullObject;\n              }\n            }"
+    },
+    {
+      "description": "memberSelectFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        347
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              final Object nullObject = null;\n\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return this.nullObject;\n              }\n            }"
+    },
+    {
+      "description": "multipleFilesFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        367
+      ],
+      "code": "class Foo {\n              final Object nullObject = null;\n\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return nullObject;\n              }\n            }\n            \n\n            class Bar {\n              final Object nullObject = null;\n\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return nullObject;\n              }\n            }"
+    },
+    {
+      "description": "voidField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        397
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Void nullObject;\n\n              Object get() {\n                // BUG: Diagnostic contains: @Nullable\n                return nullObject;\n              }\n            }"
+    },
+    {
+      "description": "typeAnnotatedArrayElement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        417
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              @Nullable String[] getMessage(boolean b, String[] s) {\n                return b ? s : null;\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              @Nullable String @Nullable [] getMessage(boolean b, String[] s) {\n                return b ? s : null;\n              }\n            }"
+    },
+    {
+      "description": "testTypeAnnotatedMultidimensionalArrayElement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        449
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              String[] @Nullable [] getMessage(boolean b, String[][] s) {\n                return b ? s : null;\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              String @Nullable [] @Nullable [] getMessage(boolean b, String[][] s) {\n                return b ? s : null;\n              }\n            }"
+    },
+    {
+      "description": "finalLocalVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        481
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get() {\n                final Object nullObject = null;\n                // BUG: Diagnostic contains: @Nullable\n                return nullObject;\n              }\n            }"
+    },
+    {
+      "description": "effectivelyFinalLocalVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        500
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get() {\n                Object nullObject = null;\n                // BUG: Diagnostic contains: @Nullable\n                return nullObject;\n              }\n            }"
+    },
+    {
+      "description": "finalLocalVariableComplexTree",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        519
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get(boolean b1, boolean b2, Object someObject) {\n                final Object nullObject = null;\n                // BUG: Diagnostic contains: @Nullable\n                return (b1 ? someObject : b2 ? nullObject : \"\");\n              }\n            }"
+    },
+    {
+      "description": "returnXIfXIsNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        538
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                // BUG: Diagnostic contains: @Nullable\n                return (o == null ? o : \"\");\n              }\n            }"
+    },
+    {
+      "description": "returnXUnlessXIsXNotNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        556
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                // BUG: Diagnostic contains: @Nullable\n                return (o != null ? \"\" : o);\n              }\n            }"
+    },
+    {
+      "description": "returnXInsideIfNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        574
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                if (o == null) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return o;\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "returnXInsideElseOfNotNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        595
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                if (o != null) {\n                  return \"\";\n                } else {\n                  // BUG: Diagnostic contains: @Nullable\n                  return o;\n                }\n              }\n            }"
+    },
+    {
+      "description": "returnFieldInsideIfNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        617
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object o;\n\n              Object foo() {\n                if (o == null) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return o;\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "otherVerify",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        640
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import static com.google.common.base.Verify.verify;\n\n            class LiteralNullReturnTest {\n              public String getMessage(boolean b) {\n                verify(b);\n                // BUG: Diagnostic contains: @Nullable\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "orNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        661
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import com.google.common.base.Optional;\n\n            class LiteralNullReturnTest {\n              public String getMessage(Optional<String> m) {\n                // BUG: Diagnostic contains: @Nullable\n                return m.orNull();\n              }\n            }"
+    },
+    {
+      "description": "orElseNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        681
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import java.util.Optional;\n\n            class LiteralNullReturnTest {\n              public String getMessage(Optional<String> m) {\n                // BUG: Diagnostic contains: @Nullable\n                return m.orElse(null);\n              }\n            }"
+    },
+    {
+      "description": "implementsMapButAlwaysThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        701
+      ],
+      "code": "import java.util.Map;\n\n            abstract class MyMap<K, V> implements Map<K, V> {\n              @Override\n              public V put(K k, V v) {\n                throw new UnsupportedOperationException();\n              }\n            }"
+    },
+    {
+      "description": "implementsMapButDoNotCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        719
+      ],
+      "code": "import com.google.errorprone.annotations.DoNotCall;\n            import java.util.Map;\n\n            interface MyMap<K, V> extends Map<K, V> {\n              @DoNotCall\n              @Override\n              V put(K k, V v);\n            }"
+    },
+    {
+      "description": "onlyIfAlreadyInScopeAndItIs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        737
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              String getMessage(boolean b) {\n                // BUG: Diagnostic contains: @Nullable\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "onlyStatementIsNullReturnButCannotBeOverridden",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        758
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public final class LiteralNullReturnTest {\n              public String getMessage() {\n                // BUG: Diagnostic contains: @Nullable\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "arrayDeclaration",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        776
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class LiteralNullReturnTest {\n              public String[] getMessage(boolean b) {\n                return b ? null : new String[0];\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class LiteralNullReturnTest {\n              @Nullable\n              public String[] getMessage(boolean b) {\n                return b ? null : new String[0];\n              }\n            }"
+    },
+    {
+      "description": "arrayTypeUse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        809
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              public String[] getMessage(boolean b) {\n                return b ? null : new String[0];\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              public String @Nullable [] getMessage(boolean b) {\n                return b ? null : new String[0];\n              }\n            }"
+    },
+    {
+      "description": "arrayTypeUseTwoDimensional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        841
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              public String[][] getMessage(boolean b, String[][] s) {\n                return b ? null : s;\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              public String @Nullable [][] getMessage(boolean b, String[][] s) {\n                return b ? null : s;\n              }\n            }"
+    },
+    {
+      "description": "alreadyTypeAnnotatedInnerClassMemberSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        873
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              class Inner {}\n\n              LiteralNullReturnTest.@Nullable Inner getMessage(boolean b, Inner i) {\n                return b ? i : null;\n              }\n            }"
+    },
+    {
+      "description": "alreadyTypeAnnotatedInnerClassNonMemberSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        894
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              class Inner {}\n\n              @Nullable Inner getMessage(boolean b, Inner i) {\n                return b ? i : null;\n              }\n            }"
+    },
+    {
+      "description": "limitation_staticFinalFieldInitializedLater",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        915
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              static final Object NULL;\n\n              static {\n                NULL = null;\n              }\n\n              Object get() {\n                return NULL;\n              }\n            }"
+    },
+    {
+      "description": "limitation_instanceFinalFieldInitializedLater",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        938
+      ],
+      "code": ""
+    },
+    {
+      "description": "limitation_finalLocalVariableInitializedLater",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        956
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object get() {\n                final Object nullObject;\n                nullObject = null;\n                return nullObject;\n              }\n            }"
+    },
+    {
+      "description": "limitation_returnThisXInsideIfNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        975
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object o;\n\n              Object foo() {\n                if (this.o == null) {\n                  return this.o;\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "removeSuppressWarnings_removeNullnessReturnWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        997
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              @SuppressWarnings(\"nullness:return\")\n              public String getMessage(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return \"negative\";\n                }\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import org.jspecify.annotations.Nullable;\n\n            public class LiteralNullReturnTest {\n\n              public @Nullable String getMessage(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return \"negative\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_onlyStatementIsNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1038
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_typeVariableUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1055
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public <T> T getMessage(boolean b, T t) {\n                return b ? null : t;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1072
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class LiteralNullReturnTest {\n              @Nullable\n              public String getMessage(boolean b) {\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyAnnotatedNullableDecl",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1092
+      ],
+      "code": "package com.google.anno.my;\n\n            public @interface NullableDecl {}\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import com.google.anno.my.NullableDecl;\n\n            public class LiteralNullReturnTest {\n              @NullableDecl\n              public String getMessage(boolean b) {\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyAnnotatedNullableType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1119
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.compatqual.NullableType;\n\n            public class LiteralNullReturnTest {\n              public @NullableType String getMessage(boolean b) {\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyTypeAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1138
+      ],
+      "code": "package com.google.anno.my;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.TYPE_USE})\n            public @interface Nullable {}\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            public class TypeAnnoReturnTest {\n              public @com.google.anno.my.Nullable String getMessage(boolean b) {\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyDeclarationAnnotatedArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1166
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class LiteralNullReturnTest {\n              @Nullable\n              String[] getMessage(boolean b, String[] s) {\n                return b ? s : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyTypeAnnotatedArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1186
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              String @Nullable [] getMessage(boolean b, String[] s) {\n                return b ? s : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyTypeAnnotatedMemberSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1205
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class LiteralNullReturnTest {\n              java.lang.@Nullable String getMessage(boolean b) {\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_checkNotNullNullableInput",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1224
+      ],
+      "code": ""
+    },
+    {
+      "description": "negativeCases_nonNullArrayWithNullableElements",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1246
+      ],
+      "code": "package com.google.anno.my;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.TYPE_USE})\n            public @interface Nullable {}\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import com.google.anno.my.Nullable;\n\n            public class NullableParameterTest {\n              public String[] apply(@Nullable String[] message) {\n                return message;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1276
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage() {\n                return \"hello\";\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1293
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class NonNullMethodTest {\n              public String getMessage(int x) {\n                return String.valueOf(x);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1310
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class NonNullFieldTest {\n              private String message;\n\n              public String getMessage() {\n                return message;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1329
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class NonNullParameterTest {\n              public String apply(String message) {\n                return message;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_this",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1346
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class ThisTest {\n              private String message;\n\n              public ThisTest setMessage(String message) {\n                this.message = message;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_capturedLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1366
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public abstract class CapturedLocalTest {\n              public abstract String getMessage();\n\n              public CapturedLocalTest withMessage(final String message) {\n                return new CapturedLocalTest() {\n                  public String getMessage() {\n                    return message;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_primitiveReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1393
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class PrimitiveReturnTest {\n              public int getCount() {\n                return (Integer) null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_voidMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1410
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class VoidMethodTest {\n              public void run(int iterations) {\n                if (iterations <= 0) {\n                  return;\n                }\n                run(iterations - 1);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_voidTypedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1430
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class VoidTypeTest {\n              public Void run(int iterations) {\n                if (iterations <= 0) {\n                  return null;\n                }\n                run(iterations - 1);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nullableReturnInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1451
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class MissingNullableReturnTest {\n              public static final java.util.function.Function<String, String> IDENTITY =\n                  (s -> {\n                    return s != null ? s : null;\n                  });\n            }"
+    },
+    {
+      "description": "negativeCases_returnLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1471
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class MissingNullableReturnTest {\n              public static java.util.function.Function<String, String> identity() {\n                return s -> s;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnParenthesizedLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1490
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class MissingNullableReturnTest {\n              public static java.util.function.Function<String, String> identity() {\n                return (s -> s);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_mixedMethodFieldAccessPath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1511
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nonnull;\n\n            public class MissingNullableReturnTest {\n              public @Nonnull MyClass test() {\n                return ((MyClass) null).myMethod().myField;\n              }\n\n              abstract class MyClass {\n                abstract MyClass myMethod();\n\n                MyClass myField;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_delegate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1537
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n            import java.util.Optional;\n\n            public class MissingNullableReturnTest {\n              public String get() {\n                return getInternal(true, null);\n              }\n\n              private String getInternal(boolean flag, @Nullable Integer i) {\n                return \"hello\";\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_lambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1561
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n            import java.util.concurrent.Callable;\n\n            public class MissingNullableReturnTest {\n              public Callable<?> get() {\n                return () -> {\n                  return null;\n                };\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_staticNonFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1583
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              static Object NULL = null;\n\n              Object get() {\n                return NULL;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_polyNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1602
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.PolyNull;\n\n            public class LiteralNullReturnTest {\n              public @PolyNull String getMessage(@PolyNull String s) {\n                if (s == null) {\n                  return null;\n                } else {\n                  return \"negative\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableExit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1625
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                System.exit(1);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableRuntimeExit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1643
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                Runtime.getRuntime().exit(1);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableRuntimeHalt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1661
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                Runtime.getRuntime().halt(1);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableAssertFail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1679
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import static org.junit.Assert.fail;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                fail();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableTestCaseFail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1699
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import static junit.framework.TestCase.fail;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                fail();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableFailNonCanonicalImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1719
+      ],
+      "code": "package foo;\n\n            import junit.framework.TestCase;\n\n            class BarTestCase extends TestCase {}\n            \n\n            package foo;\n\n            import static foo.BarTestCase.fail;\n\n            class OtherTestCase {\n              public String getMessage() {\n                fail();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableThrowExceptionMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1748
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import static org.junit.Assert.fail;\n\n            class LiteralNullReturnTest {\n              void throwRuntimeException() {}\n\n              public String getMessage() {\n                throwRuntimeException();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableCheckFalse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1770
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import static com.google.common.base.Preconditions.checkState;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                checkState(false);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_unreachableVerifyFalse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1790
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import static com.google.common.base.Verify.verify;\n\n            class LiteralNullReturnTest {\n              public String getMessage() {\n                verify(false);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_staticFinalNonNullField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1810
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              static final Object SOMETHING = 1;\n\n              Object get() {\n                return SOMETHING;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnXIfXIsNotNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1829
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                return (o != null ? o : \"\");\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnXIfSameSymbolDifferentObjectIsNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1846
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object o;\n\n              Object foo(LiteralNullReturnTest other) {\n                return (o == null ? other.o : \"\");\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnXUnlessXIsXNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1865
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                return (o == null ? \"\" : o);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnXInsideIfNotNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1882
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                if (o != null) {\n                  return o;\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnXInsideIfNullElse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1902
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                if (o == null) {\n                  return \"\";\n                } else {\n                  return o;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_returnXInsideIfNullButAfterOtherStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1923
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object foo(Object o) {\n                if (o == null) {\n                  o = \"\";\n                  return o;\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_onlyIfAlreadyInScopeAndItIsNot",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1944
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              String getMessage(boolean b) {\n                return b ? \"\" : null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_orElseNotNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1962
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import java.util.Optional;\n\n            class LiteralNullReturnTest {\n              public String getMessage(Optional<String> m) {\n                return m.orElse(\"\");\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_doesNotImplementMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1981
+      ],
+      "code": "interface NotMap<K, V> {\n              String get(Object o);\n\n              V replace(K k, V v);\n            }\n            \n\n            interface MyMap extends NotMap<Integer, Double> {\n              @Override\n              String get(Object o);\n\n              @Override\n              Double replace(Integer k, Double v);\n            }"
+    },
+    {
+      "description": "negativeCases_suppressionForReturnTreeBased",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2007
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import java.util.Optional;\n\n            class LiteralNullReturnTest {\n              @SuppressWarnings(\"ReturnMissingNullable\")\n              public String getMessage(Optional<String> m) {\n                return m.orElse(null);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_suppressionForMethodTreeBased",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2027
+      ],
+      "code": "interface NotMap {\n              Integer get(String o);\n            }\n            \n\n            import java.util.Map;\n\n            interface MyMap<K, V> extends Map<K, V>, NotMap {\n              @SuppressWarnings(\"ReturnMissingNullable\")\n              @Override\n              V get(Object o);\n            }"
+    },
+    {
+      "description": "negativeCases_suppressionAboveMethodLevel",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2051
+      ],
+      "code": "interface NotMap {\n              Integer get(String o);\n            }\n            \n\n            import java.util.Map;\n\n            @SuppressWarnings(\"ReturnMissingNullable\")\n            interface MyMap<K, V> extends Map<K, V>, NotMap {\n              @Override\n              V get(Object o);\n            }"
+    },
+    {
+      "description": "negativeCases_implementsMapButRunningInConservativeMode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2075
+      ],
+      "code": "import java.util.Map;\n\n            interface MyMap<K, V> extends Map<K, V> {\n              @Override\n              V get(Object o);\n            }"
+    },
+    {
+      "description": "returnSameSymbolDifferentObjectInsideIfNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2091
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            abstract class LiteralNullReturnTest {\n              Object o;\n\n              Object foo(LiteralNullReturnTest other) {\n                if (o == null) {\n                  return other.o;\n                }\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "suggestNonJsr305Nullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2113
+      ],
+      "code": "class T {\n              @Nullable private final Object obj1 = null;\n\n              private final Object method(boolean b) {\n                return b ? null : 0;\n              }\n\n              @interface Nullable {}\n            }\n            \n\n            class T {\n              @Nullable private final Object obj1 = null;\n\n              @Nullable\n              private final Object method(boolean b) {\n                return b ? null : 0;\n              }\n\n              @interface Nullable {}\n            }"
+    },
+    {
+      "description": "nonAnnotationNullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2146
+      ],
+      "code": "class T {\n              private final Object method(boolean b) {\n                return b ? null : 0;\n              }\n\n              class Nullable {}\n            }\n            \n\n            class T {\n              @org.jspecify.annotations.Nullable\n              private final Object method(boolean b) {\n                return b ? null : 0;\n              }\n\n              class Nullable {}\n            }"
+    },
+    {
+      "description": "multipleNullReturns",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2175
+      ],
+      "code": "class T {\n              private final Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }\n            \n\n            import org.jspecify.annotations.Nullable;\n\n            class T {\n              private final @Nullable Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "memberSelectReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2209
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              java.lang.Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }\n            \n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              java.lang.@Nullable Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "annotationInsertedAfterModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2245
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              final Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }\n            \n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              final @Nullable Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "parameterizedMemberSelectReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2281
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              java.util.List<java.lang.Object> method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }\n            \n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              java.util.@Nullable List<java.lang.Object> method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "annotatedMemberSelectReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2317
+      ],
+      "code": "import org.checkerframework.checker.initialization.qual.UnderInitialization;\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              java.lang.@UnderInitialization Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }\n            \n\n            import org.checkerframework.checker.initialization.qual.UnderInitialization;\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              java.lang.@Nullable @UnderInitialization Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "annotationNotNamedNullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2355
+      ],
+      "code": "class T {\n              Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }\n            \n\n            import javax.annotation.CheckForNull;\n\n            class T {\n              @CheckForNull\n              Object method(boolean b) {\n                if (b) {\n                  return null;\n                } else {\n                  return null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "aggressive_onlyStatementIsNullReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2391
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public String getMessage() {\n                // BUG: Diagnostic contains: @Nullable\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "aggressive_typeVariableUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2409
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              public <T> T getMessage(boolean b, T t) {\n                // BUG: Diagnostic contains: @Nullable\n                return b ? null : t;\n              }\n            }"
+    },
+    {
+      "description": "aggressive_voidTypedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2427
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class VoidTypeTest {\n              public Void run(int iterations) {\n                if (iterations <= 0) {\n                  // BUG: Diagnostic contains: @Nullable\n                  return null;\n                }\n                run(iterations - 1);\n                // BUG: Diagnostic contains: @Nullable\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_doesNotRemoveNecessarySuppressWarnings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2450
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              @SuppressWarnings(\"nullness:argument\")\n              public String getMessage(boolean b) {\n                if (b) {\n                  doSomethingElse(null);\n                  return \"negative\";\n                } else {\n                  return \"negative\";\n                }\n              }\n\n              public void doSomethingElse(Object c) {\n                return;\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            public class LiteralNullReturnTest {\n              @SuppressWarnings(\"nullness:argument\")\n              public String getMessage(boolean b) {\n                if (b) {\n                  doSomethingElse(null);\n                  return \"negative\";\n                } else {\n                  return \"negative\";\n                }\n              }\n\n              public void doSomethingElse(Object c) {\n                return;\n              }\n            }"
+    },
+    {
+      "description": "aggressive_implementsMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2499
+      ],
+      "code": "interface NotMap {\n              Integer get(String o);\n            }\n            \n\n            import java.util.Map;\n\n            interface MyMap<K, V> extends Map<K, V>, NotMap {\n              @Override\n              // BUG: Diagnostic contains: @Nullable\n              V get(Object o);\n\n              @Override\n              // BUG: Diagnostic contains: @Nullable\n              V replace(K k, V v);\n\n              @Override\n              boolean replace(K k, V expect, V update);\n\n              @Override\n              Integer get(String o);\n            }"
+    }
+  ]
+}

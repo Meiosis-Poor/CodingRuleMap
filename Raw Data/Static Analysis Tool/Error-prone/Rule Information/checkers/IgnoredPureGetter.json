@@ -1,0 +1,86 @@
+{
+  "name": "IgnoredPureGetter",
+  "language": "java",
+  "description": "Getters on AutoValues, AutoBuilders, and Protobuf Messages are side-effect free, so there is no point in calling them if the return value is ignored. While there are no side effects from the getter, the receiver may have side effects.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 126,
+  "branches": 11,
+  "apis": 4,
+  "test": [
+    {
+      "description": "autoValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class A {\n              abstract int foo();\n            }\n            \n\n            class B {\n              void test(A a) {\n                // BUG: Diagnostic contains:\n                a.foo();\n              }\n            }"
+    },
+    {
+      "description": "autoValueBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Animal {\n              abstract String name();\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String name);\n\n                abstract Animal build();\n              }\n            }"
+    },
+    {
+      "description": "autoValueStepBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            public abstract class Animal {\n              public abstract String name();\n\n              public abstract int legs();\n\n              public interface NameStep {\n                LegStep setName(String name);\n              }\n\n              public interface LegStep {\n                Build setLegs(int legs);\n              }\n\n              public interface Build {\n                Animal build();\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder implements NameStep, LegStep, Build {}\n            }"
+    },
+    {
+      "description": "autoValue_secondFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class A {\n              abstract int foo();\n\n              static A of(int foo) {\n                return null;\n              }\n            }\n            \n\n            class B {\n              void test() {\n                A.of(1).foo();\n              }\n            }\n            \n\n            class B {\n              void test() {\n                A.of(1);\n              }\n            }"
+    },
+    {
+      "description": "autoBuilder_getters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "import com.google.auto.value.AutoBuilder;\n            import java.util.Optional;\n\n            public class Named {\n              Named(String name, String nickname) {}\n\n              @AutoBuilder\n              public abstract static class Builder {\n                public abstract Builder setName(String x);\n\n                public abstract Builder setNickname(String x);\n\n                abstract String getName();\n\n                abstract Optional<String> getNickname();\n\n                abstract Named autoBuild();\n\n                public Named build() {\n                  if (!getNickname().isPresent()) {\n                    setNickname(getName());\n                  }\n                  return autoBuild();\n                }\n              }\n            }"
+    },
+    {
+      "description": "autoBuilder_buildIsntCrv",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": ""
+    },
+    {
+      "description": "refactoringHelper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        274
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void test(TestProtoMessage message) {\n                message.getMessage();\n                message.hasMessage();\n              }\n            }\n            \n\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void test(TestProtoMessage message) {}\n            }"
+    },
+    {
+      "description": "protoInstanceMethodsFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        301
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void test(TestProtoMessage message) {\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.getMultiField(1);\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.getWeightMap();\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.getWeightOrDefault(1, 42);\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.getWeightOrThrow(1);\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.containsWeight(1);\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.getWeightCount();\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.getMessage();\n                // BUG: Diagnostic contains: IgnoredPureGetter\n                message.hasMessage();\n              }\n            }"
+    },
+    {
+      "description": "protoReturnValueIgnored_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        333
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void test(TestProtoMessage message) {\n                Object o = message.getMessage();\n                boolean b = message.hasMessage();\n              }\n            }"
+    }
+  ]
+}

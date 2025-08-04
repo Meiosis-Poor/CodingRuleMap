@@ -1,0 +1,222 @@
+{
+  "name": "ImpossibleNullComparison",
+  "language": "java",
+  "description": "This value cannot be null, and comparing it to null may be misleading.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 619,
+  "branches": 45,
+  "apis": 8,
+  "test": [
+    {
+      "description": "scalarCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                // BUG: Diagnostic contains: message.hasMessage()\n                if (message.getMessage() != null) {}\n                // BUG: Diagnostic contains: !message.hasMessage()\n                if (message.getMessage() == null) {}\n                // BUG: Diagnostic contains: message.hasMessage()\n                if (null != message.getMessage()) {}\n                // BUG: Diagnostic contains: message.getMessage().hasField()\n                if (message.getMessage().getField() != null) {}\n              }\n            }"
+    },
+    {
+      "description": "listCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n\n            class Test {\n              void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                TestFieldProtoMessage field = message.getMessage();\n                // BUG: Diagnostic contains: !message.getMultiFieldList().isEmpty()\n                if (message.getMultiFieldList() != null) {}\n                // BUG: Diagnostic contains: message.getMultiFieldList().isEmpty()\n                if (null == message.getMultiFieldList()) {}\n                // BUG: Diagnostic contains: message.getMultiFieldCount() > 1\n                if (message.getMultiField(1) != null) {}\n                // BUG: Diagnostic contains: message.getMultiFieldCount() <= 1\n                if (message.getMultiField(1) == null) {}\n              }\n            }"
+    },
+    {
+      "description": "intermediateVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                TestFieldProtoMessage field = message.getMessage();\n                List<TestFieldProtoMessage> fields = message.getMultiFieldList();\n                // BUG: Diagnostic contains: message.hasMessage()\n                if (field != null) {}\n                // BUG: Diagnostic contains: !message.getMultiFieldList().isEmpty()\n                if (fields != null) {}\n              }\n            }"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              public void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                Object object = new Object();\n                if (message.getMessage() != object) {}\n                if (object != message.getMessage()) {}\n                if (message.getMessage().getField() != object) {}\n                if (message.getMultiFieldList() != object) {}\n                if (object == message.getMultiFieldList()) {}\n              }\n            }"
+    },
+    {
+      "description": "proto3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        138
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.Proto3Test.TestProto3Message;\n\n            public class TestProto3 {\n              public boolean doIt(TestProto3Message proto3Message) {\n                // BUG: Diagnostic matches: NO_FIX\n                return proto3Message.getMyString() == null;\n              }\n            }"
+    },
+    {
+      "description": "messageOrBuilderGetField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "import com.google.protobuf.Descriptors.FieldDescriptor;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            public class Test {\n              public boolean doIt(TestProtoMessage mob, FieldDescriptor f) {\n                // BUG: Diagnostic contains:\n                return mob.getField(f) == null;\n              }\n            }"
+    },
+    {
+      "description": "messageOrBuilderGetFieldCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        176
+      ],
+      "code": "import com.google.protobuf.Descriptors.FieldDescriptor;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            public class Test {\n              public boolean doIt(TestProtoMessage mob, FieldDescriptor f) {\n                String s = ((String) mob.getField(f));\n                // BUG: Diagnostic contains:\n                return s == null;\n              }\n            }"
+    },
+    {
+      "description": "extendableMessageGetExtension1param",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        196
+      ],
+      "code": "import static org.junit.Assert.assertNotNull;\n            import com.google.protobuf.ExtensionLite;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            public class Test {\n              public void test(TestProtoMessage e, ExtensionLite extensionLite) {\n                // BUG: Diagnostic contains:\n                boolean a = e.getExtension(extensionLite) == null;\n                // BUG: Diagnostic contains:\n                assertNotNull(e.getExtension(extensionLite));\n              }\n            }"
+    },
+    {
+      "description": "messageOrBuilderGetRepeatedField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        218
+      ],
+      "code": "import com.google.protobuf.Descriptors.FieldDescriptor;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            public class Test {\n              public void doIt(TestProtoMessage mob, FieldDescriptor f) {\n                // BUG: Diagnostic contains:\n                boolean a = mob.getRepeatedField(f, 0) == null;\n              }\n            }"
+    },
+    {
+      "description": "extendableMessageGetExtension2param",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        237
+      ],
+      "code": "import com.google.protobuf.ExtensionLite;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            public class Test {\n              public void test(TestProtoMessage e, ExtensionLite extensionLite) {\n                // BUG: Diagnostic contains:\n                boolean a = e.getExtension(extensionLite, 0) == null;\n              }\n            }"
+    },
+    {
+      "description": "repeated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        256
+      ],
+      "code": "import com.google.protobuf.ExtensionLite;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\nimport java.util.List;\n\npublic class Test {\n  public void test(\n      ExtensionLite<TestProtoMessage, List<TestFieldProtoMessage>> e, TestProtoMessage message) {\n    // BUG: Diagnostic contains:\n    boolean y = message.getExtension(e) == null;\n  }\n}"
+    },
+    {
+      "description": "repeated2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "import com.google.protobuf.Extension.MessageType;\n            import com.google.protobuf.ExtensionLite;\n            import com.google.protobuf.GeneratedMessage;\n            import com.sun.tools.javac.code.Type;\n            import com.google.common.collect.ImmutableList;\n            import java.util.List;\n\n            public class Test {\n              public static <\n                      MessageType extends GeneratedMessage.ExtendableMessage<MessageType>,\n                      Type extends GeneratedMessage>\n                  List<Type> getRepeatedExtensionObjects(\n                      GeneratedMessage.ExtendableMessage<MessageType> mob,\n                      ExtensionLite<MessageType, List<Type>> extension) {\n                ImmutableList.Builder extensionList = ImmutableList.builder();\n                int extensionCount = mob.getExtensionCount(extension);\n                for (int extensionIndex = 0; extensionIndex < extensionCount; ++extensionIndex) {\n                  // BUG: Diagnostic contains:\n                  boolean y = mob.getExtension(extension) == null;\n                  extensionList.add(mob.getExtension(extension));\n                }\n                return extensionList.build();\n              }\n            }"
+    },
+    {
+      "description": "preconditions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        313
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkNotNull;\n            import static com.google.common.base.Verify.verifyNotNull;\n            import static java.util.Objects.requireNonNull;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                TestFieldProtoMessage field = message.getMessage();\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(field);\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(message.getMessage());\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                verifyNotNull(message.getMessage());\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(message.getMultiFieldList());\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(message.getMessage(), new Object());\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(message.getMultiFieldList(), new Object());\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(message.getMessage(), \"%s\", new Object());\n                // BUG: Diagnostic contains: This value cannot be null\n                // remove this line\n                checkNotNull(message.getMultiFieldList(), \"%s\", new Object());\n                // BUG: Diagnostic contains: fieldMessage = message.getMessage();\n                TestFieldProtoMessage fieldMessage = checkNotNull(message.getMessage());\n                // BUG: Diagnostic contains: fieldMessage2 = message.getMessage()\n                TestFieldProtoMessage fieldMessage2 = checkNotNull(message.getMessage(), \"M\");\n                // BUG: Diagnostic contains: message.getMessage().toString();\n                checkNotNull(message.getMessage()).toString();\n                // BUG: Diagnostic contains: message.getMessage().toString();\n                checkNotNull(message.getMessage(), \"Message\").toString();\n                // BUG: Diagnostic contains: TestFieldProtoMessage fieldCopy = field;\n                TestFieldProtoMessage fieldCopy = requireNonNull(field);\n              }\n            }"
+    },
+    {
+      "description": "assertions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        370
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertNotNull;\n            import com.google.common.truth.extensions.proto.ProtoTruth;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                TestFieldProtoMessage field = message.getMessage();\n                // BUG: Diagnostic contains: assertTrue(\"Message\", message.hasMessage());\n                assertNotNull(\"Message\", message.getMessage());\n                // BUG: Diagnostic contains: assertThat(message.hasMessage()).isTrue()\n                assertThat(message.getMessage()).isNotNull();\n                // BUG: Diagnostic contains: assertThat(message.hasMessage()).isTrue()\n                ProtoTruth.assertThat(message.getMessage()).isNotNull();\n              }\n            }"
+    },
+    {
+      "description": "assertions_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        399
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertNotNull;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                TestFieldProtoMessage field = message.getMessage();\n                assertNotNull(\"Message\", message.getMessage());\n                assertThat(message.getMessage()).isNotNull();\n              }\n            }"
+    },
+    {
+      "description": "optional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        424
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import java.util.Optional;\n\n            class Test {\n              Optional<?> test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                // BUG: Diagnostic contains: Optional.of(message.getMessage())\n                return Optional.ofNullable(message.getMessage());\n              }\n            }"
+    },
+    {
+      "description": "guavaOptional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        444
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import java.util.Optional;\n\n            class Test {\n              Optional<?> test() {\n                TestProtoMessage message = TestProtoMessage.newBuilder().build();\n                // BUG: Diagnostic contains: Optional.of(message.getMessage())\n                return Optional.ofNullable(message.getMessage());\n              }\n            }"
+    },
+    {
+      "description": "optionalGet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        464
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              public boolean o(Optional<String> o) {\n                // BUG: Diagnostic contains: o.isEmpty()\n                return o.get() == null;\n              }\n            }"
+    },
+    {
+      "description": "optionalGetSwitched",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        482
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              public boolean o(Optional<String> o) {\n                return switch (o.get()) {\n                  case null -> true;\n                  case \"\" -> false;\n                  default -> false;\n                };\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            public class Test {\n              public boolean o(Optional<String> o) {\n                return switch (o.get()) {\n                  case \"\" -> false;\n                  default -> false;\n                };\n              }\n            }"
+    },
+    {
+      "description": "optionalGetSwitched_noNullCheck",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        517
+      ],
+      "code": "import java.util.Optional;\n\n            public class Test {\n              public boolean o(Optional<String> o) {\n                return switch (o.get()) {\n                  case \"\" -> false;\n                  default -> false;\n                };\n              }\n            }"
+    },
+    {
+      "description": "guavaOptionalGet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        538
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            public class Test {\n              public boolean o(Optional<String> o) {\n                // BUG: Diagnostic contains: !o.isPresent()\n                return o.get() == null;\n              }\n            }"
+    },
+    {
+      "description": "multimapGet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        556
+      ],
+      "code": "import com.google.common.collect.Multimap;\n\n            public class Test {\n              public boolean o(Multimap<String, String> m) {\n                // BUG: Diagnostic contains: !m.containsKey(\"foo\")\n                return m.get(\"foo\") == null;\n              }\n            }"
+    },
+    {
+      "description": "listMultimapGet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        574
+      ],
+      "code": "import com.google.common.collect.ListMultimap;\n\n            public class Test {\n              public boolean o(ListMultimap<String, String> m) {\n                // BUG: Diagnostic contains: !m.containsKey(\"foo\")\n                return m.get(\"foo\") == null;\n              }\n            }"
+    },
+    {
+      "description": "tables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        592
+      ],
+      "code": "import com.google.common.collect.Table;\n\n            public class Test {\n              public void o(Table<String, String, String> t) {\n                // BUG: Diagnostic contains: !t.containsRow(\"foo\")\n                boolean b1 = t.row(\"foo\") == null;\n                // BUG: Diagnostic contains: !t.containsColumn(\"foo\")\n                boolean b2 = t.column(\"foo\") == null;\n              }\n            }"
+    },
+    {
+      "description": "primitives",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        612
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void o(int i, Integer boxed) {\n                // BUG: Diagnostic contains:\n                assertThat(i).isNotNull();\n                assertThat(boxed).isNotNull();\n              }\n            }"
+    },
+    {
+      "description": "valueOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        631
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.concurrent.TimeUnit;\n\n            public class Test {\n              public void o(String s) {\n                // BUG: Diagnostic contains:\n                assertThat(TimeUnit.valueOf(s)).isNotNull();\n                // BUG: Diagnostic contains:\n                assertThat(Integer.valueOf(s)).isNotNull();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "name": "TryWithResourcesVariable",
+  "language": "java",
+  "description": "This variable is unnecessary, the try-with-resources resource can be a reference to a final or effectively final variable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 64,
+  "branches": 6,
+  "apis": 1,
+  "test": [
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class Test {\n              void f(AutoCloseable r1) {\n                try (AutoCloseable r2 = r1) {\n                  System.err.println(r2);\n                } catch (Exception e) {\n                }\n              }\n            }\n            \n\n            class Test {\n              void f(AutoCloseable r1) {\n                try (r1) {\n                  System.err.println(r1);\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactoringTwoVariables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "class Test {\n              void f(AutoCloseable a1, AutoCloseable a2) {\n                try (AutoCloseable b1 = a1;\n                    AutoCloseable b2 = a2) {\n                  System.err.println(b1);\n                  System.err.println(b2);\n                } catch (Exception e) {\n                }\n              }\n            }\n            \n\n            class Test {\n              void f(AutoCloseable a1, AutoCloseable a2) {\n                try (a1;\n                    a2) {\n                  System.err.println(a1);\n                  System.err.println(a2);\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeNonFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "abstract class Test {\n              abstract AutoCloseable reassign(AutoCloseable r);\n\n              void f(AutoCloseable r1) {\n                r1 = reassign(r1);\n                try (AutoCloseable r2 = r1) {\n                  System.err.println(r2);\n                } catch (Exception e) {\n                }\n              }\n            }"
+    }
+  ]
+}

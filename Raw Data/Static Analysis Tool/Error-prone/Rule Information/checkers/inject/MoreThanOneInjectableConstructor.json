@@ -1,0 +1,30 @@
+{
+  "name": "MoreThanOneInjectableConstructor",
+  "language": "java",
+  "description": "This class has more than one @Inject-annotated constructor. Please remove the @Inject annotation from all but one of them.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 57,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport com.google.inject.Inject;\nimport java.beans.ConstructorProperties;\n\n/**\n * @author sgoldfeder@google.com(Steven Goldfeder)\n */\npublic class MoreThanOneInjectableConstructorPositiveCases {\n\n  /** Class has 2 constructors, both are injectable */\n  // BUG: Diagnostic contains: MoreThanOneInjectableConstructor\n  public class TestClass1 {\n    @Inject\n    public TestClass1() {}\n\n    @Inject\n    public TestClass1(int n) {}\n  }\n\n  /** Class has 3 constructors, two of which are injectable. */\n  // BUG: Diagnostic contains: MoreThanOneInjectableConstructor\n  public class TestClass2 {\n    @Inject\n    public TestClass2() {}\n\n    public TestClass2(int n) {}\n\n    @Inject\n    public TestClass2(String s) {}\n  }\n\n  /**\n   * testing that the error appears on the @Inject annotation even in the presence of other\n   * annotations\n   */\n  // BUG: Diagnostic contains: MoreThanOneInjectableConstructor\n  public class TestClass3 {\n    @Inject\n    public TestClass3() {}\n\n    @Inject\n    @ConstructorProperties({\"m\", \"n\"})\n    public TestClass3(int m, int n) {}\n  }\n\n  /** Fails on 3 constructors w/ @Inject */\n  // BUG: Diagnostic contains: MoreThanOneInjectableConstructor\n  public class TestClass4 {\n    @Inject\n    public TestClass4() {}\n\n    @Inject\n    public TestClass4(int m, int n) {}\n\n    @Inject\n    public TestClass4(int m, int n, boolean x) {}\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport com.google.inject.Inject;\n\n/**\n * @author sgoldfeder@google.com(Steven Goldfeder)\n */\npublic class MoreThanOneInjectableConstructorNegativeCases {\n\n  /** Class has a single non-injectable constructor. */\n  public class TestClass1 {\n    public TestClass1() {}\n  }\n\n  /** Class has a single injectable constructor. */\n  public class TestClass2 {\n    @Inject\n    public TestClass2() {}\n  }\n\n  /** Class has two constructors, one of which is injectable. */\n  public class TestClass3 {\n    @Inject\n    public TestClass3() {}\n\n    public TestClass3(int n) {}\n  }\n\n  /** Class has two constructors, one of which is injectable. Class also has an injectable field. */\n  public class TestClass4 {\n\n    @Inject String x;\n\n    @Inject\n    public TestClass4() {}\n\n    public TestClass4(int n) {}\n  }\n\n  /** Class has 2 constructors, both are injectable. Error is suppressed. */\n  @SuppressWarnings(\"MoreThanOneInjectableConstructor\")\n  public class TestClass5 {\n    @Inject\n    public TestClass5() {}\n\n    @Inject\n    public TestClass5(int n) {}\n  }\n\n  /** Suppressed class */\n  @SuppressWarnings(\"inject-constructors\")\n  public class TestClass6 {\n    @Inject\n    public TestClass6() {}\n\n    @Inject\n    public TestClass6(int n) {}\n  }\n\n  /** Suppressed class */\n  @SuppressWarnings(\"InjectMultipleAtInjectConstructors\")\n  public class TestClass7 {\n    @Inject\n    public TestClass7() {}\n\n    @Inject\n    public TestClass7(int n) {}\n  }\n}\\"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "RobolectricShadowDirectlyOn",
+  "language": "java",
+  "description": "Migrate off a deprecated overload of org.robolectric.shadow.api.Shadow#directlyOn",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 84,
+  "branches": 5,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package org.robolectric.shadow.api;\n\n            import org.robolectric.util.ReflectionHelpers.ClassParameter;\n\n            public class Shadow {\n              public static <T> T directlyOn(T shadowedObject, Class<T> clazz) {\n                return null;\n              }\n\n              public static <T> Runnable directlyOn(\n                  T shadowedObject, Class<T> clazz, String baz, ClassParameter<?>... params) {\n                return null;\n              }\n            }\n            \n\n            package org.robolectric.util;\n\n            public class ReflectionHelpers {\n              public static class ClassParameter<V> {\n                public static <V> ClassParameter<V> from(Class<? extends V> clazz, V val) {\n                  return null;\n                }\n              }\n            }\n            \n\n            import java.util.List;\n\n            class Foo {\n              Runnable baz(Object r, long n, List<?> x, String s) {\n                return null;\n              }\n            }\n            \n\n            import java.util.List;\n            import org.robolectric.shadow.api.Shadow;\n\n            class Test {\n              public <T> Runnable registerNativeAllocation(Foo foo, Object r, long n, List<T> x) {\n                return Shadow.directlyOn(foo, Foo.class).baz(r, n, x, null);\n              }\n            }\n            \n\n            import java.util.List;\n            import org.robolectric.shadow.api.Shadow;\n            import org.robolectric.util.ReflectionHelpers.ClassParameter;\n\n            class Test {\n              public <T> Runnable registerNativeAllocation(Foo foo, Object r, long n, List<T> x) {\n                return Shadow.directlyOn(\n                    foo,\n                    Foo.class,\n                    \"baz\",\n                    ClassParameter.from(Object.class, r),\n                    ClassParameter.from(long.class, n),\n                    ClassParameter.from(List.class, x),\n                    ClassParameter.from(String.class, null));\n              }\n            }"
+    }
+  ]
+}

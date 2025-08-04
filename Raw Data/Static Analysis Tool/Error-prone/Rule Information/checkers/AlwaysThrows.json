@@ -1,0 +1,94 @@
+{
+  "name": "AlwaysThrows",
+  "language": "java",
+  "description": "Detects calls that will fail at runtime",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 227,
+  "branches": 20,
+  "apis": 8,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import java.time.Instant;\n\n            class T {\n              void f() {\n                // BUG: Diagnostic contains: will fail at runtime with a DateTimeParseException\n                Instant.parse(\"2007-12-3T10:15:30.00Z\");\n              }\n            }"
+    },
+    {
+      "description": "immutableMapThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              private static final ImmutableMap<Integer, Integer> xs =\n                  ImmutableMap.<Integer, Integer>builder()\n                      .put(1, 1)\n                      // BUG: Diagnostic contains:\n                      .put(1, 2)\n                      .buildOrThrow();\n            }"
+    },
+    {
+      "description": "immutableBiMapThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "import com.google.common.collect.ImmutableBiMap;\n\n            class Test {\n              private static final ImmutableBiMap<Integer, Integer> xs =\n                  ImmutableBiMap.<Integer, Integer>builder()\n                      .put(1, 1)\n                      // BUG: Diagnostic contains:\n                      .put(2, 1)\n                      .buildOrThrow();\n            }"
+    },
+    {
+      "description": "immutableMapDoesNotThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              private static final ImmutableMap<Integer, Integer> xs =\n                  ImmutableMap.<Integer, Integer>builder().put(1, 1).put(2, 2).buildOrThrow();\n            }"
+    },
+    {
+      "description": "immutableMapOfThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              private static final ImmutableMap<Integer, Integer> xs =\n                  // BUG: Diagnostic contains:\n                  ImmutableMap.of(1, 1, 1, 2);\n            }"
+    },
+    {
+      "description": "immutableMapOfThrowsWithEnums",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              private enum E {\n                A,\n                B\n              }\n\n              private static final ImmutableMap<E, Integer> xs =\n                  // BUG: Diagnostic contains:\n                  ImmutableMap.of(E.A, 1, E.A, 2);\n            }"
+    },
+    {
+      "description": "immutableBiMapOfThrowsWithEnums",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              private enum E {\n                A,\n                B\n              }\n\n              private static final ImmutableMap<E, Integer> xs =\n                  // BUG: Diagnostic contains:\n                  ImmutableMap.of(E.A, 1, E.A, 2);\n            }"
+    },
+    {
+      "description": "immutableMapOfThrowsWithRepeatedFinalVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        165
+      ],
+      "code": "import com.google.common.collect.ImmutableBiMap;\n\n            class Test {\n              ImmutableBiMap<String, Integer> map(String s) {\n                // BUG: Diagnostic contains:\n                return ImmutableBiMap.of(s, 1, s, 2);\n              }\n\n              ImmutableBiMap<Integer, String> values(String s) {\n                // BUG: Diagnostic contains:\n                return ImmutableBiMap.of(1, s, 2, s);\n              }\n            }"
+    },
+    {
+      "description": "immutableMapWithComplexKeys",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n            import java.time.Duration;\n\n            class Test {\n              private static final ImmutableMap<Duration, Integer> xs =\n                  // BUG: Diagnostic contains: Duration.ofMillis(1)\n                  ImmutableMap.of(Duration.ofMillis(1), 1, Duration.ofMillis(1), 2);\n            }"
+    },
+    {
+      "description": "uuidFromString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        206
+      ],
+      "code": "import java.util.UUID;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              private final UUID uuid = UUID.fromString(\"foo\");\n            }"
+    }
+  ]
+}

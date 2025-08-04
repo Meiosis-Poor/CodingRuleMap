@@ -1,0 +1,134 @@
+{
+  "name": "TypeParameterShadowing",
+  "language": "java",
+  "description": "Type parameter declaration overrides another type parameter already declared",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 145,
+  "branches": 16,
+  "apis": 2,
+  "test": [
+    {
+      "description": "singleLevel",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              // BUG: Diagnostic contains: T declared in Test\n              <T> void something() {}\n            }"
+    },
+    {
+      "description": "staticNotFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              static <T> void something() {}\n            }"
+    },
+    {
+      "description": "staticMethodInnerDoesntConflictWithOuter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": ""
+    },
+    {
+      "description": "nestedClassDeclarations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "package foo.bar;\n\n            class Test<D> {\n              // BUG: Diagnostic contains: D declared in Test\n              class Test2<D> {}\n            }"
+    },
+    {
+      "description": "twoLevels",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              class MyTest<J> {\n                // BUG: Diagnostic matches: combo\n                public <T, J> void something() {}\n              }\n            }"
+    },
+    {
+      "description": "renameTypeVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              /**\n               * @param <T> foo\n               */\n              <T> void something(T t) {\n                T other = t;\n              }\n            }\n            \n\n            package foo.bar;\n\n            class Test<T> {\n              /**\n               * @param <T2> foo\n               */\n              <T2> void something(T2 t) {\n                T2 other = t;\n              }\n            }"
+    },
+    {
+      "description": "renameRecursiveBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        155
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              <T extends Comparable<T>> void something(T t) {\n                T other = t;\n              }\n            }\n            \n\n            package foo.bar;\n\n            class Test<T> {\n              <T2 extends Comparable<T2>> void something(T2 t) {\n                T2 other = t;\n              }\n            }"
+    },
+    {
+      "description": "refactorUnderneathStuff",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        183
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              <T> void something(T t) {\n                T other = t;\n              }\n\n              <T> T identity(T t) {\n                return t;\n              }\n            }\n            \n\n            package foo.bar;\n\n            class Test<T> {\n              <T2> void something(T2 t) {\n                T2 other = t;\n              }\n\n              <T2> T2 identity(T2 t) {\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "refactorMultipleVars",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "package foo.bar;\n\n            class Test<T, D> {\n              <T, D> void something(T t) {\n                T other = t;\n                java.util.List<T> ts = new java.util.ArrayList<T>();\n                D d = null;\n              }\n            }\n            \n\n            package foo.bar;\n\n            class Test<T, D> {\n              <T2, D2> void something(T2 t) {\n                T2 other = t;\n                java.util.List<T2> ts = new java.util.ArrayList<T2>();\n                D2 d = null;\n              }\n            }"
+    },
+    {
+      "description": "refactorWithNestedTypeParameterDeclaration",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              <T, T2> void something(T t) {\n                T var = t;\n                @SuppressWarnings(\"TypeParameterShadowing\")\n                class MethodInnerWithGeneric<T> {}\n                MethodInnerWithGeneric<T> innerVar = null;\n                class MethodInner {\n                  @SuppressWarnings(\"TypeParameterShadowing\")\n                  <T> void doSomething() {}\n\n                  void doSomethingElse(T t) {\n                    this.<T>doSomething();\n                  }\n                }\n                MethodInner myInner = null;\n              }\n            }\n            \n\n            package foo.bar;\n\n            class Test<T> {\n              <T3, T2> void something(T3 t) {\n                T3 var = t;\n                @SuppressWarnings(\"TypeParameterShadowing\")\n                class MethodInnerWithGeneric<T> {}\n                MethodInnerWithGeneric<T3> innerVar = null;\n                class MethodInner {\n                  @SuppressWarnings(\"TypeParameterShadowing\")\n                  <T> void doSomething() {}\n\n                  void doSomethingElse(T3 t) {\n                    this.<T3>doSomething();\n                  }\n                }\n                MethodInner myInner = null;\n              }\n            }"
+    },
+    {
+      "description": "refactorCheckForExisting",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        307
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              class A<T2, T3, T4> {\n                <T> void something(T t) {\n                  T var = t;\n                }\n              }\n            }\n            \n\n            package foo.bar;\n\n            class Test<T> {\n              class A<T2, T3, T4> {\n                <T5> void something(T5 t) {\n                  T5 var = t;\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactorMethodInnerInner",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        339
+      ],
+      "code": "package foo.bar;\n\n            class Test<T> {\n              static <D> void something(D t) {\n                class B {\n                  class C<T, D> {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "symbolWithoutTypeParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        370
+      ],
+      "code": "package foo.bar;\n\nimport java.util.Map;\nimport java.util.Comparator;\n\nclass Test {\n  static Comparator<Map.Entry<Integer, String>> ENTRY_COMPARATOR =\n      new Comparator<Map.Entry<Integer, String>>() {\n        public int compare(Map.Entry<Integer, String> o1, Map.Entry<Integer, String> o2) {\n          return 0;\n        }\n\n        private <T extends Comparable> int c(T o1, T o2) {\n          return 0;\n        }\n      };\n}"
+    },
+    {
+      "description": "lambdaParameterDesugaring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        397
+      ],
+      "code": "import java.util.function.Consumer;\n\n            class A<T> {\n              abstract class B<T> {\n                void f() {\n                  g(t -> {});\n                }\n\n                abstract void g(Consumer<T> c);\n              }\n            }\n            \n\n            import java.util.function.Consumer;\n\n            class A<T> {\n              abstract class B<T2> {\n                void f() {\n                  g(t -> {});\n                }\n\n                abstract void g(Consumer<T2> c);\n              }\n            }"
+    },
+    {
+      "description": "typesWithBounds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        433
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test<T> {\n              <B extends Object & Comparable> void something(B b) {\n                class Foo<B extends Object & Comparable> implements Predicate<B> {\n                  public boolean test(B b) {\n                    return false;\n                  }\n                }\n                new Foo<>();\n              }\n            }\n            \n\n            import java.util.function.Predicate;\n\n            class Test<T> {\n              <B extends Object & Comparable> void something(B b) {\n                class Foo<B2 extends Object & Comparable> implements Predicate<B2> {\n                  public boolean test(B2 b) {\n                    return false;\n                  }\n                }\n                new Foo<>();\n              }\n            }"
+    }
+  ]
+}

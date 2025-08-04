@@ -1,0 +1,46 @@
+{
+  "name": "StronglyTypeByteString",
+  "language": "java",
+  "description": "This primitive byte array is only used to construct ByteStrings. It would be clearer to strongly type the field instead.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 52,
+  "branches": 1,
+  "apis": 1,
+  "test": [
+    {
+      "description": "findingLocatedOnField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import com.google.protobuf.ByteString;\n\n            class Test {\n              // BUG: Diagnostic contains: ByteString instances\n              private static final byte[] FOO_BYTES = new byte[10];\n\n              public ByteString get() {\n                return ByteString.copyFrom(FOO_BYTES);\n              }\n            }"
+    },
+    {
+      "description": "byteStringFactory",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "import com.google.protobuf.ByteString;\n\n            class Test {\n              private static final byte[] FOO_BYTES = new byte[10];\n\n              public ByteString get() {\n                return ByteString.copyFrom(FOO_BYTES);\n              }\n            }\n            \n\n            import com.google.protobuf.ByteString;\n\n            class Test {\n              private static final ByteString FOO_BYTES = ByteString.copyFrom(new byte[10]);\n\n              public ByteString get() {\n                return FOO_BYTES;\n              }\n            }"
+    },
+    {
+      "description": "byteStringFactory_addNewTypeToByteArrayLiterals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import com.google.protobuf.ByteString;\n\n            class Test {\n              private static final byte[] FOO_BYTES = {7, 7, 7};\n\n              public ByteString get() {\n                return ByteString.copyFrom(FOO_BYTES);\n              }\n            }\n            \n\nimport com.google.protobuf.ByteString;\n\nclass Test {\n  private static final ByteString FOO_BYTES = ByteString.copyFrom(new byte[] {7, 7, 7});\n\n  public ByteString get() {\n    return FOO_BYTES;\n  }\n}"
+    },
+    {
+      "description": "byteStringFactory_noNewTypeAddedIfLiteralHasType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        118
+      ],
+      "code": "import com.google.protobuf.ByteString;\n\n            class Test {\n              private static final byte[] FOO_BYTES = new byte[] {7, 7, 7};\n\n              public ByteString get() {\n                return ByteString.copyFrom(FOO_BYTES);\n              }\n            }\n            \n\nimport com.google.protobuf.ByteString;\n\nclass Test {\n  private static final ByteString FOO_BYTES = ByteString.copyFrom(new byte[] {7, 7, 7});\n\n  public ByteString get() {\n    return FOO_BYTES;\n  }\n}"
+    }
+  ]
+}

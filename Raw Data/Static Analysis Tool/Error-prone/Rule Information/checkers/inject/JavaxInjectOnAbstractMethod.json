@@ -1,0 +1,30 @@
+{
+  "name": "JavaxInjectOnAbstractMethod",
+  "language": "java",
+  "description": "Abstract and default methods are not injectable with javax.inject.Inject",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 60,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class JavaxInjectOnAbstractMethodPositiveCases {\n\n  /** Abstract class has an injectable(javax.inject.Inject) abstract method. */\n  public abstract class TestClass1 {\n    // BUG: Diagnostic contains: remove\n    @javax.inject.Inject\n    abstract void abstractMethod();\n  }\n\n  /**\n   * Abstract class has an injectable(javax.inject.Inject) abstract method and an unrelated concrete\n   * method.\n   */\n  public abstract class TestClass2 {\n    // BUG: Diagnostic contains: remove\n    @javax.inject.Inject\n    abstract void abstractMethod();\n\n    public void foo() {}\n  }\n\n  /**\n   * Abstract class has an injectable(javax.inject.Inject) abstract method and an unrelated abstract\n   * method.\n   */\n  public abstract class TestClass3 {\n    // BUG: Diagnostic contains: remove\n    @javax.inject.Inject\n    abstract void abstractMethod1();\n\n    abstract void abstractMethod2();\n  }\n\n  /** Interface with Inject method, should also fail. */\n  public interface TestInterface {\n    // BUG: Diagnostic contains: remove\n    @javax.inject.Inject\n    void abstractMethod();\n  }\n\n  /** Concrete Implementer of interface. */\n  public class Implementing implements TestInterface {\n    // No error here\n    public void abstractMethod() {}\n  }\n\n  /** Abstract implementer of interface. */\n  public abstract class AbstractImplementing implements TestInterface {\n    // BUG: Diagnostic contains: remove\n    @javax.inject.Inject\n    public abstract void abstractMethod();\n  }\n\n  interface HasDefault {\n    // BUG: Diagnostic contains: remove\n    @javax.inject.Inject\n    default void foo() {}\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        107
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport javax.inject.Inject;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class JavaxInjectOnAbstractMethodNegativeCases {\n\n  /** Concrete class has no methods or annotations. */\n  public class TestClass1 {}\n\n  /** Abstract class has a single abstract method with no annotation. */\n  public abstract class TestClass2 {\n    abstract void abstractMethod();\n  }\n\n  /** Concrete class has an injectable method. */\n  public class TestClass3 {\n    @Inject\n    public void foo() {}\n  }\n\n  /** Abstract class has an injectable concrete method. */\n  public abstract class TestClass4 {\n    abstract void abstractMethod();\n\n    @Inject\n    public void concreteMethod() {}\n  }\n\n  /**\n   * Abstract class has an com.google.inject.Inject abstract method (This is allowed; Injecting\n   * abstract methods is only forbidden with javax.inject.Inject).\n   */\n  public abstract class TestClass5 {\n    @com.google.inject.Inject\n    abstract void abstractMethod();\n  }\n\n  /** Abstract class has an injectable(javax.inject.Inject) abstract method. Error is suppressed. */\n  public abstract class TestClass6 {\n    @SuppressWarnings(\"JavaxInjectOnAbstractMethod\")\n    @javax.inject.Inject\n    abstract void abstractMethod();\n  }\n}\\"
+    }
+  ]
+}

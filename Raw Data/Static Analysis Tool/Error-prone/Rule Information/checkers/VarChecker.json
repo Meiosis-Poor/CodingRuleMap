@@ -1,0 +1,230 @@
+{
+  "name": "VarChecker",
+  "language": "java",
+  "description": "Non-constant variable missing @Var annotation",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 108,
+  "branches": 19,
+  "apis": 2,
+  "test": [
+    {
+      "description": "nonFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class Test {\n              public int x = 42;\n            }"
+    },
+    {
+      "description": "finalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": ""
+    },
+    {
+      "description": "positiveParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: public void x(@Var int y) {\n              public void x(int y) {\n                y++;\n              }\n            }\n            \n\n            class Test {\n              public void x() {\n                // BUG: Diagnostic contains: @Var int y = 0;\n                int y = 0;\n                y++;\n              }\n            }\n            \n\n            class Test {\n              public void x() {\n                // BUG: Diagnostic contains: /*START*/ int y = 0;\n                /*START*/ final int y = 0;\n              }\n            }\n            \n\n            class Test {\n              {\n                for (int i = 0; i < 10; i++) {}\n              }\n            }\n            \n\n            class Test {\n              void f(Iterable<String> xs) {\n                for (String x : xs) {}\n              }\n            }\n            \n\n            class Test {\n              // BUG: Diagnostic contains: native void f(int y);\n              native void f(final int y);\n            }\n            \n\n            import com.google.errorprone.annotations.Var;\n\n            class Test {\n              @Var public int x = 42;\n            }\n            \n\n            import com.google.errorprone.annotations.Var;\n\n            class Test {\n              public void x(@Var int y) {\n                y++;\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.Var;\n\n            class Test {\n              public void x() {\n                @Var int y = 0;\n                y++;\n              }\n            }\n            \n\n            class Test {\n              public void x() {\n                try {\n                  // BUG: Diagnostic contains: missing @Var\n                } catch (Exception e) {\n                  e = null;\n                }\n              }\n            }\n            \n\n            class Test {\n              public void x() {\n                try {\n                  // BUG: Diagnostic contains: Unnecessary 'final' modifier.\n                } catch (final Exception e) {\n                }\n              }\n            }\n            \n\n            import java.io.InputStream;\n\n            class Test {\n              public void x() {\n                // BUG: Diagnostic contains: Unnecessary 'final' modifier.\n                try (final InputStream is = null) {\n                } catch (Exception e) {\n                }\n              }\n            }\n            \n\n            import java.io.InputStream;\n\n            class Test {\n              public void x() {\n                try (InputStream is = null) {\n                } catch (Exception e) {\n                }\n              }\n            }\n            \n\n            class Test {\n              public void f(Test this, int x) {\n                this.toString();\n              }\n            }\n            \n\n            import javax.annotation.processing.Generated;\n\n            @Generated(\"generator\")\n            class Test {\n              public void x() {\n                final int y = 0;\n              }\n            }\n            \n\n            @SuppressWarnings(\"Var\")\n            class Test {\n              public void x() {\n                final int y = 0;\n              }\n            }\n            \n\n            @SuppressWarnings(\"Foo\")\n            class Test {\n              public void x() {\n                // BUG: Diagnostic contains: Unnecessary 'final' modifier.\n                final int y = 0;\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.Var;\n\n            class Test {\n              int f(\n                  // BUG: Diagnostic contains: @Var variable is never modified\n                  @Var int x, @Var int y) {\n                y++;\n                return x + y;\n              }\n            }\n            \n\n            // BUG: Diagnostic contains:\n            public record Test(String x) {\n              public Test {\n                x = x.replace('_', ' ');\n              }\n            }"
+    },
+    {
+      "description": "negativeParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": ""
+    },
+    {
+      "description": "positiveLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "class Test {\n              public void x() {\n                // BUG: Diagnostic contains: @Var int y = 0;\n                int y = 0;\n                y++;\n              }\n            }"
+    },
+    {
+      "description": "negativeLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": ""
+    },
+    {
+      "description": "finalLocal7",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        120
+      ],
+      "code": ""
+    },
+    {
+      "description": "finalLocal8",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "class Test {\n              public void x() {\n                // BUG: Diagnostic contains: /*START*/ int y = 0;\n                /*START*/ final int y = 0;\n              }\n            }"
+    },
+    {
+      "description": "forLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "class Test {\n              {\n                for (int i = 0; i < 10; i++) {}\n              }\n            }"
+    },
+    {
+      "description": "enhancedFor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        167
+      ],
+      "code": "class Test {\n              void f(Iterable<String> xs) {\n                for (String x : xs) {}\n              }\n            }"
+    },
+    {
+      "description": "unnecessaryFinalNativeMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: native void f(int y);\n              native void f(final int y);\n            }"
+    },
+    {
+      "description": "nativeMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        196
+      ],
+      "code": ""
+    },
+    {
+      "description": "abstractMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208
+      ],
+      "code": ""
+    },
+    {
+      "description": "interfaceMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": ""
+    },
+    {
+      "description": "varField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        232
+      ],
+      "code": "import com.google.errorprone.annotations.Var;\n\n            class Test {\n              @Var public int x = 42;\n            }"
+    },
+    {
+      "description": "varParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        247
+      ],
+      "code": "import com.google.errorprone.annotations.Var;\n\n            class Test {\n              public void x(@Var int y) {\n                y++;\n              }\n            }"
+    },
+    {
+      "description": "varLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        264
+      ],
+      "code": "import com.google.errorprone.annotations.Var;\n\n            class Test {\n              public void x() {\n                @Var int y = 0;\n                y++;\n              }\n            }"
+    },
+    {
+      "description": "varCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        282
+      ],
+      "code": "class Test {\n              public void x() {\n                try {\n                  // BUG: Diagnostic contains: missing @Var\n                } catch (Exception e) {\n                  e = null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "finalCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        301
+      ],
+      "code": "class Test {\n              public void x() {\n                try {\n                  // BUG: Diagnostic contains: Unnecessary 'final' modifier.\n                } catch (final Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "finalTWR",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "import java.io.InputStream;\n\n            class Test {\n              public void x() {\n                // BUG: Diagnostic contains: Unnecessary 'final' modifier.\n                try (final InputStream is = null) {\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "nonFinalTWR",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        339
+      ],
+      "code": "import java.io.InputStream;\n\n            class Test {\n              public void x() {\n                try (InputStream is = null) {\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "receiverParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        358
+      ],
+      "code": "class Test {\n              public void f(Test this, int x) {\n                this.toString();\n              }\n            }"
+    },
+    {
+      "description": "suppressedByGeneratedAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        373
+      ],
+      "code": "import javax.annotation.processing.Generated;\n\n            @Generated(\"generator\")\n            class Test {\n              public void x() {\n                final int y = 0;\n              }\n            }"
+    },
+    {
+      "description": "suppressedBySuppressWarningsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        391
+      ],
+      "code": "@SuppressWarnings(\"Var\")\n            class Test {\n              public void x() {\n                final int y = 0;\n              }\n            }"
+    },
+    {
+      "description": "notSuppressedByUnrelatedSuppressWarningsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        407
+      ],
+      "code": "@SuppressWarnings(\"Foo\")\n            class Test {\n              public void x() {\n                // BUG: Diagnostic contains: Unnecessary 'final' modifier.\n                final int y = 0;\n              }\n            }"
+    },
+    {
+      "description": "effectivelyFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        424
+      ],
+      "code": "import com.google.errorprone.annotations.Var;\n\n            class Test {\n              int f(\n                  // BUG: Diagnostic contains: @Var variable is never modified\n                  @Var int x, @Var int y) {\n                y++;\n                return x + y;\n              }\n            }"
+    },
+    {
+      "description": "recordCanonicalConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        444
+      ],
+      "code": "// BUG: Diagnostic contains:\n            public record Test(String x) {\n              public Test {\n                x = x.replace('_', ' ');\n              }\n            }"
+    }
+  ]
+}

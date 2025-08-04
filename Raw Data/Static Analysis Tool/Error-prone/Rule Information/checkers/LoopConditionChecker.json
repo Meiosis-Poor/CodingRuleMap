@@ -1,0 +1,86 @@
+{
+  "name": "LoopConditionChecker",
+  "language": "java",
+  "description": "Loop condition is never modified in loop body.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 169,
+  "branches": 14,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              int h9() {\n                int sum = 0;\n                int i, j;\n                for (i = 0; i < 10; ++i) {\n                  // BUG: Diagnostic contains:\n                  for (j = 0; j < 10; ++i) {\n                    sum += j;\n                  }\n                }\n                return sum;\n              }\n            }"
+    },
+    {
+      "description": "positive_noUpdate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "class Test {\n              void f() {\n                // BUG: Diagnostic contains:\n                for (int i = 0; i < 10; ) {}\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "class Test {\n              int h9() {\n                int sum = 0;\n                int i, j;\n                for (i = 0; i < 10; ++i) {\n                  for (j = 0; j < 10; ++i) {\n                    sum += j;\n                    j++;\n                  }\n                }\n                return sum;\n              }\n            }"
+    },
+    {
+      "description": "negative_forExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "class Test {\n              void f() {\n                for (int i = 0; i < 10; i++) {\n                  System.err.println(i);\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_noVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "import java.util.Iterator;\n\n            class Test {\n              void f(Iterable<String> xs) {\n                Iterator<String> it = xs.iterator();\n                while (it.hasNext()) {\n                  System.err.println(it.next());\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_noCondition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "class Test {\n              void f() {\n                for (; ; ) {}\n              }\n            }"
+    },
+    {
+      "description": "negative_noUpdate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "class Test {\n              void f() {\n                for (int i = 0; i < 10; ) {\n                  i++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_conditionUpdate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "class Test {\n              void f() {\n                int i = 0;\n                while (i++ < 10) {}\n              }\n            }"
+    },
+    {
+      "description": "negative_field",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        178
+      ],
+      "code": "class Test {\n              int i = 0;\n\n              void f() {\n                while (i < 10) {\n                  g();\n                }\n              }\n\n              void g() {\n                i++;\n              }\n            }"
+    }
+  ]
+}

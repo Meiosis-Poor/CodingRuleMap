@@ -1,0 +1,30 @@
+{
+  "name": "TypeEqualsChecker",
+  "language": "java",
+  "description": "com.sun.tools.javac.code.Type doesn't override Object.equals and instances are not interned by javac, so testing types for equality should be done with Types#isSameType instead",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import com.google.errorprone.BugPattern;\n            import com.google.errorprone.BugPattern.SeverityLevel;\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;\n            import com.google.errorprone.matchers.Description;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.tools.javac.code.Types;\n\n            @BugPattern(name = \"Example\", summary = \"\", severity = SeverityLevel.ERROR)\n            public class ExampleChecker extends BugChecker implements ClassTreeMatcher {\n              @Override\n              public Description matchClass(ClassTree t, VisitorState s) {\n                return Description.NO_MATCH;\n              }\n            }"
+    },
+    {
+      "description": "matchInABugChecker",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import static com.google.errorprone.util.ASTHelpers.getSymbol;\n            import com.google.errorprone.BugPattern;\n            import com.google.errorprone.BugPattern.SeverityLevel;\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;\n            import com.google.errorprone.fixes.SuggestedFix;\n            import com.google.errorprone.matchers.Description;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.tools.javac.code.Symbol;\n            import com.sun.tools.javac.code.Symbol.ClassSymbol;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.code.Types;\n            import java.util.Objects;\n\n            @BugPattern(name = \"Example\", summary = \"\", severity = SeverityLevel.ERROR)\n            public class ExampleChecker extends BugChecker implements ClassTreeMatcher {\n              @Override\n              public Description matchClass(ClassTree tree, VisitorState state) {\n                Symbol sym = getSymbol(tree);\n                Types types = state.getTypes();\n                ClassSymbol owner = sym.enclClass();\n                for (Type s : types.closure(owner.type)) {\n                  // BUG: Diagnostic contains: TypeEquals\n                  if (s.equals(owner.type)) {\n                    return Description.NO_MATCH;\n                  }\n                  // BUG: Diagnostic contains: TypeEquals\n                  if (Objects.equals(s, owner.type)) {\n                    return Description.NO_MATCH;\n                  }\n                }\n                return Description.NO_MATCH;\n              }\n            }"
+    }
+  ]
+}

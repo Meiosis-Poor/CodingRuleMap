@@ -1,0 +1,134 @@
+{
+  "name": "TypeParameterUnusedInFormals",
+  "language": "java",
+  "description": "Declaring a type parameter that is only used in the return type is a misuse of generics: operations on the type parameter are unchecked, it hides unsafe casts at invocations of the method, and it interacts badly with method overload resolution.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 122,
+  "branches": 15,
+  "apis": 2,
+  "test": [
+    {
+      "description": "evilCastImpl",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              static <T> T doCast(Object o) {\n                T t = (T) o;\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "leadingParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              static <U extends Object, T> T doCast(U o) {\n                T t = (T) o;\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "trailingParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              static <T, U extends Object> T doCast(U o) {\n                T t = (T) o;\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "leadingAndTrailingParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              static <V extends Object, T, U extends Object> T doCast(U o, V v) {\n                T t = (T) o;\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "superBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              static <T extends Number> T doCast(Object o) {\n                return (T) o;\n              }\n            }"
+    },
+    {
+      "description": "okFBound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              interface Foo<T> {}\n\n              static <T extends Foo<T>> T doCast(Object o) {\n                return (T) o;\n              }\n            }"
+    },
+    {
+      "description": "wildbound",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              interface Foo<T> {}\n\n              // BUG: Diagnostic contains:\n              static <T extends Foo<?>> T doCast(Object o) {\n                return (T) o;\n              }\n            }"
+    },
+    {
+      "description": "okGenericFactory",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        163
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              static <T> List<T> newList() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "okWithParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        180
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              static <T> T noop(T t) {\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "okNotMyParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "import java.util.List;\n\n            class Test<T> {\n              T noop(T t) {\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "abstractMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        214
+      ],
+      "code": "abstract class Test {\n              // BUG: Diagnostic contains:\n              abstract <T> T badMethod();\n            }"
+    },
+    {
+      "description": "objectCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        228
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains:\n              <T> T badMethod(String s) {\n                return (T) s;\n              }\n            }"
+    },
+    {
+      "description": "issue343",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        244
+      ],
+      "code": "interface Test {\n              interface Visitor1<X, Y> {}\n\n              interface Visitor2<X, Y> {}\n\n              <\n                      R,\n                      R1 extends R,\n                      R2 extends R,\n                      X1 extends Exception,\n                      X2 extends Exception,\n                      V extends Visitor1<R1, X1> & Visitor2<R2, X2>>\n                  R accept_(V v) throws X1, X2;\n            }"
+    },
+    {
+      "description": "classTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "abstract class Test<T> {\n              abstract T get(String s);\n            }"
+    },
+    {
+      "description": "typeAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        283
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.TYPE_USE)\n            @interface A {}\n            \n\n            class Test {\n              <T> T f(@A T x) {\n                return x;\n              }\n            }"
+    }
+  ]
+}

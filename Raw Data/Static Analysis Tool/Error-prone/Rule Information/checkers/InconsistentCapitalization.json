@@ -1,0 +1,102 @@
+{
+  "name": "InconsistentCapitalization",
+  "language": "java",
+  "description": "It is confusing to have a field and a parameter under the same scope that differ only in capitalization.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 197,
+  "branches": 24,
+  "apis": 5,
+  "test": [
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/** Negative cases for {@link com.google.errorprone.bugpatterns.InconsistentCapitalizationTest}. */\npublic class InconsistentCapitalizationNegativeCases {\n\n  public void doesntConflictWithOtherVariables() {\n    int aa;\n    int aA;\n  }\n\n  public void doesntConflictWithVariableOutOfScope() {\n    if (true) {\n      int a;\n    }\n    if (true) {\n      int a;\n    }\n  }\n\n  public void doesntConflictBetweenForVariables() {\n    for (int i = 0; i < 1; i++) {}\n\n    for (int i = 0; i < 1; i++) {}\n  }\n\n  private class DoesntConflictBetweenMethods {\n    int a;\n\n    void a() {}\n\n    void b(int baba) {\n      int c = baba;\n      if (c == baba) {}\n    }\n\n    void c() {\n      int c;\n    }\n  }\n\n  private static class DoesntConflictWithClass {\n\n    static int B;\n\n    static class A {\n\n      static int A;\n    }\n\n    class B {}\n  }\n\n  private static class DoesAllowUpperCaseStaticVariable {\n\n    static int A;\n\n    void method() {\n      int a;\n    }\n  }\n\n  private enum DoesntConflictWithUpperCaseEnum {\n    TEST;\n\n    private Object test;\n  }\n\n  public void doesntConflictWithMethodParameter(long aa) {\n    int aA;\n  }\n\n  private class DoesntConflictWithConstructorParameter {\n\n    DoesntConflictWithConstructorParameter(Object aa) {\n      Object aA;\n    }\n  }\n\n  private class DoesntConflictOutOfScope {\n\n    class A {\n      private Object aaa;\n      private Object aab;\n    }\n\n    class B {\n      private Object aaA;\n\n      void method(String aaB) {\n        char aAb;\n      }\n    }\n  }\n\n  private static class DoesntReplaceMember {\n\n    class A {\n      Object aa;\n      Object ab;\n\n      void method() {\n        B b = new B();\n        aa = b.aA;\n        ab = b.aB.aA;\n        new B().aA();\n        aa.equals(ab);\n        aa.equals(b.aB.aA);\n        aa.equals(b.aB);\n      }\n    }\n\n    class B {\n      Object aA;\n      C aB = new C();\n\n      void aA() {}\n    }\n\n    class C {\n      Object aA;\n    }\n  }\n\n  class DoesntConflictWithNested {\n    Object aa;\n    Object ab;\n\n    class Nested {\n      Object aB;\n\n      Nested(Object aa) {\n        DoesntConflictWithNested.this.aa = aa;\n      }\n\n      class Nested2 {\n        Object aB;\n\n        Nested2(Object aa) {\n          DoesntConflictWithNested.this.aa = aa;\n        }\n      }\n    }\n  }\n\n  static class DoesntFixExternalParentClassFieldMatch {\n\n    static class Parent {\n      Object aa;\n    }\n\n    static class Child extends Parent {\n\n      Child(Object aA) {\n        aa = aA;\n      }\n    }\n  }\n}\\"
+    },
+    {
+      "description": "correctsInconsistentVariableNameInMethodDefinitionToFieldCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": "class Test {\n              Object aa;\n\n              void method(Object aA) {\n                this.aa = aA;\n              }\n            }\n            \n\n            class Test {\n              Object aa;\n\n              void method(Object aa) {\n                this.aa = aa;\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameInConstructorDefinitionToFieldCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "class Test {\n              Object aa;\n\n              Test(Object aA) {\n                this.aa = aA;\n              }\n            }\n            \n\n            class Test {\n              Object aa;\n\n              Test(Object aa) {\n                this.aa = aa;\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameInLambdaDefinitionToFieldCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        258
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              Object ea;\n\n              Test() {\n                Function<Void, Object> f =\n                    (eA) -> {\n                      this.ea = eA;\n                      return eA;\n                    };\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              Object ea;\n\n              Test() {\n                Function<Void, Object> f =\n                    (ea) -> {\n                      this.ea = ea;\n                      return ea;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameInConstructorDefinitionWithMultipleOccurrencesToFieldCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        298
+      ],
+      "code": "class Test {\n              Object aa;\n\n              Test(Object aA) {\n                this.aa = aA;\n                if (aA == this.aa) {\n                  for (Object i = aA; ; ) {}\n                }\n              }\n            }\n            \n\n            class Test {\n              Object aa;\n\n              Test(Object aa) {\n                this.aa = aa;\n                if (aa == this.aa) {\n                  for (Object i = aa; ; ) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameToFieldCaseAndQualifiesField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        333
+      ],
+      "code": "class Test {\n              Object aa;\n\n              Test(Object aA) {\n                aa = aA;\n                if (aA == aa) {}\n              }\n            }\n            \n\n            class Test {\n              Object aa;\n\n              Test(Object aa) {\n                this.aa = aa;\n                if (aa == this.aa) {}\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameToFieldCaseAndQualifiesNestedClassField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        363
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              Object aa;\n              Object ab;\n\n              class Nested {\n                Object aB;\n\n                Nested(Object aA) {\n                  aa = aA;\n                  if (aa == aA) {}\n                  Test.this.aa = aA;\n                }\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              Object aa;\n              Object ab;\n\n              class Nested {\n                Object aB;\n\n                Nested(Object aa) {\n                  Test.this.aa = aa;\n                  if (Test.this.aa == aa) {}\n                  Test.this.aa = aa;\n                }\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameToFieldCaseAndQualifiesNestedChildClassField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        409
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              static class A {\n                Object aa;\n\n                static class Nested extends A {\n                  Nested(Object aA) {\n                    aa = aA;\n                    if (aa == aA) {}\n                    super.aa = aA;\n                  }\n                }\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              static class A {\n                Object aa;\n\n                static class Nested extends A {\n                  Nested(Object aa) {\n                    super.aa = aa;\n                    if (super.aa == aa) {}\n                    super.aa = aa;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "correctsInconsistentVariableNameToFieldCaseInAnonymousClassAndQualifiesNestedChildClassField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        453
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              Object aa;\n              Function<Object, Object> f =\n                  new Function() {\n                    public Object apply(Object aA) {\n                      aa = aA;\n                      return aA;\n                    }\n                  };\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              Object aa;\n              Function<Object, Object> f =\n                  new Function() {\n                    public Object apply(Object aa) {\n                      Test.this.aa = aa;\n                      return aa;\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "clash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        493
+      ],
+      "code": "class Test {\n              Object _DocumentObjectData_QNAME;\n              Object _DocumentObjectdata_QNAME;\n            }\n            \n\n            class Test {\n              Object _DocumentObjectData_QNAME;\n              Object _DocumentObjectdata_QNAME;\n            }"
+    },
+    {
+      "description": "i1008",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        515
+      ],
+      "code": "public class Callback {\n              interface WaitHandler {} // ignore\n\n              private final WaitHandler waitHandler;\n\n              // BUG: Diagnostic contains:\n              protected Callback(final WaitHandler waithandler) {\n                this.waitHandler = waithandler;\n              }\n\n              public static Callback doOnSuccess() {\n                return new Callback(null) {};\n              }\n            }"
+    }
+  ]
+}

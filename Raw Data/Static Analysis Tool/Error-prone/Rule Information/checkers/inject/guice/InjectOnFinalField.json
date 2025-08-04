@@ -1,0 +1,30 @@
+{
+  "name": "InjectOnFinalField",
+  "language": "java",
+  "description": "Although Guice allows injecting final fields, doing so is disallowed because the injected value may not be visible to other threads.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 51,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            import com.google.inject.Inject;\n            import org.jspecify.annotations.Nullable;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class InjectOnFinalFieldPositiveCases {\n              /** Class has a final injectable(com.google.inject.Inject) field. */\n              public class TestClass1 {\n                // BUG: Diagnostic contains: @Inject int a\n                @Inject final int a = 0;\n\n                @Inject\n                // BUG: Diagnostic contains: public int b\n                public final int b = 0;\n\n                @Inject @Nullable\n                // BUG: Diagnostic contains: Object c\n                final Object c = null;\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            import com.google.inject.Inject;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class InjectOnFinalFieldNegativeCases {\n\n              /** Class has no final fields or @Inject annotations. */\n              public class TestClass1 {}\n\n              /** Class has a final field that is not injectable. */\n              public class TestClass2 {\n                public final int n = 0;\n              }\n\n              /** Class has an injectable(com.google.inject.Inject) field that is not final. */\n              public class TestClass3 {\n                @Inject public int n;\n              }\n\n              /** Class has an injectable(com.google.inject.Inject), final method. */\n              public class TestClass4 {\n                @Inject\n                final void method() {}\n              }\n            }\\"
+    }
+  ]
+}

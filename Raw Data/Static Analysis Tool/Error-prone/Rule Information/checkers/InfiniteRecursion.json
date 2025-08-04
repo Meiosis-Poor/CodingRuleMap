@@ -1,0 +1,214 @@
+{
+  "name": "InfiniteRecursion",
+  "language": "java",
+  "description": "This method always recurses, and will cause a StackOverflowError",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 234,
+  "branches": 26,
+  "apis": 4,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              void f(int x) {}\n\n              void f() {\n                // BUG: Diagnostic contains:\n                f();\n              }\n\n              int g() {\n                return 0;\n              }\n\n              int g(int x) {\n                // BUG: Diagnostic contains:\n                return g(x);\n              }\n            }"
+    },
+    {
+      "description": "positiveExplicitThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "package p;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains:\n                this.f();\n              }\n\n              void g() {\n                // BUG: Diagnostic contains:\n                (this).g();\n              }\n\n              void h() {\n                // BUG: Diagnostic contains:\n                Test.this.h();\n              }\n\n              void i() {\n                // BUG: Diagnostic contains:\n                (p.Test.this).i();\n              }\n            }"
+    },
+    {
+      "description": "positiveMultipleStatementsFirst",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "class Test {\n              Test f() {\n                // BUG: Diagnostic contains:\n                f();\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "positiveStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "class Test {\n              static void f(int x) {}\n\n              static void f() {\n                // BUG: Diagnostic contains:\n                Test.f();\n              }\n\n              static void instanceF() {\n                // BUG: Diagnostic contains:\n                new Test().instanceF();\n              }\n\n              static void subclassF() {\n                // BUG: Diagnostic contains:\n                Subclass.subclassF();\n              }\n\n              static int g() {\n                return 0;\n              }\n\n              static int g(int x) {\n                // BUG: Diagnostic contains:\n                return Test.g(x);\n              }\n\n              class Subclass extends Test {}\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "class Test {\n              void f(int x) {}\n\n              void f() {\n                f(42);\n              }\n\n              int g() {\n                return 0;\n              }\n\n              int g(int x) {\n                return x == 0 ? g() : g(x - 1);\n              }\n            }"
+    },
+    {
+      "description": "positiveMultipleStatementsNotFirst",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "class Test {\n              Test f() {\n                new Test();\n                // BUG: Diagnostic contains:\n                f();\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "negativeDelegate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        190
+      ],
+      "code": "class Test {\n              Test test;\n\n              void f() {\n                test.f();\n              }\n            }"
+    },
+    {
+      "description": "positiveDelegateCannotBeOverridden",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "final class Test {\n              Test test;\n\n              void f() {\n                // BUG: Diagnostic contains:\n                test.f();\n              }\n            }"
+    },
+    {
+      "description": "negativeAfterReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "final class Test {\n              void f(boolean callAgain) {\n                if (!callAgain) {\n                  return;\n                }\n                f(false);\n              }\n            }"
+    },
+    {
+      "description": "positiveBeforeReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        243
+      ],
+      "code": "final class Test {\n              void f(boolean callAgain) {\n                // BUG: Diagnostic contains:\n                f(false);\n                if (!callAgain) {\n                  return;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeIfConditional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "final class Test {\n              void f(boolean callAgain) {\n                if (callAgain) {\n                  f(false);\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeSwitchStatementConditional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        279
+      ],
+      "code": "final class Test {\n              void f(CallAgain callAgain) {\n                switch (callAgain) {\n                  case TRUE:\n                    f(CallAgain.FALSE);\n                }\n              }\n\n              enum CallAgain {\n                TRUE,\n                FALSE,\n              }\n            }"
+    },
+    {
+      "description": "negativeSwitchExpressionConditional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": "final class Test {\n              int f(CallAgain callAgain) {\n                return switch (callAgain) {\n                  case TRUE -> f(CallAgain.FALSE) + 1;\n                  case FALSE -> 0;\n                };\n              }\n\n              enum CallAgain {\n                TRUE,\n                FALSE,\n              }\n            }"
+    },
+    {
+      "description": "negativeNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        325
+      ],
+      "code": "final class Test {\n              void f() {\n                new Object() {\n                  void g() {\n                    f();\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "positiveAfterNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        344
+      ],
+      "code": "final class Test {\n              void f() {\n                new Object() {\n                  void g() {\n                    f();\n                    return;\n                  }\n                };\n                // BUG: Diagnostic contains:\n                f();\n              }\n            }"
+    },
+    {
+      "description": "negativeLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        366
+      ],
+      "code": "final class Test {\n              Runnable f() {\n                return () -> f();\n              }\n            }"
+    },
+    {
+      "description": "positiveGeneric",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        381
+      ],
+      "code": "class Test<X> {\n              <T> void f(T x) {\n                // BUG: Diagnostic contains:\n                this.<String>f(\"\");\n              }\n\n              void g(X x) {\n                // BUG: Diagnostic contains:\n                g(null);\n              }\n            }"
+    },
+    {
+      "description": "positiveCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        402
+      ],
+      "code": "class Test<X> {\n              String overrideOfSomeMethodThatReturnsObject() {\n                // BUG: Diagnostic contains:\n                return (String) overrideOfSomeMethodThatReturnsObject();\n              }\n            }"
+    },
+    {
+      "description": "positiveCastWithParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        418
+      ],
+      "code": "class Test<X> {\n              String overrideOfSomeMethodThatReturnsObject() {\n                // BUG: Diagnostic contains:\n                return (String) (overrideOfSomeMethodThatReturnsObject());\n              }\n            }"
+    },
+    {
+      "description": "overload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        434
+      ],
+      "code": "class Test {\n              public void f(String s) {\n                f((Object) s);\n              }\n\n              public void f(Object o) {\n                // BUG: Diagnostic contains:\n                f(o);\n              }\n            }"
+    },
+    {
+      "description": "abstractMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        454
+      ],
+      "code": "abstract class Test {\n              abstract void f();\n            }"
+    },
+    {
+      "description": "positiveBinaryLeftHandSide",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        467
+      ],
+      "code": "final class Test {\n              Test next;\n              boolean nextIsCool;\n\n              boolean isCool(boolean thisIsCool) {\n                // BUG: Diagnostic contains:\n                return next.isCool(nextIsCool) || thisIsCool;\n              }\n            }"
+    },
+    {
+      "description": "negativeBinaryRightHandSide",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        486
+      ],
+      "code": "final class Test {\n              Test next;\n              boolean nextIsCool;\n\n              boolean isCool(boolean thisIsCool) {\n                return thisIsCool || next.isCool(thisIsCool);\n              }\n            }"
+    },
+    {
+      "description": "positiveBinaryRightHandSideNotConditional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        504
+      ],
+      "code": "class Test {\n              String asString() {\n                // BUG: Diagnostic contains:\n                return '{' + asString() + '}';\n              }\n            }"
+    },
+    {
+      "description": "positiveCatchAndReturnDoesNotMakeItSafe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        520
+      ],
+      "code": "final class Test {\n              void f() {\n                try {\n                  System.out.println(\"hi\");\n                } catch (Exception e) {\n                  return;\n                }\n                // BUG: Diagnostic contains:\n                f();\n              }\n            }"
+    }
+  ]
+}

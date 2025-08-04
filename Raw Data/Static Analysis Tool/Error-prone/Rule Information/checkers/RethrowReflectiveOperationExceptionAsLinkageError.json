@@ -1,0 +1,30 @@
+{
+  "name": "RethrowReflectiveOperationExceptionAsLinkageError",
+  "language": "java",
+  "description": "Prefer LinkageError for rethrowing ReflectiveOperationException as unchecked",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 77,
+  "branches": 6,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            public class RethrowReflectiveOperationExceptionAsLinkageErrorPositiveCases {\n              void assertionErrorExceptionConstructor() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e) {\n                  // BUG: Diagnostic contains: throw new LinkageError(e.getMessage(), e);\n                  throw new AssertionError(e);\n                }\n              }\n\n              void assertionErrorStringConstructor() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e) {\n                  // BUG: Diagnostic contains: throw new LinkageError(\"Test\", e);\n                  throw new AssertionError(\"Test\", e);\n                }\n              }\n\n              void assertionErrorStringFormatConstructor() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e) {\n                  // BUG: Diagnostic contains: throw new LinkageError(String.format(\"Test\"), e);\n                  throw new AssertionError(String.format(\"Test\"), e);\n                }\n              }\n\n              void multiLineCatchBlock() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e1) {\n                  int a = 100;\n                  if (a < 100) {\n                    try {\n                      throw new ReflectiveOperationException();\n                    } catch (ReflectiveOperationException e2) {\n                      // BUG: Diagnostic contains: throw new LinkageError(e2.getMessage(), e2);\n                      throw new AssertionError(e2);\n                    }\n                  }\n                  // BUG: Diagnostic contains: throw new LinkageError(e1.getMessage(), e1);\n                  throw new AssertionError(e1);\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.io.IOException;\n\n            public class RethrowReflectiveOperationExceptionAsLinkageErrorNegativeCases {\n              void assertionErrorNonStringConstructor() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e) {\n                  throw new AssertionError(1);\n                }\n              }\n\n              void assertionErrorNoArgConstructor() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e) {\n                  throw new AssertionError();\n                }\n              }\n\n              void noThrowAssertionError() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (ReflectiveOperationException e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n\n              void noCatchReflectiveOperationException() {\n                try {\n                  throw new ReflectiveOperationException();\n                } catch (Exception e) {\n                  throw new AssertionError(e);\n                }\n              }\n\n              void multiCatchExceptions() {\n                try {\n                  int a = 100;\n                  if (a < 100) {\n                    throw new IOException(\"Test\");\n                  }\n                  throw new ReflectiveOperationException();\n                } catch (IOException | ReflectiveOperationException e) {\n                  throw new AssertionError(e);\n                }\n              }\n\n              void throwNewReflectiveOperationException() {\n                throw new AssertionError(new ReflectiveOperationException(\"Test\"));\n              }\n            }\\"
+    }
+  ]
+}

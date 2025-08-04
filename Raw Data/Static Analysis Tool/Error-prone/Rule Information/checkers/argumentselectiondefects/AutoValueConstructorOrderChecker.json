@@ -1,0 +1,38 @@
+{
+  "name": "AutoValueConstructorOrderChecker",
+  "language": "java",
+  "description": "Arguments to AutoValue constructor are in the wrong order",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 79,
+  "branches": 7,
+  "apis": 2,
+  "test": [
+    {
+      "description": "autoValueChecker_detectsSwap_withExactNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Test {\n              abstract String valueOne();\n\n              abstract String valueTwo();\n\n              static Test create(String valueOne, String valueTwo) {\n                // BUG: Diagnostic contains: new AutoValue_Test(valueOne, valueTwo)\n                return new AutoValue_Test(valueTwo, valueOne);\n              }\n            }\n\n            class AutoValue_Test extends Test {\n              String valueOne() {\n                return null;\n              }\n\n              String valueTwo() {\n                return null;\n              }\n\n              AutoValue_Test(String valueOne, String valueTwo) {}\n            }"
+    },
+    {
+      "description": "autoValueChecker_ignoresSwap_withInexactNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Test {\n              abstract String valueOne();\n\n              abstract String valueTwo();\n\n              static Test create(String valueOneArg, String valueTwoArg) {\n                return new AutoValue_Test(valueTwoArg, valueOneArg);\n              }\n            }\n\n            class AutoValue_Test extends Test {\n              String valueOne() {\n                return null;\n              }\n\n              String valueTwo() {\n                return null;\n              }\n\n              AutoValue_Test(String valueOne, String valueTwo) {}\n            }"
+    },
+    {
+      "description": "autoValueChecker_makesNoSuggestion_withCorrectOrder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Test {\n              abstract String valueOne();\n\n              abstract String valueTwo();\n\n              static Test create(String valueOne, String valueTwo) {\n                return new AutoValue_Test(valueOne, valueTwo);\n              }\n            }\n\n            class AutoValue_Test extends Test {\n              String valueOne() {\n                return null;\n              }\n\n              String valueTwo() {\n                return null;\n              }\n\n              AutoValue_Test(String valueOne, String valueTwo) {}\n            }"
+    }
+  ]
+}

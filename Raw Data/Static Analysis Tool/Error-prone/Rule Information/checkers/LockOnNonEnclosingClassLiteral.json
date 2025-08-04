@@ -1,0 +1,30 @@
+{
+  "name": "LockOnNonEnclosingClassLiteral",
+  "language": "java",
+  "description": "Lock on the class other than the enclosing class of the code block can unintentionally prevent the locked class being used properly.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 57,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "lockOnNonEnclosingClassLiteralPositiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\npublic class LockOnNonEnclosingClassLiteralPositiveCases {\n\n  static {\n    // BUG: Diagnostic contains: Lock on the class other than the enclosing class of the code block\n    // can unintentionally prevent the locked class being used properly.\n    synchronized (String.class) {\n    }\n  }\n\n  private void methodContainsSynchronizedBlock() {\n    // BUG: Diagnostic contains: Lock on the class other than the enclosing class of the code block\n    // can unintentionally prevent the locked class being used properly.\n    synchronized (String.class) {\n    }\n  }\n\n  class SubClass {\n\n    public void methodContainsSynchronizedBlock() {\n      // BUG: Diagnostic contains: Lock on the class other than the enclosing class of the code\n      // block can unintentionally prevent the locked class being used properly.\n      synchronized (LockOnNonEnclosingClassLiteralPositiveCases.class) {\n      }\n    }\n  }\n}\\"
+    },
+    {
+      "description": "lockOnNonEnclosingClassLiteralNegativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            public class LockOnNonEnclosingClassLiteralNegativeCases {\n\n              static {\n                synchronized (LockOnNonEnclosingClassLiteralNegativeCases.class) {\n                }\n              }\n\n              private void methodContainsSynchronizedBlock() {\n                synchronized (LockOnNonEnclosingClassLiteralNegativeCases.class) {\n                }\n                synchronized (this) {\n                }\n              }\n\n              class SubClass {\n\n                public void methodContainsSynchronizedBlock() {\n                  synchronized (SubClass.class) {\n                  }\n                }\n              }\n            }\\"
+    }
+  ]
+}

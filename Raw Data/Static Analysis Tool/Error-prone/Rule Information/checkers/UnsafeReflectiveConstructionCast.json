@@ -1,0 +1,54 @@
+{
+  "name": "UnsafeReflectiveConstructionCast",
+  "language": "java",
+  "description": "Prefer `asSubclass` instead of casting the result of `newInstance`, to detect classes of incorrect type before invoking their constructors. This way, if the class is of the incorrect type, it will throw an exception before invoking its constructor.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 91,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "class Test {\n  private String newInstanceOnGetDeclaredConstructorChained() throws Exception {\n    return (String) Class.forName(\"java.lang.String\").getDeclaredConstructor().newInstance();\n  }\n}\n\n\n            class Test {\n              private String newInstanceOnGetDeclaredConstructorChained() throws Exception {\n                return Class.forName(\"java.lang.String\")\n                    .asSubclass(String.class)\n                    .getDeclaredConstructor()\n                    .newInstance();\n              }\n            }"
+    },
+    {
+      "description": "positiveCaseConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65
+      ],
+      "code": "class Test {\n              private String newInstanceOnGetConstructorChained() throws Exception {\n                return (String) Class.forName(\"java.lang.String\").getConstructor().newInstance();\n              }\n            }\n            \n\n            class Test {\n              private String newInstanceOnGetConstructorChained() throws Exception {\n                return Class.forName(\"java.lang.String\")\n                    .asSubclass(String.class)\n                    .getConstructor()\n                    .newInstance();\n              }\n            }"
+    },
+    {
+      "description": "positiveCaseWithErasure",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "class Test {\n              class Fn<T> {}\n              ;\n\n              private Fn<String> newInstanceOnGetDeclaredConstructorChained() throws Exception {\n                return (Fn<String>) Class.forName(\"Fn\").getDeclaredConstructor().newInstance();\n              }\n            }\n            \n\nclass Test {\n  class Fn<T> {}\n  ;\n\n  private Fn<String> newInstanceOnGetDeclaredConstructorChained() throws Exception {\n    return (Fn<String>)\n        Class.forName(\"Fn\").asSubclass(Fn.class).getDeclaredConstructor().newInstance();\n  }\n}"
+    },
+    {
+      "description": "negativeCaseWithIntersection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "import java.io.Serializable;\n\nclass Test {\n  interface Fn {}\n  ;\n\n  private Fn newInstanceOnGetDeclaredConstructorChained() throws Exception {\n    return (Serializable & Fn) Class.forName(\"Fn\").getDeclaredConstructor().newInstance();\n  }\n}"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * Negative cases for {@link UnsafeReflectiveConstructionCast}.\n *\n * @author bhagwani@google.com (Sumit Bhagwani)\n */\npublic class UnsafeReflectiveConstructionCastNegativeCases {\n\n  public String newInstanceDirectCall() throws Exception {\n    return (String) Class.forName(\"java.lang.String\").newInstance();\n  }\n\n  public String newInstanceDirectlyOnClassAndGetDeclaredConstructor() throws Exception {\n    return (String) String.class.getDeclaredConstructor().newInstance();\n  }\n\n  public String newInstanceDirectlyOnClassAndNewInstance() throws Exception {\n    return (String) String.class.newInstance();\n  }\n\n  public String invocationWithAsSubclass() throws Exception {\n    return Class.forName(\"java.lang.String\").asSubclass(String.class).newInstance();\n  }\n\n  public class Supplier<T> {\n    public T get(String className) {\n      try {\n        return (T) Class.forName(className).getDeclaredConstructor().newInstance();\n      } catch (ReflectiveOperationException e) {\n        throw new IllegalStateException(e);\n      }\n    }\n  }\n}\\"
+    }
+  ]
+}

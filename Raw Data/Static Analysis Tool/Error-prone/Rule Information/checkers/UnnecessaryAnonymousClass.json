@@ -1,0 +1,62 @@
+{
+  "name": "UnnecessaryAnonymousClass",
+  "language": "java",
+  "description": "Implementing a functional interface is unnecessary; prefer to implement the functional interface method directly and use a method reference instead.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 233,
+  "branches": 22,
+  "apis": 4,
+  "test": [
+    {
+      "description": "variable_instance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private final Function<String, String> camelCase =\n                  new Function<String, String>() {\n                    public String apply(String x) {\n                      return \"hello \" + x;\n                    }\n                  };\n\n              void g() {\n                Function<String, String> f = camelCase;\n                System.err.println(camelCase.apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private String camelCase(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> f = this::camelCase;\n                System.err.println(camelCase(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "variable_static",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private static final Function<String, String> F =\n                  new Function<String, String>() {\n                    public String apply(String x) {\n                      return \"hello \" + x;\n                    }\n                  };\n\n              void g() {\n                Function<String, String> l = Test.F;\n                System.err.println(F.apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private static String f(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> l = Test::f;\n                System.err.println(f(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "abstractClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              abstract static class Impl implements Function<String, String> {\n                public String apply(String input) {\n                  return input;\n                }\n\n                public abstract void f(String input);\n              }\n\n              private final Function<String, String> camelCase =\n                  new Impl() {\n                    public void f(String input) {}\n                  };\n\n              void g() {\n                Function<String, String> f = camelCase;\n                System.err.println(camelCase.apply(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "recursive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        148
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private static final Function<Object, Object> STRINGIFY =\n                  new Function<Object, Object>() {\n                    @Override\n                    public Object apply(Object input) {\n                      return transform(STRINGIFY);\n                    }\n                  };\n\n              public static Object transform(Function<Object, Object> f) {\n                return f.apply(\"a\");\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private static Object stringify(Object input) {\n                return transform(Test::stringify);\n              }\n\n              public static Object transform(Function<Object, Object> f) {\n                return f.apply(\"a\");\n              }\n            }"
+    },
+    {
+      "description": "invokingDefaultMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              interface Foo {\n                int foo(int a);\n\n                default void bar() {\n                  foo(1);\n                }\n              }\n\n              private static final Foo FOO =\n                  new Foo() {\n                    @Override\n                    public int foo(int a) {\n                      return 2 * a;\n                    }\n                  };\n\n              public static void test() {\n                FOO.bar();\n                useFoo(FOO);\n              }\n\n              public static void useFoo(Foo foo) {}\n            }"
+    },
+    {
+      "description": "mockitoSpy",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "import java.util.function.Function;\n            import org.mockito.Spy;\n\n            class Test {\n              interface Foo {\n                int foo(int a);\n              }\n\n              @Spy\n              private static final Foo FOO =\n                  new Foo() {\n                    @Override\n                    public int foo(int a) {\n                      return 2 * a;\n                    }\n                  };\n\n              public static void test() {\n                FOO.foo(2);\n              }\n            }"
+    }
+  ]
+}

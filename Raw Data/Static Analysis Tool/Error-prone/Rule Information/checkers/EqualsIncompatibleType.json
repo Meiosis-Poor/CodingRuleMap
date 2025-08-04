@@ -1,0 +1,158 @@
+{
+  "name": "EqualsIncompatibleType",
+  "language": "java",
+  "description": "An equality test between objects with incompatible types always returns false",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 192,
+  "branches": 14,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.collect.ImmutableList;\nimport java.util.List;\nimport java.util.Map;\nimport java.util.Set;\n\n/**\n * @author avenet@google.com (Arnaud J. Venet)\n */\npublic class EqualsIncompatibleTypePositiveCases {\n  class A {}\n\n  class B {}\n\n  void checkEqualsAB(A a, B b) {\n    // BUG: Diagnostic contains: incompatible types\n    a.equals(b);\n    // BUG: Diagnostic contains: incompatible types\n    b.equals(a);\n  }\n\n  class C {}\n\n  abstract class C1 extends C {\n    public abstract boolean equals(Object o);\n  }\n\n  abstract class C2 extends C1 {}\n\n  abstract class C3 extends C {}\n\n  void checkEqualsCC1C2C3(C c, C1 c1, C2 c2, C3 c3) {\n    // BUG: Diagnostic contains: incompatible types\n    c3.equals(c1);\n    // BUG: Diagnostic contains: incompatible types\n    c3.equals(c2);\n    // BUG: Diagnostic contains: incompatible types\n    c1.equals(c3);\n    // BUG: Diagnostic contains: incompatible types\n    c2.equals(c3);\n  }\n\n  void checkStaticEqualsCC1C2C3(C c, C1 c1, C2 c2, C3 c3) {\n    // BUG: Diagnostic contains: incompatible types\n    java.util.Objects.equals(c3, c1);\n    // BUG: Diagnostic contains: incompatible types\n    java.util.Objects.equals(c3, c2);\n    // BUG: Diagnostic contains: incompatible types\n    java.util.Objects.equals(c1, c3);\n    // BUG: Diagnostic contains: incompatible types\n    java.util.Objects.equals(c2, c3);\n  }\n\n  void checkGuavaStaticEqualsCC1C2C3(C c, C1 c1, C2 c2, C3 c3) {\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(c3, c1);\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(c3, c2);\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(c1, c3);\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(c2, c3);\n  }\n\n  void checkPrimitiveEquals(int a, long b) {\n    // BUG: Diagnostic contains: incompatible types\n    java.util.Objects.equals(a, b);\n    // BUG: Diagnostic contains: incompatible types\n    java.util.Objects.equals(b, a);\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(a, b);\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(b, a);\n  }\n\n  interface I {\n    boolean equals(Object o);\n  }\n\n  class D {}\n\n  class D1 extends D {}\n\n  class D2 extends D implements I {}\n\n  void checkEqualsDD1D2(D d, D1 d1, D2 d2) {\n    // BUG: Diagnostic contains: incompatible types\n    d1.equals(d2);\n    // BUG: Diagnostic contains: incompatible types\n    d2.equals(d1);\n  }\n\n  enum MyEnum {}\n\n  enum MyOtherEnum {}\n\n  void enumEquals(MyEnum m, MyOtherEnum mm) {\n    // BUG: Diagnostic contains: incompatible types\n    m.equals(mm);\n    // BUG: Diagnostic contains: incompatible types\n    mm.equals(m);\n\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(m, mm);\n    // BUG: Diagnostic contains: incompatible types\n    com.google.common.base.Objects.equal(mm, m);\n  }\n\n  void collectionsWithGenericMismatches(\n      List<String> stringList,\n      List<Integer> intList,\n      Set<String> stringSet,\n      Set<Integer> intSet,\n      ImmutableList<String> stringImmutableList) {\n\n    // BUG: Diagnostic contains: incompatible types\n    stringList.equals(intList);\n\n    // BUG: Diagnostic contains: incompatible types\n    stringSet.equals(intSet);\n\n    // BUG: Diagnostic contains: incompatible types\n    stringList.equals(stringSet);\n\n    // BUG: Diagnostic contains: incompatible types\n    intList.equals(stringImmutableList);\n  }\n\n  void mapKeyChecking(\n      Map<String, Integer> stringIntegerMap,\n      Map<Integer, String> integerStringMap,\n      Map<List<String>, Set<String>> stringListSetMap,\n      Map<List<String>, Set<Integer>> intListSetMap) {\n    // BUG: Diagnostic contains: incompatible types\n    stringIntegerMap.equals(integerStringMap);\n\n    // BUG: Diagnostic contains: incompatible types\n    stringListSetMap.equals(intListSetMap);\n  }\n\n  void nestedColls(Set<List<String>> setListString, Set<List<Integer>> setListInteger) {\n    // BUG: Diagnostic contains: String and Integer are incompatible\n    boolean equals = setListString.equals(setListInteger);\n  }\n\n  class MyGenericClazz<T> {}\n\n  <T extends I> void testSomeGenerics(\n      MyGenericClazz<String> strClazz, MyGenericClazz<Integer> intClazz, MyGenericClazz<T> iClazz) {\n    // BUG: Diagnostic contains: String and Integer are incompatible\n    strClazz.equals(intClazz);\n\n    // BUG: Diagnostic contains: T and String are incompatible\n    iClazz.equals(strClazz);\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableSet;\n            import java.util.List;\n            import java.util.Set;\n\n            /**\n             * @author avenet@google.com (Arnaud J. Venet)\n             */\n            public class EqualsIncompatibleTypeNegativeCases {\n              class A {\n                public boolean equals(Object o) {\n                  if (o instanceof A) {\n                    return true;\n                  }\n                  return false;\n                }\n              }\n\n              class B1 extends A {}\n\n              class B2 extends A {}\n\n              class B3 extends B2 {}\n\n              void checkEqualsAB1B2B3(A a, B1 b1, B2 b2, B3 b3) {\n                a.equals(a);\n                a.equals(b1);\n                a.equals(b2);\n                a.equals(b3);\n                a.equals(null);\n\n                b1.equals(a);\n                b1.equals(b1);\n                b1.equals(b2);\n                b1.equals(b3);\n                b1.equals(null);\n\n                b2.equals(a);\n                b2.equals(b1);\n                b2.equals(b2);\n                b2.equals(b3);\n                b2.equals(null);\n\n                b3.equals(a);\n                b3.equals(b1);\n                b3.equals(b2);\n                b3.equals(b3);\n                b3.equals(null);\n              }\n\n              void checks(Object o, boolean[] bools, boolean bool) {\n                o.equals(bool);\n                o.equals(bools[0]);\n              }\n\n              void checkJUnit(B1 b1, B2 b2) {\n                org.junit.Assert.assertFalse(b1.equals(b2));\n              }\n\n              void checkStaticEquals(A a, B1 b1, B2 b2, B3 b3) {\n                java.util.Objects.equals(a, a);\n                java.util.Objects.equals(a, b1);\n                java.util.Objects.equals(a, b2);\n                java.util.Objects.equals(a, b3);\n                java.util.Objects.equals(a, null);\n\n                java.util.Objects.equals(b1, b3);\n                java.util.Objects.equals(b2, b3);\n                java.util.Objects.equals(b3, b3);\n                java.util.Objects.equals(null, b3);\n              }\n\n              void checkGuavaStaticEquals(A a, B1 b1, B2 b2, B3 b3) {\n                com.google.common.base.Objects.equal(a, a);\n                com.google.common.base.Objects.equal(a, b1);\n                com.google.common.base.Objects.equal(a, b2);\n                com.google.common.base.Objects.equal(a, b3);\n                com.google.common.base.Objects.equal(a, null);\n\n                com.google.common.base.Objects.equal(b1, b3);\n                com.google.common.base.Objects.equal(b2, b3);\n                com.google.common.base.Objects.equal(b3, b3);\n                com.google.common.base.Objects.equal(null, b3);\n              }\n\n              class C {}\n\n              abstract class C1 extends C {\n                public abstract boolean equals(Object o);\n              }\n\n              abstract class C2 extends C1 {}\n\n              abstract class C3 extends C1 {}\n\n              void checkEqualsC1C2C3(C1 c1, C2 c2, C3 c3) {\n                c1.equals(c1);\n                c1.equals(c2);\n                c1.equals(c3);\n                c1.equals(null);\n\n                c2.equals(c1);\n                c2.equals(c2);\n                c2.equals(c3);\n                c2.equals(null);\n\n                c3.equals(c1);\n                c3.equals(c2);\n                c3.equals(c3);\n                c3.equals(null);\n              }\n\n              interface I {\n                boolean equals(Object o);\n              }\n\n              class E1 implements I {}\n\n              class E2 implements I {}\n\n              class E3 extends E2 {}\n\n              void checkEqualsIE1E2E3(\n                  I e, E1 e1, E2 e2, E3 e3, List<I> eList, List<E1> e1List, List<E2> e2List) {\n                e.equals(e);\n                e.equals(e1);\n                e.equals(e2);\n                e.equals(e3);\n                e.equals(null);\n\n                e1.equals(e);\n                e1.equals(e1);\n                e1.equals(e2);\n                e1.equals(e3);\n                e1.equals(null);\n\n                e2.equals(e);\n                e2.equals(e1);\n                e2.equals(e2);\n                e2.equals(e3);\n                e2.equals(null);\n\n                e3.equals(e);\n                e3.equals(e1);\n                e3.equals(e2);\n                e3.equals(e3);\n                e3.equals(null);\n\n                eList.equals(e1List);\n                eList.equals(e2List);\n                eList.equals(null);\n\n                e1List.equals(eList);\n                e1List.equals(e2List);\n                e1List.equals(null);\n\n                e2List.equals(eList);\n                e2List.equals(e1List);\n                e2List.equals(null);\n              }\n\n              void collectionStuff(\n                  List rawList,\n                  List<String> stringList,\n                  Set<String> stringSet,\n                  ImmutableSet<String> immutableStringSet,\n                  ImmutableList<String> immutableStringList) {\n\n                // With raw types, we can't be sure. So... /shrug\n                rawList.equals(stringList);\n\n                stringSet.equals(immutableStringSet);\n                stringList.equals(immutableStringList);\n              }\n\n              interface J {}\n\n              class F1 implements J {}\n\n              abstract class F2 {\n                public abstract boolean equals(J o);\n              }\n\n              void checkOtherEquals(F1 f1, F2 f2) {\n                f2.equals(f1);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase_recursive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        401
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.time.DayOfWeek;\nimport java.time.Month;\nimport java.util.Objects;\n\n/** Checks for objects with recursive type bounds. */\npublic class EqualsIncompatibleTypeRecursiveTypes {\n\n  interface Bar<X, Y> {}\n\n  final class ConcreteBar<X, Y> implements Bar<X, Y> {}\n\n  static class Foo<T extends Enum<T>> implements Bar<String, T> {\n    T field;\n\n    void check(Foo<?> other) {\n      // OK since Enum<?> and Enum<T> are not incompatible\n      this.field.equals(other.field);\n    }\n\n    <X extends ConcreteBar<String, X>> void badCheck(Bar<String, X> other) {\n      // BUG: Diagnostic contains: T and X are incompatible\n      this.equals(other);\n    }\n  }\n\n  interface RandomInterface {}\n\n  interface Entity<\n      E extends Entity<E, K, V, V2>,\n      K extends EntityKey<K>,\n      V extends Enum<V>,\n      V2 extends Enum<V2>> {}\n\n  interface EntityKey<K extends EntityKey<K>> extends Comparable<K> {}\n\n  static final class EK1 implements EntityKey<EK1> {\n    @Override\n    public int compareTo(EK1 o) {\n      return 0;\n    }\n  }\n\n  static final class E1 implements Entity<E1, EK1, DayOfWeek, Month>, RandomInterface {}\n\n  static final class E2 implements Entity<E2, EK1, Month, DayOfWeek>, RandomInterface {}\n\n  void testMultilayer(Class<? extends Entity<?, ?, ?, ?>> eClazz, Class<? extends E2> e2Clazz) {\n    if (Objects.equals(eClazz, E1.class)) {\n      System.out.println(\"yay\");\n    }\n\n    if (Objects.equals(eClazz, E2.class)) {\n      System.out.println(\"yay\");\n    }\n\n    if (Objects.equals(e2Clazz, E2.class)) {\n      System.out.println(\"yay\");\n    }\n\n    // BUG: Diagnostic contains: E2 and E1 are incompatible.\n    if (Objects.equals(e2Clazz, E1.class)) {\n      System.out.println(\"boo\");\n    }\n  }\n\n  interface First<A extends First<A>> {\n    default A get() {\n      return null;\n    }\n  }\n\n  interface Second<B> extends First<Second<B>> {}\n\n  interface Third extends Second<Third> {}\n\n  interface Fourth extends Second<Fourth> {}\n\n  void testing(Third third, Fourth fourth) {\n    // BUG: Diagnostic contains: Third and Fourth\n    boolean equals = third.equals(fourth);\n  }\n\n  interface RecOne extends Comparable<Comparable<RecOne>> {}\n\n  interface RecTwo extends Comparable<Comparable<RecTwo>> {}\n\n  void testMultiRecursion(RecOne a, RecTwo b) {\n    // BUG: Diagnostic contains: RecOne and RecTwo\n    boolean bad = a.equals(b);\n  }\n\n  interface Quux<A extends Quux<A>> {}\n\n  interface Quuz<A extends Quux<A>> extends Quux<A> {}\n\n  interface Quiz<A extends Quux<A>> extends Quux<A> {}\n\n  interface Id1 extends Quuz<Id1> {}\n\n  interface Id2 extends Quiz<Id2> {}\n\n  abstract static class Id3 implements Quuz<Id3>, Quiz<Id3> {}\n\n  void test(Id1 first, Id3 second) {\n    // BUG: Diagnostic contains: Id1 and Id3\n    boolean res = Objects.equals(first, second);\n  }\n\n  class I<T> {}\n\n  class J<A extends I<B>, B extends I<C>, C extends I<A>> {}\n\n  <\n          A1 extends I<B1>,\n          B1 extends I<C1>,\n          C1 extends I<A1>,\n          A2 extends I<B2>,\n          B2 extends I<C2>,\n          C2 extends I<A2>>\n      void something(J<A1, B1, C1> j1, J<A2, B2, C2> j2) {\n    // Technically this could work, since there's nothing stopping A1 == A2, etc.\n    boolean equals = j1.equals(j2);\n  }\n}\\"
+    },
+    {
+      "description": "primitiveBoxingIntoObject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        537
+      ],
+      "code": "class Test {\n              void something(boolean b, Object o) {\n                o.equals(b);\n              }\n            }"
+    },
+    {
+      "description": "i547",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        556
+      ],
+      "code": "class Test {\n              interface B {}\n\n              <T extends B> void t(T x) {\n                // BUG: Diagnostic contains: T and String\n                x.equals(\"foo\");\n              }\n            }"
+    },
+    {
+      "description": "prettyNameForConflicts",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        574
+      ],
+      "code": "class Test {\n              interface B {}\n\n              interface String {}\n\n              void t(String x) {\n                // BUG: Diagnostic contains: types Test.String and java.lang.String\n                x.equals(\"foo\");\n              }\n            }"
+    },
+    {
+      "description": "methodReference_incompatibleTypes_finding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        594
+      ],
+      "code": "import java.util.stream.Stream;\n\n            class Test {\n              boolean t(Stream<Integer> xs, String x) {\n                // BUG: Diagnostic contains:\n                return xs.anyMatch(x::equals);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_comparableTypes_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        612
+      ],
+      "code": "import java.util.stream.Stream;\n\n            class Test {\n              boolean t(Stream<Integer> xs, Object x) {\n                return xs.anyMatch(x::equals);\n              }\n            }"
+    },
+    {
+      "description": "wildcards_whenIncompatible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        629
+      ],
+      "code": "public class Test {\n              public void test(Class<? extends Integer> a, Class<? extends String> b) {\n                // BUG: Diagnostic contains:\n                a.equals(b);\n              }\n            }"
+    },
+    {
+      "description": "unconstrainedWildcard_compatibleWithAnything",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        645
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            public class Test {\n              public void test(java.lang.reflect.Method m, Class<?> c) {\n                TestProtoMessage.class.equals(m.getParameterTypes()[0]);\n                TestProtoMessage.class.equals(c);\n              }\n            }"
+    },
+    {
+      "description": "enumsCanBeEqual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        663
+      ],
+      "code": "class Test {\n              enum E {\n                A,\n                B\n              }\n\n              public void test() {\n                E.A.equals(E.B);\n              }\n            }"
+    },
+    {
+      "description": "protoBuildersCannotBeEqual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        683
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestOneOfMessage;\n\n            public class Test {\n              public void test() {\n                // BUG: Diagnostic contains: . Though\n                TestProtoMessage.newBuilder().equals(TestProtoMessage.newBuilder());\n                // BUG: Diagnostic contains:\n                TestProtoMessage.newBuilder().equals(TestOneOfMessage.newBuilder());\n                // BUG: Diagnostic contains:\n                TestProtoMessage.newBuilder().equals(TestOneOfMessage.getDefaultInstance());\n              }\n            }"
+    },
+    {
+      "description": "enumsNamedBuilderCanBeEqual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        706
+      ],
+      "code": "public class Test {\n              enum FooBuilder {\n                A\n              }\n\n              public boolean test(FooBuilder a, FooBuilder b) {\n                return a.equals(b);\n              }\n            }"
+    },
+    {
+      "description": "flaggedOff_protoBuildersNotConsideredIncomparable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        725
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\npublic class Test {\n  public void test() {\n    TestProtoMessage.newBuilder().equals(TestProtoMessage.newBuilder());\n    TestProtoMessage.getDefaultInstance().equals(TestProtoMessage.getDefaultInstance());\n  }\n}"
+    },
+    {
+      "description": "protoBuilderComparedWithinAutoValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        744
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            @AutoValue\n            abstract class Test {\n              abstract TestProtoMessage.Builder b();\n            }\n            \n\n            import javax.annotation.processing.Generated;\n\n            @Generated(\"com.google.auto.value.processor.AutoValueProcessor\")\n            abstract class AutoValue_Test extends Test {\n              @Override\n              public boolean equals(Object o) {\n                return ((Test) o).b().equals(b());\n              }\n            }"
+    },
+    {
+      "description": "predicateIsEqual_incompatible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        774
+      ],
+      "code": "import static java.util.function.Predicate.isEqual;\n            import java.util.stream.Stream;\n\n            class Test {\n              boolean test(Stream<Long> xs) {\n                // BUG: Diagnostic contains:\n                return xs.allMatch(isEqual(1));\n              }\n            }"
+    },
+    {
+      "description": "predicateIsEqual_compatible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        793
+      ],
+      "code": "import static java.util.function.Predicate.isEqual;\n            import java.util.stream.Stream;\n\n            class Test {\n              boolean test(Stream<Long> xs) {\n                return xs.allMatch(isEqual(1L));\n              }\n            }"
+    },
+    {
+      "description": "predicateIsEqual_methodRef",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        811
+      ],
+      "code": "import java.util.function.Function;\n            import java.util.function.Predicate;\n            import java.util.stream.Stream;\n\n            class Test {\n              boolean test(Function<Long, Predicate<Integer>> fn) {\n                // BUG: Diagnostic contains:\n                return test(Predicate::isEqual);\n              }\n            }"
+    }
+  ]
+}

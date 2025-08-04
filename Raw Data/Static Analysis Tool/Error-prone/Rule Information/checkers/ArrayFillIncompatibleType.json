@@ -1,0 +1,46 @@
+{
+  "name": "ArrayFillIncompatibleType",
+  "language": "java",
+  "description": "Arrays.fill(Object[], Object) called with incompatible types.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 101,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "primitiveBoxingIntoObject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import java.util.Arrays;\n\n            class Test {\n              void something(boolean b, Object[] o) {\n                Arrays.fill(o, b);\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "import java.util.Arrays;\n\n            class Test {\n              void something(String b, Integer[] o, Number n) {\n                // BUG: Diagnostic contains:\n                Arrays.fill(o, b);\n                // BUG: Diagnostic contains:\n                Arrays.fill(o, 2.0d);\n                // BUG: Diagnostic contains:\n                Arrays.fill(o, n);\n              }\n            }"
+    },
+    {
+      "description": "ternary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "import java.util.Arrays;\n\n            class Test {\n              enum Foo {\n                BAR,\n                BAZ\n              };\n\n              void something(Foo[] o, String[] s) {\n                Arrays.fill(o, true ? Foo.BAR : Foo.BAZ);\n                Arrays.fill(s, true ? \"a\" : \"b\");\n                // BUG: Diagnostic contains:\n                Arrays.fill(s, true ? \"a\" : 123);\n              }\n            }"
+    },
+    {
+      "description": "boxing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "import java.util.Arrays;\n\n            class Test {\n              void something(int i, long l, Integer[] o) {\n                Arrays.fill(o, 1);\n                Arrays.fill(o, i);\n                Arrays.fill(o, 0, 4, i);\n                // BUG: Diagnostic contains:\n                Arrays.fill(o, l);\n                // BUG: Diagnostic contains:\n                Arrays.fill(o, 4L);\n                // BUG: Diagnostic contains:\n                Arrays.fill(o, 0, 4, l);\n              }\n            }"
+    }
+  ]
+}

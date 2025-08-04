@@ -1,0 +1,150 @@
+{
+  "name": "JavaInstantGetSecondsGetNano",
+  "language": "java",
+  "description": "instant.getNano() only accesses the underlying nanosecond adjustment from the whole second.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 63,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "getSecondsWithGetNanos",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              public static void foo(Instant instant) {\n                long seconds = instant.getEpochSecond();\n                int nanos = instant.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsWithGetNanosInReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "package test;\n\n            import com.google.common.collect.ImmutableMap;\n            import java.time.Instant;\n\n            public class TestCase {\n              public static int foo(Instant instant) {\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                return instant.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsWithGetNanosInReturnType2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "package test;\n\nimport com.google.common.collect.ImmutableMap;\nimport java.time.Instant;\n\npublic class TestCase {\n  public static ImmutableMap<String, Object> foo(Instant instant) {\n    return ImmutableMap.of(\"seconds\", instant.getEpochSecond(), \"nanos\", instant.getNano());\n  }\n}"
+    },
+    {
+      "description": "getSecondsWithGetNanosDifferentScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              public static void foo(Instant instant) {\n                long seconds = instant.getEpochSecond();\n                if (true) {\n                  // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                  int nanos = instant.getNano();\n                }\n              }\n            }"
+    },
+    {
+      "description": "getSecondsWithGetNanosInDifferentMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              public static void foo(Instant instant) {\n                long seconds = instant.getEpochSecond();\n              }\n\n              public static void bar(Instant instant) {\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                int nanos = instant.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsOnly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              public static void foo(Instant instant) {\n                long seconds = instant.getEpochSecond();\n              }\n            }"
+    },
+    {
+      "description": "getNanoOnly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              public static void foo(Instant instant) {\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                int nanos = instant.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getNanoInMethodGetSecondsInClassVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              private static final Instant INSTANT = Instant.EPOCH;\n              private static final long seconds = INSTANT.getEpochSecond();\n\n              public static void foo() {\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                int nanos = INSTANT.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsOnlyInStaticBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              static {\n                long seconds = Instant.EPOCH.getEpochSecond();\n              }\n            }"
+    },
+    {
+      "description": "getNanoOnlyInStaticBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        224
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              static {\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                int nanos = Instant.EPOCH.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsOnlyInClassBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        244
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              private final long seconds = Instant.EPOCH.getEpochSecond();\n              private final int nanos = Instant.EPOCH.getNano();\n            }"
+    },
+    {
+      "description": "getNanoOnlyInClassBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n              private final int nanos = Instant.EPOCH.getNano();\n            }"
+    },
+    {
+      "description": "getNanoInInnerClassGetSecondsInMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        280
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              private static final Instant INSTANT = Instant.EPOCH;\n\n              public static void foo() {\n                long seconds = INSTANT.getEpochSecond();\n                Object obj =\n                    new Object() {\n                      @Override\n                      public String toString() {\n                        // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                        return String.valueOf(INSTANT.getNano());\n                      }\n                    };\n              }\n            }"
+    },
+    {
+      "description": "getNanoInInnerClassGetSecondsInClassVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        309
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              Instant INSTANT = Instant.EPOCH;\n              long seconds = INSTANT.getEpochSecond();\n              Object obj =\n                  new Object() {\n                    // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                    long nanos = INSTANT.getNano();\n                  };\n            }"
+    },
+    {
+      "description": "getNanoInMethodGetSecondsInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              private static final Instant INSTANT = Instant.EPOCH;\n\n              public static void foo() {\n                Runnable r = () -> INSTANT.getEpochSecond();\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                int nanos = INSTANT.getNano();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        355
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n            import java.util.function.Supplier;\n\n            public class TestCase {\n              private static final Instant INSTANT = Instant.EPOCH;\n\n              public void foo() {\n                doSomething(() -> INSTANT.getEpochSecond());\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                int nanos = INSTANT.getNano();\n              }\n\n              public void doSomething(Supplier<Long> supplier) {}\n            }"
+    },
+    {
+      "description": "getNanoInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        381
+      ],
+      "code": "package test;\n\n            import java.time.Instant;\n\n            public class TestCase {\n              private static final Instant INSTANT = Instant.EPOCH;\n\n              public static void foo() {\n                // BUG: Diagnostic contains: JavaInstantGetSecondsGetNano\n                Runnable r = () -> INSTANT.getNano();\n                long seconds = INSTANT.getEpochSecond();\n              }\n            }"
+    }
+  ]
+}

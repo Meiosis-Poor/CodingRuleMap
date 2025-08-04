@@ -1,0 +1,30 @@
+{
+  "name": "ModifyingCollectionWithItself",
+  "language": "java",
+  "description": "Using a collection function with itself as the argument.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 144,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCases1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.ArrayList;\n            import java.util.List;\n\n            /**\n             * @author scottjohnson@google.com (Scott Johnson)\n             */\n            public class ModifyingCollectionWithItselfPositiveCases {\n\n              List<Integer> a = new ArrayList<Integer>();\n              List<Integer> c = new ArrayList<Integer>();\n\n              public void addAll(List<Integer> b) {\n                // BUG: Diagnostic contains: a.addAll(b)\n                this.a.addAll(a);\n\n                // BUG: Diagnostic contains: a.addAll(1, b)\n                a.addAll(1, a);\n              }\n\n              public void containsAll(List<Integer> b) {\n                // BUG: Diagnostic contains: this.a.containsAll(b)\n                this.a.containsAll(this.a);\n\n                // BUG: Diagnostic contains: a.containsAll(b)\n                a.containsAll(this.a);\n              }\n\n              public void retainAll(List<Integer> a) {\n                // BUG: Diagnostic contains: this.a.retainAll(a)\n                a.retainAll(a);\n              }\n\n              public void removeAll() {\n                // BUG: Diagnostic contains: a.clear()\n                this.a.removeAll(a);\n\n                // BUG: Diagnostic contains: a.clear()\n                a.removeAll(a);\n              }\n\n              static class HasOneField {\n                List<Integer> a;\n\n                void removeAll() {\n                  // BUG: Diagnostic contains: a.clear();\n                  a.removeAll(a);\n                }\n\n                void testParameterFirst(List<Integer> b) {\n                  // BUG: Diagnostic contains: this.a.removeAll(b);\n                  b.removeAll(b);\n                }\n\n                void expressionStatementChecks() {\n                  // BUG: Diagnostic contains: ModifyingCollectionWithItself\n                  boolean b = 2 == 2 && a.containsAll(a);\n\n                  // BUG: Diagnostic contains: ModifyingCollectionWithItself\n                  b = a.retainAll(a);\n\n                  // BUG: Diagnostic contains: ModifyingCollectionWithItself\n                  b = a.removeAll(a);\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.ArrayList;\n            import java.util.List;\n\n            /**\n             * @author scottjohnson@google.com (Scott Johnson)\n             */\n            public class ModifyingCollectionWithItselfNegativeCases {\n\n              List<Integer> a = new ArrayList<Integer>();\n\n              public boolean addAll(List<Integer> b) {\n                return a.addAll(b);\n              }\n\n              public boolean removeAll(List<Integer> b) {\n                return a.removeAll(b);\n              }\n\n              public boolean retainAll(List<Integer> b) {\n                return a.retainAll(b);\n              }\n\n              public boolean containsAll(List<Integer> b) {\n                return a.containsAll(b);\n              }\n            }\\"
+    }
+  ]
+}

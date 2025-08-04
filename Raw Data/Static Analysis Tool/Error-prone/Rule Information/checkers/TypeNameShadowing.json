@@ -1,0 +1,142 @@
+{
+  "name": "TypeNameShadowing",
+  "language": "java",
+  "description": "Type parameter declaration shadows another named type",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 153,
+  "branches": 5,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package foo.bar;\n\n            class T {}\n            \n\n            package foo.bar;\n\n            // BUG: Diagnostic contains: Type parameter T shadows visible type foo.bar.T\n            class Foo<T> {\n              void bar(T t) {}\n            }"
+    },
+    {
+      "description": "positiveNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "package foo.bar;\n\n            class Foo {\n              class T {}\n\n              // BUG: Diagnostic contains: Type parameter T shadows visible type foo.bar.Foo$T\n              class Bar<T> {\n                void bar(T t) {}\n              }\n            }"
+    },
+    {
+      "description": "positiveNestedStaticClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "package foo.bar;\n\n            class Foo {\n              public static class T {}\n\n              // BUG: Diagnostic contains: Type parameter T shadows visible type foo.bar.Foo$T\n              class Bar<T> {\n                void bar(T t) {}\n              }\n            }"
+    },
+    {
+      "description": "positiveNestedGeneric",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "package foo.bar;\n\n            interface T {}\n            \n\n            package foo.bar;\n\n            class Foo {\n              // BUG: Diagnostic contains: Type parameter T shadows visible type foo.bar.T\n              class FooInner<T> {\n                void bar(T t) {}\n              }\n            }"
+    },
+    {
+      "description": "positiveOtherNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        122
+      ],
+      "code": "package foo.bar;\n\n            class Foo {\n              class T {}\n            }\n            \n\n            package foo.bar;\n\n            import foo.bar.Foo.T;\n\n            // BUG: Diagnostic contains: Type parameter T shadows visible type foo.bar.Foo$T\n            class Bar<T> {\n              void bar(T t) {}\n            }"
+    },
+    {
+      "description": "positiveMultipleParamsOneCollides",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "package foo.bar;\n\n            class T {}\n            \n\n            package foo.bar;\n\n            // BUG: Diagnostic contains: Type parameter T shadows visible type foo.bar.T\n            class Foo<T, U, V> {\n              void bar(T t, U u, V v) {}\n            }"
+    },
+    {
+      "description": "positiveMultipleParamsBothCollide",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "package foo.bar;\n\n            class T {}\n            \n\n            package foo.bar;\n\n            class U {}\n            \n\n            package foo.bar;\n\n            // BUG: Diagnostic matches: combo\n            class Foo<T, U> {\n              void bar(T t, U u) {}\n            }"
+    },
+    {
+      "description": "positiveJavaLangCollision",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "// BUG: Diagnostic contains: Class shadows visible type java.lang.Class\n            class Foo<Class> {\n              void bar(Class c) {}\n            }"
+    },
+    {
+      "description": "negativeClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        221
+      ],
+      "code": "package foo.bar;\n\n            class T {}\n            \n\n            package foo.bar;\n\n            class Foo<T1> {\n              void bar(T1 t) {}\n            }"
+    },
+    {
+      "description": "negativeNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        243
+      ],
+      "code": "package foo.bar;\n\n            class T {\n              class Foo<T1> {\n                void bar(T1 t) {}\n              }\n            }"
+    },
+    {
+      "description": "negativeOtherNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        260
+      ],
+      "code": "package foo.bar;\n\n            class Foo {\n              class T {}\n            }\n            \n\n            package foo.bar;\n\n            class Bar<T> {\n              void bar(T t) {}\n            }"
+    },
+    {
+      "description": "negativeStarImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": "package a;\n\n            class T {}\n            \n\n            package b;\n\n            import a.*;\n\n            class Foo<T> {\n              void bar(T u) {}\n            }"
+    },
+    {
+      "description": "refactorSingle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        308
+      ],
+      "code": "class Foo {\n              class T {}\n\n              <T> void f(T t) {}\n            }\n            \n\n            class Foo {\n              class T {}\n\n              <T2> void f(T2 t) {}\n            }"
+    },
+    {
+      "description": "refactorMultiple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": "class Foo {\n              class T {}\n\n              class U {}\n\n              <T, U> void f(T t, U u) {}\n            }\n            \n\n            class Foo {\n              class T {}\n\n              class U {}\n\n              <T2, U2> void f(T2 t, U2 u) {}\n            }"
+    },
+    {
+      "description": "fixOnlyWellNamedVariables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        365
+      ],
+      "code": "class Foo {\n              class T {}\n\n              class BadParameterName {}\n\n              <T, BadParameterName> void f(T t, BadParameterName u) {}\n            }\n            \n\n            class Foo {\n              class T {}\n\n              class BadParameterName {}\n\n              <T2, BadParameterName> void f(T2 t, BadParameterName u) {}\n            }"
+    },
+    {
+      "description": "fieldClashOk",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        393
+      ],
+      "code": "class Test {\n              final Object T = new Object();\n\n              <T> void doIt(T t) {}\n            }"
+    }
+  ]
+}

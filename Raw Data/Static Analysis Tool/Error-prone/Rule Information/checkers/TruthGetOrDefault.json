@@ -1,0 +1,38 @@
+{
+  "name": "TruthGetOrDefault",
+  "language": "java",
+  "description": "Asserting on getOrDefault is unclear; prefer containsEntry or doesNotContainKey",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 132,
+  "branches": 13,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              void test() {\n                Map<String, Integer> map = new HashMap<>();\n                // BUG: Diagnostic contains: TruthGetOrDefault\n                assertThat(map.getOrDefault(\"key\", 0)).isEqualTo(0);\n                Integer expectedVal = 0;\n                // BUG: Diagnostic contains: TruthGetOrDefault\n                assertThat(map.getOrDefault(\"key\", expectedVal)).isEqualTo(expectedVal);\n                Map<String, Long> longMap = new HashMap<>();\n                // BUG: Diagnostic contains: TruthGetOrDefault\n                assertThat(longMap.getOrDefault(\"key\", 0L)).isEqualTo(5L);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\nimport java.util.HashMap;\nimport java.util.Map;\n\nclass Test {\n  void test() {\n    Map<String, Integer> map = new HashMap<>();\n    Integer expectedVal = 10;\n    assertThat(map.getOrDefault(\"key\", 0)).isEqualTo(expectedVal);\n    assertThat(map.getOrDefault(\"key\", Integer.valueOf(0))).isEqualTo(Integer.valueOf(1));\n  }\n}"
+    },
+    {
+      "description": "fixGeneration",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              void test() {\n                Map<String, Integer> map = new HashMap<>();\n                assertThat(map.getOrDefault(\"key\", 0)).isEqualTo(1);\n                Map<String, Long> longMap = new HashMap<>();\n                assertThat(longMap.getOrDefault(\"key\", 0L)).isEqualTo(0L);\n                assertThat(longMap.getOrDefault(\"key\", 0L)).isEqualTo(0);\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            class Test {\n              void test() {\n                Map<String, Integer> map = new HashMap<>();\n                assertThat(map).containsEntry(\"key\", 1);\n                Map<String, Long> longMap = new HashMap<>();\n                assertThat(longMap).doesNotContainKey(\"key\");\n                assertThat(longMap.getOrDefault(\"key\", 0L)).isEqualTo(0);\n              }\n            }"
+    }
+  ]
+}

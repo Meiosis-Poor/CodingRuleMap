@@ -1,0 +1,150 @@
+{
+  "name": "TryFailRefactoring",
+  "language": "java",
+  "description": "Prefer assertThrows to try/fail",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 74,
+  "branches": 8,
+  "apis": 4,
+  "test": [
+    {
+      "description": "catchBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.fail;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void f(String message) throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                  Files.readAllBytes(p);\n                  fail(message);\n                } catch (IOException e) {\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n\n              @Test\n              public void g() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                  fail(\"expected exception not thrown\");\n                } catch (IOException e) {\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertThrows;\n            import static org.junit.Assert.fail;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void f(String message) throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                IOException e =\n                    assertThrows(\n                        message,\n                        IOException.class,\n                        () -> {\n                          Files.readAllBytes(p);\n                          Files.readAllBytes(p);\n                        });\n                assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n              }\n\n              @Test\n              public void g() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                IOException e = assertThrows(IOException.class, () -> Files.readAllBytes(p));\n                assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n              }\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        46
+      ],
+      "code": ""
+    },
+    {
+      "description": "g",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": ""
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": ""
+    },
+    {
+      "description": "g",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": ""
+    },
+    {
+      "description": "emptyCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.fail;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void test() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                  fail();\n                } catch (IOException e) {\n                }\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertThrows;\n            import static org.junit.Assert.fail;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void test() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                assertThrows(IOException.class, () -> Files.readAllBytes(p));\n              }\n            }"
+    },
+    {
+      "description": "test",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": ""
+    },
+    {
+      "description": "test",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": ""
+    },
+    {
+      "description": "tryWithResources",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.fail;\n            import com.google.common.io.CharSource;\n            import java.io.BufferedReader;\n            import java.io.IOException;\n            import java.io.PushbackReader;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void f(String message, CharSource cs) throws IOException {\n                try (BufferedReader buf = cs.openBufferedStream();\n                    PushbackReader pbr = new PushbackReader(buf)) {\n                  pbr.read();\n                  fail(message);\n                } catch (IOException e) {\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertThrows;\n            import static org.junit.Assert.fail;\n            import com.google.common.io.CharSource;\n            import java.io.BufferedReader;\n            import java.io.IOException;\n            import java.io.PushbackReader;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void f(String message, CharSource cs) throws IOException {\n                try (BufferedReader buf = cs.openBufferedStream();\n                    PushbackReader pbr = new PushbackReader(buf)) {\n                  IOException e = assertThrows(message, IOException.class, () -> pbr.read());\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        166
+      ],
+      "code": ""
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        191
+      ],
+      "code": ""
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.fail;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void noFail() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                } catch (IOException e) {\n                }\n              }\n\n              @Test\n              public void unionCatch() throws Exception {\n                try {\n                  ((Class<?>) null).newInstance();\n                  fail();\n                } catch (IllegalAccessException | InstantiationException e) {\n                }\n              }\n\n              @Test\n              public void multiCatch() throws Exception {\n                try {\n                  ((Class<?>) null).newInstance();\n                  fail();\n                } catch (IllegalAccessException e) {\n                } catch (InstantiationException e) {\n                }\n              }\n\n              @Test\n              public void finallyBlock() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                } catch (IOException e) {\n                } finally {\n                }\n              }\n\n              public void nonTestMethod() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                  fail();\n                } catch (IOException e) {\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "noFail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        217
+      ],
+      "code": ""
+    },
+    {
+      "description": "unionCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        226
+      ],
+      "code": ""
+    },
+    {
+      "description": "multiCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        235
+      ],
+      "code": ""
+    },
+    {
+      "description": "finallyBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245
+      ],
+      "code": ""
+    },
+    {
+      "description": "tryInStaticInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "class Test {\n              static {\n                try {\n                  int a;\n                } catch (Exception e) {\n                }\n              }\n            }"
+    }
+  ]
+}

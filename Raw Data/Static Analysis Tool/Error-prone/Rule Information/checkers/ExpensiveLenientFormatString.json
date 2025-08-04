@@ -1,0 +1,46 @@
+{
+  "name": "ExpensiveLenientFormatString",
+  "language": "java",
+  "description": "String.format is passed to a lenient formatting method, which can be unwrapped to improve efficiency.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 84,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.devtools.javatools.refactory.refaster.cleanups;\n\nimport static com.google.common.base.Preconditions.checkNotNull;\n\nclass PreconditionsExpensiveStringTest {\n  void f() {\n    checkNotNull(this, \"%s\", \"hello\");\n  }\n\n  void g() {\n    checkNotNull(this, \"hello\");\n  }\n\n  void h() {\n    checkNotNull(this, String.format(\"%d\", 42));\n  }\n\n  void i() {\n    checkNotNull(this, \"%s\", \"hello\");\n  }\n}\n\n\npackage com.google.devtools.javatools.refactory.refaster.cleanups;\n\nimport static com.google.common.base.Preconditions.checkNotNull;\n\nclass PreconditionsExpensiveStringTest {\n  void f() {\n    checkNotNull(this, \"%s\", \"hello\");\n  }\n\n  void g() {\n    checkNotNull(this, \"hello\");\n  }\n\n  void h() {\n    checkNotNull(this, String.format(\"%d\", 42));\n  }\n\n  void i() {\n    checkNotNull(this, \"%s\", \"hello\");\n  }\n}"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.base.Preconditions;\n\n/**\n * Test for methodIs call involving String.format() and %s\n *\n * @author sjnickerson@google.com (Simon Nickerson)\n */\npublic class PreconditionsExpensiveStringPositiveCase1 {\n  public void error() {\n    int foo = 42;\n    int bar = 78;\n    // BUG: Diagnostic contains: String.format\n    Preconditions.checkState(true, String.format(\"The foo %s (%s) is not a good foo\", foo, bar));\n  }\n}"
+    },
+    {
+      "description": "negative1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.base.Preconditions;\n\n/**\n * Preconditions calls which shouldn't be picked up for expensive string operations\n *\n * @author sjnickerson@google.com (Simon Nickerson)\n */\npublic class PreconditionsExpensiveStringNegativeCase1 {\n  public void error() {\n    int foo = 42;\n    Preconditions.checkState(true, \"The foo %s foo  is not a good foo\", foo);\n\n    // This call should not be converted because of the %d, which does some locale specific\n    // behaviour. If it were an %s, it would be fair game.\n    Preconditions.checkState(true, String.format(\"The foo %d foo is not a good foo\", foo));\n\n    // No format arguments\n    Preconditions.checkState(true);\n  }\n}"
+    },
+    {
+      "description": "negative2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.base.Preconditions;\n\n/**\n * Test for methodIs call including string concatenation. (Not yet supported, so this is a negative\n * case)\n *\n * @author sjnickerson@google.com (Simon Nickerson)\n */\npublic class PreconditionsExpensiveStringNegativeCase2 {\n  public void error() {\n    int foo = 42;\n    Preconditions.checkState(true, \"The foo\" + foo + \" is not a good foo\");\n  }\n}"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "ThrowIfUncheckedKnownChecked",
+  "language": "java",
+  "description": "throwIfUnchecked(knownCheckedException) is a no-op.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 77,
+  "branches": 5,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.base.Throwables.propagateIfPossible;\n            import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            import java.io.IOException;\n            import java.util.concurrent.ExecutionException;\n\n            /**\n             * @author cpovirk@google.com (Chris Povirk)\n             */\n            public class ThrowIfUncheckedKnownCheckedTestPositiveCases {\n              void simple(IOException e) {\n                // BUG: Diagnostic contains: no-op\n                throwIfUnchecked(e);\n\n                // BUG: Diagnostic contains: no-op\n                propagateIfPossible(e);\n              }\n\n              void union() {\n                try {\n                  foo();\n                } catch (IOException | ExecutionException e) {\n                  // BUG: Diagnostic contains: no-op\n                  throwIfUnchecked(e);\n\n                  // BUG: Diagnostic contains: no-op\n                  propagateIfPossible(e);\n                }\n              }\n\n              <E extends IOException> void checkedGeneric(E e) {\n                // BUG: Diagnostic contains: no-op\n                throwIfUnchecked(e);\n              }\n\n              void foo() throws IOException, ExecutionException {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static com.google.common.base.Throwables.propagateIfPossible;\nimport static com.google.common.base.Throwables.throwIfUnchecked;\n\nimport java.io.IOException;\nimport java.util.concurrent.CancellationException;\nimport java.util.concurrent.ExecutionException;\n\n/**\n * @author cpovirk@google.com (Chris Povirk)\n */\npublic class ThrowIfUncheckedKnownCheckedTestNegativeCases {\n  void exception(Exception e) {\n    throwIfUnchecked(e);\n  }\n\n  void throwable(Throwable e) {\n    throwIfUnchecked(e);\n  }\n\n  void runtime(RuntimeException e) {\n    // Better written as \"throw e,\" but comes up too rarely to justify a compile error.\n    throwIfUnchecked(e);\n  }\n\n  void error(Error e) {\n    // Better written as \"throw e,\" but comes up too rarely to justify a compile error.\n    throwIfUnchecked(e);\n  }\n\n  void multiarg(IOException e) throws IOException {\n    propagateIfPossible(e, IOException.class);\n  }\n\n  void union() {\n    try {\n      foo();\n    } catch (IOException | ExecutionException | CancellationException e) {\n      throwIfUnchecked(e);\n    }\n  }\n\n  <E extends RuntimeException> void genericUnchecked(E e) {\n    throwIfUnchecked(e);\n  }\n\n  <E extends Exception> void genericMaybeUnchecked(E e) {\n    throwIfUnchecked(e);\n  }\n\n  <E extends T, T extends Exception> void genericUpperBoundDifferentFromErasure(E e) {\n    throwIfUnchecked(e);\n  }\n\n  void foo() throws IOException, ExecutionException {}\n\n  /*\n   * I don't care whether these are flagged or not, since it won't come up in practice. I just want\n   * to make sure that we don't blow up when running against the tests of Throwables.\n   */\n  void nullException() {\n    throwIfUnchecked(null); // throws NPE\n    propagateIfPossible(null); // no-op\n  }\n}\\"
+    }
+  ]
+}

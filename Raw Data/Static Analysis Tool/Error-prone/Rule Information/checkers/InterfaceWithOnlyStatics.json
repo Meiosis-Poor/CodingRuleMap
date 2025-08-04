@@ -1,0 +1,94 @@
+{
+  "name": "InterfaceWithOnlyStatics",
+  "language": "java",
+  "description": "This interface only contains static fields and methods; consider making it a final class instead to prevent subclassing.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 113,
+  "branches": 14,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "// BUG: Diagnostic contains: InterfaceWithOnlyStatics\n            interface Test {\n              public static final int foo = 42;\n            }"
+    },
+    {
+      "description": "negative_hasNonStaticMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47
+      ],
+      "code": "interface Test {\n              public static final int foo = 42;\n\n              int bar();\n            }"
+    },
+    {
+      "description": "negative_notInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "class Test {\n              public static final int foo = 42;\n            }"
+    },
+    {
+      "description": "negative_annotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "@interface Test {\n              public static final int foo = 42;\n            }"
+    },
+    {
+      "description": "negative_extends",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "interface Test extends A {\n              int foo = 42;\n\n              static int bar() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "negative_daggerModules",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "package dagger;\n\n            public @interface Module {}\n            \n\n            import dagger.Module;\n\n            @Module\n            interface Test {\n              public static final int foo = 42;\n            }"
+    },
+    {
+      "description": "negative_daggerModules_producerModule",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "package dagger.producers;\n\n            public @interface ProducerModule {}\n            \n\n            import dagger.producers.ProducerModule;\n\n            @ProducerModule\n            interface Test {\n              public static final int foo = 42;\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        154
+      ],
+      "code": "interface Test {\n              int foo = 42;\n\n              static int bar() {\n                return 1;\n              }\n            }\n            \n\n            final class Test {\n              public static final int foo = 42;\n\n              public static int bar() {\n                return 1;\n              }\n\n              private Test() {}\n            }"
+    },
+    {
+      "description": "refactoring_innerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "class Foo {\n              interface Test {\n                int foo = 42;\n              }\n            }\n            \n\n            class Foo {\n              static final class Test {\n                public static final int foo = 42;\n\n                private Test() {}\n              }\n            }"
+    },
+    {
+      "description": "negativeSealed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        210
+      ],
+      "code": "sealed interface Test {\n              record A() implements Test {}\n\n              record B() implements Test {}\n            }"
+    }
+  ]
+}

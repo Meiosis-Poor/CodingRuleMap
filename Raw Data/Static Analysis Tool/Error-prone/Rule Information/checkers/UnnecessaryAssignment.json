@@ -1,0 +1,158 @@
+{
+  "name": "UnnecessaryAssignment",
+  "language": "java",
+  "description": "Fields annotated with @Inject/@Mock should not be manually assigned to, as they should be initialized by a framework. Remove the assignment if a framework is being used, or the annotation if one isn't.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 234,
+  "branches": 18,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import org.mockito.Mock;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              @Mock Object mockObject = new Object();\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "import org.mockito.Mock;\n\n            class Test {\n              @Mock Object mockObject;\n            }"
+    },
+    {
+      "description": "doubleAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65
+      ],
+      "code": "import com.google.inject.Inject;\n            import org.mockito.Mock;\n\n            class Test {\n              // BUG: Diagnostic contains: both\n              @Mock @Inject Object mockObject;\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "import org.mockito.Mock;\n\n            class Test {\n              @Mock Object mockObject = new Object();\n            }\n            \n\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock Object mockObject;\n            }"
+    },
+    {
+      "description": "initializedViaInitMocks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "import org.mockito.Mock;\n            import org.mockito.Mockito;\n            import org.mockito.MockitoAnnotations;\n\n            class Test {\n              @Mock Object mockObject = Mockito.mock(Object.class);\n\n              void before() {\n                MockitoAnnotations.initMocks(this);\n              }\n            }\n            \n\n            import org.mockito.Mock;\n            import org.mockito.Mockito;\n            import org.mockito.MockitoAnnotations;\n\n            class Test {\n              @Mock Object mockObject;\n\n              void before() {\n                MockitoAnnotations.initMocks(this);\n              }\n            }"
+    },
+    {
+      "description": "noInitializerPresent_retainManualInitialization",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "import org.mockito.Mock;\n            import org.mockito.Mockito;\n\n            class Test {\n              @Mock Object mockObject = Mockito.mock(Object.class);\n            }\n            \n\n            import org.mockito.Mock;\n            import org.mockito.Mockito;\n\n            class Test {\n              Object mockObject = Mockito.mock(Object.class);\n            }"
+    },
+    {
+      "description": "initializedViaRunner",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        168
+      ],
+      "code": "import org.junit.runner.RunWith;\n            import org.mockito.Mock;\n            import org.mockito.Mockito;\n            import org.mockito.junit.MockitoJUnitRunner;\n\n            @RunWith(MockitoJUnitRunner.class)\n            public class Test {\n              @Mock Object mockObject = Mockito.mock(Object.class);\n            }\n            \n\n            import org.junit.runner.RunWith;\n            import org.mockito.Mock;\n            import org.mockito.Mockito;\n            import org.mockito.junit.MockitoJUnitRunner;\n\n            @RunWith(MockitoJUnitRunner.class)\n            public class Test {\n              @Mock Object mockObject;\n            }"
+    },
+    {
+      "description": "positiveOnTestParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        200
+      ],
+      "code": "import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              // BUG: Diagnostic contains: @TestParameter\n              @TestParameter boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "optionalInject_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        216
+      ],
+      "code": "import com.google.inject.Inject;\n\n            class Test {\n              @Inject(optional = true)\n              boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "optionalInject_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        216
+      ],
+      "code": "import com.google.inject.Inject;\n\n            class Test {\n              @Inject(optional = true)\n              boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "optionalInject_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        216
+      ],
+      "code": "import com.google.inject.Inject;\n\n            class Test {\n              @Inject(optional = true)\n              boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "fixForTestParameter_deletesAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        232
+      ],
+      "code": "import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              @TestParameter boolean myFoo = false;\n            }\n            \n\n            import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              @TestParameter boolean myFoo;\n            }"
+    },
+    {
+      "description": "fixForTestParameter_ifFinal_deletesAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        256
+      ],
+      "code": "import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              @TestParameter final boolean myFoo = false;\n            }\n            \n\n            import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              final boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "fixForTestParameter_ifFinal_deletesAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        256
+      ],
+      "code": "import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              @TestParameter final boolean myFoo = false;\n            }\n            \n\n            import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              final boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "fixForTestParameter_ifFinal_deletesAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        256
+      ],
+      "code": "import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              @TestParameter final boolean myFoo = false;\n            }\n            \n\n            import com.google.testing.junit.testparameterinjector.TestParameter;\n\n            class Test {\n              final boolean myFoo = false;\n            }"
+    },
+    {
+      "description": "inject_assignedElsewhere_assignmentDeleted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        280
+      ],
+      "code": "import com.google.inject.Inject;\n\n            class Test {\n              @Inject boolean myFoo;\n\n              void sin() {\n                myFoo = false;\n              }\n            }\n            \n\n            import com.google.inject.Inject;\n\n            class Test {\n              @Inject boolean myFoo;\n\n              void sin() {}\n            }"
+    },
+    {
+      "description": "inject_assignedElsewhere_assignmentDeleted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        280
+      ],
+      "code": "import com.google.inject.Inject;\n\n            class Test {\n              @Inject boolean myFoo;\n\n              void sin() {\n                myFoo = false;\n              }\n            }\n            \n\n            import com.google.inject.Inject;\n\n            class Test {\n              @Inject boolean myFoo;\n\n              void sin() {}\n            }"
+    },
+    {
+      "description": "inject_assignedElsewhereButOptional_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        310
+      ],
+      "code": "import com.google.inject.Inject;\n\n            class Test {\n              @Inject(optional = true)\n              boolean myFoo;\n\n              void sin() {\n                myFoo = false;\n              }\n            }"
+    }
+  ]
+}

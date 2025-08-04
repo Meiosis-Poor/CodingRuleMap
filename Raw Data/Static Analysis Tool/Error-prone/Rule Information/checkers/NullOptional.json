@@ -1,0 +1,54 @@
+{
+  "name": "NullOptional",
+  "language": "java",
+  "description": "Passing a literal null to an Optional parameter is almost certainly a mistake. Did you mean to provide an empty Optional?",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 6,
+  "apis": 1,
+  "test": [
+    {
+      "description": "simplePositiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void a(Optional<Object> o) {}\n\n              void test() {\n                a(null);\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              void a(Optional<Object> o) {}\n\n              void test() {\n                a(Optional.empty());\n              }\n            }"
+    },
+    {
+      "description": "annotatedWithNullable_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "import java.util.Optional;\n            import javax.annotation.Nullable;\n\n            class Test {\n              void a(@Nullable Optional<Object> o) {}\n\n              void test() {\n                a(null);\n              }\n            }"
+    },
+    {
+      "description": "notPassingNull_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void a(Optional<Object> o) {}\n\n              void test() {\n                a(Optional.empty());\n              }\n            }"
+    },
+    {
+      "description": "withinAssertThrows_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "import static org.junit.Assert.assertThrows;\n            import java.util.Optional;\n\n            class Test {\n              void a(Optional<Object> o) {}\n\n              void test() {\n                assertThrows(NullPointerException.class, () -> a(null));\n              }\n            }"
+    },
+    {
+      "description": "lastVarArgsParameter_match",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              @SafeVarargs\n              private final void a(int a, Optional<Object>... o) {}\n\n              void test() {\n                // BUG: Diagnostic contains:\n                a(1, Optional.empty(), null);\n              }\n            }"
+    }
+  ]
+}

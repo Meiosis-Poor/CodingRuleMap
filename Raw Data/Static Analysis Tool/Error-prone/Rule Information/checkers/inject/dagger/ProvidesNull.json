@@ -1,0 +1,94 @@
+{
+  "name": "ProvidesNull",
+  "language": "java",
+  "description": "Dagger @Provides methods may not return null unless annotated with @Nullable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 14,
+  "apis": 4,
+  "test": [
+    {
+      "description": "simple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "import dagger.Provides;\n\npublic class Test {\n  @Provides\n  public Object providesObject() {\n    // BUG: Diagnostic contains: Did you mean '@Nullable' or 'throw new RuntimeException();'\n    return null;\n  }\n}"
+    },
+    {
+      "description": "hasJavaxAnnotationNullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "import dagger.Provides;\n            import javax.annotation.Nullable;\n\n            public class Test {\n              @Provides\n              @Nullable\n              public Object providesObject() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "hasOtherNullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "import dagger.Provides;\n\n            public class Test {\n              @Provides\n              @Nullable\n              public Object providesObject() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "hasTypeUseNullableOnMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "import dagger.Provides;\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class Test {\n              @Provides\n              @Nullable\n              public Object providesObject() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "hasTypeUseNullableOnReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "import dagger.Provides;\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class Test {\n              @Provides\n              public @Nullable Object providesObject() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "guiceProvides",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        134
+      ],
+      "code": "import com.google.inject.Provides;\n\n            public class Test {\n              @Provides\n              public Object providesObject() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "inCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "import java.io.IOException;\nimport dagger.Provides;\n\npublic class Test {\n  @Provides\n  public Object providesObject() {\n    try {\n      return new Object();\n    } catch (Exception e) {\n      // BUG: Diagnostic contains: Did you mean 'throw new RuntimeException(e);' or '@Nullable'\n      return null;\n    }\n  }\n}"
+    },
+    {
+      "description": "inTry",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        176
+      ],
+      "code": "import dagger.Provides;\n\npublic class Test {\n  @Provides\n  public Object providesObject() {\n    try {\n      // BUG: Diagnostic contains: Did you mean '@Nullable' or 'throw new RuntimeException();'\n      return null;\n    } catch (Exception e) {\n      return new Object();\n    }\n  }\n}"
+    },
+    {
+      "description": "returnWithNoExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        199
+      ],
+      "code": "import dagger.Provides;\n\n            public class Test {\n              public void doNothing() {\n                return;\n              }\n            }"
+    },
+    {
+      "description": "hasOtherTypeUseNullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        216
+      ],
+      "code": "import static java.lang.annotation.ElementType.TYPE_USE;\n            import java.lang.annotation.Target;\n\n            @Target(TYPE_USE)\n            public @interface Nullable {}\n            \n\n            import dagger.Provides;\n\n            public class Test {\n              @Provides\n              @Nullable\n              public Object providesObject() {\n                return null;\n              }\n            }"
+    }
+  ]
+}

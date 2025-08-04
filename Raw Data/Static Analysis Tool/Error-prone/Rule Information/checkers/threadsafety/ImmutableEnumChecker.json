@@ -1,0 +1,102 @@
+{
+  "name": "ImmutableEnumChecker",
+  "language": "java",
+  "description": "Enums should always be immutable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 103,
+  "branches": 7,
+  "apis": 3,
+  "test": [
+    {
+      "description": "nonFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "enum Enum {\n              ONE(1),\n              TWO(2);\n              // BUG: Diagnostic contains: final int x;'\n              int x;\n\n              private Enum(int x) {\n                this.x = x;\n              }\n            }"
+    },
+    {
+      "description": "immutableEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "import com.google.common.collect.ImmutableSet;\n\n            enum Enum {\n              ONE(1),\n              TWO(2);\n              final ImmutableSet<Integer> xs;\n\n              private Enum(Integer... xs) {\n                this.xs = ImmutableSet.copyOf(xs);\n              }\n            }"
+    },
+    {
+      "description": "finalMutableField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "import java.util.Arrays;\nimport java.util.HashSet;\nimport java.util.Set;\n\nenum Enum {\n  ONE(1),\n  TWO(2);\n  // BUG: Diagnostic contains:  enums should be immutable: 'Enum' has field 'xs' of type\n  // 'java.util.Set<java.lang.Integer>', 'Set' is mutable\n  final Set<Integer> xs;\n\n  private Enum(Integer... xs) {\n    this.xs = new HashSet<>(Arrays.asList(xs));\n  }\n}"
+    },
+    {
+      "description": "annotatedEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            // BUG: Diagnostic contains: enums are immutable by default\n            @Immutable\n            enum Enum {\n              ONE,\n              TWO\n            }"
+    },
+    {
+      "description": "annotatedEnumThatImplementsImmutableInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface MyInterface {}\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            enum Enum implements MyInterface {\n              ONE,\n              TWO\n            }"
+    },
+    {
+      "description": "annotatedEnumThatImplementsImmutableInterfaceWithOverrides",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        140
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            interface MyInterface {\n              void bar();\n            }\n            \n\n            import com.google.errorprone.annotations.Immutable;\n\n            @Immutable\n            enum Enum implements MyInterface {\n              ONE {\n                public void bar() {}\n              },\n              TWO {\n                public void bar() {}\n              }\n            }"
+    },
+    {
+      "description": "mutableFieldType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        171
+      ],
+      "code": "class Foo {}\n            \n\n            import java.util.Arrays;\n            import java.util.HashSet;\n            import java.util.Set;\n\n            enum Enum {\n              ONE(new Foo()),\n              TWO(new Foo());\n              // BUG: Diagnostic contains: the declaration of type 'Foo' is not annotated with\n              // @com.google.errorprone.annotations.Immutable\n              final Foo f;\n\n              private Enum(Foo f) {\n                this.f = f;\n              }\n            }"
+    },
+    {
+      "description": "suppressOnEnumField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "import com.google.errorprone.annotations.Immutable;\n\n            enum Test {\n              ONE;\n\n              @SuppressWarnings(\"Immutable\")\n              final int[] xs = {1};\n            }"
+    },
+    {
+      "description": "enumInstanceSuperMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "enum Test {\n              ONE {\n                int incr() {\n                  return x++;\n                }\n              };\n\n              abstract int incr();\n\n              // BUG: Diagnostic contains: non-final\n              int x;\n            }"
+    },
+    {
+      "description": "enumInstanceMutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        241
+      ],
+      "code": "enum Test {\n              ONE {\n                // BUG: Diagnostic contains: non-final\n                int x;\n\n                int incr() {\n                  return x++;\n                }\n              };\n\n              abstract int incr();\n            }"
+    },
+    {
+      "description": "jucImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "import javax.annotation.concurrent.Immutable;\n\n            @Immutable\n            class Lib {}\n            \n\nenum Test {\n  ONE;\n  // BUG: Diagnostic contains: not annotated with @com.google.errorprone.annotations.Immutable\n  final Lib l = new Lib();\n}"
+    }
+  ]
+}

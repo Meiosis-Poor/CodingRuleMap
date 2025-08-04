@@ -1,0 +1,94 @@
+{
+  "name": "JUnitIncompatibleType",
+  "language": "java",
+  "description": "The types passed to this assertion are incompatible.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 115,
+  "branches": 8,
+  "apis": 2,
+  "test": [
+    {
+      "description": "assertEquals_mismatched",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import static org.junit.Assert.assertEquals;\n            import static org.junit.Assert.assertNotEquals;\n\n            class Test {\n              public void test() {\n                // BUG: Diagnostic contains:\n                assertEquals(1, \"\");\n                // BUG: Diagnostic contains:\n                assertEquals(\"foo\", 1, \"\");\n                // BUG: Diagnostic contains:\n                assertEquals(\"foo\", \"\", 1);\n                // BUG: Diagnostic contains:\n                assertNotEquals(1, \"\");\n                // BUG: Diagnostic contains:\n                assertNotEquals(\"foo\", 1, \"\");\n              }\n            }"
+    },
+    {
+      "description": "assertEquals_matched",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import static org.junit.Assert.assertEquals;\n            import static org.junit.Assert.assertNotEquals;\n\n            class Test {\n              public void test() {\n                assertEquals(1, 2);\n                assertEquals(1, 2L);\n                assertEquals(\"foo\", 1, 2);\n                assertNotEquals(1, 2);\n                assertNotEquals(\"foo\", 1, 2);\n              }\n            }"
+    },
+    {
+      "description": "assertArrayEquals_mismatched",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n\n            final class Test {\n              public void test() {\n                // BUG: Diagnostic contains:\n                assertArrayEquals(new Test[] {}, new String[] {\"\"});\n                // BUG: Diagnostic contains:\n                assertArrayEquals(\"foo\", new Test[] {}, new String[] {\"\"});\n              }\n            }"
+    },
+    {
+      "description": "assertArrayEquals_primitiveOverloadsFine",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n\n            final class Test {\n              public void test() {\n                assertArrayEquals(new long[] {1L}, new long[] {2L});\n              }\n            }"
+    },
+    {
+      "description": "assertArrayEquals_cast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n\n            final class Test {\n              public void test(Object o, byte[] b) {\n                assertArrayEquals((byte[]) o, b);\n              }\n            }"
+    },
+    {
+      "description": "seesThroughCasts",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "import static org.junit.Assert.assertEquals;\n            import static org.junit.Assert.assertNotEquals;\n\n            class Test {\n              public void test() {\n                // BUG: Diagnostic contains:\n                assertEquals((Object) 1, (Object) 2L);\n              }\n            }"
+    },
+    {
+      "description": "fourArgumentOverload",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n\n            class Test {\n              public void test() {\n                assertArrayEquals(\"foo\", new double[] {1}, new double[] {2}, 10d);\n              }\n            }"
+    },
+    {
+      "description": "arrayNullComparison",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        169
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n\n            class Test {\n              public void test() {\n                assertArrayEquals(null, new Object[] {2});\n              }\n            }"
+    },
+    {
+      "description": "typeVariables_incompatible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        186
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n            import java.util.Map;\n\n            class Test {\n              public <T extends String> void test(Map<Integer, T[]> xs) {\n                T[] x = xs.get(1);\n                // BUG: Diagnostic contains:\n                assertArrayEquals(x, new Double[] {1d});\n              }\n            }"
+    },
+    {
+      "description": "typeVariables_compatible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        206
+      ],
+      "code": "import static org.junit.Assert.assertArrayEquals;\n            import java.util.Map;\n\n            class Test {\n              public <T extends Double> void test(Map<Integer, T[]> xs) {\n                T[] x = xs.get(1);\n                assertArrayEquals(x, new Double[] {1d});\n              }\n            }"
+    }
+  ]
+}

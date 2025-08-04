@@ -1,0 +1,94 @@
+{
+  "name": "GuiceNestedCombine",
+  "language": "java",
+  "description": "Nesting Modules.combine() here is unnecessary.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 80,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Guice;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                Guice.createInjector(new ModuleA(), Modules.combine(new ModuleB(), new ModuleC()));\n              }\n            }\n            \n\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Guice;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                Guice.createInjector(new ModuleA(), new ModuleB(), new ModuleC());\n              }\n            }"
+    },
+    {
+      "description": "arbitraryVarargsMethod_combineCollapsed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), Modules.combine(new ModuleB(), new ModuleC()));\n              }\n\n              public void foo(Module... xs) {}\n            }\n            \n\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), new ModuleB(), new ModuleC());\n              }\n\n              public void foo(Module... xs) {}\n            }"
+    },
+    {
+      "description": "singleArgument_collapsed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), Modules.combine(new ModuleA()));\n              }\n\n              public void foo(Module... xs) {}\n            }\n            \n\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), new ModuleA());\n              }\n\n              public void foo(Module... xs) {}\n            }"
+    },
+    {
+      "description": "noArguments_ignored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), Modules.combine());\n              }\n\n              public void foo(Module... xs) {}\n            }"
+    },
+    {
+      "description": "iterableOverload_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        185
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), Modules.combine(ImmutableList.of(new ModuleA())));\n              }\n\n              public void foo(Module... xs) {}\n            }"
+    },
+    {
+      "description": "varargsMethod_arrayInputToCombine_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        210
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              public void test(Module[] ms) {\n                foo(Modules.combine(ms));\n              }\n\n              public void foo(Module... xs) {}\n            }"
+    },
+    {
+      "description": "notVargs_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        232
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), Modules.combine(new ModuleB(), new ModuleC()));\n              }\n\n              public void foo(Module a, Module b) {}\n            }"
+    },
+    {
+      "description": "partialVarargs_collapsed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        260
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                foo(\n                    new ModuleA(),\n                    Modules.combine(new ModuleB(), new ModuleC()),\n                    Modules.combine(new ModuleB(), new ModuleC()));\n              }\n\n              public void foo(Module a, Module... b) {}\n            }\n            \n\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                foo(new ModuleA(), new ModuleB(), new ModuleC(), new ModuleB(), new ModuleC());\n              }\n\n              public void foo(Module a, Module... b) {}\n            }"
+    },
+    {
+      "description": "noCombine_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        311
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Guice;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                Guice.createInjector(new ModuleA(), new ModuleB(), new ModuleC());\n              }\n            }"
+    },
+    {
+      "description": "assignedToVariable_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        337
+      ],
+      "code": "import com.google.inject.AbstractModule;\n            import com.google.inject.Module;\n            import com.google.inject.util.Modules;\n\n            class Test {\n              private class ModuleA extends AbstractModule {}\n\n              private class ModuleB extends AbstractModule {}\n\n              private class ModuleC extends AbstractModule {}\n\n              public void test() {\n                Module extraModule = Modules.combine(new ModuleA(), new ModuleB(), new ModuleC());\n              }\n            }"
+    }
+  ]
+}

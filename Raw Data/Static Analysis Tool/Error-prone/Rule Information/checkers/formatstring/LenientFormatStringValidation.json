@@ -1,0 +1,62 @@
+{
+  "name": "LenientFormatStringValidation",
+  "language": "java",
+  "description": "The number of arguments provided to lenient format methods should match the positional specifiers.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 109,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "tooFewArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                // BUG: Diagnostic contains:\n                Preconditions.checkState(false, \"%s\");\n              }\n            }"
+    },
+    {
+      "description": "tooManyArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                // BUG: Diagnostic contains:\n                Preconditions.checkState(false, \"%s\", 1, 1);\n              }\n            }"
+    },
+    {
+      "description": "tooManyArguments_fix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                Preconditions.checkState(false, \"%s\", 1, 1);\n              }\n            }\n            \n\n            import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                Preconditions.checkState(false, \"%s (%s)\", 1, 1);\n              }\n            }"
+    },
+    {
+      "description": "numericSpecifier_fix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                Preconditions.checkState(false, \"expected %d = %d\", 1, 1);\n              }\n            }\n            \n\n            import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                Preconditions.checkState(false, \"expected %s = %s\", 1, 1);\n              }\n            }"
+    },
+    {
+      "description": "tooManyArguments_fixWithNonLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              private static final String FOO = \"%s\";\n\n              void test() {\n                Preconditions.checkState(false, FOO, 1, 1);\n              }\n            }\n            \n\n            import com.google.common.base.Preconditions;\n\n            class Test {\n              private static final String FOO = \"%s\";\n\n              void test() {\n                Preconditions.checkState(false, FOO + \" (%s)\", 1, 1);\n              }\n            }"
+    },
+    {
+      "description": "correctArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              void test() {\n                Preconditions.checkState(false, \"%s\", 1);\n              }\n            }"
+    }
+  ]
+}

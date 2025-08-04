@@ -1,0 +1,358 @@
+{
+  "name": "NarrowingCompoundAssignment",
+  "language": "java",
+  "description": "Compound assignments may hide dangerous casts",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 155,
+  "branches": 44,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "class Test {\n              void m() {\n                short s = 0;\n                char t = 0;\n                byte u = 0;\n                float v = 0;\n                // BUG: Diagnostic contains: s = (short) (s * 1)\n                s *= 1;\n                // BUG: Diagnostic contains: t = (char) (t * 1)\n                t *= 1;\n                // BUG: Diagnostic contains: u = (byte) (u * 1)\n                u *= 1;\n                // BUG: Diagnostic contains: u = (byte) (u * 1L)\n                u *= 1L;\n                // BUG: Diagnostic contains: v = (float) (v * 1.0)\n                v *= 1.0;\n                // BUG: Diagnostic contains: v = (float) (v * 1.0d)\n                v *= 1.0d;\n              }\n            }"
+    },
+    {
+      "description": "allOps",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "class Test {\n              void m() {\n                short s = 0;\n                // BUG: Diagnostic contains: s = (short) (s * 1)\n                s *= 1;\n                // BUG: Diagnostic contains: s = (short) (s / 1)\n                s /= 1;\n                // BUG: Diagnostic contains: s = (short) (s % 1)\n                s %= 1;\n                // BUG: Diagnostic contains: s = (short) (s + 1)\n                s += 1;\n                // BUG: Diagnostic contains: s = (short) (s - 1)\n                s -= 1;\n                // BUG: Diagnostic contains: s = (short) (s << 1)\n                s <<= 1;\n                // Signed right shifts are OK\n                s >>= 1;\n                // BUG: Diagnostic contains: s = (short) (s >>> 1)\n                s >>>= 1;\n              }\n            }"
+    },
+    {
+      "description": "deficientRightShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "class Test {\n              void m() {\n                // BUG: Diagnostic contains: i = (short) (i >>> 1)\n                for (short i = -1; i != 0; i >>>= 1)\n                  ;\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "class Test {\n              void m() {\n                int s = 0;\n                long t = 0;\n                double u = 0;\n                s *= 1;\n                t *= 1;\n                u *= 1;\n              }\n            }"
+    },
+    {
+      "description": "floatFloat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "class Test {\n              void m() {\n                float a = 0;\n                float b = 0;\n                Float c = Float.valueOf(0);\n                a += b;\n                a += c;\n              }\n            }"
+    },
+    {
+      "description": "bitTwiddle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        150
+      ],
+      "code": "class Test {\n              void m() {\n                short smask = 0b1;\n                byte bmask = 0b1;\n\n                short s = 0;\n                byte b = 0;\n\n                s &= smask;\n                s |= smask;\n                s ^= smask;\n\n                s &= bmask;\n                s |= bmask;\n                s ^= bmask;\n\n                b &= bmask;\n                b |= bmask;\n                b ^= bmask;\n              }\n            }"
+    },
+    {
+      "description": "bitTwiddleConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "class Test {\n              void m() {\n                short s = 0;\n                byte b = 0;\n\n                s &= ~1;\n                s |= 1;\n                s ^= 1;\n\n                b &= ~1;\n                b |= 1;\n                b ^= 1;\n\n                b |= 128;\n                b &= 128;\n                b ^= 128;\n                b |= 1L;\n                b &= 1L;\n                b ^= 1L;\n\n                // BUG: Diagnostic contains: b = (byte) (b | 256)\n                b |= 256;\n                // BUG: Diagnostic contains: b = (byte) (b & ~256)\n                b &= ~256;\n                // BUG: Diagnostic contains: b = (byte) (b ^ 256)\n                b ^= 256;\n              }\n            }"
+    },
+    {
+      "description": "allowsBinopsOfDeficientTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "class Test {\n              void m() {\n                short smask = 0b1;\n                byte bmask = 0b1;\n\n                short s = 0;\n                byte b = 0;\n\n                s += smask;\n                s -= smask;\n                s *= smask;\n\n                s += bmask;\n                s -= bmask;\n                s *= bmask;\n\n                b -= bmask;\n                b += bmask;\n                b /= bmask;\n              }\n            }"
+    },
+    {
+      "description": "preservePrecedence",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "class Test {\n              void m() {\n                float f = 0;\n                // BUG: Diagnostic contains: f = (float) (f - (3.0 - 2.0))\n                f -= 3.0 - 2.0;\n              }\n            }"
+    },
+    {
+      "description": "preservePrecedence2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        268
+      ],
+      "code": "class Test {\n              void m() {\n                float f = 0;\n                // BUG: Diagnostic contains: f = (float) (f - 3.0 * 2.0)\n                f -= 3.0 * 2.0;\n              }\n            }"
+    },
+    {
+      "description": "preservePrecedence3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        285
+      ],
+      "code": "class Test {\n              void m() {\n                float f = 0;\n                // BUG: Diagnostic contains: f = (float) (f - (3.0 > 0 ? 1.0 : 2.0))\n                f -= 3.0 > 0 ? 1.0 : 2.0;\n              }\n            }"
+    },
+    {
+      "description": "preservePrecedenceExhaustive_multMult",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_multPlus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        307
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_multLShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        312
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_multAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        317
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_multOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_plusMult",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        327
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_plusPlus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_plusLShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        337
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_plusAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        342
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_plusOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        347
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_lShiftMult",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        352
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_lShiftPlus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_lShiftLShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        362
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_lShiftAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        367
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_lShiftOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        372
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_andMult",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        377
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_andPlus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        383
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_andLShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        388
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_andAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        393
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_andOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        398
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_orMult",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        403
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_orPlus",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        408
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_orLShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        413
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_orAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        418
+      ],
+      "code": ""
+    },
+    {
+      "description": "preservePrecedenceExhaustive_orOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        423
+      ],
+      "code": ""
+    },
+    {
+      "description": "doubleLong",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        450
+      ],
+      "code": "class Test {\n              void m() {\n                long a = 1;\n                double b = 2;\n                // BUG: Diagnostic contains: Compound assignments from double to long\n                a *= b;\n              }\n            }"
+    },
+    {
+      "description": "doubleInt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        468
+      ],
+      "code": "class Test {\n              void m() {\n                int a = 1;\n                double b = 2;\n                // BUG: Diagnostic contains: Compound assignments from double to int\n                a *= b;\n              }\n            }"
+    },
+    {
+      "description": "floatLong",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        486
+      ],
+      "code": "class Test {\n              void m() {\n                long a = 1;\n                float b = 2;\n                // BUG: Diagnostic contains: Compound assignments from float to long\n                a *= b;\n              }\n            }"
+    },
+    {
+      "description": "floatInt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        504
+      ],
+      "code": "class Test {\n              void m() {\n                int a = 1;\n                float b = 2;\n                // BUG: Diagnostic contains: Compound assignments from float to int\n                a *= b;\n              }\n            }"
+    },
+    {
+      "description": "exhaustiveTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        522
+      ],
+      "code": "class Test {\n              void f(short s, byte b, char c, int i, long l, float f, double d) {\n                s += s;\n                s += b;\n                // BUG: Diagnostic contains:\n                s += c;\n                // BUG: Diagnostic contains:\n                s += i;\n                // BUG: Diagnostic contains:\n                s += l;\n                // BUG: Diagnostic contains:\n                s += f;\n                // BUG: Diagnostic contains:\n                s += d;\n                // BUG: Diagnostic contains:\n                b += s;\n                b += b;\n                // BUG: Diagnostic contains:\n                b += c;\n                // BUG: Diagnostic contains:\n                b += i;\n                // BUG: Diagnostic contains:\n                b += l;\n                // BUG: Diagnostic contains:\n                b += f;\n                // BUG: Diagnostic contains:\n                b += d;\n                // BUG: Diagnostic contains:\n                c += s;\n                // BUG: Diagnostic contains:\n                c += b;\n                c += c;\n                // BUG: Diagnostic contains:\n                c += i;\n                // BUG: Diagnostic contains:\n                c += l;\n                // BUG: Diagnostic contains:\n                c += f;\n                // BUG: Diagnostic contains:\n                c += d;\n                i += s;\n                i += b;\n                i += c;\n                i += i;\n                // BUG: Diagnostic contains:\n                i += l;\n                // BUG: Diagnostic contains:\n                i += f;\n                // BUG: Diagnostic contains:\n                i += d;\n                l += s;\n                l += b;\n                l += c;\n                l += i;\n                l += l;\n                // BUG: Diagnostic contains:\n                l += f;\n                // BUG: Diagnostic contains:\n                l += d;\n                f += s;\n                f += b;\n                f += c;\n                f += i;\n                f += l;\n                f += f;\n                // BUG: Diagnostic contains:\n                f += d;\n                d += s;\n                d += b;\n                d += c;\n                d += i;\n                d += l;\n                d += f;\n                d += d;\n              }\n            }"
+    },
+    {
+      "description": "boxing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        608
+      ],
+      "code": "class Test {\n              void m() {\n                int a = 1;\n                // BUG: Diagnostic contains: from Long to int\n                a += (Long) 0L;\n              }\n            }"
+    },
+    {
+      "description": "stringConcat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        625
+      ],
+      "code": "class Test {\n              void m() {\n                String a = \"\";\n                a += (char) 0;\n              }\n            }"
+    }
+  ]
+}

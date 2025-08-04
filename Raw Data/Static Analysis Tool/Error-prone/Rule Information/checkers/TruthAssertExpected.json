@@ -1,0 +1,30 @@
+{
+  "name": "TruthAssertExpected",
+  "language": "java",
+  "description": "The actual and expected values appear to be swapped, which results in poor assertion failure messages. The actual value should come first.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 188,
+  "branches": 19,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static com.google.common.truth.Truth.assertThat;\nimport static com.google.common.truth.Truth.assertWithMessage;\n\nimport com.google.common.collect.ImmutableList;\n\n/**\n * Positive test cases for TruthAssertExpected check.\n *\n * @author ghm@google.com (Graeme Morgan)\n */\nfinal class TruthAssertExpectedPositiveCases {\n  private static final ImmutableList<Object> EXPECTED_LIST = ImmutableList.of();\n  private static final float EXPECTED_FLOAT = 1f;\n\n  private float actualFloat() {\n    return 3.14f;\n  }\n\n  private void simple() {\n    Object expected = new Object();\n    Object actual = new Object();\n    Object foo = new Object();\n    // BUG: Diagnostic contains: assertThat(foo).isEqualTo(expected)\n    assertThat(expected).isEqualTo(foo);\n    // BUG: Diagnostic contains: assertThat(foo).isNotEqualTo(expected)\n    assertThat(expected).isNotEqualTo(foo);\n\n    // BUG: Diagnostic contains: assertWithMessage(\"reversed!\").that(actual).isEqualTo(expected)\n    assertWithMessage(\"reversed!\").that(expected).isEqualTo(actual);\n\n    // BUG: Diagnostic contains: assertThat(actual.hashCode()).isEqualTo(expected.hashCode())\n    assertThat(expected.hashCode()).isEqualTo(actual.hashCode());\n  }\n\n  private void tolerantFloats() {\n    // BUG: Diagnostic contains: assertThat(actualFloat()).isWithin(1f).of(EXPECTED_FLOAT)\n    assertThat(EXPECTED_FLOAT).isWithin(1f).of(actualFloat());\n  }\n\n  private void lists() {\n    // BUG: Diagnostic contains:\n    // assertThat(ImmutableList.of(this)).containsExactlyElementsIn(EXPECTED_LIST);\n    assertThat(EXPECTED_LIST).containsExactlyElementsIn(ImmutableList.of(this));\n    // BUG: Diagnostic contains:\n    // assertThat(ImmutableList.of(this)).containsExactlyElementsIn(EXPECTED_LIST).inOrder();\n    assertThat(EXPECTED_LIST).containsExactlyElementsIn(ImmutableList.of(this)).inOrder();\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.truth.Truth.assertThat;\n\n            import com.google.common.collect.ImmutableList;\n\n            /**\n             * Negative test cases for TruthAssertExpected check.\n             *\n             * @author ghm@google.com (Graeme Morgan)\n             */\n            final class TruthAssertExpectedNegativeCases {\n              private static final Object expected = new Object();\n              private static final Object actual = new Object();\n              private static final Object foo = new Object();\n              private static final long CONSTANT = 1L;\n\n              private enum Enum {\n                A,\n                B;\n              }\n\n              private void simple() {\n                assertThat(foo).isEqualTo(expected);\n\n                assertThat(expected.hashCode()).isEqualTo(expected.hashCode());\n                assertThat(hashCode()).isEqualTo(foo);\n              }\n\n              private void actualAndExpectedTogether(int delay) {\n                int actualDelayInExpectedUnits = 1;\n                assertThat(actualDelayInExpectedUnits).isEqualTo(delay);\n              }\n\n              private void expectedExceptions() {\n                Exception expectedException = new Exception(\"Oh no.\");\n                assertThat(expectedException).hasMessageThat().isEqualTo(\"Oh no.\");\n                assertThat(expectedException.getClass()).isEqualTo(hashCode());\n              }\n\n              private void staticFactoryMethod() {\n                assertThat(expected).isEqualTo(Long.valueOf(10L));\n                assertThat(expected).isEqualTo(ImmutableList.of(1));\n              }\n\n              private void constantValues() {\n                assertThat(expected).isEqualTo(Enum.A);\n                assertThat(expected).isEqualTo(10L);\n                assertThat(expected).isEqualTo(CONSTANT);\n              }\n            }\\"
+    }
+  ]
+}

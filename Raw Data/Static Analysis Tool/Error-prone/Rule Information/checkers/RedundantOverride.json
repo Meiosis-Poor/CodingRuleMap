@@ -1,0 +1,118 @@
+{
+  "name": "RedundantOverride",
+  "language": "java",
+  "description": "This overriding method is redundant, and can be removed.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 146,
+  "branches": 17,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class Test extends foo.Bar {\n              @Override\n              // BUG: Diagnostic contains:\n              public boolean frob(Object o) {\n                return super.frob(o);\n              }\n            }\n            \n\n            package foo;\n\n            public class Bar {\n              public boolean frob(Object o) {\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "addingJavadoc",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "class Test extends foo.Bar {\n              /** Adding javadoc. */\n              @Override\n              public boolean frob(Object o) {\n                return super.frob(o);\n              }\n            }\n            \n\n            package foo;\n\n            public class Bar {\n              public boolean frob(Object o) {\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "addingComments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "class Test extends foo.Bar {\n              @Override\n              public boolean frob(Object o) {\n                // TODO..\n                return super.frob(o);\n              }\n            }\n            \n\n            package foo;\n\n            public class Bar {\n              public boolean frob(Object o) {\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "considersParameterOrder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "class A {\n              public void swap(int a, int b) {}\n            }\n            \n\n            class B extends A {\n              @Override\n              public void swap(int a, int b) {\n                super.swap(b, a);\n              }\n            }"
+    },
+    {
+      "description": "wideningVisibilityNoMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "class A {\n              void swap(int a, int b) {}\n            }\n            \n\n            class B extends A {\n              @Override\n              public void swap(int a, int b) {\n                super.swap(a, b);\n              }\n            }"
+    },
+    {
+      "description": "addingAnnotations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        160
+      ],
+      "code": "class A {\n              Object swap(int a, int b) {\n                return null;\n              }\n            }\n            \n\n            import javax.annotation.Nullable;\n\n            class B extends A {\n              @Nullable\n              @Override\n              public Object swap(int a, int b) {\n                return super.swap(a, b);\n              }\n            }"
+    },
+    {
+      "description": "sameAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import javax.annotation.Nullable;\n\n            class A {\n              @Nullable\n              Object swap(int a, int b) {\n                return null;\n              }\n            }\n            \n\n            import javax.annotation.Nullable;\n\n            class B extends A {\n              @Nullable\n              @Override\n              // BUG: Diagnostic contains:\n              Object swap(int a, int b) {\n                return super.swap(a, b);\n              }\n            }"
+    },
+    {
+      "description": "removesAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "import javax.annotation.Nullable;\n\n            class A {\n              @Nullable\n              Object swap(int a, int b) {\n                return null;\n              }\n            }\n            \n\n            import javax.annotation.Nullable;\n\n            class B extends A {\n              @Override\n              Object swap(int a, int b) {\n                return super.swap(a, b);\n              }\n            }"
+    },
+    {
+      "description": "addsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": "class A {\n              Object swap(int a, int b) {\n                return null;\n              }\n            }\n            \n\n            import javax.annotation.Nullable;\n\n            class B extends A {\n              @Nullable\n              @Override\n              Object swap(int a, int b) {\n                return super.swap(a, b);\n              }\n            }"
+    },
+    {
+      "description": "protectedOverrideInDifferentPackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "package foo;\n\n            public class A {\n              protected void swap() {}\n            }\n            \n\n            package bar;\n\n            public class B extends foo.A {\n              @Override\n              protected void swap() {\n                super.swap();\n              }\n            }"
+    },
+    {
+      "description": "protectedOverrideInSamePackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        305
+      ],
+      "code": "package foo;\n\n            class A {\n              protected void swap() {}\n            }\n            \n\n            package foo;\n\n            class B extends A {\n              @Override\n              // BUG: Diagnostic contains:\n              protected void swap() {\n                super.swap();\n              }\n            }"
+    },
+    {
+      "description": "paramAnnotationAddedInOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        333
+      ],
+      "code": "package foo;\n\n            @interface DemoAnnotation {}\n            \n\n            package foo;\n\n            class A {\n              protected void swap(int a) {}\n            }\n            \n\n            package foo;\n\n            class B extends A {\n              @Override\n              protected void swap(@DemoAnnotation int a) {\n                super.swap(a);\n              }\n            }"
+    },
+    {
+      "description": "paramAnnotationOmittedInOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        367
+      ],
+      "code": "package foo;\n\n            @interface DemoAnnotation {}\n            \n\n            package foo;\n\n            class A {\n              protected void swap(@DemoAnnotation int a) {}\n            }\n            \n\n            package foo;\n\n            class B extends A {\n              @Override\n              protected void swap(int a) {\n                super.swap(a);\n              }\n            }"
+    }
+  ]
+}

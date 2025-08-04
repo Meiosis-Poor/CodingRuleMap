@@ -1,0 +1,238 @@
+{
+  "name": "ParameterMissingNullable",
+  "language": "java",
+  "description": "Parameter has handling for null but is not annotated @Nullable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 301,
+  "branches": 55,
+  "apis": 14,
+  "test": [
+    {
+      "description": "positiveIf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {\n                // BUG: Diagnostic contains: @Nullable\n                if (i == null) {\n                  i = 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveIfWithUnrelatedThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "class Foo {\n              void foo(boolean b, Integer i) {\n                if (b) {\n                  // BUG: Diagnostic contains: @Nullable\n                  int val = i == null ? 0 : i;\n                  if (val < 0) {\n                    throw new RuntimeException();\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveDespiteWhileLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkArgument;\n\n            class Foo {\n              void foo(Object o) {\n                while (true) checkArgument(o != null);\n              }\n            }"
+    },
+    {
+      "description": "positiveTernary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "class Foo {\n              int i;\n\n              void foo(Integer i) {\n                // BUG: Diagnostic contains: @Nullable\n                this.i = i == null ? 0 : i;\n              }\n            }"
+    },
+    {
+      "description": "positiveCallToMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {}\n\n              void bar() {\n                // BUG: Diagnostic contains: @Nullable\n                foo(null);\n              }\n            }"
+    },
+    {
+      "description": "positiveCallToTopLevelConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "class Foo {\n              Foo(Integer i) {}\n\n              void bar() {\n                // BUG: Diagnostic contains: @Nullable\n                new Foo(null);\n              }\n            }"
+    },
+    {
+      "description": "positiveCallToNestedConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "class Foo {\n              static class Nested {\n                Nested(Integer i) {}\n              }\n\n              void bar() {\n                // BUG: Diagnostic contains: @Nullable\n                new Foo.Nested(null);\n              }\n            }"
+    },
+    {
+      "description": "negativeCallToNestedConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        171
+      ],
+      "code": ""
+    },
+    {
+      "description": "declarationAnnotatedLocation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import javax.annotation.Nullable;\n\n            class Foo {\n              void foo(java.lang.Integer i) {\n                if (i == null) {\n                  i = 0;\n                }\n              }\n            }\n            \n\n            import javax.annotation.Nullable;\n\n            class Foo {\n              void foo(@Nullable java.lang.Integer i) {\n                if (i == null) {\n                  i = 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "typeAnnotatedLocation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class Foo {\n              void foo(java.lang.Integer i) {\n                if (i == null) {\n                  i = 0;\n                }\n              }\n            }\n            \n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class Foo {\n              void foo(java.lang.@Nullable Integer i) {\n                if (i == null) {\n                  i = 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeAlreadyAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "import javax.annotation.Nullable;\n\n            class Foo {\n              void foo(@Nullable Integer i) {\n                if (i == null) {\n                  i = 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeCasesAlreadyTypeAnnotatedInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class Foo {\n              class Inner {}\n\n              @Nullable Inner message;\n\n              void foo(@Nullable Inner i) {\n                if (i == null) {\n                  return;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativePreconditionCheckMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        294
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkArgument;\n\n            class Foo {\n              void foo(Integer i) {\n                checkArgument(i != null);\n              }\n            }"
+    },
+    {
+      "description": "negativeOtherCheckMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        311
+      ],
+      "code": "class Foo {\n              void assertNot(boolean b) {}\n\n              void foo(Integer i) {\n                assertNot(i == null);\n              }\n            }"
+    },
+    {
+      "description": "negativeAssert",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        328
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {\n                assert (i != null);\n              }\n            }"
+    },
+    {
+      "description": "negativeCheckNotAgainstNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {\n                if (i == 7) {\n                  i = 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeCheckOfNonParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        360
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {\n                Integer j = 7;\n                if (j == null) {\n                  i = 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        378
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {\n                if (i == null) {\n                  throw something();\n                }\n              }\n\n              RuntimeException something() {\n                return new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "negativeCreateException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        399
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {\n                if (i == null) {\n                  throwIt(new RuntimeException());\n                }\n              }\n\n              void throwIt(RuntimeException x) {\n                throw x;\n              }\n            }"
+    },
+    {
+      "description": "negativeLambdaParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        420
+      ],
+      "code": "interface Foo {\n              Foo FOO = o -> o == null ? 0 : o;\n\n              int toInt(Integer o);\n            }"
+    },
+    {
+      "description": "negativeDoWhileLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        435
+      ],
+      "code": "class Foo {\n              Foo next;\n\n              void foo(Foo foo) {\n                do {\n                  foo = foo.next;\n                } while (foo != null);\n              }\n            }"
+    },
+    {
+      "description": "negativeWhileLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        454
+      ],
+      "code": "class Foo {\n              Foo next;\n\n              void foo(Foo foo) {\n                while (foo != null) {\n                  foo = foo.next;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeForLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        478
+      ],
+      "code": "class Foo {\n              Foo next;\n\n              void foo(Foo foo) {\n                for (; foo != null; foo = foo.next) {}\n              }\n            }"
+    },
+    {
+      "description": "negativeCallArgNotNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        496
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {}\n\n              void bar() {\n                foo(1);\n              }\n            }"
+    },
+    {
+      "description": "negativeCallAlreadyAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        513
+      ],
+      "code": "import javax.annotation.Nullable;\n\n            class Foo {\n              void foo(@Nullable Integer i) {}\n\n              void bar() {\n                foo(null);\n              }\n            }"
+    },
+    {
+      "description": "negativeCallTypeVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        532
+      ],
+      "code": "class Foo {\n              <T> void foo(T t) {}\n\n              void bar() {\n                foo(null);\n              }\n            }"
+    },
+    {
+      "description": "negativeCallOtherCompilationUnit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        549
+      ],
+      "code": "class Foo {\n              void foo(Integer i) {}\n            }\n            \n\n            class Bar {\n              void bar(Foo foo) {\n                foo.foo(null);\n              }\n            }"
+    },
+    {
+      "description": "negativeCallVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        571
+      ],
+      "code": "class Foo {\n              void foo(Integer... i) {}\n\n              void bar() {\n                foo(null, 1);\n              }\n            }"
+    }
+  ]
+}

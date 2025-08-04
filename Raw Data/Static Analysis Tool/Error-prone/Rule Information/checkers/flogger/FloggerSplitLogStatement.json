@@ -1,0 +1,38 @@
+{
+  "name": "FloggerSplitLogStatement",
+  "language": "java",
+  "description": "Splitting log statements and using Api instances directly breaks logging.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 64,
+  "branches": 1,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              // BUG: Diagnostic contains:\n              FluentLogger.Api getLogger() {\n                return logger.atInfo();\n              }\n\n              void splitLog() {\n                // BUG: Diagnostic contains:\n                FluentLogger.Api api = logger.atInfo();\n                api.log(\"foo\");\n              }\n            }"
+    },
+    {
+      "description": "positiveVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              void splitLog() {\n                // BUG: Diagnostic contains:\n                var api = logger.atInfo();\n                api.log(\"foo\");\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              void log() {\n                logger.atInfo().log(\"foo\");\n              }\n            }"
+    }
+  ]
+}

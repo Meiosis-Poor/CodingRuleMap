@@ -1,0 +1,134 @@
+{
+  "name": "AndroidJdkLibsChecker",
+  "language": "java",
+  "description": "Use of class, field, or method that is not compatible with legacy Android devices",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 72,
+  "branches": 5,
+  "apis": 5,
+  "test": [
+    {
+      "description": "repeatedAnnotationAllowed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.lang.annotation.Repeatable;\n\n            @Repeatable(Test.Container.class)\n            public @interface Test {\n              public @interface Container {\n                Test[] value();\n              }\n            }"
+    },
+    {
+      "description": "typeAnnotationAllowed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "import java.lang.annotation.Target;\n            import java.lang.annotation.ElementType;\n\n            @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE})\n            public @interface Test {}"
+    },
+    {
+      "description": "defaultMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "import java.util.Map;\n\n            public class Test {\n              abstract static class A implements Map<Object, Object> {}\n\n              abstract static class B implements Map<Object, Object> {\n                @Override\n                public Object getOrDefault(Object key, Object defaultValue) {\n                  return null;\n                }\n              }\n\n              void f(A a, B b) {\n                a.getOrDefault(null, null);\n                b.getOrDefault(null, null); // OK: overrides getOrDefault\n              }\n            }"
+    },
+    {
+      "description": "typeKind",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "public class Test {\n              // BUG: Diagnostic contains:\n              javax.lang.model.type.TypeKind tk;\n            }"
+    },
+    {
+      "description": "stopwatchElapsed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "import com.google.common.base.Stopwatch;\n            import java.util.concurrent.TimeUnit;\n\n            public class Test {\n              void o() {\n                Stopwatch.createStarted().elapsed();\n                Stopwatch.createStarted().elapsed(TimeUnit.MILLISECONDS);\n              }\n            }"
+    },
+    {
+      "description": "allowJava8Flag_packageAllowed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "import java.time.Duration;\n            import java.util.stream.Stream;\n            import com.google.common.base.Predicates;\n            import java.util.Arrays;\n\n            public class Test {\n              Duration d = Duration.ofSeconds(10);\n\n              public static void test(Stream s) {\n                s.forEach(i -> {});\n              }\n            }"
+    },
+    {
+      "description": "allowJava8Flag_memberAllowed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "import java.util.Arrays;\n\n            public class Test {\n              public static void main(String... args) {\n                Arrays.stream(args);\n              }\n            }"
+    },
+    {
+      "description": "allowJava8Flag_getTimeZone",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        163
+      ],
+      "code": "import java.time.ZoneId;\n            import java.util.TimeZone;\n\n            public class Test {\n              public static void test() {\n                TimeZone.getTimeZone(\"a\");\n                TimeZone.getTimeZone(ZoneId.of(\"a\"));\n              }\n            }"
+    },
+    {
+      "description": "allowJava8Flag_explicitNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "import java.util.Spliterator;\n\n            public abstract class Test implements Spliterator.OfInt {}"
+    },
+    {
+      "description": "forEach",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        195
+      ],
+      "code": "import java.util.Collection;\n\n            class T {\n              void f(Iterable<?> i, Collection<?> c) {\n                i.forEach(System.err::println);\n                c.forEach(System.err::println);\n              }\n            }"
+    },
+    {
+      "description": "moduleInfo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        213
+      ],
+      "code": "module testmodule {\n              requires java.base;\n            }"
+    },
+    {
+      "description": "methodHandle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "import java.lang.invoke.MethodHandles;\n\n            public class Test {\n              void f() {\n                Object o = MethodHandles.lookup();\n              }\n            }"
+    },
+    {
+      "description": "newAndroidApi",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245
+      ],
+      "code": "package android.service.quicksettings;\n\n            public class Tile {}\n            \n\n            import static java.util.Objects.requireNonNull;\n\n            public class Test {\n              void f() {\n                requireNonNull(android.service.quicksettings.Tile.class);\n              }\n            }"
+    },
+    {
+      "description": "parallelStream",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "import java.util.Collection;\n            import java.util.stream.Stream;\n\n            public class Test {\n              Stream<?> f(Collection<?> xs) {\n                // BUG: Diagnostic contains:\n                return xs.parallelStream().map(x -> x);\n              }\n            }"
+    },
+    {
+      "description": "base64",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        290
+      ],
+      "code": "import java.util.Base64;\n\n            public class Test {\n              String f(byte[] code) {\n                return Base64.getUrlEncoder().encodeToString(code);\n              }\n            }"
+    }
+  ]
+}

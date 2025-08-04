@@ -1,0 +1,30 @@
+{
+  "name": "CloseableProvides",
+  "language": "java",
+  "description": "Providing Closeable resources makes their lifecycle unclear",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 47,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import com.google.inject.Provides;\n            import java.io.Closeable;\n            import java.io.PrintWriter;\n            import java.nio.charset.StandardCharsets;\n            import javax.inject.Singleton;\n\n            /**\n             * @author bhagwani@google.com (Sumit Bhagwani)\n             */\n            public class CloseableProvidesPositiveCases {\n\n              static class ImplementsClosable implements Closeable {\n                public void close() {\n                  // no op\n                }\n              }\n\n              @Provides\n              // BUG: Diagnostic contains: CloseableProvides\n              ImplementsClosable providesImplementsClosable() {\n                return new ImplementsClosable();\n              }\n\n              @Provides\n              @Singleton\n              // BUG: Diagnostic contains: CloseableProvides\n              PrintWriter providesPrintWriter() throws Exception {\n                return new PrintWriter(\"some_file_path\", StandardCharsets.UTF_8.name());\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import com.google.inject.Provides;\n            import javax.inject.Singleton;\n\n            /**\n             * @author bhagwani@google.com (Sumit Bhagwani)\n             */\n            public class CloseableProvidesNegativeCases {\n\n              static class DoesNotImplementsClosable {\n                public void close() {\n                  // no op\n                }\n              }\n\n              @Provides\n              DoesNotImplementsClosable providesDoesNotImplementsClosable() {\n                return new DoesNotImplementsClosable();\n              }\n\n              @Provides\n              @Singleton\n              Object providesObject() {\n                return new Object();\n              }\n            }\\"
+    }
+  ]
+}

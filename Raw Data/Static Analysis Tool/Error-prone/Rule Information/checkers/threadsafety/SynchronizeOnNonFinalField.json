@@ -1,0 +1,62 @@
+{
+  "name": "SynchronizeOnNonFinalField",
+  "language": "java",
+  "description": "Synchronizing on non-final fields is not safe: if the field is ever updated, different threads may end up locking on different objects.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 64,
+  "branches": 8,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package threadsafety.Test;\n\n            class Test {\n              Object lock = new Object();\n\n              void m() {\n                // BUG: Diagnostic contains: Synchronizing on non-final fields is not safe\n                synchronized (lock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "package threadsafety.Test;\n\n            class Test {\n              Object lock = new Object();\n              Test[] tx = null;\n\n              void m(int i) {\n                // BUG: Diagnostic contains: Synchronizing on non-final fields is not safe\n                synchronized (this.tx[i].lock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "package threadsafety.Test;\n\n            class Test {\n              Object lock = new Object();\n\n              void m(Test t) {\n                // BUG: Diagnostic contains: Synchronizing on non-final fields is not safe\n                synchronized (t.lock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "package threadsafety.Test;\n\n            class Test {\n              final Object lock = new Object();\n\n              void m() {\n                synchronized (lock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_lazyInit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "package threadsafety.Test;\n\n            import com.google.errorprone.annotations.concurrent.LazyInit;\n\n            class Test {\n              @LazyInit transient Object lock = new Object();\n\n              void m() {\n                synchronized (lock) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_writer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        136
+      ],
+      "code": "import java.io.Writer;\n\n            abstract class Test extends Writer {\n              void m() {\n                synchronized (lock) {\n                }\n              }\n            }"
+    }
+  ]
+}

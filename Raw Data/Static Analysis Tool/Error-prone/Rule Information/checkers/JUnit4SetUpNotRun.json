@@ -1,0 +1,62 @@
+{
+  "name": "JUnit4SetUpNotRun",
+  "language": "java",
+  "description": "setUp() method will not be run; please add JUnit's @Before annotation",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 58,
+  "branches": 2,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport org.junit.After;\nimport org.junit.AfterClass;\nimport org.junit.runner.RunWith;\nimport org.junit.runners.JUnit4;\n\n/** Basic class with an untagged setUp method */\n@RunWith(JUnit4.class)\npublic class JUnit4SetUpNotRunPositiveCases {\n  // BUG: Diagnostic contains: @Before\n  public void setUp() {}\n}\n\n@RunWith(JUnit4.class)\nclass J4PositiveCase2 {\n  // BUG: Diagnostic contains: @Before\n  protected void setUp() {}\n}\n\n/** Replace @After with @Before */\n@RunWith(JUnit4.class)\nclass J4AfterToBefore {\n  // BUG: Diagnostic contains: @Before\n  @After\n  protected void setUp() {}\n}\n\n/** Replace @AfterClass with @BeforeClass */\n@RunWith(JUnit4.class)\nclass J4AfterClassToBeforeClass {\n  // BUG: Diagnostic contains: @BeforeClass\n  @AfterClass\n  protected void setUp() {}\n}\n\nclass BaseTestClass {\n  void setUp() {}\n}\n\n/**\n * This is the ambiguous case that we want the developer to make the determination as to whether to\n * rename setUp()\n */\n@RunWith(JUnit4.class)\nclass J4Inherit extends BaseTestClass {\n  // BUG: Diagnostic contains: @Before\n  protected void setUp() {}\n}\n\n/**\n * setUp() method overrides parent method with @Override, but that method isn't @Before in the\n * superclass\n */\n@RunWith(JUnit4.class)\nclass J4OverriddenSetUp extends BaseTestClass {\n  @Override\n  // BUG: Diagnostic contains: @Before\n  protected void setUp() {}\n}\n\n@RunWith(JUnit4.class)\nclass J4OverriddenSetUpPublic extends BaseTestClass {\n  @Override\n  // BUG: Diagnostic contains: @Before\n  public void setUp() {}\n}"
+    },
+    {
+      "description": "positiveCase_customBefore",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n\n            /** Slightly funky test case with a custom Before annotation */\n            @RunWith(JUnit4.class)\n            public class JUnit4SetUpNotRunPositiveCaseCustomBefore {\n              // This will compile-fail and suggest the import of org.junit.Before\n              // BUG: Diagnostic contains: @Before\n              @Before\n              public void setUp() {}\n            }\n\n            @interface Before {}\\"
+    },
+    {
+      "description": "customBefore_refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n\n            @RunWith(JUnit4.class)\n            public class Foo {\n              @Before\n              public void initMocks() {}\n\n              @Before\n              protected void badVisibility() {}\n            }\n            \n\n            import org.junit.Before;\n            import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n\n            @RunWith(JUnit4.class)\n            public class Foo {\n              @Before\n              public void initMocks() {}\n\n              @Before\n              public void badVisibility() {}\n            }"
+    },
+    {
+      "description": "positiveCase_customBeforeDifferentName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        180
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n\n            /** Test case with a custom Before annotation. */\n            @RunWith(JUnit4.class)\n            public class JUnit4SetUpNotRunPositiveCaseCustomBefore2 {\n              // This will compile-fail and suggest the import of org.junit.Before\n              // BUG: Diagnostic contains: @Before\n              @Before\n              public void initMocks() {}\n\n              // BUG: Diagnostic contains: @Before\n              @Before\n              protected void badVisibility() {}\n            }\n\n            @interface Before {}\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        209
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport junit.framework.TestCase;\nimport org.junit.Before;\nimport org.junit.internal.runners.JUnit38ClassRunner;\nimport org.junit.runner.RunWith;\nimport org.junit.runners.JUnit4;\n\n/** Not a JUnit 4 test (no @RunWith annotation on the class). */\npublic class JUnit4SetUpNotRunNegativeCases {\n  public void setUp() {}\n}\n\n@RunWith(JUnit38ClassRunner.class)\nclass J4SetUpWrongRunnerType {\n  public void setUp() {}\n}\n\n@RunWith(JUnit4.class)\nclass J4SetUpCorrectlyDone {\n  @Before\n  public void setUp() {}\n}\n\n/** May be a JUnit 3 test -- has @RunWith annotation on the class but also extends TestCase. */\n@RunWith(JUnit4.class)\nclass J4SetUpJUnit3Class extends TestCase {\n  public void setUp() {}\n}\n\n/** setUp() method is private and wouldn't be run by JUnit3 */\n@RunWith(JUnit4.class)\nclass J4PrivateSetUp {\n  private void setUp() {}\n}\n\n/**\n * setUp() method is package-local. You couldn't have a JUnit3 test class with a package-private\n * setUp() method (narrowing scope from protected to package)\n */\n@RunWith(JUnit4.class)\nclass J4PackageLocalSetUp {\n  void setUp() {}\n}\n\n@RunWith(JUnit4.class)\nclass J4SetUpNonVoidReturnType {\n  int setUp() {\n    return 42;\n  }\n}\n\n/** setUp() has parameters */\n@RunWith(JUnit4.class)\nclass J4SetUpWithParameters {\n  public void setUp(int ignored) {}\n\n  public void setUp(boolean ignored) {}\n\n  public void setUp(String ignored) {}\n}\n\n/** setUp() method is static and wouldn't be run by JUnit3 */\n@RunWith(JUnit4.class)\nclass J4StaticSetUp {\n  public static void setUp() {}\n}\n\nabstract class SetUpAnnotatedBaseClass {\n  @Before\n  public void setUp() {}\n}\n\n/** setUp() method overrides parent method with @Before. It will be run by JUnit4BlockRunner */\n@RunWith(JUnit4.class)\nclass J4SetUpExtendsAnnotatedMethod extends SetUpAnnotatedBaseClass {\n  public void setUp() {}\n}\\"
+    },
+    {
+      "description": "noBeforeOnClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": ""
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "RedundantThrows",
+  "language": "java",
+  "description": "Thrown exception is a subtype of another",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 102,
+  "branches": 12,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "import java.io.IOException;\n            import java.io.FileNotFoundException;\n            import java.nio.file.AccessDeniedException;\n\n            interface Test {\n              // BUG: Diagnostic contains: FileNotFoundException is a subtype of IOException\n              void f() throws FileNotFoundException, IOException;\n\n              // BUG: Diagnostic contains: FileNotFoundException is a subtype of IOException\n              void g() throws IOException, FileNotFoundException;\n            }"
+    },
+    {
+      "description": "positiveTwoSubtypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "interface Test {\n  // BUG: Diagnostic contains: IllegalAccessException and NoSuchFieldException are subtypes of\n  // ReflectiveOperationException\n  void f() throws IllegalAccessException, NoSuchFieldException, ReflectiveOperationException;\n}"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "import java.io.*;\n\n            interface Test {\n              void f() throws NullPointerException, FileNotFoundException;\n            }"
+    },
+    {
+      "description": "transitiveSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83
+      ],
+      "code": "import java.io.IOException;\n            import java.io.FileNotFoundException;\n            import java.nio.file.AccessDeniedException;\n\n            interface Test {\n              void f() throws FileNotFoundException, IOException, AccessDeniedException;\n            }\n            \n\n            import java.io.IOException;\n            import java.io.FileNotFoundException;\n            import java.nio.file.AccessDeniedException;\n\n            interface Test {\n              void f() throws IOException;\n            }"
+    }
+  ]
+}

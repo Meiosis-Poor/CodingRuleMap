@@ -1,0 +1,142 @@
+{
+  "name": "ModifiedButNotUsed",
+  "language": "java",
+  "description": "A collection or proto builder was created, but its values were never accessed.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 359,
+  "branches": 31,
+  "apis": 9,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                // BUG: Diagnostic contains:\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                List<Integer> bar;\n                // BUG: Diagnostic contains:\n                bar = new ArrayList<>();\n                bar.add(1);\n              }\n            }"
+    },
+    {
+      "description": "sideEffectFreeRefactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                List<Integer> bar = new ArrayList<>();\n                bar.add(sideEffects());\n                List<Integer> baz;\n                baz = new ArrayList<>();\n                baz.add(sideEffects());\n              }\n\n              int sideEffects() {\n                return 1;\n              }\n            }\n            \n\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {}\n\n              int sideEffects() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "sideEffectPreservingRefactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                List<Integer> bar = new ArrayList<>();\n                bar.add(sideEffects());\n                List<Integer> baz;\n                baz = new ArrayList<>();\n                baz.add(sideEffects());\n              }\n\n              int sideEffects() {\n                return 1;\n              }\n            }\n            \n\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                sideEffects();\n                sideEffects();\n              }\n\n              int sideEffects() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "negatives",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        148
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            abstract class Test {\n              void test() {\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                if (false) {\n                  foo = new ArrayList<>();\n                }\n                int a = foo.get(0);\n              }\n\n              void test2() {\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                incoming(foo);\n              }\n\n              abstract void incoming(List<Integer> l);\n            }"
+    },
+    {
+      "description": "usedByAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              private List<Integer> bar;\n\n              void test() {\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                bar = foo;\n              }\n            }"
+    },
+    {
+      "description": "usedDuringAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            abstract class Test {\n              private List<Integer> bar;\n\n              void test() {\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                foo = frobnicate(foo);\n              }\n\n              abstract List<Integer> frobnicate(List<Integer> a);\n            }"
+    },
+    {
+      "description": "negativeAfterReassignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                List<Integer> foo = new ArrayList<>();\n                foo.add(1);\n                foo.get(0);\n                foo = new ArrayList<>();\n                foo.add(1);\n                foo.get(0);\n              }\n            }"
+    },
+    {
+      "description": "proto",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        248
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              static void foo() {\n                // BUG: Diagnostic contains:\n                TestProtoMessage.Builder proto = TestProtoMessage.newBuilder();\n                proto.setMessage(TestFieldProtoMessage.newBuilder());\n                TestProtoMessage.Builder proto2 =\n                    // BUG: Diagnostic contains:\n                    TestProtoMessage.newBuilder().setMessage(TestFieldProtoMessage.newBuilder());\n                TestProtoMessage.Builder proto3 =\n                    // BUG: Diagnostic contains:\n                    TestProtoMessage.getDefaultInstance().toBuilder().clearMessage();\n                TestProtoMessage.Builder proto4 =\n                    // BUG: Diagnostic contains:\n                    TestProtoMessage.getDefaultInstance().toBuilder().clear();\n              }\n            }"
+    },
+    {
+      "description": "protoSideEffects",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        277
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void foo() {\n                TestProtoMessage.Builder proto = TestProtoMessage.newBuilder();\n                TestFieldProtoMessage.Builder builder = TestFieldProtoMessage.newBuilder();\n                proto.setMessage(builder).setMessage(sideEffects());\n              }\n\n              TestFieldProtoMessage sideEffects() {\n                throw new UnsupportedOperationException();\n              }\n            }\n            \n\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void foo() {\n                TestFieldProtoMessage.Builder builder = TestFieldProtoMessage.newBuilder();\n                sideEffects();\n              }\n\n              TestFieldProtoMessage sideEffects() {\n                throw new UnsupportedOperationException();\n              }\n            }"
+    },
+    {
+      "description": "protoNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              static TestProtoMessage foo() {\n                TestProtoMessage.Builder proto = TestProtoMessage.newBuilder();\n                return proto.setMessage(TestFieldProtoMessage.newBuilder()).build();\n              }\n            }"
+    },
+    {
+      "description": "immutableCollection",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        338
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              static void foo() {\n                // BUG: Diagnostic contains:\n                ImmutableList.Builder<Integer> a = ImmutableList.builder();\n                a.add(1);\n                // BUG: Diagnostic contains:\n                ImmutableList.Builder<Integer> b = ImmutableList.<Integer>builder().add(1);\n                b.add(1);\n              }\n            }"
+    },
+    {
+      "description": "protoUnusedExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        360
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void foo(TestProtoMessage proto) {\n                // BUG: Diagnostic contains:\n                proto.toBuilder().setMessage(TestFieldProtoMessage.newBuilder()).build();\n                // BUG: Diagnostic contains:\n                proto.toBuilder().setMessage(TestFieldProtoMessage.newBuilder());\n              }\n            }"
+    },
+    {
+      "description": "protoBuilderMergeFrom",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        381
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void foo(TestProtoMessage proto) throws Exception {\n                // BUG: Diagnostic contains:\n                TestProtoMessage.newBuilder().mergeFrom(new byte[0]).build();\n              }\n            }"
+    },
+    {
+      "description": "protoUnusedExpressionViaBuilderGetter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        400
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            class Test {\n              void foo(TestProtoMessage proto) {\n                // BUG: Diagnostic contains:\n                proto.toBuilder().getMessageBuilder().clearField().build();\n              }\n            }"
+    },
+    {
+      "description": "collectionUnusedExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        419
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              void foo() {\n                // BUG: Diagnostic contains:\n                ImmutableList.<Integer>builder().add(1).build();\n                // BUG: Diagnostic contains:\n                ImmutableList.<Integer>builder().add(1);\n              }\n            }"
+    },
+    {
+      "description": "unusedPrefix_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        439
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              void test() {\n                List<Integer> unusedIntegers = new ArrayList<>();\n                unusedIntegers.add(1);\n                List<Integer> ignored = new ArrayList<>();\n                ignored.add(1);\n              }\n            }"
+    }
+  ]
+}

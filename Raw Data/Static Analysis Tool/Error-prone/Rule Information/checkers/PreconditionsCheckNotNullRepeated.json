@@ -1,0 +1,38 @@
+{
+  "name": "PreconditionsCheckNotNullRepeated",
+  "language": "java",
+  "description": "Including the first argument of checkNotNull in the failure message is not useful, as it will always be `null`.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 77,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveMatchesWithReplacement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkNotNull;\n            import com.google.common.base.Preconditions;\n\n            public class Test {\n              public void error() {\n                Object someObject = new Object();\n                Preconditions.checkNotNull(someObject, someObject);\n                checkNotNull(someObject, someObject);\n              }\n            }\n            \n\n            import static com.google.common.base.Preconditions.checkNotNull;\n            import com.google.common.base.Preconditions;\n\n            public class Test {\n              public void error() {\n                Object someObject = new Object();\n                Preconditions.checkNotNull(someObject, \"someObject must not be null\");\n                checkNotNull(someObject, \"someObject must not be null\");\n              }\n            }"
+    },
+    {
+      "description": "flagArgInVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkNotNull;\n            import com.google.common.base.Preconditions;\n\n            public class Test {\n              public void notError() {\n                Object obj = new Object();\n                Preconditions.checkNotNull(\n                    obj,\n                    \"%s must not be null\",\n                    // BUG: Diagnostic contains: Including `obj` in the failure message\n                    obj);\n                String s = \"test string\";\n                // BUG: Diagnostic contains: PreconditionsCheckNotNullRepeated\n                Preconditions.checkNotNull(s, s, s);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "import static com.google.common.base.Preconditions.checkNotNull;\n            import com.google.common.base.Preconditions;\n\n            public class Test {\n              public void notError() {\n                Object obj = new Object();\n                Preconditions.checkNotNull(obj);\n                Preconditions.checkNotNull(obj, \"obj\");\n                Preconditions.checkNotNull(obj, \"check with message\");\n                Preconditions.checkNotNull(obj, \"check with msg and an arg %s\", new Object());\n              }\n            }"
+    }
+  ]
+}

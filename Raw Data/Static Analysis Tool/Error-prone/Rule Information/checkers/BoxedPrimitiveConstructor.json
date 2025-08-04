@@ -1,0 +1,110 @@
+{
+  "name": "BoxedPrimitiveConstructor",
+  "language": "java",
+  "description": "valueOf or autoboxing provides better time and space performance",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 224,
+  "branches": 32,
+  "apis": 13,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "public class Test {\n              {\n                // BUG: Diagnostic contains: byte b = (byte) 0;\n                byte b = new Byte((byte) 0);\n                // BUG: Diagnostic contains: char c = (char) 0;\n                char c = new Character((char) 0);\n                // BUG: Diagnostic contains: double d = 0;\n                double d = new Double(0);\n                // BUG: Diagnostic contains: float f = 0;\n                float f = new Float(0);\n                // BUG: Diagnostic contains: int i = 0;\n                int i = new Integer(0);\n                // BUG: Diagnostic contains: long j = 0;\n                long j = new Long(0);\n                // BUG: Diagnostic contains: short s = (short) 0;\n                short s = new Short((short) 0);\n                Double dd = d;\n                // BUG: Diagnostic contains: float f2 = dd.floatValue();\n                float f2 = new Float(dd);\n                // BUG: Diagnostic contains: float f3 = (float) d;\n                float f3 = new Float(d);\n                // BUG: Diagnostic contains: foo(Float.valueOf((float) d));\n                foo(new Float(d));\n              }\n\n              public void foo(Float f) {}\n            }"
+    },
+    {
+      "description": "positiveStrings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "public class Test {\n              {\n                // BUG: Diagnostic contains: byte b = Byte.valueOf(\"0\");\n                byte b = new Byte(\"0\");\n                // BUG: Diagnostic contains: double d = Double.valueOf(\"0\");\n                double d = new Double(\"0\");\n                // BUG: Diagnostic contains: float f = Float.valueOf(\"0\");\n                float f = new Float(\"0\");\n                // BUG: Diagnostic contains: int i = Integer.valueOf(\"0\");\n                int i = new Integer(\"0\");\n                // BUG: Diagnostic contains: long j = Long.valueOf(\"0\");\n                long j = new Long(\"0\");\n                // BUG: Diagnostic contains: short s = Short.valueOf(\"0\");\n                short s = new Short(\"0\");\n              }\n            }"
+    },
+    {
+      "description": "booleanConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "public class Test {\n              static final Boolean CONST = true;\n              static final String CONST2 = null;\n\n              {\n                // BUG: Diagnostic contains: boolean a = true;\n                boolean a = new Boolean(true);\n                // BUG: Diagnostic contains: boolean b = false;\n                boolean b = new Boolean(false);\n                // BUG: Diagnostic contains: boolean c = Boolean.valueOf(CONST);\n                boolean c = new Boolean(CONST);\n                // BUG: Diagnostic contains: boolean e = true;\n                boolean e = new Boolean(\"true\");\n                // BUG: Diagnostic contains: boolean f = false;\n                boolean f = new Boolean(\"nope\");\n                // BUG: Diagnostic contains: boolean g = Boolean.valueOf(CONST2);\n                boolean g = new Boolean(CONST2);\n                // BUG: Diagnostic contains: System.err.println(Boolean.TRUE);\n                System.err.println(new Boolean(\"true\"));\n                // BUG: Diagnostic contains: System.err.println(Boolean.FALSE);\n                System.err.println(new Boolean(\"false\"));\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "public class Test {\n              {\n                String s = new String((String) null);\n              }\n            }"
+    },
+    {
+      "description": "autoboxing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "public abstract class Test {\n              abstract int g(Integer x);\n\n              void f(int x) {\n                // BUG: Diagnostic contains: int i = x;\n                int i = new Integer(x);\n                // BUG: Diagnostic contains: i = g(Integer.valueOf(x));\n                i = g(new Integer(x));\n                // BUG: Diagnostic contains: i = (short) 0;\n                i = new Integer((short) 0);\n              }\n            }"
+    },
+    {
+      "description": "methodCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        166
+      ],
+      "code": "public abstract class Test {\n              abstract int g(Integer x);\n\n              void f(int x) {\n                // BUG: Diagnostic contains: int i = Integer.valueOf(x).byteValue();\n                int i = new Integer(x).byteValue();\n              }\n            }"
+    },
+    {
+      "description": "stringValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "public abstract class Test {\n              abstract int g(Integer x);\n\n              void f(int x) {\n                // BUG: Diagnostic contains: String s = String.valueOf(x);\n                String s = new Integer(x).toString();\n              }\n            }"
+    },
+    {
+      "description": "compareTo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": "public abstract class Test {\n              abstract int g(Integer x);\n\n              void f(int x, Integer y, double d, Double dd, Float f) {\n                // BUG: Diagnostic contains: int c1 = Integer.compare(x, y);\n                int c1 = new Integer(x).compareTo(y);\n                // BUG: Diagnostic contains: int c2 = y.compareTo(Integer.valueOf(x));\n                int c2 = y.compareTo(new Integer(x));\n                // BUG: Diagnostic contains: int c3 = Float.compare((float) d, f);\n                int c3 = new Float(d).compareTo(f);\n                // BUG: Diagnostic contains: int c4 = Float.compare(dd.floatValue(), f);\n                int c4 = new Float(dd).compareTo(f);\n              }\n            }"
+    },
+    {
+      "description": "hashCodeRefactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        226
+      ],
+      "code": "public abstract class Test {\n              abstract int g(Integer x);\n\n              int f(int x, Integer y, long z, double d, Double dd) {\n                // BUG: Diagnostic contains: int h = Integer.hashCode(x);\n                int h = new Integer(x).hashCode();\n                // BUG: Diagnostic contains: h = Float.hashCode((float) d);\n                h = new Float(d).hashCode();\n                // BUG: Diagnostic contains: h = Float.hashCode(dd.floatValue());\n                h = new Float(dd).hashCode();\n                // BUG: Diagnostic contains: return Long.hashCode(z);\n                return new Long(z).hashCode();\n              }\n            }"
+    },
+    {
+      "description": "incompleteClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        254
+      ],
+      "code": ""
+    },
+    {
+      "description": "autoboxWidening",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "class Test {\n              void f(float f) {\n                // BUG: Diagnostic contains: (double) f;\n                Double d = new Double(f);\n                // BUG: Diagnostic contains: (short) (byte) 0;\n                Short s = new Short((byte) 0);\n              }\n            }"
+    },
+    {
+      "description": "autoboxGenerics",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        287
+      ],
+      "code": "class Test {\n              <T> T f(Object o) {\n                // BUG: Diagnostic contains: return (T) Integer.valueOf(o.hashCode());\n                return (T) new Integer(o.hashCode());\n              }\n            }"
+    }
+  ]
+}

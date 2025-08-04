@@ -1,0 +1,30 @@
+{
+  "name": "NonRuntimeAnnotation",
+  "language": "java",
+  "description": "Calling getAnnotation on an annotation that is not retained at runtime",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 72,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\n\n/**\n * @author scottjohnson@google.com (Scott Johnsson)\n */\n@NonRuntimeAnnotationPositiveCases.NotSpecified\n@NonRuntimeAnnotationPositiveCases.NonRuntime\npublic class NonRuntimeAnnotationPositiveCases {\n\n  public NonRuntime testAnnotation() {\n    // BUG: Diagnostic contains: runtime; NonRuntime\n    NonRuntimeAnnotationPositiveCases.class.getAnnotation(\n        NonRuntimeAnnotationPositiveCases.NonRuntime.class);\n    // BUG: Diagnostic contains:\n    NonRuntimeAnnotationPositiveCases.class.getAnnotation(\n        NonRuntimeAnnotationPositiveCases.NotSpecified.class);\n    // BUG: Diagnostic contains:\n    return this.getClass().getAnnotation(NonRuntimeAnnotationPositiveCases.NonRuntime.class);\n  }\n\n  /** Annotation that is explicitly NOT retained at runtime */\n  @Retention(RetentionPolicy.SOURCE)\n  public @interface NonRuntime {}\n\n  /** Annotation that is implicitly NOT retained at runtime */\n  public @interface NotSpecified {}\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\n\n/**\n * @author scottjohnson@google.com (Scott Johnsson)\n */\n@NonRuntimeAnnotationNegativeCases.Runtime\npublic class NonRuntimeAnnotationNegativeCases {\n\n  public Runtime testAnnotation() {\n    return this.getClass().getAnnotation(NonRuntimeAnnotationNegativeCases.Runtime.class);\n  }\n\n  /** Annotation that is retained at runtime */\n  @Retention(RetentionPolicy.RUNTIME)\n  public @interface Runtime {}\n}\\"
+    }
+  ]
+}

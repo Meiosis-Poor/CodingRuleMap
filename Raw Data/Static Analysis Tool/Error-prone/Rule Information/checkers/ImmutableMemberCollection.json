@@ -1,0 +1,118 @@
+{
+  "name": "ImmutableMemberCollection",
+  "language": "java",
+  "description": "If you don't intend to mutate a member collection prefer using Immutable types.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 238,
+  "branches": 9,
+  "apis": 4,
+  "test": [
+    {
+      "description": "listInitInline_notMutated_replacesTypeWithImmutableList",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.List;\n\n            class Test {\n              private final List<String> myList = ImmutableList.of(\"a\");\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.List;\n\n            class Test {\n              private final ImmutableList<String> myList = ImmutableList.of(\"a\");\n            }"
+    },
+    {
+      "description": "setInitConstructor_notMutatedButSuppressed_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              @SuppressWarnings(\"ImmutableMemberCollection\")\n              private final List<String> myList;\n\n              Test(List<String> myList) {\n                this.myList = myList;\n              }\n            }"
+    },
+    {
+      "description": "listInitConstructor_notMutated_replacesTypeWithImmutableList",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.List;\n\n            class Test {\n              private final List<String> myList;\n              private List<String> doNotTouchThisList;\n\n              Test() {\n                myList = ImmutableList.of(\"a\");\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.List;\n\n            class Test {\n              private final ImmutableList<String> myList;\n              private List<String> doNotTouchThisList;\n\n              Test() {\n                myList = ImmutableList.of(\"a\");\n              }\n            }"
+    },
+    {
+      "description": "listInitInline_bindAnnotation_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        113
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.inject.testing.fieldbinder.Bind;\n            import java.util.List;\n\n            class Test {\n              @Bind private final List<String> myList = ImmutableList.of(\"a\");\n            }"
+    },
+    {
+      "description": "setInit_mutableTypeInConstructor_mutated_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              private final Set<String> mySet;\n\n              Test() {\n                mySet = new HashSet<>();\n              }\n\n              private void myFunc() {\n                mySet.add(\"myString\");\n              }\n            }"
+    },
+    {
+      "description": "setInit_mutableTypeInConstructor_returnedAsIs_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        156
+      ],
+      "code": "import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              private final Set<String> mySet = new HashSet<String>();\n\n              private Set<String> myFunc() {\n                return mySet;\n              }\n            }"
+    },
+    {
+      "description": "setInit_mutableTypeInConstructor_returnedInConditional_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              private final Set<String> mySet = new HashSet<String>();\n\n              private Set<String> myFunc() {\n                return 1 > 2 ? new HashSet<String>() : mySet;\n              }\n            }"
+    },
+    {
+      "description": "setInit_mutableTypeInStaticBlock_mutated_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        198
+      ],
+      "code": "import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              private static final Set<String> mySet;\n\n              static {\n                mySet = new HashSet<>();\n              }\n\n              private static void myFunc() {\n                mySet.add(\"myString\");\n              }\n            }"
+    },
+    {
+      "description": "setInit_mutableTypeInStaticBlock_passedToAnotherFunction_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        223
+      ],
+      "code": "import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              private static final Set<String> mySet;\n\n              static {\n                mySet = new HashSet<>();\n              }\n\n              private static void myFunc() {\n                System.out.println(mySet);\n              }\n            }"
+    },
+    {
+      "description": "listInitWithMutableType_notMutated_replacesTypeAndMakesDefensiveCopy",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        248
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              private final List<String> myList1 = new ArrayList<>();\n              private final List<String> myList2;\n\n              Test() {\n                myList2 = new ArrayList<>();\n              }\n\n              Test(String x) {\n                myList2 = ImmutableList.of(x);\n              }\n            }\n            \n\nimport com.google.common.collect.ImmutableList;\nimport java.util.List;\nimport java.util.ArrayList;\n\nclass Test {\n  private final ImmutableList<String> myList1 = ImmutableList.copyOf(new ArrayList<>());\n  private final ImmutableList<String> myList2;\n\n  Test() {\n    myList2 = ImmutableList.copyOf(new ArrayList<>());\n  }\n\n  Test(String x) {\n    myList2 = ImmutableList.of(x);\n  }\n}"
+    },
+    {
+      "description": "listInitWithMutableType_invokesReadOnlyMethods_replacesTypeAndMakesDefensiveCopy",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        294
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              private final List<String> myList = new ArrayList<>();\n\n              private String myFunc() {\n                return myList.get(0);\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              private final ImmutableList<String> myList = ImmutableList.copyOf(new ArrayList<>());\n\n              private String myFunc() {\n                return myList.get(0);\n              }\n            }"
+    },
+    {
+      "description": "setMutation_thisReference_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        329
+      ],
+      "code": "import com.google.common.collect.ImmutableSet;\n            import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              private final ImmutableSet<String> mySet;\n\n              Test() {\n                mySet = ImmutableSet.of();\n              }\n\n              private static final class Builder {\n                private final Set<String> mySet = new HashSet<>();\n\n                public void addString(String x) {\n                  this.mySet.add(x);\n                }\n              }\n            }"
+    },
+    {
+      "description": "setInNestedClassMutationInParent_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        359
+      ],
+      "code": "import com.google.common.collect.ImmutableSet;\n            import java.util.Set;\n            import java.util.HashSet;\n\n            class Test {\n              public void addString(String x) {\n                NestedTest nested = new NestedTest();\n                nested.mySet.add(x);\n              }\n\n              private static final class NestedTest {\n                private final Set<String> mySet = new HashSet<>();\n              }\n            }"
+    }
+  ]
+}

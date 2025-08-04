@@ -1,0 +1,86 @@
+{
+  "name": "CheckedExceptionNotThrown",
+  "language": "java",
+  "description": "This method cannot throw a checked exception that it claims to. This may cause consumers of the API to incorrectly attempt to handle, or propagate, this exception.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 185,
+  "branches": 8,
+  "apis": 3,
+  "test": [
+    {
+      "description": "noExceptionThrown_entireThrowsBlockRemoved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "public final class Test {\n              /**\n               * Frobnicate\n               *\n               * @throws Exception foo\n               */\n              void test() throws Exception {}\n            }\n            \n\n            public final class Test {\n              /** Frobnicate */\n              void test() {}\n            }"
+    },
+    {
+      "description": "exceptionActuallyThrown_noChange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "public final class Test {\n              void test() throws Exception {\n                Thread.sleep(1);\n              }\n            }"
+    },
+    {
+      "description": "overridable_noChange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "public class Test {\n              void test() throws Exception {}\n            }"
+    },
+    {
+      "description": "thrownViaGenericChecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "import java.util.Optional;\n\n            public final class Test {\n              int test(Optional<Integer> x) throws Exception {\n                return x.orElseThrow(() -> new Exception());\n              }\n            }"
+    },
+    {
+      "description": "thrownViaGenericUnchecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "import java.util.Optional;\n\n            public final class Test {\n              int test(Optional<Integer> x) throws Exception {\n                return x.orElseThrow(() -> new IllegalStateException());\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            public final class Test {\n              int test(Optional<Integer> x) {\n                return x.orElseThrow(() -> new IllegalStateException());\n              }\n            }"
+    },
+    {
+      "description": "oneCheckedOneUnchecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        138
+      ],
+      "code": "public final class Test {\n              void test() throws IllegalStateException, Exception {}\n            }\n            \n\n            public final class Test {\n              void test() throws IllegalStateException {}\n            }"
+    },
+    {
+      "description": "oneCheckedOneUnchecked_finding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        158
+      ],
+      "code": "public final class Test {\n              // BUG: Diagnostic contains: (Exception)\n              void test() throws IllegalStateException, Exception {}\n            }"
+    },
+    {
+      "description": "ignoredOnTestMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "public final class Test {\n              @org.junit.Test\n              void test() throws IllegalStateException, Exception {}\n            }"
+    },
+    {
+      "description": "exceptionActuallyThrownInFieldInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "public final class Test {\n              Test() throws Exception {}\n\n              int f = test();\n\n              static int test() throws Exception {\n                Thread.sleep(1);\n                return 1;\n              }\n            }"
+    }
+  ]
+}

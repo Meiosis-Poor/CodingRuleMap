@@ -1,0 +1,46 @@
+{
+  "name": "StaticAssignmentInConstructor",
+  "language": "java",
+  "description": "This assignment is to a static field. Mutating static state from a constructor is highly error-prone.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 74,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class Test {\n              static int foo;\n\n              public Test(int foo) {\n                // BUG: Diagnostic contains:\n                this.foo = foo;\n              }\n            }"
+    },
+    {
+      "description": "dubiousStorageOfLatestInstance_exempted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "class Test {\n              static Test latest;\n\n              public Test() {\n                latest = this;\n              }\n            }"
+    },
+    {
+      "description": "instanceField_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65
+      ],
+      "code": "class Test {\n              int foo;\n\n              public Test(int foo) {\n                this.foo = foo;\n              }\n            }"
+    },
+    {
+      "description": "assignedWithinLambda_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "class Test {\n              static int foo;\n\n              public Test(int a) {\n                java.util.Arrays.asList().stream()\n                    .map(\n                        x -> {\n                          foo = 1;\n                          return a;\n                        })\n                    .count();\n              }\n            }"
+    }
+  ]
+}

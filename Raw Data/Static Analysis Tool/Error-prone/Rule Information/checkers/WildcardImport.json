@@ -1,0 +1,166 @@
+{
+  "name": "WildcardImport",
+  "language": "java",
+  "description": "Wildcard imports, static or otherwise, should not be used",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 244,
+  "branches": 39,
+  "apis": 5,
+  "test": [
+    {
+      "description": "chainOffStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        40
+      ],
+      "code": "package a;\n\n            public class One {\n              public static Two THE_INSTANCE = null;\n            }\n            \n\n            package a;\n\n            public class Two {\n              public static String MESSAGE = \"Hello\";\n            }\n            \n\n            package test;\n\n            import static a.One.*;\n\n            public class Test {\n              String m = THE_INSTANCE.MESSAGE;\n            }\n            \n\n            package test;\n\n            import static a.One.THE_INSTANCE;\n\n            public class Test {\n              String m = THE_INSTANCE.MESSAGE;\n            }"
+    },
+    {
+      "description": "classLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "package a;\n\n            public class A {}\n            \n\n            package test;\n\n            import a.*;\n\n            public class Test {\n              void m() {\n                System.err.println(A.class);\n              }\n            }\n            \n\n            package test;\n\n            import a.A;\n\n            public class Test {\n              void m() {\n                System.err.println(A.class);\n              }\n            }"
+    },
+    {
+      "description": "staticMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        128
+      ],
+      "code": "package a;\n\n            public class A {\n              public static void f() {}\n            }\n            \n\n            package test;\n\n            import static a.A.*;\n\n            public class Test {\n              void m() {\n                f();\n              }\n            }\n            \n\n            package test;\n\n            import static a.A.f;\n\n            public class Test {\n              void m() {\n                f();\n              }\n            }"
+    },
+    {
+      "description": "enumTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        170
+      ],
+      "code": "package test;\n\n            import static java.nio.charset.StandardCharsets.*;\n\n            public class Test {\n              void m() {\n                System.err.println(UTF_8);\n              }\n            }\n            \n\n            package test;\n\n            import static java.nio.charset.StandardCharsets.UTF_8;\n\n            public class Test {\n              void m() {\n                System.err.println(UTF_8);\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": "package test;\n\n            import java.util.*;\n\n            public class Test {\n              java.util.Map.Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }\n            \n\n            package test;\n\n            public class Test {\n              java.util.Map.Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }"
+    },
+    {
+      "description": "doublePrefix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        234
+      ],
+      "code": "package foo;\n\n            public class Foo {}\n            \n\n            package foo.bar;\n\n            public class Bar {}\n            \n\n            package test;\n\n            import foo.*;\n            import foo.bar.*;\n\n            public class Test {\n              void f(Bar c) {}\n            }\n            \n\n            package test;\n\n            import foo.bar.Bar;\n\n            public class Test {\n              void f(Bar c) {}\n            }"
+    },
+    {
+      "description": "positiveClassSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        279
+      ],
+      "code": "package test;\n\n            import java.util.*;\n\n            public class Test {\n              Map.Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }\n            \n\n            package test;\n\n            import java.util.Map;\n\n            public class Test {\n              Map.Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }"
+    },
+    {
+      "description": "positiveInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        313
+      ],
+      "code": "package test;\n\n            import java.util.Map.*;\n\n            public class Test {\n              Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }\n            \n\n            package test;\n\n            import java.util.Map.Entry;\n\n            public class Test {\n              Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }"
+    },
+    {
+      "description": "dontImportRuntime",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        347
+      ],
+      "code": "package test;\n\n            public class Test {\n              String s;\n            }\n            \n\n            package test;\n\n            public class Test {\n              String s;\n            }"
+    },
+    {
+      "description": "dontImportSelf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        371
+      ],
+      "code": "package test;\n\n            import java.util.*;\n\n            public class Test {\n              Test s;\n            }\n            \n\n            package test;\n\n            public class Test {\n              Test s;\n            }"
+    },
+    {
+      "description": "dontImportSelfPrivate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        397
+      ],
+      "code": "package test;\n\n            import test.Test.Inner.*;\n\n            public class Test {\n              public static class Inner {\n                private static class InnerMost {\n                  InnerMost i;\n                }\n              }\n            }\n            \n\n            package test;\n\n            public class Test {\n              public static class Inner {\n                private static class InnerMost {\n                  InnerMost i;\n                }\n              }\n            }"
+    },
+    {
+      "description": "dontImportSelfNested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        431
+      ],
+      "code": "package test;\n\n            import java.util.*;\n\n            public class Test {\n              public static class Inner {\n                Inner t;\n              }\n            }\n            \n\n            package test;\n\n            public class Test {\n              public static class Inner {\n                Inner t;\n              }\n            }"
+    },
+    {
+      "description": "importSamePackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        461
+      ],
+      "code": "package test;\n\n            public class A {\n              public static class Inner {}\n            }\n            \n\n            package test;\n\n            import test.A.*;\n\n            public class Test {\n              Inner t;\n            }\n            \n\n            package test;\n\n            import test.A.Inner;\n\n            public class Test {\n              Inner t;\n            }"
+    },
+    {
+      "description": "negativeNoWildcard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        499
+      ],
+      "code": "package test;\n\n            import java.util.Map;\n\n            public class Test {\n              Map.Entry<String, String> e;\n              C c;\n\n              static class C {}\n            }"
+    },
+    {
+      "description": "sameUnitWithSpuriousWildImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        519
+      ],
+      "code": "package test;\n\n            import java.util.Map;\n\n            public class Test {\n              Map.Entry<String, String> e;\n              C c;\n\n              private static class C {}\n            }\n            \n\n            package test;\n\n            import java.util.Map;\n\n            public class Test {\n              Map.Entry<String, String> e;\n              C c;\n\n              private static class C {}\n            }"
+    },
+    {
+      "description": "nonCanonical",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        553
+      ],
+      "code": "package a;\n\n            public class One extends Two {}\n            \n\n            package a;\n\n            public class Two {\n              public static class Inner {}\n            }\n            \n\n            package test;\n\n            import static a.One.*;\n\n            public class Test {\n              Inner i;\n            }\n            \n\n            package test;\n\n            import a.Two.Inner;\n\n            public class Test {\n              Inner i;\n            }"
+    },
+    {
+      "description": "memberImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        599
+      ],
+      "code": "package test;\n\n            import static java.util.Arrays.*;\n            import java.util.*;\n\n            public class Test {\n              List<Integer> xs = asList(1, 2, 3);\n            }\n            \n\n            package test;\n\n            import static java.util.Arrays.asList;\n            import java.util.List;\n\n            public class Test {\n              List<Integer> xs = asList(1, 2, 3);\n            }"
+    },
+    {
+      "description": "qualifyMembersFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        634
+      ],
+      "code": "import e.E;\n\n            public class Test {\n              Object[] ex = {\n                E.A, E.B, E.C, E.D, E.E, E.F, E.G, E.H, E.I, E.J,\n                E.K, E.L, E.M, E.N, E.O, E.P, E.Q, E.R, E.S, E.T,\n                E.U, E.V, E.W, E.X, E.Y, E.Z\n              };\n\n              boolean f(e.E e) {\n                switch (e) {\n                  case A:\n                  case E:\n                  case I:\n                  case O:\n                  case U:\n                    return true;\n                  default:\n                    return false;\n                }\n              }\n            }"
+    },
+    {
+      "description": "manyTypesFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        707
+      ],
+      "code": ""
+    }
+  ]
+}

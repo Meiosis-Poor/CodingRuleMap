@@ -1,0 +1,150 @@
+{
+  "name": "ForOverrideChecker",
+  "language": "java",
+  "description": "Method annotated @ForOverride must be protected or package-private and only invoked from declaring class, or from an override of the method",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 181,
+  "branches": 30,
+  "apis": 2,
+  "test": [
+    {
+      "description": "canApplyForOverrideToProtectedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.ForOverride;\n\n            public class Test {\n              @ForOverride\n              protected void myMethod() {}\n            }"
+    },
+    {
+      "description": "canApplyForOverrideToPackagePrivateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.ForOverride;\n\n            public class Test {\n              @ForOverride\n              void myMethod() {}\n            }"
+    },
+    {
+      "description": "cannotApplyForOverrideToPublicMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "package test;\n\nimport com.google.errorprone.annotations.ForOverride;\n\npublic class Test {\n  @ForOverride\n  // BUG: Diagnostic contains: @ForOverride must have protected or package-private visibility\n  public void myMethod() {}\n}"
+    },
+    {
+      "description": "cannotApplyForOverrideToPrivateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109
+      ],
+      "code": "package test;\n\nimport com.google.errorprone.annotations.ForOverride;\n\npublic class Test {\n  @ForOverride\n  // BUG: Diagnostic contains: @ForOverride must have protected or package-private visibility\n  private void myMethod() {}\n}"
+    },
+    {
+      "description": "cannotApplyForOverrideToInterfaceMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        128
+      ],
+      "code": "package test;\n\nimport com.google.errorprone.annotations.ForOverride;\n\npublic interface Test {\n  @ForOverride\n  // BUG: Diagnostic contains: @ForOverride must have protected or package-private visibility\n  void myMethod();\n}"
+    },
+    {
+      "description": "userCanCallAppropriateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "package test;\n\n            public class Test extends test.ExtendMe {\n              public void googleyMethod() {\n                callMe();\n              }\n            }"
+    },
+    {
+      "description": "userInSamePackageCannotCallMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "package test;\n\n            public class Test {\n              public void tryCall() {\n                ExtendMe extendMe = new ExtendMe();\n                // BUG: Diagnostic contains: must not be invoked\n                extendMe.overrideMe();\n              }\n            }"
+    },
+    {
+      "description": "userCannotCallDefault",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        183
+      ],
+      "code": "package test;\n\n            public class Test extends test.ExtendMe {\n              public void circumventer() {\n                // BUG: Diagnostic contains: must not be invoked\n                overrideMe();\n              }\n            }"
+    },
+    {
+      "description": "userCannotCallOverridden",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "package test2;\n\n            public class Test extends test.ExtendMe {\n              @Override\n              protected int overrideMe() {\n                System.err.println(\"Capybaras are semi-aquatic.\");\n                return 1;\n              }\n\n              public void circumventer() {\n                // BUG: Diagnostic contains: must not be invoked\n                overrideMe();\n              }\n            }"
+    },
+    {
+      "description": "userCanCallSuperFromOverridden",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "package test2;\n\n            public class Test extends test.ExtendMe {\n              @Override\n              protected int overrideMe() {\n                return super.overrideMe();\n              }\n            }"
+    },
+    {
+      "description": "userCanCallSuperFromOverridden_explicitQualification",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        243
+      ],
+      "code": ""
+    },
+    {
+      "description": "userCannotCallSuperFromNonOverriddenMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        259
+      ],
+      "code": "package test2;\n\n            public class Test extends test.ExtendMe {\n              protected void circumventer() {\n                // BUG: Diagnostic contains: must not be invoked\n                super.overrideMe();\n              }\n            }"
+    },
+    {
+      "description": "userCannotCallSuperFromFieldInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        277
+      ],
+      "code": "package test2;\n\n            public class Test extends test.ExtendMe {\n              // BUG: Diagnostic contains: must not be invoked\n              private final int k = super.overrideMe();\n            }"
+    },
+    {
+      "description": "userCannotCallSuperFromAnonymousInnerClassInOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        293
+      ],
+      "code": "package test2;\n\n            public class Test extends test.ExtendMe {\n              @Override\n              protected int overrideMe() {\n                return new Object() {\n                  // BUG: Diagnostic contains: must not be invoked\n                  final int k = Test.super.overrideMe();\n\n                  int foo() {\n                    // BUG: Diagnostic contains: must not be invoked\n                    return Test.super.overrideMe();\n                  }\n                }.foo();\n              }\n            }"
+    },
+    {
+      "description": "userCannotMakeMethodPublic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "package test2;\n\n            public class Test extends test.ExtendMe {\n              // BUG: Diagnostic contains: overrides @ForOverride method test.ExtendMe.overrideMe\n              public int overrideMe() {\n                return 1;\n              }\n\n              // BUG: Diagnostic contains: overrides @ForOverride method test.ExtendMe.overrideMe\n              public int overrideMe(int a) {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "definerCanCallFromInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        342
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.ForOverride;\n\n            public class OuterClass {\n              @ForOverride\n              protected void forOverride() {}\n\n              private class InnerClass {\n                void invoke() {\n                  forOverride();\n                }\n              }\n            }"
+    },
+    {
+      "description": "definerCanCallFromAnonymousInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        366
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.annotations.ForOverride;\n\n            public class OuterClass {\n              @ForOverride\n              protected void forOverride() {}\n\n              public Runnable getRunner() {\n                return new Runnable() {\n                  public void run() {\n                    forOverride();\n                  }\n                };\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "NullTernary",
+  "language": "java",
+  "description": "This conditional expression may evaluate to null, which will result in an NPE when the result is unboxed.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 46,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              void f(boolean b) {\n                // BUG: Diagnostic contains:\n                int x = b ? 0 : null;\n                // BUG: Diagnostic contains:\n                long l = b ? null : 0;\n                // BUG: Diagnostic contains:\n                g(\"\", b ? null : 0);\n                // BUG: Diagnostic contains:\n                h(\"\", 1, b ? null : 0);\n                // BUG: Diagnostic contains:\n                h(\"\", 1, b ? null : 0, 3);\n                // BUG: Diagnostic contains:\n                int z = 0 + (b ? null : 1);\n                // BUG: Diagnostic contains:\n                z = (b ? null : 1) + 0;\n              }\n\n              void g(String s, int y) {}\n\n              void h(String s, int... y) {}\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63
+      ],
+      "code": "class Test {\n              void f(boolean b) {\n                int x = b ? 0 : 1;\n                Integer y = b ? 0 : null;\n                g(\"\", b ? 1 : 0);\n                h(\"\", 1, b ? 1 : 0);\n                h(\"\", 1, b ? 1 : 0, 3);\n                int z = 0 + (b ? 0 : 1);\n                boolean t = (b ? 0 : null) == Integer.valueOf(0);\n              }\n\n              void g(String s, int y) {}\n\n              void h(String s, int... y) {}\n            }"
+    },
+    {
+      "description": "lambdas",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "class Test {\n              interface I {\n                int f();\n              }\n\n              interface J {\n                Integer f();\n              }\n\n              interface K<X> {\n                X f();\n              }\n\n              void f(boolean b) {\n                I i =\n                    () -> {\n                      // BUG: Diagnostic contains:\n                      return b ? null : 1;\n                    };\n                J j =\n                    () -> {\n                      return b ? null : 1;\n                    };\n                K<Integer> k =\n                    () -> {\n                      return b ? null : 1;\n                    };\n                // BUG: Diagnostic contains:\n                i = () -> b ? null : 1;\n                j = () -> b ? null : 1;\n                k = () -> b ? null : 1;\n              }\n            }"
+    },
+    {
+      "description": "conditionalInCondition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "class Test {\n  void conditionalInCondition(Object array, String input) {\n    int arrayDimensions =\n        ((array != null ? input : null) == null) ? 0 : (array != null ? input : null).length();\n  }\n}"
+    },
+    {
+      "description": "expressionSwitch_doesNotCrash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "class Test {\n              static String doStuff(SomeEnum enumVar) {\n                return switch (enumVar) {\n                  case A -> enumVar.name() != null ? \"AAA\" : null;\n                  default -> null;\n                };\n              }\n\n              static enum SomeEnum {\n                A,\n                B\n              }\n            }"
+    },
+    {
+      "description": "nullTernaryInSwitch_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        170
+      ],
+      "code": "class Test {\n              String f(int n) {\n                return switch (n) {\n                  case 0 -> \"zero\";\n                  default -> (n % 2 == 0) ? \"even\" : null;\n                };\n              }\n            }"
+    },
+    {
+      "description": "nullTernaryInSwitch_positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "class Test {\n              int f(int n) {\n                return switch (n) {\n                  default -> {\n                    // BUG: Diagnostic contains:\n                    yield (n % 2 == 0) ? 0 : null;\n                  }\n                };\n              }\n            }"
+    }
+  ]
+}

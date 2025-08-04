@@ -1,0 +1,182 @@
+{
+  "name": "ProtoDurationGetSecondsGetNano",
+  "language": "java",
+  "description": "getNanos() only accesses the underlying nanosecond-adjustment of the duration.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 57,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "getSecondsWithGetNanos",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              public static void foo(Duration duration) {\n                long seconds = duration.getSeconds();\n                int nanos = duration.getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsWithGetNanosInReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "package test;\n\n            import com.google.common.collect.ImmutableMap;\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              public static int foo(Duration duration) {\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                return duration.getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsWithGetNanosInReturnType2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "package test;\n\nimport com.google.common.collect.ImmutableMap;\nimport com.google.protobuf.Duration;\n\npublic class TestCase {\n  public static ImmutableMap<String, Object> foo(Duration duration) {\n    return ImmutableMap.of(\"seconds\", duration.getSeconds(), \"nanos\", duration.getNanos());\n  }\n}"
+    },
+    {
+      "description": "getSecondsWithGetNanosDifferentScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              public static void foo(Duration duration) {\n                long seconds = duration.getSeconds();\n                if (true) {\n                  // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                  int nanos = duration.getNanos();\n                }\n              }\n            }"
+    },
+    {
+      "description": "getSecondsWithGetNanosInDifferentMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              public static void foo(Duration duration) {\n                long seconds = duration.getSeconds();\n              }\n\n              public static void bar(Duration duration) {\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = duration.getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsOnly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              public static void foo(Duration duration) {\n                long seconds = duration.getSeconds();\n              }\n            }"
+    },
+    {
+      "description": "getNanoOnly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              public static void foo(Duration duration) {\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = duration.getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getNanoInMethodGetSecondsInClassVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              private static final Duration DURATION = Duration.getDefaultInstance();\n              private static final long seconds = DURATION.getSeconds();\n\n              public static void foo() {\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = DURATION.getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsOnlyInStaticBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              static {\n                long seconds = Duration.getDefaultInstance().getSeconds();\n              }\n            }"
+    },
+    {
+      "description": "getNanoOnlyInStaticBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        226
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              static {\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = Duration.getDefaultInstance().getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsOnlyInClassBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        246
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              private final Duration DURATION = Duration.getDefaultInstance();\n              private final long seconds = DURATION.getSeconds();\n              private final int nanos = DURATION.getNanos();\n            }"
+    },
+    {
+      "description": "getNanoOnlyInClassBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        265
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n              private final int nanos = Duration.getDefaultInstance().getNanos();\n            }"
+    },
+    {
+      "description": "getNanoInInnerClassGetSecondsInMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        283
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              private static final Duration DURATION = Duration.getDefaultInstance();\n\n              public static void foo() {\n                long seconds = DURATION.getSeconds();\n                Object obj =\n                    new Object() {\n                      @Override\n                      public String toString() {\n                        // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                        return String.valueOf(DURATION.getNanos());\n                      }\n                    };\n              }\n            }"
+    },
+    {
+      "description": "getNanoInInnerClassGetSecondsInClassVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        312
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              Duration DURATION = Duration.getDefaultInstance();\n              long seconds = DURATION.getSeconds();\n              Object obj =\n                  new Object() {\n                    // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                    long nanos = DURATION.getNanos();\n                  };\n            }"
+    },
+    {
+      "description": "getNanoInMethodGetSecondsInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        335
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              private static final Duration DURATION = Duration.getDefaultInstance();\n\n              public static void foo() {\n                Runnable r = () -> DURATION.getSeconds();\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = DURATION.getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getSecondsInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        358
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n            import java.util.function.Supplier;\n\n            public class TestCase {\n              private static final Duration DURATION = Duration.getDefaultInstance();\n\n              public void foo() {\n                doSomething(() -> DURATION.getSeconds());\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = DURATION.getNanos();\n              }\n\n              public void doSomething(Supplier<Long> supplier) {}\n            }"
+    },
+    {
+      "description": "getNanoInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        384
+      ],
+      "code": "package test;\n\n            import com.google.protobuf.Duration;\n\n            public class TestCase {\n              private static final Duration DURATION = Duration.getDefaultInstance();\n\n              public static void foo() {\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                Runnable r = () -> DURATION.getNanos();\n                long seconds = DURATION.getSeconds();\n              }\n            }"
+    },
+    {
+      "description": "getMessageGetSecondsGetNanos",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        407
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.bugpatterns.time.Test.DurationTimestamp;\n\n            public class TestCase {\n              public static void foo(DurationTimestamp durationTimestamp) {\n                long seconds = durationTimestamp.getTestDuration().getSeconds();\n                int nanos = durationTimestamp.getTestDuration().getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getNestedMessageGetSecondsGetNanos",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        427
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.bugpatterns.time.Test.DurationTimestamp;\n\n            public class TestCase {\n              public static void foo(DurationTimestamp dt) {\n                long seconds = dt.getNestedMessage().getNestedTestDuration().getSeconds();\n                int nanos = dt.getNestedMessage().getNestedTestDuration().getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getNestedMessageGetSecondsGetNanos_onDifferentProtoInstances",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        447
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.bugpatterns.time.Test.DurationTimestamp;\n\n            public class TestCase {\n              public static void foo(DurationTimestamp dt1, DurationTimestamp dt2) {\n                long seconds = dt1.getNestedMessage().getNestedTestDuration().getSeconds();\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = dt2.getNestedMessage().getNestedTestDuration().getNanos();\n              }\n            }"
+    },
+    {
+      "description": "getMessageGetSecondsGetNanosDifferentSubMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        468
+      ],
+      "code": "package test;\n\n            import com.google.errorprone.bugpatterns.time.Test.DurationTimestamp;\n\n            public class TestCase {\n              public static void foo(DurationTimestamp durationTimestamp) {\n                long seconds = durationTimestamp.getTestDuration().getSeconds();\n                // BUG: Diagnostic contains: ProtoDurationGetSecondsGetNano\n                int nanos = durationTimestamp.getAnotherTestDuration().getNanos();\n              }\n            }"
+    }
+  ]
+}

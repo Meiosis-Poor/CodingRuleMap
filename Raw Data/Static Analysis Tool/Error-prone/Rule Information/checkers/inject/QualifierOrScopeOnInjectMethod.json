@@ -1,0 +1,38 @@
+{
+  "name": "QualifierOrScopeOnInjectMethod",
+  "language": "java",
+  "description": "Qualifiers/Scope annotations on @Inject methods don't have any effect. Move the qualifier annotation to the binding location.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 92,
+  "branches": 6,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "import javax.inject.Inject;\n            import javax.inject.Named;\n\n            class Foo {\n              @Inject\n              // BUG: Diagnostic contains: remove\n              @Named(\"bar\")\n              void someMethod() {}\n            }"
+    },
+    {
+      "description": "positiveCase_injectConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        55
+      ],
+      "code": "import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            class Foo {\n              @Inject\n              @Singleton\n              @Named(\"bar\")\n              Foo() {}\n            }\n            \n\n            import javax.inject.Inject;\n            import javax.inject.Named;\n            import javax.inject.Singleton;\n\n            @Singleton\n            class Foo {\n              @Inject\n              Foo() {}\n            }"
+    },
+    {
+      "description": "negativeNotInject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "import dagger.Provides;\n            import dagger.Module;\n            import javax.inject.Named;\n\n            @Module\n            class Foo {\n              @Provides\n              @Named(\"bar\")\n              int something() {\n                return 42;\n              }\n            }"
+    }
+  ]
+}

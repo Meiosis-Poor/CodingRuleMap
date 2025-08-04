@@ -1,0 +1,102 @@
+{
+  "name": "InvalidLink",
+  "language": "java",
+  "description": "This @link tag looks wrong.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 199,
+  "branches": 20,
+  "apis": 10,
+  "test": [
+    {
+      "description": "httpLink",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "interface Test {\n              /** {@link https://foo/bar/baz} */\n              void foo();\n            }\n            \n\n            interface Test {\n              /** <a href=\"https://foo/bar/baz\">link</a> */\n              void foo();\n            }"
+    },
+    {
+      "description": "httpLink_lineBreak",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "interface Test {\n              /** {@link https://foo/bar/baz foo} */\n              void foo();\n            }\n            \n\n            interface Test {\n              /** <a href=\"https://foo/bar/baz\">foo</a> */\n              void foo();\n            }"
+    },
+    {
+      "description": "badMethodLink",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "interface Test {\n              // BUG: Diagnostic contains: The reference `#bar()` to a method doesn't resolve\n              /** {@link #bar()} */\n              void foo();\n            }"
+    },
+    {
+      "description": "badMethodLink_erasureHint",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": "interface Test<T> {\n              // BUG: Diagnostic contains: erasure\n              /** {@link #bar(Test<String>)} */\n              void foo(Test<String> foo);\n            }"
+    },
+    {
+      "description": "validLinks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "import java.util.List;\n\ninterface Test {\n  /** {@link Test} {@link List} {@link IllegalArgumentException} {@link #foo} {@link #foo()} */\n  void foo();\n}"
+    },
+    {
+      "description": "dontComplainAboutFullyQualified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "/** {@link i.dont.exist.B#foo} */\n            interface A {}"
+    },
+    {
+      "description": "shouldBeMethodLink",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "/** {@link frobnicate} */\n            interface A {}\n            \n\n            /** {@link #frobnicate} */\n            interface A {}"
+    },
+    {
+      "description": "shouldBeParameterReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "class Test {\n              /** Pass in a {@link bar} */\n              void foo(String bar) {}\n            }\n            \n\n            class Test {\n              /** Pass in a {@code bar} */\n              void foo(String bar) {}\n            }"
+    },
+    {
+      "description": "multiField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "@interface Param {\n              String name() default \"\";\n            }\n            \n\n            @interface Test {\n              /** Pass in a {@link Tuple<Object>} */\n              Param extraPositionals() default @Param(name = \"\");\n            }"
+    },
+    {
+      "description": "emptyLinkTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        200
+      ],
+      "code": "interface Test {\n              /** {@link} */\n              void foo();\n            }"
+    },
+    {
+      "description": "markdown",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        214
+      ],
+      "code": "public class Test {\n              /// Hello [bar]\n              // BUG: Diagnostic contains: `bar` is a parameter\n              static void foo(int bar) {}\n            }"
+    }
+  ]
+}

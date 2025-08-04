@@ -1,0 +1,214 @@
+{
+  "name": "ClassCanBeStatic",
+  "language": "java",
+  "description": "Inner class is non-static but does not reference enclosing class",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 94,
+  "branches": 14,
+  "apis": 2,
+  "test": [
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author alexloh@google.com (Alex Loh)\n             */\n            public class ClassCanBeStaticNegativeCases {\n              int outerVar;\n\n              public int outerMethod() {\n                return 0;\n              }\n\n              public static class Inner1 { // inner class already static\n                int innerVar;\n              }\n\n              public class Inner2 { // inner class references an outer variable\n                int innerVar = outerVar;\n              }\n\n              public class Inner3 { // inner class references an outer variable in a method\n                int localMethod() {\n                  return outerVar;\n                }\n              }\n\n              public class Inner4 { // inner class references an outer method in a method\n                int localMethod() {\n                  return outerMethod();\n                }\n              }\n\n              // outer class is a nested but non-static, and thus cannot have a static class\n              class NonStaticOuter {\n                int nonStaticVar = outerVar;\n\n                class Inner5 {}\n              }\n\n              // inner class is local and thus cannot be static\n              void foo() {\n                class Inner6 {}\n              }\n\n              // inner class is anonymous and thus cannot be static\n              Object bar() {\n                return new Object() {};\n              }\n\n              // enums are already static\n              enum Inner7 {\n                RED,\n                BLUE,\n                VIOLET,\n              }\n\n              // outer class is a nested but non-static, and thus cannot have a static class\n              void baz() {\n                class NonStaticOuter2 {\n                  int nonStaticVar = outerVar;\n\n                  class Inner8 {}\n                }\n              }\n\n              // inner class references a method from inheritance\n              public interface OuterInter {\n                int outerInterMethod();\n              }\n\n              abstract static class AbstractOuter implements OuterInter {\n                class Inner8 {\n                  int localMethod() {\n                    return outerInterMethod();\n                  }\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "positiveCase1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        120
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author alexloh@google.com (Alex Loh)\n             */\n            public class ClassCanBeStaticPositiveCase1 {\n\n              int outerVar;\n\n              // Non-static inner class that does not use outer scope\n              // BUG: Diagnostic contains: static class Inner1\n              class Inner1 {\n                int innerVar;\n              }\n            }\\"
+    },
+    {
+      "description": "positiveCase2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author alexloh@google.com (Alex Loh)\n             */\n            public class ClassCanBeStaticPositiveCase2 {\n\n              int outerVar1;\n              int outerVar2;\n\n              // Outer variable overridden\n              // BUG: Diagnostic contains: private /* COMMENT */ static final class Inner2\n              private /* COMMENT */ final class Inner2 {\n                int outerVar1;\n                int innerVar = outerVar1;\n\n                int localMethod(int outerVar2) {\n                  return outerVar2;\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "positiveCase3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        176
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author alexloh@google.com (Alex Loh)\n             */\n            public class ClassCanBeStaticPositiveCase3 {\n\n              static int outerVar;\n\n              // Nested non-static inner class inside a static inner class\n              static class NonStaticOuter {\n                int nonStaticVar = outerVar;\n\n                // BUG: Diagnostic contains: public static class Inner3\n                public class Inner3 {}\n              }\n            }"
+    },
+    {
+      "description": "positiveReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains:\n              private class One {\n                int field;\n              }\n\n              // BUG: Diagnostic contains:\n              private class Two {\n                String field;\n              }\n            }"
+    },
+    {
+      "description": "nonMemberField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        224
+      ],
+      "code": "class Test {\n              int x;\n\n              private class One {\n                {\n                  System.err.println(x);\n                }\n              }\n\n              // BUG: Diagnostic contains:\n              private class Two {\n                void f(Test t) {\n                  System.err.println(t.x);\n                }\n              }\n            }"
+    },
+    {
+      "description": "qualifiedThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": "class Test {\n              private class One {\n                {\n                  System.err.println(Test.this);\n                }\n              }\n\n              // BUG: Diagnostic contains:\n              private class Two {\n                void f(Test t) {\n                  System.err.println(Test.class);\n                }\n              }\n            }"
+    },
+    {
+      "description": "referencesSibling",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        274
+      ],
+      "code": "class Test {\n              private class One {\n                {\n                  new Two();\n                }\n              }\n\n              private class Two {\n                void f(Test t) {\n                  System.err.println(Test.this);\n                }\n              }\n            }"
+    },
+    {
+      "description": "referenceInAnonymousClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        297
+      ],
+      "code": "class Test {\n              private class Two {\n                {\n                  new Runnable() {\n                    @Override\n                    public void run() {\n                      System.err.println(Test.this);\n                    }\n                  }.run();\n                }\n              }\n            }"
+    },
+    {
+      "description": "extendsInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "class Test {\n              private class One {\n                {\n                  System.err.println(Test.this);\n                }\n              }\n\n              private class Two extends One {}\n            }"
+    },
+    {
+      "description": "ctorParametricInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        338
+      ],
+      "code": "class Test {\n              private class One<T> {\n                {\n                  System.err.println(Test.this);\n                }\n              }\n\n              private abstract class Two {\n                {\n                  new One<String>();\n                }\n              }\n            }"
+    },
+    {
+      "description": "extendsParametricInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        361
+      ],
+      "code": "class Test {\n              private class One<T> {\n                {\n                  System.err.println(Test.this);\n                }\n              }\n\n              private abstract class Two<T> extends One<T> {}\n            }"
+    },
+    {
+      "description": "referencesTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        380
+      ],
+      "code": "import java.util.List;\n\n            class Test<T> {\n              private class One {\n                List<T> xs;\n              }\n            }"
+    },
+    {
+      "description": "referencesTypeParameterImplicit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        397
+      ],
+      "code": "import java.util.List;\n\n            class Test<T> {\n              class One {\n                {\n                  System.err.println(Test.this);\n                }\n              }\n\n              class Two {\n                One one; // implicit reference of Test<T>.One\n              }\n            }"
+    },
+    {
+      "description": "negative_referencesTypeParameterImplicit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        420
+      ],
+      "code": "package test;\n\n            public class One<T> {\n              public class Inner {\n                {\n                  System.err.println(One.this);\n                }\n              }\n            }\n            \n\n            import test.One.Inner;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              class Two {\n                Inner inner; // ok: implicit reference of One.Inner\n              }\n            }"
+    },
+    {
+      "description": "qualifiedSuperReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        451
+      ],
+      "code": "class Test {\n              class One {\n                {\n                  Test.super.getClass();\n                }\n              }\n            }"
+    },
+    {
+      "description": "annotationMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        468
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains:\n              class One {\n                @SuppressWarnings(value = \"\")\n                void f() {}\n              }\n            }"
+    },
+    {
+      "description": "extendsHiddenInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        485
+      ],
+      "code": "public class A {\n              public class Inner {\n                {\n                  System.err.println(A.this);\n                }\n              }\n            }\n            \n\n            public class B extends A {\n              public class Inner extends A.Inner {}\n            }"
+    },
+    {
+      "description": "nestedInAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        509
+      ],
+      "code": "public class A {\n              static Runnable r =\n                  new Runnable() {\n                    class Inner {}\n\n                    public void run() {}\n                  };\n            }"
+    },
+    {
+      "description": "nestedInLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        527
+      ],
+      "code": "public class A {\n              static void f() {\n                class Outer {\n                  class Inner {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "nestedInLocal_static",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        545
+      ],
+      "code": "public class A {\n              static void f() {\n                class Outer {\n                  // BUG: Diagnostic contains:\n                  class Inner {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClassMethodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        563
+      ],
+      "code": "import java.util.function.Supplier;\n\n            public class T {\n              class A {\n                {\n                  System.err.println(T.this);\n                }\n              }\n\n              class B {\n                {\n                  Supplier<A> s = A::new; // capture enclosing instance\n                  System.err.println(s.get());\n                }\n              }\n            }"
+    },
+    {
+      "description": "labelledBreak",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        589
+      ],
+      "code": "public class A {\n              // BUG: Diagnostic contains:\n              class Inner {\n                void f() {\n                  OUTER:\n                  while (true) {\n                    break OUTER;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "refaster",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        610
+      ],
+      "code": "package com.google.errorprone.refaster.annotation;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.METHOD)\n            @Retention(RetentionPolicy.SOURCE)\n            public @interface BeforeTemplate {}\n            \n\n            import com.google.errorprone.refaster.annotation.BeforeTemplate;\n\n            public class A {\n              class Inner {\n                @BeforeTemplate\n                void f() {}\n              }\n            }"
+    },
+    {
+      "description": "junitNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        642
+      ],
+      "code": "package org.junit.jupiter.api;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.TYPE)\n            @Retention(RetentionPolicy.RUNTIME)\n            public @interface Nested {}\n            \n\n            import org.junit.jupiter.api.Nested;\n\n            public class A {\n              @Nested\n              class Inner {\n                void f() {}\n              }\n            }"
+    }
+  ]
+}

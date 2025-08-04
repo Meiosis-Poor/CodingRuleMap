@@ -1,0 +1,94 @@
+{
+  "name": "InlineFormatString",
+  "language": "java",
+  "description": "Prefer to create format strings inline, instead of extracting them to a single-use constant",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 191,
+  "branches": 25,
+  "apis": 2,
+  "test": [
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class Test {\n              private static final String FORMAT = \"hello %s\";\n\n              void f() {\n                System.err.printf(FORMAT, 42);\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                System.err.printf(\"hello %s\", 42);\n              }\n            }"
+    },
+    {
+      "description": "negative_multiple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "class Test {\n              private static final String FORMAT = \"hello %s\";\n\n              void f() {\n                System.err.printf(FORMAT, 42);\n                System.err.printf(FORMAT, 43);\n              }\n            }"
+    },
+    {
+      "description": "negative_otherUsers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "class Test {\n              private static final String FORMAT = \"hello %s\";\n\n              void f() {\n                System.err.printf(FORMAT, 42);\n                System.err.println(FORMAT);\n              }\n            }"
+    },
+    {
+      "description": "refactoring_precondition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "import com.google.common.base.Preconditions;\n\n            class Test {\n              private static final String FORMAT = \"hello %s\";\n\n              void f(boolean b) {\n                Preconditions.checkArgument(b, FORMAT, 42);\n              }\n            }\n            \n\n            import com.google.common.base.Preconditions;\n\n            class Test {\n              void f(boolean b) {\n                Preconditions.checkArgument(b, \"hello %s\", 42);\n              }\n            }"
+    },
+    {
+      "description": "refactoring_formatMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            abstract class Test {\n              @FormatMethod\n              abstract String f(String f, Object... args);\n\n              @FormatMethod\n              abstract String g(boolean b, @FormatString String f, Object... args);\n\n              private static final String FORMAT = \"hello %s\";\n              private static final String FORMAT2 = \"hello %s\";\n\n              void h(boolean b) {\n                f(FORMAT, 42);\n                g(b, FORMAT2, 42);\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            abstract class Test {\n              @FormatMethod\n              abstract String f(String f, Object... args);\n\n              @FormatMethod\n              abstract String g(boolean b, @FormatString String f, Object... args);\n\n              void h(boolean b) {\n                f(\"hello %s\", 42);\n                g(b, \"hello %s\", 42);\n              }\n            }"
+    },
+    {
+      "description": "suppression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "class Test {\n              @SuppressWarnings(\"InlineFormatString\")\n              private static final String FORMAT = \"hello %s\";\n\n              void f() {\n                System.err.printf(FORMAT, 42);\n              }\n            }"
+    },
+    {
+      "description": "suppressionClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        192
+      ],
+      "code": "@SuppressWarnings(\"InlineFormatString\")\n            class Test {\n              private static final String FORMAT = \"hello %s\";\n\n              void f() {\n                System.err.printf(FORMAT, 42);\n              }\n            }"
+    },
+    {
+      "description": "negativeLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        210
+      ],
+      "code": "class Test {\n              void f(String a) {\n                String format = a;\n                System.err.printf(format, 42);\n              }\n            }"
+    },
+    {
+      "description": "refactoringLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        226
+      ],
+      "code": "class Test {\n              void f() {\n                String format = \"hello %s\";\n                System.err.printf(format, 42);\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                System.err.printf(\"hello %s\", 42);\n              }\n            }"
+    },
+    {
+      "description": "multipleUses",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "class Test {\n              void f() {\n                String format = \"hello %s\";\n                // BUG: Diagnostic contains\n                System.err.printf(format, 42);\n                // BUG: Diagnostic contains\n                System.err.printf(format, 42);\n              }\n            }"
+    }
+  ]
+}

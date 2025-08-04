@@ -1,0 +1,94 @@
+{
+  "name": "MissingOverride",
+  "language": "java",
+  "description": "method overrides method in supertype; expected @Override",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 102,
+  "branches": 9,
+  "apis": 2,
+  "test": [
+    {
+      "description": "simple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "public class Super {\n              void f() {}\n            }\n            \n\n            public class Test extends Super {\n              // BUG: Diagnostic contains: f overrides method in Super; expected @Override\n              public void f() {}\n            }"
+    },
+    {
+      "description": "abstractMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "public abstract class Super {\n              abstract void f();\n            }\n            \n\n            public class Test extends Super {\n              // BUG: Diagnostic contains: f implements method in Super; expected @Override\n              public void f() {}\n            }"
+    },
+    {
+      "description": "generatedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        74
+      ],
+      "code": "import javax.annotation.processing.Generated;\n\n            @Generated(\"foo\")\n            public abstract class Test {\n              public abstract int hashCode();\n            }"
+    },
+    {
+      "description": "interfaceMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "interface Super {\n              void f();\n            }\n            \n\n            public class Test implements Super {\n              // BUG: Diagnostic contains: f implements method in Super; expected @Override\n              public void f() {}\n            }"
+    },
+    {
+      "description": "bothStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "public class Super {\n              static void f() {}\n            }\n            \n\n            public class Test extends Super {\n              public static void f() {}\n            }"
+    },
+    {
+      "description": "deprecatedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "public class Super {\n              @Deprecated\n              void f() {}\n            }\n            \n\n            public class Test extends Super {\n              public void f() {}\n            }"
+    },
+    {
+      "description": "interfaceOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "interface Super {\n              void f();\n            }\n            \n\n            public interface Test extends Super {\n              // BUG: Diagnostic contains: f implements method in Super; expected @Override\n              void f();\n            }"
+    },
+    {
+      "description": "ignoreInterfaceOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173
+      ],
+      "code": "interface Super {\n              void f();\n            }\n            \n\n            public interface Test extends Super {\n              void f();\n            }"
+    },
+    {
+      "description": "explicitRecordAccessor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        194
+      ],
+      "code": "public record Baz(int x) {\n              // BUG: Diagnostic contains: x is an explicitly declared accessor method\n              public int x() {\n                return x;\n              }\n\n              public int x(int y) {\n                return y;\n              }\n\n              public int y() {\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "explicitRecordAccessor_doesNotFlagConstructors",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        218
+      ],
+      "code": "public record Test(int x) {\n              public Test() {\n                this(1);\n              }\n\n              public Test {}\n            }"
+    }
+  ]
+}

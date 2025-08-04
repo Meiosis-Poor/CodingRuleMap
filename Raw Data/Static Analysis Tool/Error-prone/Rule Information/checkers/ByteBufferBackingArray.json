@@ -1,0 +1,38 @@
+{
+  "name": "ByteBufferBackingArray",
+  "language": "java",
+  "description": "ByteBuffer.array() shouldn't be called unless ByteBuffer.arrayOffset() is used or if the ByteBuffer was initialized using ByteBuffer.wrap() or ByteBuffer.allocate().",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 179,
+  "branches": 26,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.errorprone.bugpatterns.ByteBufferBackingArrayTest;\nimport java.nio.ByteBuffer;\n\n/** Positive cases for {@link ByteBufferBackingArrayTest}. */\npublic class ByteBufferBackingArrayPositiveCases {\n\n  public void array_notPrecededByOffsetNorValidInitializer_asLocalVariable_isFlagged() {\n    ByteBuffer buff = null;\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buff.array();\n  }\n\n  class A {\n\n    ByteBuffer buff = null;\n\n    void array_notPrecededByOffsetNorValidInitializer_asField_isFlagged() {\n      // BUG: Diagnostic contains: ByteBuffer.array()\n      buff.array();\n    }\n  }\n\n  class ArrayCalledInFieldNotPrecededByOffsetNorValidInitializerAsFieldIsFlagged {\n    ByteBuffer buffer = null;\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    byte[] array = buffer.array();\n  }\n\n  void array_notPrecededByOffsetNorValidInitializer_asMethodParameter_isFlagged(ByteBuffer buffer) {\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buffer.array();\n  }\n\n  void array_followedByWrap_isFlagged() {\n    ByteBuffer buff = null;\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buff.array();\n    buff = ByteBuffer.wrap(new byte[] {1});\n  }\n\n  void array_followedByAllocate_isFlagged() {\n    ByteBuffer buff = null;\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buff.array();\n    buff = ByteBuffer.allocate(1);\n  }\n\n  void array_precededByAllocateDirect_isFlagged() {\n    ByteBuffer buff = null;\n    buff = ByteBuffer.allocateDirect(1);\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buff.array();\n  }\n\n  void array_precededByAllocateOnAnotherBuffer_isFlagged() {\n    ByteBuffer otherBuff = ByteBuffer.allocate(1);\n    ByteBuffer buff = null;\n    otherBuff.arrayOffset();\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buff.array();\n  }\n\n  void array_precededByNotAValidMethod_isFlagged() {\n    ByteBuffer buff = null;\n    buff.position();\n    // BUG: Diagnostic contains: ByteBuffer.array()\n    buff.array();\n  }\n}\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.errorprone.bugpatterns.ByteBufferBackingArrayTest;\nimport java.nio.ByteBuffer;\nimport java.util.function.Function;\n\n/** Negative cases for {@link ByteBufferBackingArrayTest}. */\npublic class ByteBufferBackingArrayNegativeCases {\n\n  void noArrayCall_isNotFlagged() {\n    ByteBuffer buffer = null;\n    buffer.position();\n  }\n\n  void array_precededByArrayOffset_isNotFlagged() {\n    ByteBuffer buffer = null;\n    buffer.arrayOffset();\n    buffer.array();\n  }\n\n  void array_precededByArrayOffset_onOuterScope_isNotFlagged() {\n    ByteBuffer buffer = null;\n    buffer.arrayOffset();\n    if (true) {\n      while (true) {\n        buffer.array();\n      }\n    }\n  }\n\n  void array_precededByByteBufferWrap_isNotFlagged() {\n    ByteBuffer buffer = ByteBuffer.wrap(new byte[] {1});\n    buffer.array();\n  }\n\n  void array_precededByByteBufferAllocate_isNotFlagged() {\n    ByteBuffer buffer = ByteBuffer.allocate(1);\n    buffer.array();\n  }\n\n  // Ideally, this case should be flagged though.\n  void array_followedByByteBufferArrayOffset_isNotFlagged() {\n    ByteBuffer buffer = null;\n    buffer.array();\n    buffer.arrayOffset();\n  }\n\n  // Ideally, this case should be flagged though.\n  void array_followedByArrayOffset_inExpression_isNotFlagged() {\n    ByteBuffer buffer = null;\n    byte[] outBytes;\n    int outOffset;\n    int outPos;\n    if (buffer.hasArray()) {\n      outBytes = buffer.array();\n      outPos = outOffset = buffer.arrayOffset() + buffer.position();\n    }\n  }\n\n  void array_precededByByteBufferAllocate_inSplitMethodChain_isNotFlagged() {\n    ByteBuffer buffer = ByteBuffer.allocate(1).put((byte) 'a');\n    buffer.array();\n  }\n\n  public void array_immediatelyPrecededByByteBufferAllocate_inContinuousMethodChain_isNotFlagged()\n      throws Exception {\n    ByteBuffer.allocate(0).array();\n  }\n\n  void array_precededByByteBufferAllocate_inContinuousMethodChain_isNotFlagged() {\n    ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(1L).array();\n  }\n\n  byte[] array_inMethodChain_precededByByteBufferAllocate_isNotFlagged() {\n    ByteBuffer buffer = ByteBuffer.allocate(1);\n    return buffer.put(new byte[] {1}).array();\n  }\n\n  class A {\n    // Ideally, this case should be flagged though.\n    void array_inMethodChain_whereByteBufferIsNotAtStartOfChain_isNotFlagged() {\n      A helper = new A();\n      helper.getBuffer().put((byte) 1).array();\n    }\n\n    ByteBuffer getBuffer() {\n      return null;\n    }\n  }\n\n  class B {\n    ByteBuffer buffer = ByteBuffer.allocate(1);\n\n    void array_precededByByteBufferAllocate_inField_isNotFlagged() {\n      buffer.array();\n    }\n  }\n\n  class C {\n    ByteBuffer buffer = ByteBuffer.allocate(1);\n\n    class A {\n      void array_precededByByteBufferAllocate_inFieldOfParentClass_isNotFlagged() {\n        buffer.array();\n      }\n    }\n  }\n\n  class ArrayInFieldPrecededByByteBufferAllocateInFieldIsNotFlagged {\n    ByteBuffer buffer = ByteBuffer.allocate(1);\n    byte[] array = buffer.array();\n  }\n\n  void array_inAnonymousClass_precededByByteBufferAllocate_isNotFlagged() {\n    final ByteBuffer buffer = ByteBuffer.allocate(0);\n\n    new Function<Object, Object>() {\n      @Override\n      public Object apply(Object o) {\n        buffer.array();\n        return null;\n      }\n    };\n  }\n\n  void array_inLambdaExpression_precededByByteBufferAllocate_isNotFlagged() {\n    final ByteBuffer buffer = ByteBuffer.allocate(0);\n\n    Function<Void, Void> f =\n        (Void unused) -> {\n          buffer.array();\n          return null;\n        };\n  }\n}\\"
+    },
+    {
+      "description": "i1004",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        257
+      ],
+      "code": "import java.nio.ByteBuffer;\n\n            public class Test {\n              public void ByteBufferBackingArrayTest() {\n                byte[] byteArray = ((ByteBuffer) new Object()).array();\n              }\n            }"
+    }
+  ]
+}

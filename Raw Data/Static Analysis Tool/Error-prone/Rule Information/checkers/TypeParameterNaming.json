@@ -1,0 +1,142 @@
+{
+  "name": "TypeParameterNaming",
+  "language": "java",
+  "description": "Type parameters must be a single letter with an optional numeric suffix, or an UpperCamelCase name followed by the letter 'T'.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 246,
+  "branches": 31,
+  "apis": 8,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        43
+      ],
+      "code": "// BUG: Diagnostic contains: TypeParameterNaming\n            class Test<BadName> {\n              // BUG: Diagnostic contains: TypeParameterNaming\n              public <T, Foo> void method(Exception e) {}\n            }"
+    },
+    {
+      "description": "refactoring_trailing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "/**\n             * @param <BadName> bad name\n             */\n            class Test<BadName> {\n              public <T, Foo> void method(Foo f) {\n                BadName bad = null;\n                Foo d = f;\n              }\n            }\n            \n\n            /**\n             * @param <BadNameT> bad name\n             */\n            class Test<BadNameT> {\n              public <T, FooT> void method(FooT f) {\n                BadNameT bad = null;\n                FooT d = f;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_single",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "class Test<BadName> {\n              /**\n               * @param <Foo> foo\n               */\n              public <T, Foo> void method(Foo f) {\n                BadName bad = null;\n                Foo d = f;\n              }\n            }\n            \n\n            class Test<B> {\n              /**\n               * @param <F> foo\n               */\n              public <T, F> void method(F f) {\n                B bad = null;\n                F d = f;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_single_number",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "class Test<Bar> {\n              public <T, Baz> void method(Baz f) {\n                Bar bad = null;\n                Baz d = f;\n              }\n            }\n            \n\n            class Test<B> {\n              public <T, B2> void method(B2 f) {\n                B bad = null;\n                B2 d = f;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_single_number_enclosing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "class Test<Bar> {\n              public <T, Baz, Boo> void method(Baz f) {\n                Bar bad = null;\n                Baz d = f;\n                Boo wow = null;\n              }\n            }\n            \n\n            class Test<B> {\n              public <T, B2, B3> void method(B2 f) {\n                B bad = null;\n                B2 d = f;\n                B3 wow = null;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_single_number_within_scope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        180
+      ],
+      "code": "class Test {\n              public <T, Baz, Boo> void method(Baz f) {\n                Baz d = f;\n                Boo wow = null;\n              }\n            }\n            \n\n            class Test {\n              public <T, B, B2> void method(B f) {\n                B d = f;\n                B2 wow = null;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_single_number_many_ok",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "class Test {\n              public <B, B2, B3, B4, Bad> void method(Bad f) {\n                Bad d = f;\n                B2 wow = null;\n              }\n            }\n            \n\n            class Test {\n              public <B, B2, B3, B4, B5> void method(B5 f) {\n                B5 d = f;\n                B2 wow = null;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_single_number_ok_after",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        234
+      ],
+      "code": "class Test {\n              public <B, Bad, B2> void method(Bad f) {\n                Bad d = f;\n                B2 wow = null;\n              }\n            }\n            \n\n            class Test {\n              public <B, B3, B2> void method(B3 f) {\n                B3 d = f;\n                B2 wow = null;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_newNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        261
+      ],
+      "code": "class Test<RESP> {\n              public <TBaz, Foo> void method(Foo f) {\n                TBaz bad = null;\n                Foo d = f;\n              }\n            }\n            \n\n            class Test<RespT> {\n              public <BazT, FooT> void method(FooT f) {\n                BazT bad = null;\n                FooT d = f;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_tSuffixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        288
+      ],
+      "code": "class Test<RESP> {\n              public <FOOT, BART> void method(FOOT f) {\n                BART bad = null;\n                FOOT d = f;\n              }\n            }\n            \n\n            class Test<RespT> {\n              public <F, B> void method(F f) {\n                B bad = null;\n                F d = f;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        315
+      ],
+      "code": "import java.util.ArrayList;\n\n            class Test<MyClassVarT> {\n              public <T, T3, SomeOtherT> void method(Exception e) {\n                ArrayList<String> dontCheckTypeArguments = new ArrayList<String>();\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_manyNumberedTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": "import java.util.ArrayList;\n\n            class Test<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> {\n              public <T1, T2, T3, T4, T5, T6, T7, T8, T9, T10> void method(Exception e) {\n                T10 t = null;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_underscore",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        349
+      ],
+      "code": "class Test {\n              public <_T> void method(_T t) {}\n            }\n            \n\n            class Test {\n              public <T> void method(T t) {}\n            }"
+    },
+    {
+      "description": "classifyTypeName_singleLetter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        370
+      ],
+      "code": ""
+    },
+    {
+      "description": "classifyTypeName_classT",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        378
+      ],
+      "code": ""
+    },
+    {
+      "description": "classifyTypeName_invalidTypeParameters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        385
+      ],
+      "code": ""
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "SwigMemoryLeak",
+  "language": "java",
+  "description": "SWIG generated code that can't call a C++ destructor will leak memory",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 55,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author irogers@google.com (Ian Rogers)\n */\npublic class SwigMemoryLeakPositiveCases {\n  private long swigCPtr;\n  protected boolean swigCMemOwn;\n\n  public SwigMemoryLeakPositiveCases(long cPtr, boolean cMemoryOwn) {\n    swigCMemOwn = cMemoryOwn;\n    swigCPtr = cPtr;\n  }\n\n  public synchronized void delete() {\n    if (swigCPtr != 0) {\n      if (swigCMemOwn) {\n        swigCMemOwn = false;\n        // BUG: Diagnostic contains: SWIG generated code that can't call a C++ destructor will leak\n        // memory\n        throw new UnsupportedOperationException(\"C++ destructor does not have public access\");\n      }\n      swigCPtr = 0;\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author irogers@google.com (Ian Rogers)\n             */\n            public class SwigMemoryLeakNegativeCases {\n              private long swigCPtr;\n              protected boolean swigCMemOwn;\n\n              public SwigMemoryLeakNegativeCases(long cPtr, boolean cMemoryOwn) {\n                swigCMemOwn = cMemoryOwn;\n                swigCPtr = cPtr;\n              }\n\n              @SuppressWarnings(\"removal\") // deprecated for removal starting in JDK 18\n              protected void finalize() {\n                delete();\n              }\n\n              public synchronized void delete() {\n                if (swigCPtr != 0) {\n                  if (swigCMemOwn) {\n                    swigCMemOwn = false;\n                    nativeDelete(swigCPtr);\n                  }\n                  swigCPtr = 0;\n                }\n              }\n\n              private static native void nativeDelete(long cptr);\n            }\\"
+    }
+  ]
+}

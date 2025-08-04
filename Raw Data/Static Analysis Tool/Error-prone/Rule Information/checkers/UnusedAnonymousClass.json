@@ -1,0 +1,78 @@
+{
+  "name": "UnusedAnonymousClass",
+  "language": "java",
+  "description": "Instance created but never used",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 75,
+  "branches": 15,
+  "apis": 1,
+  "test": [
+    {
+      "description": "deadObject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package a;\n\n            public class One {\n              public static void main(String[] args) {\n                new Object();\n              }\n            }"
+    },
+    {
+      "description": "deadThread",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "package a;\n\n            public class One {\n              public static void main(String[] args) {\n                // BUG: Diagnostic contains:\n                new Thread() {\n                  public void run() {}\n                };\n              }\n            }"
+    },
+    {
+      "description": "liveObject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "package a;\n\n            public class One {\n              public static void main(String[] args) {\n                new Object().toString();\n              }\n            }"
+    },
+    {
+      "description": "deadCallable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "package a;\n\n            import java.util.concurrent.Callable;\n\n            public class One {\n              public static void main(String[] args) throws Exception {\n                // BUG: Diagnostic contains:\n                new Callable<Void>() {\n                  public Void call() throws Exception {\n                    return null;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "liveCallable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109
+      ],
+      "code": "package a;\n\n            import java.util.concurrent.Callable;\n\n            public class One {\n              public static void main(String[] args) throws Exception {\n                new Callable<Void>() {\n                  public Void call() throws Exception {\n                    return null;\n                  }\n                }.call();\n              }\n            }"
+    },
+    {
+      "description": "liveCallableViaCinit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        132
+      ],
+      "code": "package a;\n\n            import java.util.concurrent.Callable;\n            import java.util.ArrayList;\n\n            public class One {\n              static ArrayList<Callable<Void>> callables = new ArrayList<>();\n\n              public static void main(String[] args) throws Exception {\n                new Callable<Void>() {\n                  {\n                    callables.add(this);\n                  }\n\n                  public Void call() throws Exception {\n                    return null;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "deadCallableWithField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "package a;\n\n            import java.util.concurrent.Callable;\n            import java.util.ArrayList;\n\n            public class One {\n              public static void main(String[] args) throws Exception {\n                // BUG: Diagnostic contains:\n                new Callable<Void>() {\n                  Void register;\n\n                  public Void call() throws Exception {\n                    return null;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "liveCallableViaField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        189
+      ],
+      "code": "package a;\n\n            import java.util.concurrent.Callable;\n            import java.util.ArrayList;\n\n            public class One {\n              static ArrayList<Callable<Void>> callables = new ArrayList<>();\n\n              static Void register(Callable<Void> callable) {\n                callables.add(callable);\n                return null;\n              }\n\n              public static void main(String[] args) throws Exception {\n                new Callable<Void>() {\n                  Void register = register(this);\n\n                  public Void call() throws Exception {\n                    return null;\n                  }\n                };\n              }\n            }"
+    }
+  ]
+}

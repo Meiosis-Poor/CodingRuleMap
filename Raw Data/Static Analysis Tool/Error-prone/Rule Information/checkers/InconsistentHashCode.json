@@ -1,0 +1,62 @@
+{
+  "name": "InconsistentHashCode",
+  "language": "java",
+  "description": "Including fields in hashCode which are not compared in equals violates the contract of hashCode.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 207,
+  "branches": 25,
+  "apis": 3,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return a == that.a && b == that.b;\n              }\n\n              @Override\n              public int hashCode() {\n                return a + 31 * b;\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "class Test {\n              private int foo;\n              private int bar;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return foo == that.foo;\n              }\n\n              @Override\n              // BUG: Diagnostic contains: bar\n              public int hashCode() {\n                return foo + 31 * bar;\n              }\n            }"
+    },
+    {
+      "description": "positiveViaGetter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "class Test {\n              private int foo;\n              private int bar;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return foo == that.foo;\n              }\n\n              @Override\n              // BUG: Diagnostic contains: bar\n              public int hashCode() {\n                return foo + 31 * getBar();\n              }\n\n              private int getBar() {\n                return bar;\n              }\n            }"
+    },
+    {
+      "description": "instanceEquality",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n\n              @Override\n              public boolean equals(Object o) {\n                return this == o;\n              }\n\n              @Override\n              public int hashCode() {\n                return a + 31 * b;\n              }\n            }"
+    },
+    {
+      "description": "memoizedHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n              private int hashCode;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return this.a == that.a && this.b == that.b;\n              }\n\n              @Override\n              public int hashCode() {\n                return hashCode;\n              }\n            }"
+    },
+    {
+      "description": "breakLabeledBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        165
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n              private int hashCode;\n\n              public void accessesLocalWithLabeledBreak() {\n                label:\n                {\n                  switch (a) {\n                    case 0:\n                      break label;\n                  }\n                }\n              }\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return this.a == that.a && this.b == that.b;\n              }\n\n              @Override\n              public int hashCode() {\n                return hashCode;\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "FloggerFormatString",
+  "language": "java",
+  "description": "Invalid printf-style format string",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 110,
+  "branches": 10,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f(Exception e, Throwable t) {\n                // BUG: Diagnostic contains: 'java.lang.String' cannot be formatted using '%d'\n                logger.atInfo().log(\"hello %d\", \"world\");\n              }\n            }"
+    },
+    {
+      "description": "positiveWithCause",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f(Exception e, Throwable t) {\n                // BUG: Diagnostic contains: logger.atInfo().withCause(e).log(\"hello\");\n                logger.atInfo().log(\"hello\", e);\n                // BUG: Diagnostic contains: logger.atInfo().withCause(t).log(\"hello %s\", e);\n                logger.atInfo().log(\"hello %s\", e, t);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f(Exception e, Throwable t, String s) {\n                logger.atInfo().withCause(e).log(\"hello %s\", e);\n              }\n            }"
+    },
+    {
+      "description": "lazyArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "import static com.google.common.flogger.LazyArgs.lazy;\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f(String s, Integer i) {\n                // BUG: Diagnostic contains: 'java.lang.String'\n                logger.atInfo().log(\"hello %d\", lazy(() -> s));\n                logger.atInfo().log(\"hello %d\", lazy(() -> i));\n              }\n            }"
+    },
+    {
+      "description": "varargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f(Object... xs) {\n                // BUG: Diagnostic contains:\n                logger.atInfo().log(\"hello %s %s\", xs);\n              }\n            }"
+    },
+    {
+      "description": "negativeLogString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "package test;\n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f() {\n                logger.atSevere().log(\"hello %s\");\n              }\n            }"
+    }
+  ]
+}

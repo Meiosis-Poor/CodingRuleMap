@@ -1,0 +1,30 @@
+{
+  "name": "ImplementAssertionWithChaining",
+  "language": "java",
+  "description": "Prefer check(...), which usually generates more readable failure messages.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 242,
+  "branches": 34,
+  "apis": 6,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.truth.FailureMetadata;\nimport com.google.common.truth.Subject;\n\n/**\n * @author cpovirk@google.com (Chris Povirk)\n */\npublic class ImplementAssertionWithChainingPositiveCases {\n  static final class FooSubject extends Subject {\n    private final Foo actual;\n\n    private FooSubject(FailureMetadata metadata, Foo actual) {\n      super(metadata, actual);\n      this.actual = actual;\n    }\n\n    void hasString(String expected) {\n      // BUG: Diagnostic contains: check(\"string()\").that(actual.string()).isEqualTo(expected)\n      if (!actual.string().equals(expected)) {\n        failWithActual(\"expected to have string\", expected);\n      }\n    }\n\n    void hasStringGuavaObjectsEqual(String expected) {\n      // BUG: Diagnostic contains: check(\"string()\").that(actual.string()).isEqualTo(expected)\n      if (!com.google.common.base.Objects.equal(actual.string(), expected)) {\n        failWithActual(\"expected to have string\", expected);\n      }\n    }\n\n    void hasStringJavaObjectsEquals(String expected) {\n      // BUG: Diagnostic contains: check(\"string()\").that(actual.string()).isEqualTo(expected)\n      if (!java.util.Objects.equals(actual.string(), expected)) {\n        failWithActual(\"expected to have string\", expected);\n      }\n    }\n\n    void hasInteger(int expected) {\n      // BUG: Diagnostic contains: check(\"integer()\").that(actual.integer()).isEqualTo(expected)\n      if (actual.integer() != expected) {\n        failWithActual(\"expected to have integer\", expected);\n      }\n    }\n\n    void hasKind(Kind expected) {\n      // BUG: Diagnostic contains: check(\"kind()\").that(actual.kind()).isEqualTo(expected)\n      if (actual.kind() != expected) {\n        failWithActual(\"expected to have kind\", expected);\n      }\n    }\n\n    void hasOtherFooInteger(int expected) {\n      // BUG: Diagnostic contains:\n      // check(\"otherFoo().integer()\").that(actual.otherFoo().integer()).isEqualTo(expected)\n      if (actual.otherFoo().integer() != expected) {\n        failWithActual(\"expected to have other foo with integer\", expected);\n      }\n    }\n  }\n\n  private static final class Foo {\n    final String string;\n    final int integer;\n    final Kind kind;\n\n    Foo(String string, int integer, Kind kind) {\n      this.string = string;\n      this.integer = integer;\n      this.kind = kind;\n    }\n\n    String string() {\n      return string;\n    }\n\n    int integer() {\n      return integer;\n    }\n\n    Kind kind() {\n      return kind;\n    }\n\n    Foo otherFoo() {\n      return this;\n    }\n  }\n\n  private enum Kind {}\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.truth.FailureMetadata;\n            import com.google.common.truth.Subject;\n\n            /**\n             * @author cpovirk@google.com (Chris Povirk)\n             */\n            public class ImplementAssertionWithChainingNegativeCases {\n              static final class FooSubject extends Subject {\n                private final Foo actual;\n\n                private FooSubject(FailureMetadata metadata, Foo actual) {\n                  super(metadata, actual);\n                  this.actual = actual;\n                }\n\n                void doesNotHaveString(String other) {\n                  if (actual.string().equals(other)) {\n                    failWithActual(\"expected not to have string\", other);\n                  }\n                }\n\n                void doesNotHaveInteger(int other) {\n                  if (actual.integer() == other) {\n                    failWithActual(\"expected not to have integer\", other);\n                  }\n                }\n\n                void hasBoxedIntegerSameInstance(Integer expected) {\n                  if (actual.boxedInteger() != expected) {\n                    failWithActual(\"expected to have boxed integer\", expected);\n                  }\n                }\n              }\n\n              private static final class Foo {\n                final String string;\n                final int integer;\n                final Integer boxedInteger;\n\n                Foo(String string, int integer, Integer boxedInteger) {\n                  this.string = string;\n                  this.integer = integer;\n                  this.boxedInteger = boxedInteger;\n                }\n\n                String string() {\n                  return string;\n                }\n\n                int integer() {\n                  return integer;\n                }\n\n                Integer boxedInteger() {\n                  return boxedInteger;\n                }\n\n                Foo otherFoo() {\n                  return this;\n                }\n              }\n            }\\"
+    }
+  ]
+}

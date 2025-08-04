@@ -1,0 +1,46 @@
+{
+  "name": "DateFormatConstant",
+  "language": "java",
+  "description": "DateFormat is not thread-safe, and should not be used as a constant field.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 101,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import java.text.DateFormat;\nimport java.text.SimpleDateFormat;\n\nclass Test {\n  // BUG: Diagnostic contains:\n  private static final DateFormat DATE_FORMAT1 = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n  // BUG: Diagnostic contains:\n  private static final SimpleDateFormat DATE_FORMAT2 = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n}"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\nclass Test {\n  private static final SimpleDateFormat NO_INITIALIZER;\n\n  static {\n    NO_INITIALIZER = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n  }\n\n  private final SimpleDateFormat NON_STATIC = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n  private static SimpleDateFormat NON_FINAL = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n  private static final SimpleDateFormat lowerCamelCase = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n\n  static void f() {\n    final SimpleDateFormat NOT_A_FIELD = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n  }\n\n  private static final String NOT_A_SIMPLE_DATE_FORMAT = \"\";\n}"
+    },
+    {
+      "description": "threadLocalFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "import java.text.SimpleDateFormat;\nimport java.text.DateFormat;\nimport java.util.Date;\n\nclass Test {\n  private static final DateFormat DATE_FORMAT = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n\n  static String f(Date d) {\n    return DATE_FORMAT.format(d);\n  }\n}\n\n\n            import java.text.SimpleDateFormat;\n            import java.text.DateFormat;\n            import java.util.Date;\n\n            class Test {\n              private static final ThreadLocal<DateFormat> dateFormat =\n                  ThreadLocal.withInitial(() -> new SimpleDateFormat(\"yyyy-MM-dd HH:mm\"));\n\n              static String f(Date d) {\n                return dateFormat.get().format(d);\n              }\n            }"
+    },
+    {
+      "description": "lowerCamelCaseFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import java.text.SimpleDateFormat;\nimport java.text.DateFormat;\nimport java.util.Date;\n\nclass Test {\n  private static final DateFormat DATE_FORMAT = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n\n  static String f(Date d) {\n    return DATE_FORMAT.format(d);\n  }\n}\n\n\nimport java.text.SimpleDateFormat;\nimport java.text.DateFormat;\nimport java.util.Date;\n\nclass Test {\n  private static final DateFormat dateFormat = new SimpleDateFormat(\"yyyy-MM-dd HH:mm\");\n\n  static String f(Date d) {\n    return dateFormat.format(d);\n  }\n}"
+    }
+  ]
+}

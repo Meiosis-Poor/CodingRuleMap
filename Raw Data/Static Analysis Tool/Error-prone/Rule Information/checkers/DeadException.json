@@ -1,0 +1,46 @@
+{
+  "name": "DeadException",
+  "language": "java",
+  "description": "Exception created but not thrown",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 102,
+  "branches": 10,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            public class DeadExceptionPositiveCases {\n              public void runtimeException() {\n                // BUG: Diagnostic contains: throw new RuntimeException\n                new RuntimeException(\"Not thrown, and reference lost\");\n              }\n\n              public void error() {\n                // BUG: Diagnostic contains: throw new AssertionError\n                new AssertionError(\"Not thrown, and reference lost\");\n              }\n\n              public void fixIsToDeleteTheFirstStatement() {\n                // BUG: Diagnostic contains: remove this line\n                new IllegalArgumentException(\"why is this here?\");\n                int i = 1;\n                System.out.println(\"i = \" + i);\n\n                if (true) {\n                  // BUG: Diagnostic contains: remove this line\n                  new RuntimeException(\"oops\");\n                  System.out.println(\"another statement after exception\");\n                }\n\n                switch (0) {\n                  default:\n                    // BUG: Diagnostic contains: remove this line\n                    new RuntimeException(\"oops\");\n                    System.out.println(\"another statement after exception\");\n                }\n              }\n\n              public void firstStatementWithNoSurroundingBlock() {\n                if (true)\n                  // BUG: Diagnostic contains: throw new InterruptedException\n                  new InterruptedException(\"this should be thrown\");\n\n                if (true) return;\n                else\n                  // BUG: Diagnostic contains: throw new ArithmeticException\n                  new ArithmeticException(\"should also be thrown\");\n\n                switch (4) {\n                  case 4:\n                    System.out.println(\"4\");\n                    break;\n                  default:\n                    // BUG: Diagnostic contains: throw new IllegalArgumentException\n                    new IllegalArgumentException(\"should be thrown\");\n                }\n              }\n\n              public void testLooksLikeAJunitTestMethod() {\n                // BUG: Diagnostic contains: throw new RuntimeException\n                new RuntimeException(\"Not thrown, and reference lost\");\n              }\n\n              {\n                // BUG: Diagnostic contains: throw new Exception\n                new Exception();\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            public class DeadExceptionNegativeCases {\n              public void noError() {\n                Exception e = new RuntimeException(\"stored\");\n                e = new UnsupportedOperationException(\"also stored\");\n                throw new IllegalArgumentException(\"thrown\");\n              }\n\n              public Exception returnsException() {\n                return new RuntimeException(\"returned\");\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCaseWhenExceptionsUnthrownInTests",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import junit.framework.TestCase;\n            import org.junit.Test;\n\n            /**\n             * @author alexeagle@google.com (Alex Eagle)\n             */\n            public class DeadExceptionTestingNegativeCases extends TestCase {\n\n              public void testShouldAllowTestingOfExceptionConstructorSideEffects() {\n                try {\n                  new IllegalArgumentException((Throwable) null);\n                  fail();\n                } catch (NullPointerException e) {\n                  // expected\n                }\n              }\n\n              @Test\n              public void shouldAllowTestingOfExceptionConstructorSideEffects() {\n                try {\n                  new IllegalArgumentException((Throwable) null);\n                  fail();\n                } catch (NullPointerException e) {\n                  // expected\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "shouldAllowTestingOfExceptionConstructorSideEffects",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        158
+      ],
+      "code": ""
+    }
+  ]
+}

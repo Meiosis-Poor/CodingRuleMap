@@ -1,0 +1,206 @@
+{
+  "name": "FieldCanBeLocal",
+  "language": "java",
+  "description": "This field can be replaced with a local variable in the methods that use it.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 284,
+  "branches": 27,
+  "apis": 5,
+  "test": [
+    {
+      "description": "simplePositive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains:\n              private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "fullyUnused_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "class Test {\n              private int a;\n\n              void foo() {\n                a = 1;\n              }\n            }"
+    },
+    {
+      "description": "suppressedByUnusedPrefix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "class Test {\n              private int unusedA;\n\n              int foo() {\n                unusedA = 1;\n                return unusedA;\n              }\n            }"
+    },
+    {
+      "description": "multipleAssignments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "class Test {\n              private int a;\n\n              int foo() {\n                a = 1;\n                a = 2;\n                return a;\n              }\n            }\n            \n\n            class Test {\n              int foo() {\n                int a = 1;\n                a = 2;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "hasFieldAnnotation_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.FIELD)\n            @Retention(RetentionPolicy.RUNTIME)\n            @interface Field {}\n            \n\n            class Test {\n              @Field private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "hasVariableAnnotation_matchesAndAnnotationCopied",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.FIELD, ElementType.LOCAL_VARIABLE})\n            @Retention(RetentionPolicy.RUNTIME)\n            @interface Field {}\n            \n\n            class Test {\n              @Field private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }\n            \n\n            class Test {\n              int foo() {\n                @Field int a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "multipleVariableAnnotations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        190
+      ],
+      "code": "import javax.annotation.Nonnull;\n            import javax.annotation.Nullable;\n\n            class Test {\n              @Nonnull /* foo */ @Nullable private Integer a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }\n            \n\n            import javax.annotation.Nonnull;\n            import javax.annotation.Nullable;\n\n            class Test {\n\n              int foo() {\n                @Nonnull /* foo */\n                @Nullable\n                Integer a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "hasTypeUseAnnotation_match",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.TYPE_USE)\n            @Retention(RetentionPolicy.RUNTIME)\n            @interface Field {}\n            \n\n            class Test {\n              @Field private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }\n            \n\n            class Test {\n              int foo() {\n                @Field int a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "suppressedOnMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        268
+      ],
+      "code": "class Test {\n              @SuppressWarnings(\"FieldCanBeLocal\")\n              private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "suppressedOnClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        287
+      ],
+      "code": "@SuppressWarnings(\"FieldCanBeLocal\")\n            class Test {\n              private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "inlineConditional_noWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "class Test {\n              private int a;\n\n              int foo(int b) {\n                a = b > 2 ? a : b;\n                return a;\n              }\n\n              int bar(int b) {\n                a = b;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "fieldIsPublic_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        329
+      ],
+      "code": "class Test {\n              public int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "usedBeforeAssigment_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        347
+      ],
+      "code": "class Test {\n              public int a;\n\n              int foo() {\n                if (a < 0) {\n                  return 0;\n                }\n                a = 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "usedInMultipleMethods_alwaysAssignedFirst_positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        368
+      ],
+      "code": "class Test {\n              private int a;\n\n              int foo() {\n                a = 1;\n                return a;\n              }\n\n              int bar() {\n                a = 2;\n                return a;\n              }\n            }\n            \n\n            class Test {\n              int foo() {\n                int a = 1;\n                return a;\n              }\n\n              int bar() {\n                int a = 2;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "qualifiedWithThis_refactoringRemovesThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        406
+      ],
+      "code": "class Test {\n              private int a;\n\n              int foo() {\n                this.a = 1;\n                return a;\n              }\n\n              int bar() {\n                this.a = 2;\n                return a;\n              }\n            }\n            \n\n            class Test {\n              int foo() {\n                int a = 1;\n                return a;\n              }\n\n              int bar() {\n                int a = 2;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "assignmentToFieldOfSameName_isRemoved",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        444
+      ],
+      "code": "class Test {\n              private int a;\n\n              Test(int a) {\n                this.a = a;\n                int b = a + 2;\n              }\n\n              int foo() {\n                this.a = 1;\n                return a;\n              }\n\n              int bar() {\n                this.a = 2;\n                return a;\n              }\n            }\n            \n\n            class Test {\n              Test(int a) {\n                int b = a + 2;\n              }\n\n              int foo() {\n                int a = 1;\n                return a;\n              }\n\n              int bar() {\n                int a = 2;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "usedBeforeReassignment_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        491
+      ],
+      "code": "class Test {\n              private int a;\n\n              int foo() {\n                a = a + 1;\n                return a;\n              }\n            }"
+    },
+    {
+      "description": "fieldAssignedOnField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        509
+      ],
+      "code": "class Test {\n              class Sub {\n                private int a;\n\n                int a() {\n                  return a;\n                }\n              }\n\n              private Sub sub;\n\n              Test(Sub sub) {\n                this.sub = sub;\n              }\n\n              void foo() {\n                sub.a = 1;\n              }\n            }"
+    },
+    {
+      "description": "usedWithinClassScope_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        538
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test {\n              private Integer a;\n              Predicate<Integer> predicate = b -> a == b;\n\n              Test(int a) {\n                this.a = a;\n              }\n\n              public void set(int a) {\n                this.a = a;\n              }\n            }"
+    },
+    {
+      "description": "usedWithinLambda_noWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        562
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test {\n              private Integer a;\n\n              Test(int a) {\n                this.a = a;\n              }\n\n              public Predicate<Integer> set(int a) {\n                this.a = a;\n                return x -> x == this.a;\n              }\n            }"
+    },
+    {
+      "description": "usedWithinLambdaMemberSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        586
+      ],
+      "code": "import java.util.function.Predicate;\nimport java.util.stream.Stream;\nimport java.util.Collections;\n\nclass Test {\n  private Integer a;\n\n  Test(int a) {\n    this.a = a;\n  }\n\n  public Stream<Integer> set(int a) {\n    this.a = a;\n    return Collections.<Integer>emptyList().stream().filter(x -> x == this.a).filter(x -> x > 0);\n  }\n}"
+    },
+    {
+      "description": "usedInStaticInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        612
+      ],
+      "code": "class Test {\n              static {\n                Test[] tests = new Test[0];\n                for (Test test : tests) {\n                  int b = test.a;\n                }\n              }\n\n              private Integer a;\n\n              Test(int a) {\n                this.a = a;\n              }\n            }"
+    },
+    {
+      "description": "unusedPrivateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        636
+      ],
+      "code": "import com.google.errorprone.annotations.Keep;\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.RetentionPolicy;\n            import java.lang.annotation.Target;\n            import javax.inject.Inject;\n\n            public class Test {\n              @Keep private int a;\n              @ProvidesCustom private int b;\n\n              public int test(int aa, int bb) {\n                a = aa;\n                b = bb;\n                return a + b;\n              }\n\n              @Keep\n              @Target(ElementType.FIELD)\n              @Retention(RetentionPolicy.SOURCE)\n              private @interface ProvidesCustom {}\n            }"
+    },
+    {
+      "description": "accessedInOtherMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        668
+      ],
+      "code": "class Test {\n              private int x;\n\n              int f() {\n                x = 42;\n                g();\n                return x;\n              }\n\n              void g() {\n                x = 46;\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "name": "ImmutableAnnotationChecker",
+  "language": "java",
+  "description": "Annotations should always be immutable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 98,
+  "branches": 8,
+  "apis": 3,
+  "test": [
+    {
+      "description": "nonFinalField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            class Test implements Deprecated {\n              public Class<? extends Annotation> annotationType() {\n                return Deprecated.class;\n              }\n\n              // BUG: Diagnostic contains: final int x;'\n              int x;\n\n              private Test(int x) {\n                this.x = x;\n              }\n\n              public boolean forRemoval() {\n                return false;\n              }\n\n              public String since() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "immutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import com.google.common.collect.ImmutableSet;\n\n            class Test implements Deprecated {\n              public Class<? extends Annotation> annotationType() {\n                return Deprecated.class;\n              }\n\n              final Annotation annotation;\n\n              private Test(Annotation annotation) {\n                this.annotation = annotation;\n              }\n\n              public boolean forRemoval() {\n                return false;\n              }\n\n              public String since() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "finalMutableField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "import java.lang.annotation.Annotation;\nimport java.util.Arrays;\nimport java.util.HashSet;\nimport java.util.Set;\n\nclass Test implements Deprecated {\n  public Class<? extends Annotation> annotationType() {\n    return Deprecated.class;\n  }\n\n  // BUG: Diagnostic contains: annotations should be immutable: 'Test' has field 'xs' of type\n  // 'java.util.Set<java.lang.Integer>', 'Set' is mutable\n  final Set<Integer> xs;\n\n  private Test(Integer... xs) {\n    this.xs = new HashSet<>(Arrays.asList(xs));\n  }\n\n  public boolean forRemoval() {\n    return false;\n  }\n\n  public String since() {\n    return \"\";\n  }\n}"
+    },
+    {
+      "description": "annotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import com.google.errorprone.annotations.Immutable;\n\n            // BUG: Diagnostic contains: annotations are immutable by default\n            @Immutable\n            class Test implements Deprecated {\n              public Class<? extends Annotation> annotationType() {\n                return Deprecated.class;\n              }\n\n              public boolean forRemoval() {\n                return false;\n              }\n\n              public String since() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "mutableFieldType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "class Foo {}\n            \n\n            import java.lang.annotation.Annotation;\n            import java.util.Arrays;\n            import java.util.HashSet;\n            import java.util.Set;\n\n            class Test implements Deprecated {\n              public Class<? extends Annotation> annotationType() {\n                return Deprecated.class;\n              }\n\n              // BUG: Diagnostic contains: the declaration of type 'Foo' is not annotated with\n              // @com.google.errorprone.annotations.Immutable\n              final Foo f;\n\n              private Test(Foo f) {\n                this.f = f;\n              }\n\n              public boolean forRemoval() {\n                return false;\n              }\n\n              public String since() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "anonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        200
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import com.google.common.collect.ImmutableSet;\n\n            class Test {\n              {\n                new Deprecated() {\n                  public Class<? extends Annotation> annotationType() {\n                    return Deprecated.class;\n                  }\n\n                  public boolean forRemoval() {\n                    return false;\n                  }\n\n                  public String since() {\n                    return \"\";\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "anonymousReferencesEnclosing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import java.util.Objects;\n            import com.google.common.collect.ImmutableSet;\n\n            class Test {\n              {\n                // BUG: Diagnostic contains: 'Deprecated' has mutable enclosing instance\n                new Deprecated() {\n                  {\n                    Objects.requireNonNull(Test.this);\n                  }\n\n                  public Class<? extends Annotation> annotationType() {\n                    return Deprecated.class;\n                  }\n\n                  public boolean forRemoval() {\n                    return false;\n                  }\n\n                  public String since() {\n                    return \"\";\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "anonymousReferencesEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        266
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import java.util.Objects;\n            import com.google.common.collect.ImmutableSet;\n\n            enum Test {\n              ;\n\n              {\n                new Deprecated() {\n                  {\n                    Objects.requireNonNull(Test.this);\n                  }\n\n                  public Class<? extends Annotation> annotationType() {\n                    return Deprecated.class;\n                  }\n\n                  public boolean forRemoval() {\n                    return false;\n                  }\n\n                  public String since() {\n                    return \"\";\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "anonymousCapturesLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        303
+      ],
+      "code": ""
+    },
+    {
+      "description": "otherAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        333
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import java.util.Objects;\n            import com.google.common.collect.ImmutableSet;\n\n            class Test {\n              @SuppressWarnings(\"Immutable\")\n              class A implements Annotation {\n                private int i = 0;\n\n                public int count() {\n                  return i++;\n                }\n\n                public Class<? extends Annotation> annotationType() {\n                  return Deprecated.class;\n                }\n              }\n\n              class B implements Annotation {\n                final A a = null;\n\n                public Class<? extends Annotation> annotationType() {\n                  return Deprecated.class;\n                }\n              }\n            }"
+    },
+    {
+      "description": "annotationSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        369
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import java.util.Objects;\n            import com.google.common.collect.ImmutableSet;\n\n            class Test {\n              class MyAnno implements Annotation {\n                public Class<? extends Annotation> annotationType() {\n                  return Deprecated.class;\n                }\n              }\n\n              {\n                new MyAnno() {};\n              }\n            }"
+    },
+    {
+      "description": "jucImmutable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        394
+      ],
+      "code": "import javax.annotation.concurrent.Immutable;\n\n            @Immutable\n            class Lib {}\n            \n\nimport java.lang.annotation.Annotation;\n\nclass MyAnno implements Annotation {\n  // BUG: Diagnostic contains: not annotated with @com.google.errorprone.annotations.Immutable\n  final Lib l = new Lib();\n\n  public Class<? extends Annotation> annotationType() {\n    return Deprecated.class;\n  }\n}"
+    },
+    {
+      "description": "generated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        422
+      ],
+      "code": "import java.lang.annotation.Annotation;\n            import javax.annotation.processing.Generated;\n\n            @Generated(\"com.google.auto.value.processor.AutoAnnotationProcessor\")\n            class Test implements Deprecated {\n              public Class<? extends Annotation> annotationType() {\n                return Deprecated.class;\n              }\n\n              int x;\n\n              private Test(int x) {\n                this.x = x;\n              }\n\n              public boolean forRemoval() {\n                return false;\n              }\n\n              public String since() {\n                return \"\";\n              }\n            }"
+    }
+  ]
+}

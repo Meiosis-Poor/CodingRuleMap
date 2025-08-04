@@ -1,0 +1,22 @@
+{
+  "name": "MissingRefasterAnnotation",
+  "language": "java",
+  "description": "The Refaster template contains a method without any Refaster annotations",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 58,
+  "branches": 2,
+  "apis": 1,
+  "test": [
+    {
+      "description": "testIdentification",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "import com.google.errorprone.refaster.annotation.AfterTemplate;\n            import com.google.errorprone.refaster.annotation.AlsoNegation;\n            import com.google.errorprone.refaster.annotation.BeforeTemplate;\n            import java.util.Map;\n\n            class A {\n              // BUG: Diagnostic matches: X\n              static final class MethodLacksBeforeTemplateAnnotation {\n                @BeforeTemplate\n                boolean before1(String string) {\n                  return string.equals(\"\");\n                }\n\n                // @BeforeTemplate is missing\n                boolean before2(String string) {\n                  return string.length() == 0;\n                }\n\n                @AfterTemplate\n                @AlsoNegation\n                boolean after(String string) {\n                  return string.isEmpty();\n                }\n              }\n\n              // BUG: Diagnostic matches: X\n              static final class MethodLacksAfterTemplateAnnotation {\n                @BeforeTemplate\n                boolean before(String string) {\n                  return string.equals(\"\");\n                }\n\n                // @AfterTemplate is missing\n                boolean after(String string) {\n                  return string.isEmpty();\n                }\n              }\n\n              // BUG: Diagnostic matches: X\n              abstract class MethodLacksPlaceholderAnnotation<K, V> {\n                // @Placeholder is missing\n                abstract V function(K key);\n\n                @BeforeTemplate\n                void before(Map<K, V> map, K key) {\n                  if (!map.containsKey(key)) {\n                    map.put(key, function(key));\n                  }\n                }\n\n                @AfterTemplate\n                void after(Map<K, V> map, K key) {\n                  map.computeIfAbsent(key, k -> function(k));\n                }\n              }\n\n              static final class ValidRefasterTemplate {\n                @BeforeTemplate\n                void unusedPureFunctionCall(Object o) {\n                  o.toString();\n                }\n              }\n\n              static final class NotARefasterTemplate {\n                @Override\n                public String toString() {\n                  return \"This is not a Refaster template\";\n                }\n              }\n            }"
+    }
+  ]
+}

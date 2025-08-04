@@ -1,0 +1,358 @@
+{
+  "name": "CanIgnoreReturnValueSuggester",
+  "language": "java",
+  "description": "Methods that always return 'this' (or return an input parameter) should be annotated with @com.google.errorprone.annotations.CanIgnoreReturnValue",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 318,
+  "branches": 41,
+  "apis": 8,
+  "test": [
+    {
+      "description": "simpleCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "b362106953_returnThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public Client setName(String name) {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "b362106953_returnParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public String setName(String name) {\n                return name;\n              }\n            }"
+    },
+    {
+      "description": "parenthesizedCastThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                return ((Client) (this));\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return ((Client) (this));\n              }\n            }"
+    },
+    {
+      "description": "returnsInputParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public String method(String name) {\n                System.out.println(name);\n                return name;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public String method(String name) {\n                System.out.println(name);\n                return name;\n              }\n            }"
+    },
+    {
+      "description": "returnsInputParam_intParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public int method(int value) {\n                value = 42;\n                return value;\n              }\n            }"
+    },
+    {
+      "description": "returnsInputParam_withParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        194
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public String method(String name) {\n                return (name);\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public String method(String name) {\n                return (name);\n              }\n            }"
+    },
+    {
+      "description": "returnInputParams_multipleParams",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "package com.google.frobber;\n\n            public final class ReturnInputParam {\n              public static StringBuilder append(StringBuilder input, String name) {\n                input.append(name);\n                return input;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class ReturnInputParam {\n              @CanIgnoreReturnValue\n              public static StringBuilder append(StringBuilder input, String name) {\n                input.append(name);\n                return input;\n              }\n            }"
+    },
+    {
+      "description": "returnInputParams_moreComplex",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        258
+      ],
+      "code": "package com.google.frobber;\n\n            public final class ReturnInputParam {\n              public static StringBuilder append(StringBuilder input, String name) {\n                input.append(\"name = \").append(name);\n                return input;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class ReturnInputParam {\n              @CanIgnoreReturnValue\n              public static StringBuilder append(StringBuilder input, String name) {\n                input.append(\"name = \").append(name);\n                return input;\n              }\n            }"
+    },
+    {
+      "description": "returnsInputParamWithMultipleReturns",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        291
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public String method(String a, String b) {\n                if (System.currentTimeMillis() > 0) {\n                  return a;\n                }\n                return b;\n              }\n            }"
+    },
+    {
+      "description": "returnsInputParamWithMultipleReturns_oneReturnIsConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        312
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public String method(String a, String b) {\n                if (System.currentTimeMillis() > 0) {\n                  return a;\n                }\n                return \"hi\";\n              }\n            }"
+    },
+    {
+      "description": "returnsInputParamWithTernary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        333
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public String method(String a, String b) {\n                return (System.currentTimeMillis() > 0) ? a : b;\n              }\n            }"
+    },
+    {
+      "description": "builder_abstractClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351
+      ],
+      "code": "package com.google.frobber;\n\n            public abstract class Builder {\n              public abstract Builder setName(String name);\n\n              public abstract Builder enableDeathStar();\n\n              public abstract Builder clone();\n\n              public abstract Builder copy();\n\n              public abstract Builder getCopy();\n\n              public abstract Builder newBuilder();\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public abstract class Builder {\n              @CanIgnoreReturnValue\n              public abstract Builder setName(String name);\n\n              @CanIgnoreReturnValue\n              public abstract Builder enableDeathStar();\n\n              public abstract Builder clone();\n\n              public abstract Builder copy();\n\n              public abstract Builder getCopy();\n\n              public abstract Builder newBuilder();\n            }"
+    },
+    {
+      "description": "builder_interface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        399
+      ],
+      "code": "package com.google.frobber;\n\n            public interface Builder {\n              Builder setName(String name);\n\n              Builder enableDeathStar();\n\n              Builder copy();\n\n              Builder clone();\n\n              Builder newBuilder();\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public interface Builder {\n              @CanIgnoreReturnValue\n              Builder setName(String name);\n\n              @CanIgnoreReturnValue\n              Builder enableDeathStar();\n\n              Builder copy();\n\n              Builder clone();\n\n              Builder newBuilder();\n            }"
+    },
+    {
+      "description": "autoValueBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        443
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Animal {\n              abstract String name();\n\n              abstract int numberOfLegs();\n\n              static Builder builder() {\n                return null;\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String value);\n\n                abstract Builder setNumberOfLegs(int value);\n\n                abstract Animal build();\n              }\n            }"
+    },
+    {
+      "description": "returnSelf_b234875737",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        477
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                return self();\n              }\n\n              private Client self() {\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return self();\n              }\n\n              private Client self() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "returnGetThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        522
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                return getThis();\n              }\n\n              private Client getThis() {\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return getThis();\n              }\n\n              private Client getThis() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "simpleCaseAlreadyAnnotatedWithCirv",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        567
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "alreadyAnnotatedWithProtobufCirv_b356526159",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        591
+      ],
+      "code": "package com.google.protobuf;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "alreadyAnnotatedWithArbitraryCirv_b356526159",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        613
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              @interface CanIgnoreReturnValue {}\n\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "simpleCaseAlreadyAnnotatedWithCrv",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        637
+      ],
+      "code": ""
+    },
+    {
+      "description": "simpleCaseWithNestedLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        656
+      ],
+      "code": "package com.google.frobber;\n\n            import java.util.function.Function;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                new Function<String, String>() {\n                  @Override\n                  public String apply(String in) {\n                    return \"kurt\";\n                  }\n                };\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import java.util.function.Function;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                new Function<String, String>() {\n                  @Override\n                  public String apply(String in) {\n                    return \"kurt\";\n                  }\n                };\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "anotherMethodDoesntReturnThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        706
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n\n              public Client getValue2() {\n                return new Client();\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n\n              public Client getValue2() {\n                return new Client();\n              }\n            }"
+    },
+    {
+      "description": "nestedCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        751
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                if (true) {\n                  return new Client();\n                }\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "nestedCaseBothReturningThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        775
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                if (true) {\n                  return this;\n                }\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                if (true) {\n                  return this;\n                }\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "capitalVoidReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        818
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public Void getValue() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "lowerVoidReturnType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        836
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public Void getValue() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "constructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        854
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public Client() {}\n            }"
+    },
+    {
+      "description": "refasterAfterTemplate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        870
+      ],
+      "code": "import com.google.errorprone.refaster.annotation.AfterTemplate;\n\n            class A {\n              static final class MethodLacksBeforeTemplateAnnotation {\n                @AfterTemplate\n                String after(String str) {\n                  return str;\n                }\n              }\n            }"
+    },
+    {
+      "description": "sometimesThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        891
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                this.name = name;\n                if (true) throw new UnsupportedOperationException();\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              private String name;\n\n              @CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                if (true) throw new UnsupportedOperationException();\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "alwaysThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        930
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public Client setName(String name) {\n                throw new UnsupportedOperationException();\n              }\n            }"
+    },
+    {
+      "description": "simpleCaseWithSimpleNameConflict",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        950
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public @interface CanIgnoreReturnValue {}\n\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            public final class Client {\n              private String name;\n\n              public @interface CanIgnoreReturnValue {}\n\n              @com.google.errorprone.annotations.CanIgnoreReturnValue\n              public Client setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "onlyReturnsThis_b236423646",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        989
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public Client getFoo() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "onlyReturnsSelf_b236423646",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1007
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Client {\n              public Client getFoo() {\n                return self();\n              }\n\n              public Client self() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "delegateToCirvMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1029
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import java.util.Arrays;\n            import java.util.List;\n\n            public final class Client {\n              public Client setFoo(String... args) {\n                return setFoo(Arrays.asList(args));\n              }\n\n              public Client setFoos(String... args) {\n                return this.setFoo(Arrays.asList(args));\n              }\n\n              @CanIgnoreReturnValue\n              public Client setFoo(List<String> args) {\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import java.util.Arrays;\n            import java.util.List;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public Client setFoo(String... args) {\n                return setFoo(Arrays.asList(args));\n              }\n\n              @CanIgnoreReturnValue\n              public Client setFoos(String... args) {\n                return this.setFoo(Arrays.asList(args));\n              }\n\n              @CanIgnoreReturnValue\n              public Client setFoo(List<String> args) {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "converter_b240039465",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1085
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            abstract class Parent<X> {\n              @CanIgnoreReturnValue\n              X doFrom(String in) {\n                return from(in);\n              }\n\n              abstract X from(String value);\n            }"
+    },
+    {
+      "description": "immutableBuilder_b265049495",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1123
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class AnimalBuilder {\n              abstract String name();\n\n              public AnimalBuilder withName(String name) {\n                return builder().setName(name).build();\n              }\n\n              static Builder builder() {\n                return null;\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String value);\n\n                abstract AnimalBuilder build();\n              }\n            }"
+    },
+    {
+      "description": "providesMethod_b267362954",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1157
+      ],
+      "code": "package com.google.frobber;\n\n            public final class Example {\n              static CharSequence provideName(String name) {\n                return name;\n              }\n            }"
+    },
+    {
+      "description": "exemptedByCustomAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1175
+      ],
+      "code": "package example;\n\n            @interface Foo {}\n            \n\n            package example;\n\n            public final class ExemptedByCustomAnnotation {\n              private String name;\n\n              @Foo\n              public ExemptedByCustomAnnotation setName(String name) {\n                this.name = name;\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "daggerComponentBuilder_b318407972",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1206
+      ],
+      "code": "package com.google.frobber;\n\n            import dagger.Component;\n\n            @Component.Builder\n            interface Builder {\n              Builder setName(String name);\n\n              String build();\n            }"
+    },
+    {
+      "description": "daggerSubcomponentBuilder_b318407972",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1227
+      ],
+      "code": "package com.google.frobber;\n\n            import dagger.Subcomponent;\n\n            @Subcomponent.Builder\n            interface Builder {\n              Builder setName(String name);\n\n              String build();\n            }"
+    },
+    {
+      "description": "anonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1248
+      ],
+      "code": "import java.util.function.Function;\n\n            public final class Test {\n              public void setName() {\n                var o =\n                    new Function<Function, Function>() {\n                      @Override\n                      public Function apply(Function in) {\n                        return in;\n                      }\n                    };\n              }\n            }"
+    },
+    {
+      "description": "returningANewInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1272
+      ],
+      "code": "public final class MyBuilder {\n              MyBuilder() {}\n\n              MyBuilder(String name) {}\n\n              MyBuilder(MyBuilder builder) {}\n\n              public MyBuilder passingParam(String name) {\n                return new MyBuilder(name);\n              }\n\n              public MyBuilder passingThis() {\n                return new MyBuilder(this);\n              }\n\n              public MyBuilder notPassing() {\n                return new MyBuilder();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "UnnecessaryStringBuilder",
+  "language": "java",
+  "description": "Prefer string concatenation over explicitly using `StringBuilder#append`, since `+` reads better and has equivalent or better performance.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 180,
+  "branches": 28,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "class Test {\n              void f(String hello) {\n                System.err.println(new StringBuilder().append(hello).append(\"world\"));\n                System.err.println(new StringBuilder(hello).append(\"world\"));\n                System.err.println(new StringBuilder(10).append(hello).append(\"world\"));\n                System.err.println(new StringBuilder(hello).append(\"world\").toString());\n                System.err.println(new StringBuilder().toString());\n              }\n            }\n            \n\n            class Test {\n              void f(String hello) {\n                System.err.println(hello + \"world\");\n                System.err.println(hello + \"world\");\n                System.err.println(hello + \"world\");\n                System.err.println(hello + \"world\");\n                System.err.println(\"\");\n              }\n            }"
+    },
+    {
+      "description": "variable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "class Test {\n              void f(String hello) {\n                String a = new StringBuilder().append(hello).append(\"world\").toString();\n                StringBuilder b = new StringBuilder().append(hello).append(\"world\");\n                StringBuilder c = new StringBuilder().append(hello).append(\"world\");\n                System.err.println(b);\n                System.err.println(b + \"\");\n                System.err.println(c);\n                c.append(\"goodbye\");\n              }\n            }\n            \n\n            class Test {\n              void f(String hello) {\n                String a = hello + \"world\";\n                String b = hello + \"world\";\n                StringBuilder c = new StringBuilder().append(hello).append(\"world\");\n                System.err.println(b);\n                System.err.println(b + \"\");\n                System.err.println(c);\n                c.append(\"goodbye\");\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100
+      ],
+      "code": "class Test {\n              void f(Iterable<String> xs) {\n                StringBuilder sb = new StringBuilder();\n                for (String s : xs) {\n                  sb.append(s);\n                }\n                System.err.println(sb);\n              }\n            }"
+    },
+    {
+      "description": "negativeMethodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "class Test {\n              void f(Iterable<String> xs) {\n                StringBuilder sb = new StringBuilder();\n                xs.forEach(sb::append);\n                System.err.println(sb);\n              }\n            }"
+    },
+    {
+      "description": "needsParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        136
+      ],
+      "code": "abstract class Test {\n              abstract void g(String x);\n\n              void f(boolean b, String hello) {\n                g(new StringBuilder().append(b ? hello : \"\").append(\"world\").toString());\n              }\n            }\n            \n\n            abstract class Test {\n              abstract void g(String x);\n\n              void f(boolean b, String hello) {\n                g((b ? hello : \"\") + \"world\");\n              }\n            }"
+    },
+    {
+      "description": "varType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "abstract class Test {\n              void f() {\n                var sb = new StringBuilder().append(\"hello\");\n                System.err.println(sb);\n              }\n            }\n            \n\n            abstract class Test {\n              void f() {\n                var sb = \"hello\";\n                System.err.println(sb);\n              }\n            }"
+    },
+    {
+      "description": "unusedReturnValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        190
+      ],
+      "code": "class Test {\n              void f() {\n                new StringBuilder().append(\"foo\");\n              }\n            }"
+    }
+  ]
+}

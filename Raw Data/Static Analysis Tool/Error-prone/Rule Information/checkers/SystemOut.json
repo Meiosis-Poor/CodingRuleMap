@@ -1,0 +1,30 @@
+{
+  "name": "SystemOut",
+  "language": "java",
+  "description": "Printing to standard output should only be used for debugging, not in production code",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 66,
+  "branches": 5,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.io.PrintStream;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: SystemOut\n                System.out.println();\n                // BUG: Diagnostic contains: SystemOut\n                System.err.println();\n                // BUG: Diagnostic contains: SystemOut\n                p(System.out);\n                // BUG: Diagnostic contains: SystemOut\n                p(System.err);\n                // BUG: Diagnostic contains: SystemOut\n                Thread.dumpStack();\n                // BUG: Diagnostic contains: SystemOut\n                new Exception().printStackTrace();\n              }\n\n              private void p(PrintStream ps) {}\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "import java.io.*;\n\n            class Test {\n              void f() {\n                new Exception().printStackTrace(new PrintStream((OutputStream) null));\n                new Exception().printStackTrace(new PrintWriter((OutputStream) null));\n              }\n            }"
+    }
+  ]
+}

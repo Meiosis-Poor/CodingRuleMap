@@ -1,0 +1,30 @@
+{
+  "name": "ConditionalExpressionNumericPromotion",
+  "language": "java",
+  "description": "A conditional expression with numeric operands of differing types will perform binary numeric promotion of the operands; when these operands are of reference types, the expression's result may not be of the expected type.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 81,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "import java.io.Serializable;\n\n            class Test {\n              Object returnObject(boolean b) {\n                return b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              Number returnNumber(boolean b) {\n                // Extra parentheses, just for fun.\n                return (b ? Integer.valueOf(0) : Long.valueOf(0));\n              }\n\n              Serializable returnSerializable(boolean b) {\n                return b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void assignObject(boolean b, Object obj) {\n                obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void assignNumber(boolean b, Number obj) {\n                obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void variableObject(boolean b) {\n                Object obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void variableNumber(boolean b) {\n                Number obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void invokeMethod(boolean b, Number n) {\n                invokeMethod(b, b ? Integer.valueOf(0) : Long.valueOf(0));\n              }\n            }\n            \n\n            import java.io.Serializable;\n\n            class Test {\n              Object returnObject(boolean b) {\n                return b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0));\n              }\n\n              Number returnNumber(boolean b) {\n                // Extra parentheses, just for fun.\n                return (b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0)));\n              }\n\n              Serializable returnSerializable(boolean b) {\n                return b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0));\n              }\n\n              void assignObject(boolean b, Object obj) {\n                obj = b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0));\n              }\n\n              void assignNumber(boolean b, Number obj) {\n                obj = b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0));\n              }\n\n              void variableObject(boolean b) {\n                Object obj = b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0));\n              }\n\n              void variableNumber(boolean b) {\n                Number obj = b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0));\n              }\n\n              void invokeMethod(boolean b, Number n) {\n                invokeMethod(b, b ? ((Number) Integer.valueOf(0)) : ((Number) Long.valueOf(0)));\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        118
+      ],
+      "code": "class Test {\n              Long returnLong(boolean b) {\n                // OK, because the return type is the correct type.\n                return false ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void assignLong(boolean b, Long obj) {\n                obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void variableLong(boolean b) {\n                Long obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void variablePrimitive(boolean b) {\n                long obj = b ? Integer.valueOf(0) : Long.valueOf(0);\n              }\n\n              void invokeMethod(boolean b, Long n) {\n                invokeMethod(b, b ? Integer.valueOf(0) : Long.valueOf(0));\n              }\n            }"
+    }
+  ]
+}

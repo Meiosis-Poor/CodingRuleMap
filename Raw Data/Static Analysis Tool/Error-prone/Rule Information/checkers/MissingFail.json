@@ -1,0 +1,182 @@
+{
+  "name": "MissingFail",
+  "language": "java",
+  "description": "Not calling fail() when expecting an exception masks bugs",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 415,
+  "branches": 29,
+  "apis": 12,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import junit.framework.TestCase;\n            import org.junit.Assert;\n            import org.mockito.Mockito;\n\n            /** Test cases for missing fail */\n            public class MissingFailPositiveCases extends TestCase {\n\n              private boolean foo = true;\n\n              public void expectedException_emptyCatch() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception expected) {\n                }\n              }\n\n              public void catchAssert() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception e) {\n                  assertDummy();\n                }\n              }\n\n              public void catchVerify() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception e) {\n                  verifyDummy();\n                }\n              }\n\n              public void expectedException_throwOutsideTryTree() throws Exception {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception expected) {\n                }\n                throw new Exception();\n              }\n\n              public void expectedException_assertLastCall() throws Exception {\n                try {\n                  dummyMethod();\n                  // BUG: Diagnostic contains: fail()\n                  assertDummy();\n                } catch (Exception expected) {\n                }\n                throw new Exception();\n              }\n\n              public void expectedException_fieldAssignmentInCatch() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception expected) {\n                  foo = true;\n                }\n              }\n\n              public void catchAssert_noopAssertLastCall() {\n                try {\n                  dummyMethod();\n                  // BUG: Diagnostic contains: fail()\n                  Assert.assertTrue(true);\n                } catch (Exception e) {\n                  assertDummy();\n                }\n              }\n\n              public void assertInCatch_verifyNotLastStatement() {\n                try {\n                  Mockito.verify(new Dummy()).dummy();\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception e) {\n                  assertDummy();\n                }\n              }\n\n              public void assertInCatch_verifyInCatch() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception e) {\n                  assertDummy();\n                  Mockito.verify(new Dummy()).dummy();\n                }\n              }\n\n              public void expectedException_logInTry() {\n                try {\n                  new Logger().log();\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception expected) {\n                  foo = true;\n                }\n              }\n\n              /** Sameple inner class. */\n              public static class Inner {\n                public void expectedException_emptyCatch() {\n                  try {\n                    // BUG: Diagnostic contains: fail()\n                    dummyMethod();\n                  } catch (Exception expected) {\n                  }\n                }\n              }\n\n              private static class Dummy {\n\n                String dummy() {\n                  return \"\";\n                }\n              }\n\n              private static class Logger {\n\n                void log() {}\n                ;\n\n                void info() {}\n                ;\n              }\n\n              private static void dummyMethod() {}\n\n              private static void assertDummy() {}\n\n              private static void verifyDummy() {}\n            }\\"
+    },
+    {
+      "description": "positiveCases2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            // unused import to make sure we don't introduce an import conflict.\n\n            import org.junit.Test;\n            import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n\n            /** Test cases for missing fail */\n            @RunWith(JUnit4.class)\n            public class MissingFailPositiveCases2 {\n\n              @Test\n              public void expectedException() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception expected) {\n                }\n              }\n\n              public void expectedException_helperMethod() {\n                try {\n                  // BUG: Diagnostic contains: fail()\n                  dummyMethod();\n                } catch (Exception expected) {\n                }\n              }\n\n              private static void dummyMethod() {}\n            }\\"
+    },
+    {
+      "description": "expectedException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": ""
+    },
+    {
+      "description": "positiveCases3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import junit.framework.TestCase;\n\n            /** Examples of an inner test case. */\n            public class MissingFailPositiveCases3 {\n\n              /** Sample inner class. */\n              public static class Inner extends TestCase {\n\n                public void expectedException_emptyCatch() {\n                  try {\n                    // BUG: Diagnostic contains: fail()\n                    dummyMethod();\n                  } catch (Exception expected) {\n                  }\n                }\n\n                public void catchAssert() {\n                  try {\n                    // BUG: Diagnostic contains: fail()\n                    dummyMethod();\n                  } catch (Exception e) {\n                    assertDummy();\n                  }\n                }\n              }\n\n              private static void dummyMethod() {}\n\n              private static void assertDummy() {}\n            }\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        267
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.HashMap;\nimport java.util.Map;\nimport junit.framework.AssertionFailedError;\nimport junit.framework.Test;\nimport junit.framework.TestCase;\nimport org.junit.After;\nimport org.junit.Assert;\nimport org.junit.Before;\nimport org.mockito.Mockito;\n\n/** Test cases for missing fail */\npublic class MissingFailNegativeCases extends TestCase {\n\n  private static final Logger logger = new Logger();\n  private static final Logger log = new Logger();\n  private static final Logger thingThatLogs = new Logger();\n\n  private boolean foo = true;\n\n  public void expectedException_withFail() {\n    try {\n      dummyMethod();\n      Assert.fail();\n    } catch (Exception expected) {\n    }\n  }\n\n  @SuppressWarnings(\"deprecation\") // Need to recognize a framework call but don't want a warning.\n  public void expectedException_withFrameworkFail() {\n    try {\n      dummyMethod();\n      junit.framework.Assert.fail();\n    } catch (Exception expected) {\n    }\n  }\n\n  public void expectedException_withStaticFail() {\n    try {\n      dummyMethod();\n      fail();\n    } catch (Exception expected) {\n    }\n  }\n\n  public void expectedException_returnInTry() {\n    try {\n      dummyMethod();\n      return;\n    } catch (Exception expected) {\n    }\n  }\n\n  public void expectedException_returnInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      return;\n    }\n  }\n\n  public void expectedException_returnAfterCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n    return;\n  }\n\n  public void expectedException_throwInCatch() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      throw new Exception();\n    }\n  }\n\n  public void expectedException_throwInTry() throws Exception {\n    boolean foo = false;\n    try {\n      if (foo) {\n        throw new Exception();\n      }\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  public void expectedException_throwSynonymInCatch() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      Assert.assertFalse(true);\n    }\n  }\n\n  public void assertInCatch_testCaseThrowSynonymInCatch() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception e) {\n      assertFalse(true);\n    }\n  }\n\n  public void expectedException_throwSynonymInTry() throws Exception {\n    boolean foo = false;\n    try {\n      if (foo) {\n        Assert.assertFalse(true);\n      }\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  public void expectedException_assertTrueFalse() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      Assert.assertTrue(false);\n    }\n  }\n\n  public void expectedException_assertTrueFalseWithMessage() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      Assert.assertTrue(\"This should never happen\", false);\n    }\n  }\n\n  public void expectedException_testCaseAssertTrueFalseWithMessage() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      assertTrue(\"This should never happen\", false);\n    }\n  }\n\n  public void assertInCatch_assertTrueFalseWithMessage() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception e) {\n      Assert.assertTrue(\"This should never happen\", false);\n    }\n  }\n\n  public void expectedException_assertBoxedTrueFalse() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      Assert.assertTrue(Boolean.FALSE);\n    }\n  }\n\n  public void expectedException_assertUnequal() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      Assert.assertEquals(1, 2);\n    }\n  }\n\n  public void expectedException_testCaseAssertUnequal() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      assertEquals(1, 2);\n    }\n  }\n\n  public void expectedException_assertFalse() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      assert (false);\n    }\n  }\n\n  @Before\n  public void expectedException_beforeAnnotation() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  @After\n  public void expectedException_afterAnnotation() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  // Don't match setUp methods.\n  public void setUp() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  // Don't match tearDown methods.\n  public void tearDown() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  // Don't match main methods.\n  public static void main(String[] args) throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n  }\n\n  // Don't match suite methods.\n  public static Test suite() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    }\n    int x; // Don't return right after catch so as not to trigger that exclusion.\n    return null;\n  }\n\n  public void expectedException_interruptedException() throws Exception {\n    try {\n      dummyMethod();\n    } catch (InterruptedException expected) {\n    }\n  }\n\n  public void expectedException_assertionError() throws Exception {\n    try {\n      dummyMethod();\n    } catch (AssertionError expected) {\n    }\n  }\n\n  public void expectedException_assertionFailedError() throws Exception {\n    try {\n      dummyMethod();\n    } catch (AssertionFailedError expected) {\n    }\n  }\n\n  public void expectedException_throwable() throws Exception {\n    try {\n      dummyMethod();\n    } catch (Throwable expected) {\n    }\n  }\n\n  public void testExpectedException_loopInTestMethod() throws Exception {\n    for (int i = 0; i < 2; i++) {\n      try {\n        dummyMethod();\n      } catch (Exception expected) {\n      }\n    }\n  }\n\n  public void expectedException_loopInHelperMethod() throws Exception {\n    for (int i = 0; i < 2; i++) {\n      try {\n        dummyMethod();\n      } catch (Exception expected) {\n      }\n    }\n  }\n\n  public static Map<String, String> assertInCatch_loopInHelperMethod(String... strings) {\n    Map<String, String> map = new HashMap<>();\n    for (String s : strings) {\n      try {\n        map.put(s, s);\n      } catch (Exception e) {\n        Assert.assertTrue(s.contains(\"foo\"));\n      }\n    }\n    return map;\n  }\n\n  // prefixed with \"test\" but private - not a test method.\n  private void testExpectedException_loopInPrivateTestHelperMethod() throws Exception {\n    for (int i = 0; i < 2; i++) {\n      try {\n        dummyMethod();\n      } catch (Exception expected) {\n      }\n    }\n  }\n\n  // prefixed with \"test\" but returns - not a test method.\n  public String testExpectedException_loopInReturningTestHelperMethod() throws Exception {\n    for (int i = 0; i < 2; i++) {\n      try {\n        dummyMethod();\n      } catch (Exception expected) {\n      }\n    }\n    return \"\";\n  }\n\n  // Prefixed with \"test\" to not trigger loop in helper method exclusion.\n  public void testExpectedException_continueInCatch() throws Exception {\n    for (int i = 0; i < 2; i++) {\n      try {\n        dummyMethod();\n      } catch (Exception expected) {\n        continue;\n      }\n    }\n  }\n\n  // Prefixed with \"test\" to not trigger loop in helper method exclusion.\n  public void testExpectedException_continueInTry() throws Exception {\n    for (int i = 0; i < 2; i++) {\n      try {\n        dummyMethod();\n        continue;\n      } catch (Exception expected) {\n      }\n    }\n  }\n\n  public void expectedException_finally() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n    } finally {\n    }\n  }\n\n  public void expectedException_logInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      thingThatLogs.log();\n    }\n  }\n\n  public void expectedException_loggerCallInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      logger.info();\n    }\n  }\n\n  public void expectedException_logCallInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      log.info();\n    }\n  }\n\n  public void assertInCatch_assertLastCallInTry() {\n    try {\n      dummyMethod();\n      assertDummy();\n    } catch (Exception e) {\n      assertDummy();\n    }\n  }\n\n  public void assertInCatch_fieldAssignmentInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception e) {\n      assertDummy();\n      foo = true;\n    }\n  }\n\n  public void assertInCatch_assertOnFieldInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception e) {\n      Assert.assertTrue(foo);\n    }\n  }\n\n  public void assertInCatch_assertOnVariableInCatch() {\n    boolean bar = false;\n    try {\n      dummyMethod();\n    } catch (Exception e) {\n      Assert.assertTrue(bar);\n    }\n  }\n\n  public void assertInCatch_verifyBeforeCatch() {\n    try {\n      dummyMethod();\n      Mockito.verify(new Dummy()).dummy();\n    } catch (Exception e) {\n      assertDummy();\n    }\n  }\n\n  public void assertInCatch_noopAssertInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception e) {\n      assertTrue(true);\n    }\n  }\n\n  public void expectedException_failInCatch() {\n    try {\n      dummyMethod();\n    } catch (Exception expected) {\n      Assert.fail();\n    }\n  }\n\n  public void expectedException_whileTrue() {\n    try {\n      while (true) {\n        dummyMethod();\n      }\n    } catch (Exception expected) {\n    }\n  }\n\n  public void expectedException_customFail() {\n    try {\n      dummyMethod();\n      specialFail();\n    } catch (Exception expected) {\n    }\n  }\n\n  private static void dummyMethod() throws InterruptedException {}\n\n  private static void assertDummy() {}\n\n  private static void specialFail() {}\n\n  private static class Logger {\n\n    void log() {}\n    ;\n\n    void info() {}\n    ;\n  }\n\n  private static class Dummy {\n\n    String dummy() {\n      return \"\";\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCases2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        739
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /** Test cases for missing fail in a non-test class */\n            public class MissingFailNegativeCases2 {\n\n              public void expectedException_emptyCatch() {\n                try {\n                  dummyMethod();\n                } catch (Exception expected) {\n                }\n              }\n\n              public void catchAssert() {\n                try {\n                  dummyMethod();\n                } catch (Exception e) {\n                  assertDummy();\n                }\n              }\n\n              private static void dummyMethod() {}\n\n              private static void assertDummy() {}\n            }\\"
+    },
+    {
+      "description": "failImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        773
+      ],
+      "code": "package test;\n\n            import junit.framework.TestCase;\n\n            public class A extends TestCase {\n              public void testMethod() {\n                try {\n                  new String();\n                } catch (IllegalArgumentException expected) {\n                }\n              }\n            }\n            \n\n            package test;\n\n            import static org.junit.Assert.fail;\n            import junit.framework.TestCase;\n\n            public class A extends TestCase {\n              public void testMethod() {\n                try {\n                  new String();\n                  fail(\"Expected IllegalArgumentException\");\n                } catch (IllegalArgumentException expected) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "failMessageMultiCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        814
+      ],
+      "code": "package test;\n\n            import junit.framework.TestCase;\n\n            public class A extends TestCase {\n              public void testMethod() {\n                try {\n                  new String();\n                } catch (IllegalArgumentException | IllegalStateException expected) {\n                }\n              }\n            }\n            \n\n            package test;\n\n            import static org.junit.Assert.fail;\n            import junit.framework.TestCase;\n\n            public class A extends TestCase {\n              public void testMethod() {\n                try {\n                  new String();\n                  fail(\"Expected Exception\");\n                } catch (IllegalArgumentException | IllegalStateException expected) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "toleratedException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        856
+      ],
+      "code": "package test;\n\n            import junit.framework.TestCase;\n\n            public class A extends TestCase {\n              public void testMethod() {\n                try {\n                  new String();\n                } catch (IllegalArgumentException | IllegalStateException tolerated) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "toleratedExceptionWithAssert",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        879
+      ],
+      "code": "package test;\n\n            import junit.framework.TestCase;\n\n            public class A extends TestCase {\n              public void testMethod() {\n                try {\n                  new String();\n                } catch (IllegalArgumentException | IllegalStateException tolerated) {\n                  assertDummy();\n                }\n              }\n\n              static void assertDummy() {}\n            }"
+    },
+    {
+      "description": "assertThrowsCatchBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        904
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void f() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                  Files.readAllBytes(p);\n                } catch (IOException e) {\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n\n              @Test\n              public void g() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                } catch (IOException e) {\n                  assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n                }\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertThrows;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void f() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                IOException e =\n                    assertThrows(\n                        IOException.class,\n                        () -> {\n                          Files.readAllBytes(p);\n                          Files.readAllBytes(p);\n                        });\n                assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n              }\n\n              @Test\n              public void g() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                IOException e = assertThrows(IOException.class, () -> Files.readAllBytes(p));\n                assertThat(e).hasMessageThat().contains(\"NOSUCH\");\n              }\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        916
+      ],
+      "code": ""
+    },
+    {
+      "description": "g",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        927
+      ],
+      "code": ""
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        948
+      ],
+      "code": ""
+    },
+    {
+      "description": "g",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        961
+      ],
+      "code": ""
+    },
+    {
+      "description": "assertThrowsEmptyCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        973
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void test() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                try {\n                  Files.readAllBytes(p);\n                } catch (IOException expected) {\n                }\n              }\n            }\n            \n\n            import static org.junit.Assert.assertThrows;\n            import java.io.IOException;\n            import java.nio.file.*;\n            import org.junit.Test;\n\n            class ExceptionTest {\n              @Test\n              public void test() throws Exception {\n                Path p = Paths.get(\"NOSUCH\");\n                assertThrows(IOException.class, () -> Files.readAllBytes(p));\n              }\n            }"
+    },
+    {
+      "description": "test",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        984
+      ],
+      "code": ""
+    },
+    {
+      "description": "test",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1003
+      ],
+      "code": ""
+    },
+    {
+      "description": "emptyTry",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1014
+      ],
+      "code": "import java.io.IOException;\n            import org.junit.Test;\n\n            abstract class ExceptionTest {\n              abstract AutoCloseable c();\n\n              @Test\n              public void test() {\n                try (AutoCloseable c = c()) {\n                } catch (Exception expected) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "test",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1026
+      ],
+      "code": ""
+    },
+    {
+      "description": "noEnclosingMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1038
+      ],
+      "code": "import java.io.IOException;\n            import org.junit.Test;\n            import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n\n            @RunWith(JUnit4.class)\n            abstract class ExceptionTest {\n              abstract void c();\n\n              {\n                try {\n                  c();\n                } catch (Exception expected) {\n                }\n              }\n            }"
+    }
+  ]
+}

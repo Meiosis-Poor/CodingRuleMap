@@ -1,0 +1,118 @@
+{
+  "name": "YodaCondition",
+  "language": "java",
+  "description": "The non-constant portion of a comparison generally comes first. For equality, prefer e.equals(CONSTANT) if e is non-null or Objects.equals(e, CONSTANT) if e may be null. For standard operators, prefer e <OPERATION> CONSTANT.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 208,
+  "branches": 27,
+  "apis": 8,
+  "test": [
+    {
+      "description": "primitive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "class Test {\n              boolean yoda(int a) {\n                return 4 == a;\n              }\n\n              boolean notYoda(int a) {\n                return a == 4;\n              }\n            }\n            \n\n            class Test {\n              boolean yoda(int a) {\n                return a == 4;\n              }\n\n              boolean notYoda(int a) {\n                return a == 4;\n              }\n            }"
+    },
+    {
+      "description": "comparison",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "class Test {\n              boolean yoda(int a) {\n                // BUG: Diagnostic contains: a < 4\n                return 4 > a;\n              }\n            }"
+    },
+    {
+      "description": "comparison_noFindingWithAdjacentComparison",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "class Test {\n              boolean test(int a) {\n                return 4 < a && a < 7 && true && false;\n              }\n\n              boolean test2(int a) {\n                return true && false && 4 < a && a < 7;\n              }\n            }"
+    },
+    {
+      "description": "boxedBoolean",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "class Test {\n              boolean yoda(Boolean a) {\n                return Boolean.TRUE.equals(a);\n              }\n            }\n            \n\n            import java.util.Objects;\n\n            class Test {\n              boolean yoda(Boolean a) {\n                return Objects.equals(a, Boolean.TRUE);\n              }\n            }"
+    },
+    {
+      "description": "boxedVsUnboxedBoolean",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "class Test {\n              boolean yoda(boolean a) {\n                return Boolean.TRUE.equals(a);\n              }\n            }"
+    },
+    {
+      "description": "enums",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "enum E {\n              A,\n              B;\n\n              boolean foo(E e) {\n                return this == e;\n              }\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                return E.A == a;\n              }\n\n              boolean notYoda(E a) {\n                return a == E.A;\n              }\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                return a == E.A;\n              }\n\n              boolean notYoda(E a) {\n                return a == E.A;\n              }\n            }"
+    },
+    {
+      "description": "nullIntolerantFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "enum E {\n              A,\n              B\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                return E.A.equals(a);\n              }\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                return a.equals(E.A);\n              }\n            }"
+    },
+    {
+      "description": "nullTolerantFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        231
+      ],
+      "code": "enum E {\n              A,\n              B\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                return E.A.equals(a);\n              }\n            }\n            \n\n            import java.util.Objects;\n\n            class Test {\n              boolean yoda(E a) {\n                return Objects.equals(a, E.A);\n              }\n            }"
+    },
+    {
+      "description": "provablyNonNull_nullIntolerantFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        266
+      ],
+      "code": "enum E {\n              A,\n              B\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                if (a != null) {\n                  return E.A.equals(a);\n                }\n                return true;\n              }\n            }\n            \n\n            class Test {\n              boolean yoda(E a) {\n                if (a != null) {\n                  return a.equals(E.A);\n                }\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "nullableConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        305
+      ],
+      "code": "class Test {\n              private static final String CONST = null;\n\n              public static boolean f() {\n                return CONST != null;\n              }\n            }"
+    },
+    {
+      "description": "nullableYodaCondition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": "class Test {\n              private static final String CONST = \"hello\";\n\n              public static boolean f(String foo) {\n                return null != foo;\n              }\n\n              public static boolean g() {\n                return null != CONST;\n              }\n            }\n            \n\n            class Test {\n              private static final String CONST = \"hello\";\n\n              public static boolean f(String foo) {\n                return foo != null;\n              }\n\n              public static boolean g() {\n                return CONST != null;\n              }\n            }"
+    },
+    {
+      "description": "unqualified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        358
+      ],
+      "code": "import com.google.common.base.Objects;\n\n            class Test {\n              @Override\n              public boolean equals(Object other) {\n                return Objects.equal(this, other);\n              }\n\n              public boolean foo(Object other) {\n                return equals(other);\n              }\n            }"
+    },
+    {
+      "description": "negativeSdkInt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        380
+      ],
+      "code": "package android.os;\n\n            public class Build {\n              public static class VERSION {\n                public static final int SDK_INT = 0;\n              }\n            }\n            \n\n            import android.os.Build;\n\n            class Test {\n              public boolean foo(int x) {\n                return Build.VERSION.SDK_INT < x;\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "BoxedPrimitiveEquality",
+  "language": "java",
+  "description": "Comparison using reference equality instead of value equality. Reference equality of boxed primitive types is usually not useful, as they are value objects, and it is bug-prone, as instances are cached for some values but not others.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 43,
+  "branches": 3,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "class Test {\n              boolean f(Boolean a, Boolean b) {\n                // BUG: Diagnostic contains:\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "negative_forNumber",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "class Test {\n              boolean f(Number a, Number b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "class Test {\n              boolean f(boolean a, boolean b) {\n                return a == b;\n              }\n\n              boolean g(String a, String b) {\n                return a == b;\n              }\n            }"
+    },
+    {
+      "description": "comparedToStaticField_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83
+      ],
+      "code": "class Test {\n              private static final Number SENTINEL = 1L;\n\n              boolean f(Number a) {\n                return a == SENTINEL;\n              }\n            }"
+    },
+    {
+      "description": "parenthesized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "class Test {\n  void f() {\n    final Long constValue = Long.valueOf(1000L);\n    Long assignedValue;\n    // BUG: Diagnostic contains: (!(assignedValue = Long.valueOf(1000L)).equals(constValue))\n    boolean retVal = ((assignedValue = Long.valueOf(1000L)) != constValue);\n  }\n}"
+    },
+    {
+      "description": "atomic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicInteger;\n\n            class Test {\n              boolean f(AtomicInteger a, AtomicInteger b) {\n                return a == b;\n              }\n            }"
+    }
+  ]
+}

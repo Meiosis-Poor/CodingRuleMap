@@ -1,0 +1,246 @@
+{
+  "name": "AlreadyChecked",
+  "language": "java",
+  "description": "This condition has already been checked.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 214,
+  "branches": 15,
+  "apis": 5,
+  "test": [
+    {
+      "description": "elseChecksSameVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (a) {\n                  // BUG: Diagnostic contains: false\n                } else if (a) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "thisAndThat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "class Test {\n              public void test(boolean a, boolean b) {\n                if (a && b) {\n                } else if (a) {\n                } else if (b) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "guardBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (a) {\n                  return;\n                }\n                // BUG: Diagnostic contains: false\n                if (a) {}\n              }\n            }"
+    },
+    {
+      "description": "guardBlock_returnFromElse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (!a) {\n                } else {\n                  return;\n                }\n                // BUG: Diagnostic contains: false\n                if (a) {}\n              }\n            }"
+    },
+    {
+      "description": "withinLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "import java.util.stream.Stream;\n\n            class Test {\n              public Stream<String> test(Stream<String> xs, String x) {\n                if (x.isEmpty()) {\n                  return Stream.empty();\n                }\n                return xs.filter(\n                    // BUG: Diagnostic contains: x.isEmpty()\n                    y -> x.isEmpty() || y.equals(x));\n              }\n            }"
+    },
+    {
+      "description": "checkedInDifferentMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private final ImmutableList<Integer> foos = null;\n\n              public boolean a() {\n                if (foos.isEmpty()) {\n                  return true;\n                }\n                return false;\n              }\n\n              public boolean b() {\n                return foos.isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "checkedInLambdaAndAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private final ImmutableList<Integer> foos = null;\n\n              public boolean a() {\n                ImmutableList.of().stream().anyMatch(x -> true);\n                if (foos.isEmpty()) {\n                  return true;\n                }\n                // BUG: Diagnostic contains:\n                return foos.isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "sameVariableCheckedTwice",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (a) {\n                  // BUG: Diagnostic contains: true\n                  if (a) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "sameVariableCheckedThrice",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        195
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (a) {\n                  // BUG: Diagnostic contains: true\n                  if (a) {}\n                  // BUG: Diagnostic contains: true\n                  if (a) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "sameVariableCheckedTwice_negated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (a) {\n                  // BUG: Diagnostic contains: true\n                  if (!a) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "sameVariableCheckedTwice_atTopLevel",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        233
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                if (a) {}\n                if (a) {}\n              }\n            }"
+    },
+    {
+      "description": "sameVariableCheckedTwice_asPartOfAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "class Test {\n              public void test(boolean a, boolean b, boolean c) {\n                if (a && b) {\n                  // BUG: Diagnostic contains: true\n                  if (a && c) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "sameVariableCheckedTwice_butOuterIfNotSimple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        267
+      ],
+      "code": "class Test {\n              public void test(boolean a, boolean b, boolean c) {\n                if ((a && b) || b) {\n                  if (a && c) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "complexExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": "class Test {\n              public void test(boolean a, boolean b, boolean c) {\n                if (!a || (b && c)) {\n                } else if (b) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "notFinal_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        301
+      ],
+      "code": "class Test {\n              public void test(boolean a) {\n                a = true;\n                if (a) {\n                } else if (a) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "ternaryWithinIf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "class Test {\n              public int test(boolean a) {\n                if (a) {\n                  // BUG: Diagnostic contains: true\n                  return a ? 1 : 2;\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "equalsCheckedTwice",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        338
+      ],
+      "code": "class Test {\n              public int test(String a) {\n                if (a.equals(\"a\")) {\n                  // BUG: Diagnostic contains: true\n                  return a.equals(\"a\") ? 1 : 2;\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "equalsCheckedTwice_comparedToDifferentConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": "class Test {\n              public int test(String a) {\n                if (a.equals(\"b\")) {\n                  return a.equals(\"a\") ? 1 : 2;\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "comparedUsingBinaryEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        375
+      ],
+      "code": "class Test {\n              public int test(int a, int b) {\n                if (a == 1) {\n                  if (a == b) {\n                    return 3;\n                  }\n                  // BUG: Diagnostic contains:\n                  return a != 1 ? 1 : 2;\n                }\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "checkedTwiceWithinTernary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        397
+      ],
+      "code": "class Test {\n              public int test(int a) {\n                // BUG: Diagnostic contains:\n                return a == 1 ? (a == 1 ? 1 : 2) : 2;\n              }\n            }"
+    },
+    {
+      "description": "durationsComparedUsingFactoryMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        413
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              public void test(Duration a, Duration b) {\n                if (a.equals(Duration.ofSeconds(1))) {\n                  if (a.equals(Duration.ofSeconds(2))) {}\n                  // BUG: Diagnostic contains:\n                  if (a.equals(Duration.ofSeconds(1))) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "durationsComparedUsingFactoryMethods_withDifferentImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        434
+      ],
+      "code": "import static java.time.Duration.ofSeconds;\n            import java.time.Duration;\n\n            class Test {\n              public void test(Duration a, Duration b) {\n                if (a.equals(Duration.ofSeconds(1))) {\n                  if (a.equals(Duration.ofSeconds(2))) {}\n                  // BUG: Diagnostic contains:\n                  if (a.equals(ofSeconds(1))) {}\n                  // BUG: Diagnostic contains:\n                  if (a.equals(java.time.Duration.ofSeconds(1))) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "autoValues",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        458
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            class Test {\n              public void test(Foo a, Foo b) {\n                if (a.bar().equals(\"foo\") && a.bar().equals(b.bar())) {\n                  // BUG: Diagnostic contains:\n                  if (a.bar().equals(\"foo\")) {}\n                  // BUG: Diagnostic contains:\n                  if (a.bar().equals(b.bar())) {}\n                }\n              }\n\n              @AutoValue\n              abstract static class Foo {\n                abstract String bar();\n              }\n            }"
+    },
+    {
+      "description": "autoValue_withEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        485
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n            import com.google.errorprone.annotations.Immutable;\n\n            class Test {\n              public void test(Foo a, Foo b) {\n                if (a.bar().equals(E.A)) {\n                  // BUG: Diagnostic contains:\n                  if (a.bar().equals(E.A)) {}\n                }\n              }\n\n              @AutoValue\n              abstract static class Foo {\n                abstract E bar();\n              }\n\n              @Immutable\n              private enum E {\n                A\n              }\n            }"
+    },
+    {
+      "description": "fieldCheckedTwice",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        516
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            class Test {\n              private final String a = \"foo\";\n\n              public void test(String a) {\n                if (this.a.equals(a)) {\n                  // BUG: Diagnostic contains:\n                  if (this.a.equals(a)) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "knownQuantityPassedToMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        538
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            class Test {\n              void test(boolean a) {\n                if (a) {\n                  set(a);\n                }\n              }\n\n              void set(boolean a) {}\n            }"
+    },
+    {
+      "description": "equalsCalledTwiceOnMutableType_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        559
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              private final List<String> xs = null;\n\n              public boolean e(List<String> ys) {\n                if (xs.equals(ys)) {\n                  return true;\n                }\n                return xs.equals(ys);\n              }\n            }"
+    },
+    {
+      "description": "i3914",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        581
+      ],
+      "code": "import java.util.List;\n\n            class Test {\n              void test(boolean a, boolean b) {\n                if (a && b) return;\n                if (a) {\n                } else if (b) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "b312047923",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        601
+      ],
+      "code": "class Test {\n              void test() {\n                boolean a = true;\n                loop:\n                while (true) {\n                  if (false && a) {\n                    a = false;\n                  } else {\n                  }\n                }\n              }\n            }"
+    }
+  ]
+}

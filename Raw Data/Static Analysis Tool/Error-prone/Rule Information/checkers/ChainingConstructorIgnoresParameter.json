@@ -1,0 +1,30 @@
+{
+  "name": "ChainingConstructorIgnoresParameter",
+  "language": "java",
+  "description": "The called constructor accepts a parameter with the same name and type as one of its caller's parameters, but its caller doesn't pass that parameter to it.  It's likely that it was intended to.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 195,
+  "branches": 18,
+  "apis": 12,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static com.google.errorprone.bugpatterns.testdata.ChainingConstructorIgnoresParameterPositiveCases.Location.TEST_TARGET;\n\n/**\n * @author cpovirk@google.com (Chris Povirk)\n */\npublic class ChainingConstructorIgnoresParameterPositiveCases {\n  static class MissileLauncher {\n    MissileLauncher(Location target, boolean askForConfirmation) {}\n\n    MissileLauncher(Location target) {\n      this(target, false);\n    }\n\n    MissileLauncher(boolean askForConfirmation) {\n      // BUG: Diagnostic contains: this(TEST_TARGET, askForConfirmation)\n      this(TEST_TARGET, false);\n    }\n  }\n\n  static class ClassRatherThanPrimitive {\n    ClassRatherThanPrimitive(String foo, boolean bar) {}\n\n    ClassRatherThanPrimitive(String foo) {\n      // BUG: Diagnostic contains: this(foo, false)\n      this(\"default\", false);\n    }\n  }\n\n  static class CallerBeforeCallee {\n    CallerBeforeCallee(String foo) {\n      // BUG: Diagnostic contains: this(foo, false)\n      this(\"default\", false);\n    }\n\n    CallerBeforeCallee(String foo, boolean bar) {}\n  }\n\n  static class AssignableButNotEqual {\n    AssignableButNotEqual(Object foo, boolean bar) {}\n\n    AssignableButNotEqual(String foo) {\n      // BUG: Diagnostic contains: this(foo, false)\n      this(\"default\", false);\n    }\n  }\n\n  static class HasNestedClassCallerFirst {\n    HasNestedClassCallerFirst(String foo) {\n      // BUG: Diagnostic contains: this(foo, false)\n      this(\"somethingElse\", false);\n    }\n\n    static class NestedClass {}\n\n    HasNestedClassCallerFirst(String foo, boolean bar) {}\n  }\n\n  static class HasNestedClassCalleeFirst {\n    HasNestedClassCalleeFirst(String foo, boolean bar) {}\n\n    static class NestedClass {}\n\n    HasNestedClassCalleeFirst(String foo) {\n      // BUG: Diagnostic contains: this(foo, false)\n      this(\"somethingElse\", false);\n    }\n  }\n\n  static class MultipleQueuedErrors {\n    MultipleQueuedErrors(Location target) {\n      // BUG: Diagnostic contains: this(target, false)\n      this(TEST_TARGET, false);\n    }\n\n    MultipleQueuedErrors(boolean askForConfirmation) {\n      // BUG: Diagnostic contains: this(TEST_TARGET, askForConfirmation)\n      this(TEST_TARGET, false);\n    }\n\n    MultipleQueuedErrors(Location target, boolean askForConfirmation) {}\n  }\n\n  enum Location {\n    TEST_TARGET\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.io.File;\n\n/**\n * @author cpovirk@google.com (Chris Povirk)\n */\npublic class ChainingConstructorIgnoresParameterNegativeCases {\n  static class ImplicitThisCall {\n    ImplicitThisCall() {}\n\n    ImplicitThisCall(String foo) {}\n  }\n\n  static class ExplicitNoArgThisCall {\n    ExplicitNoArgThisCall() {}\n\n    ExplicitNoArgThisCall(String foo) {\n      this();\n    }\n  }\n\n  static class ParameterNotAvailable {\n    ParameterNotAvailable(String foo, boolean bar) {}\n\n    ParameterNotAvailable(String foo) {\n      this(foo, false);\n    }\n  }\n\n  static class ParameterDifferentType {\n    ParameterDifferentType(File foo) {}\n\n    ParameterDifferentType(String foo) {\n      this(new File(\"/tmp\"));\n    }\n  }\n\n  static class ParameterUsedInExpression {\n    ParameterUsedInExpression(String foo, boolean bar) {}\n\n    ParameterUsedInExpression(String foo) {\n      this(foo.substring(0), false);\n    }\n  }\n\n  /** Make sure that we don't confuse a nested class's constructor with the containing class's. */\n  static class HasNestedClass {\n    HasNestedClass(String foo) {\n      this(\"somethingElse\", false);\n    }\n\n    static class NestedClass {\n      NestedClass(String foo, boolean bar) {}\n    }\n\n    HasNestedClass(String notFoo, boolean bar) {}\n  }\n\n  static class HasNestedClassesWithSameName {\n    static class Outer1 {\n      static class Inner {\n        Inner(String foo, boolean bar) {}\n      }\n    }\n\n    static class Outer2 {\n      static class Inner {\n        Inner(String foo) {\n          this(\"somethingElse\", false);\n        }\n\n        Inner(String notFoo, boolean bar) {}\n      }\n    }\n  }\n\n  class NonStaticClass {\n    NonStaticClass(String foo, boolean bar) {}\n\n    NonStaticClass(String foo) {\n      this(foo, false);\n    }\n  }\n\n  static class Varargs1 {\n    Varargs1(String foo, boolean... bar) {}\n\n    Varargs1() {\n      this(\"something\", false, false);\n    }\n  }\n\n  static class Varargs2 {\n    Varargs2(String foo, boolean... bar) {}\n\n    Varargs2() {\n      this(\"something\");\n    }\n  }\n}\\"
+    }
+  ]
+}

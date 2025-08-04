@@ -1,0 +1,30 @@
+{
+  "name": "AssistedInjectAndInjectOnConstructors",
+  "language": "java",
+  "description": "@AssistedInject and @Inject should not be used on different constructors in the same class.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 55,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport com.google.inject.assistedinject.AssistedInject;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class AssistedInjectAndInjectOnConstructorsPositiveCases {\n  /**\n   * Class has a constructor annotated with @javax.inject.Inject and another constructor annotated\n   * with @AssistedInject.\n   */\n  // BUG: Diagnostic contains: AssistedInjectAndInjectOnConstructors\n  public class TestClass1 {\n    @javax.inject.Inject\n    public TestClass1() {}\n\n    @AssistedInject\n    public TestClass1(int n) {}\n  }\n\n  /**\n   * Class has a constructor annotated with @com.google.inject.Inject and another constructor\n   * annotated with @AssistedInject.\n   */\n  // BUG: Diagnostic contains: AssistedInjectAndInjectOnConstructors\n  public class TestClass2 {\n    @com.google.inject.Inject\n    public TestClass2() {}\n\n    @AssistedInject\n    public TestClass2(int n) {}\n  }\n\n  /**\n   * Class has a constructor annotated with @com.google.inject.Inject, another constructor annotated\n   * with @AssistedInject, and a third constructor with no annotation.\n   */\n  // BUG: Diagnostic contains: AssistedInjectAndInjectOnConstructors\n  public class TestClass3 {\n    @com.google.inject.Inject\n    public TestClass3() {}\n\n    @AssistedInject\n    public TestClass3(int n) {}\n\n    public TestClass3(String s) {}\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport com.google.inject.assistedinject.AssistedInject;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class AssistedInjectAndInjectOnConstructorsNegativeCases {\n  /** Class has a single constructor with no annotation. */\n  public class TestClass1 {\n    TestClass1() {}\n  }\n\n  /** Class has a constructor with a @javax.inject.Inject annotation. */\n  public class TestClass2 {\n    @javax.inject.Inject\n    public TestClass2() {}\n  }\n\n  /** Class has a constructor with a @com.google.inject.Inject annotation. */\n  public class TestClass3 {\n    @com.google.inject.Inject\n    public TestClass3() {}\n  }\n\n  /** Class has a constructor annotated with @AssistedInject */\n  public class TestClass4 {\n    @AssistedInject\n    public TestClass4() {}\n  }\n\n  /** Class has a constructor with a @AssistedInject annotation as well as an injectable field */\n  public class TestClass5 {\n    @javax.inject.Inject private int n;\n\n    @AssistedInject\n    public TestClass5() {}\n  }\n\n  /**\n   * Class has a constructor annotated with @javax.inject.Inject and another constructor annotated\n   * with @AssistedInject. The warning is suppressed.\n   */\n  @SuppressWarnings(\"AssistedInjectAndInjectOnConstructors\")\n  public class TestClass6 {\n    @javax.inject.Inject\n    public TestClass6() {}\n\n    @AssistedInject\n    public TestClass6(int n) {}\n  }\n}\\"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "EqualsReference",
+  "language": "java",
+  "description": "== must be used in equals method to check equality to itself or an infinite loop will occur.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 89,
+  "branches": 9,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /** Created by mariasam on 6/22/17. */\n            public class EqualsReferencePositiveCases {\n\n              @Override\n              // BUG: Diagnostic contains: ==\n              public boolean equals(Object o) {\n                System.out.println(this.equals(o));\n                return true;\n              }\n\n              class EqualsInElse {\n                @Override\n                // BUG: Diagnostic contains: ==\n                public boolean equals(Object o) {\n                  System.out.println(o == this);\n                  return this.equals(o);\n                }\n              }\n\n              class FinalObject {\n                @Override\n                // BUG: Diagnostic contains: ==\n                public boolean equals(final Object object) {\n                  return this.equals(object);\n                }\n              }\n\n              class NoThis {\n                @Override\n                // BUG: Diagnostic contains: ==\n                public boolean equals(Object o) {\n                  return equals(o);\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /** Created by mariasam on 6/23/17. */\n            public class EqualsReferenceNegativeCases {\n\n              @Override\n              public boolean equals(Object o) {\n                return (this == o);\n              }\n\n              class OtherEquals {\n                @Override\n                public boolean equals(Object o) {\n                  if (o.equals(\"hi\")) {\n                    return true;\n                  } else {\n                    return o == this;\n                  }\n                }\n              }\n\n              class EqualsThisLast {\n                @Override\n                public boolean equals(Object o) {\n                  if (o instanceof EqualsThisLast) {\n                    return true;\n                  }\n                  return o.equals(this);\n                }\n              }\n\n              class Foo {\n                @Override\n                public boolean equals(Object o) {\n                  return o instanceof Foo && this.equals((Foo) o);\n                }\n\n                public boolean equals(Foo o) {\n                  return true;\n                }\n              }\n\n              class OtherEqualsMethod {\n                @Override\n                public boolean equals(Object o) {\n                  return equals((String) o);\n                }\n\n                public boolean equals(String o) {\n                  return true;\n                }\n              }\n\n              class CodeBase {\n                public CodeBase(Object o) {}\n\n                public boolean equals(Object obj) {\n                  CodeBase other = (CodeBase) obj;\n                  return equals(new CodeBase(other.getValue()));\n                }\n\n                public Object getValue() {\n                  return null;\n                }\n              }\n            }\\"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "IncompatibleArgumentType",
+  "language": "java",
+  "description": "Passing argument to a generic method with an incompatible type.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 224,
+  "branches": 30,
+  "apis": 11,
+  "test": [
+    {
+      "description": "genericMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\nimport com.google.errorprone.annotations.CompatibleWith;\n\n/** Test IncompatibleArgumentType with a generic method */\npublic class IncompatibleArgumentTypeGenericMethod {\n  class A<B> {\n    <C> C remove(@CompatibleWith(\"B\") Object b, @CompatibleWith(\"C\") Object c) {\n      return null;\n    }\n\n    <C> C varargs(@CompatibleWith(\"B\") Object b, @CompatibleWith(\"C\") Object... cs) {\n      return (C) cs[0];\n    }\n  }\n\n  class C extends A<String> {}\n\n  void testfoo(C c, A<?> unbound, A<? extends Number> boundToNumber) {\n    c.remove(\"a\", null); // OK, match null to Double\n    c.remove(\"a\", 123.0); // OK, match Double to Double\n    c.remove(\"a\", 123); // OK, 2nd arg is unbound\n\n    unbound.remove(null, 123); // OK, variables unbound\n\n    // BUG: Diagnostic contains: String is not compatible with the required type: Number\n    boundToNumber.remove(\"123\", null);\n\n    // BUG: Diagnostic contains: int is not compatible with the required type: Double\n    Double d = c.remove(\"a\", 123);\n    // BUG: Diagnostic contains: int is not compatible with the required type: Double\n    c.<Double>remove(\"a\", 123);\n\n    // BUG: Diagnostic contains: float is not compatible with the required type: Double\n    c.<Double>remove(123, 123.0f);\n  }\n\n  void testVarargs(A<String> stringA) {\n    // OK, all varargs elements compatible with Integer\n    Integer first = stringA.varargs(\"hi\", 2, 3, 4);\n\n    // BUG: Diagnostic contains: long is not compatible with the required type: Integer\n    first = stringA.varargs(\"foo\", 2, 3L);\n\n    // OK, everything compatible w/ Object\n    Object o = stringA.varargs(\"foo\", 2L, 1.0d, \"a\");\n  }\n}\\"
+    },
+    {
+      "description": "owningTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\nimport com.google.errorprone.annotations.CompatibleWith;\nimport java.util.Set;\n\n/** Test case for enclosing type */\npublic class IncompatibleArgumentTypeEnclosingTypes {\n  static class Foo<Y> {\n    class Bar {\n      void doSomething(@CompatibleWith(\"Y\") Object x) {}\n    }\n\n    class Sub<X> {\n      class SubSub<X> {\n        void doSomething(@CompatibleWith(\"X\") Object nestedResolution) {}\n\n        <X> X methodVarIsReturn(@CompatibleWith(\"X\") Object nestedResolution) {\n          return null;\n        }\n\n        <X> void methodVarIsFree(@CompatibleWith(\"X\") Object nestedResolution) {}\n\n        void compatibleWithBase(@CompatibleWith(\"Y\") Object nestedResolution) {}\n      }\n    }\n\n    static class Baz {\n      // Shouldn't resolve to anything, would be a compile error due to CompatibleWithMisuse\n      static void doSomething(@CompatibleWith(\"X\") Object x) {}\n    }\n  }\n\n  void testSubs() {\n    new Foo<String>().new Bar().doSomething(\"a\");\n    // BUG: Diagnostic contains: int is not compatible with the required type: String\n    new Foo<String>().new Bar().doSomething(123);\n    new Foo<Integer>().new Bar().doSomething(123);\n\n    Foo.Bar rawtype = new Foo<String>().new Bar();\n    rawtype.doSomething(123); // Weakness, rawtype isn't specialized in Foo\n\n    Foo.Baz.doSomething(123); // No resolution of X\n  }\n\n  void testMegasub() {\n    new Foo<String>().new Sub<Integer>().new SubSub<Boolean>().doSomething(true);\n    // BUG: Diagnostic contains: int is not compatible with the required type: Boolean\n    new Foo<String>().new Sub<Integer>().new SubSub<Boolean>().doSomething(123);\n\n    // X in method is unbound\n    new Foo<String>().new Sub<Integer>().new SubSub<Boolean>().methodVarIsReturn(123);\n\n    // BUG: Diagnostic contains: int is not compatible with the required type: Set<?>\n    new Foo<String>().new Sub<Integer>().new SubSub<Boolean>().<Set<?>>methodVarIsReturn(123);\n\n    // BUG: Diagnostic contains: int is not compatible with the required type: String\n    new Foo<String>().new Sub<Integer>().new SubSub<Boolean>().<Set<?>>compatibleWithBase(123);\n  }\n\n  void extraStuff() {\n    // Javac throws away the type of <X> since it's not used in params/return type, so we can't\n    // enforce it here.\n    new Foo<String>().new Sub<Integer>().new SubSub<Boolean>().<Set<?>>methodVarIsFree(123);\n  }\n}\\"
+    },
+    {
+      "description": "multimapIntegration",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        166
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\nimport com.google.errorprone.annotations.CompatibleWith;\n\n/** Integration test testing a hypothetical multimap interface */\npublic class IncompatibleArgumentTypeMultimapIntegration {\n  interface Multimap<K, V> {\n    boolean containsKey(@CompatibleWith(\"K\") Object key);\n\n    boolean containsValue(@CompatibleWith(\"V\") Object value);\n\n    boolean containsEntry(@CompatibleWith(\"K\") Object key, @CompatibleWith(\"V\") Object value);\n\n    boolean containsAllKeys(@CompatibleWith(\"K\") Object key, Object... others);\n  }\n\n  class MyMultimap<K, V> implements Multimap<K, V> {\n    @Override\n    public boolean containsKey(Object key) {\n      return false;\n    }\n\n    @Override\n    public boolean containsValue(Object value) {\n      return false;\n    }\n\n    @Override\n    public boolean containsEntry(Object key, Object value) {\n      return false;\n    }\n\n    @Override\n    public boolean containsAllKeys(Object key, Object... keys) {\n      return false;\n    }\n  }\n\n  void testRegularValid(Multimap<Integer, String> intToString) {\n    intToString.containsKey(123);\n    intToString.containsEntry(123, \"abc\");\n    intToString.containsValue(\"def\");\n    // 0-entry vararg doesn't crash\n    intToString.containsAllKeys(123);\n  }\n\n  static <K extends Number, V extends String> void testIncompatibleWildcards(\n      Multimap<? extends K, ? extends V> map, K key, V value) {\n    map.containsKey(key);\n    map.containsValue(value);\n    map.containsEntry(key, value);\n\n    // BUG: Diagnostic contains: V is not compatible with the required type: K\n    map.containsEntry(value, key);\n    // BUG: Diagnostic contains: K is not compatible with the required type: V\n    map.containsValue(key);\n    // BUG: Diagnostic contains: V is not compatible with the required type: K\n    map.containsKey(value);\n  }\n\n  void testVarArgs(Multimap<Integer, String> intToString) {\n    // Validates the first, not the varags params\n    intToString.containsAllKeys(123, 123, 123);\n    // TODO(glorioso): If we make it work with varargs, this should fail\n    intToString.containsAllKeys(123, 123, \"a\");\n\n    Integer[] keys = {123, 345};\n    intToString.containsAllKeys(123, (Object[]) keys);\n  }\n}\\"
+    },
+    {
+      "description": "intersectionTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        246
+      ],
+      "code": "package com.google.errorprone.bugpatterns.collectionincompatibletype.testdata;\n\nimport com.google.errorprone.annotations.CompatibleWith;\n\n/** Test intersection types. */\npublic class IncompatibleArgumentTypeIntersectionTypes {\n\n  interface Nothing {}\n\n  interface Something {}\n\n  interface Everything extends Nothing, Something {}\n\n  class Test<X extends Nothing & Something> {\n    void doSomething(@CompatibleWith(\"X\") Object whatever) {}\n  }\n\n  class ArrayTest<X> {\n    void doSomething(@CompatibleWith(\"X\") Object whatever) {}\n  }\n\n  void testStuff(Test<Everything> someTest, Everything[] everythings, Nothing nothing) {\n    // Final classes (Integer) can't be cast to an interface they don't implement\n    // BUG: Diagnostic contains: int is not compatible with the required type: Everything\n    someTest.doSomething(123);\n\n    // Non-final classes can.\n    someTest.doSomething((Object) 123);\n\n    // Arrays can't, since they can only be cast to Serializable\n    // BUG: Diagnostic contains: Everything[] is not compatible with the required type: Everything\n    someTest.doSomething(everythings);\n\n    // BUG: Diagnostic contains: Everything[][] is not compatible with the required type: Everything\n    someTest.doSomething(new Everything[][] {everythings});\n\n    // OK (since some other implementer of Nothing could implement Everything)\n    someTest.doSomething(nothing);\n  }\n\n  void testArraySpecialization(\n      ArrayTest<Number[]> arrayTest, Integer[] ints, Object[] objz, String[] strings) {\n    arrayTest.doSomething(ints);\n\n    arrayTest.doSomething(objz);\n\n    // BUG: Diagnostic contains: String[] is not compatible with the required type: Number[]\n    arrayTest.doSomething(strings);\n  }\n}\\"
+    },
+    {
+      "description": "typeWithinLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\nimport com.google.errorprone.annotations.CompatibleWith;\nimport java.util.Map;\nimport java.util.Optional;\n\nabstract class Test {\n  abstract <K, V> Optional<V> getOrEmpty(Map<K, V> map, @CompatibleWith(\"K\") Object key);\n\n  void test(Map<Long, String> map, ImmutableList<Long> xs) {\n    // BUG: Diagnostic contains:\n    getOrEmpty(map, xs);\n    Optional<String> x = Optional.empty().flatMap(k -> getOrEmpty(map, xs));\n  }\n}"
+    },
+    {
+      "description": "typeWithinLambda_jdkhead",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\nimport com.google.errorprone.annotations.CompatibleWith;\nimport java.util.Map;\nimport java.util.Optional;\n\nabstract class Test {\n  abstract <K, V> Optional<V> getOrEmpty(Map<K, V> map, @CompatibleWith(\"K\") Object key);\n\n  void test(Map<Long, String> map, ImmutableList<Long> xs) {\n    // BUG: Diagnostic contains:\n    getOrEmpty(map, xs);\n    // BUG: Diagnostic contains:\n    Optional<String> x = Optional.empty().flatMap(k -> getOrEmpty(map, xs));\n  }\n}"
+    }
+  ]
+}

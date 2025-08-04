@@ -1,0 +1,102 @@
+{
+  "name": "ParameterComment",
+  "language": "java",
+  "description": "Non-standard parameter comment; prefer `/* paramName= */ arg`",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "class Test {\n              void f(int x, int y) {}\n\n              {\n                f(0 /*x*/, 1/* y= */ );\n                f(0 /*x*/, 1); // y\n                f(/* x */ 0, /* y */ 1);\n                f(0 /* x */, /* y */ 1);\n                f(/* x */ 0, 1 /* y */);\n              }\n            }\n            \n\n            class Test {\n              void f(int x, int y) {}\n\n              {\n                f(/* x= */ 0, /* y= */ 1);\n                f(/* x= */ 0, /* y= */ 1);\n                f(/* x= */ 0, /* y= */ 1);\n                f(/* x= */ 0, /* y= */ 1);\n                f(/* x= */ 0, /* y= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "class Test {\n              void f(int x, int y) {}\n\n              {\n                f(/* x= */ 0, /* y= */ 1);\n                f(0/* y= */ , 1/* x= */ );\n              }\n            }"
+    },
+    {
+      "description": "varargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "class Test {\n              void f(int y, int... xs) {}\n\n              {\n                f(0 /*y*/);\n                f(0 /*y*/, 1 /*xs*/);\n                f(0, new int[] {0} /*xs*/);\n                f(0, 1, 2 /*xs*/, 3 /*xs*/);\n              }\n            }\n            \n\n            class Test {\n              void f(int y, int... xs) {}\n\n              {\n                f(/* y= */ 0);\n                f(/* y= */ 0, /* xs= */ 1);\n                f(0, /* xs= */ new int[] {0});\n                f(0, 1, /* xs= */ 2, /* xs= */ 3);\n              }\n            }"
+    },
+    {
+      "description": "noParams",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "class Test {\n              void f() {}\n\n              {\n                f();\n              }\n            }"
+    },
+    {
+      "description": "positiveConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "class Test {\n              Test(int x, int y) {}\n\n              {\n                new Test(0 /*x*/, 1/* y= */ );\n                new Test(0 /*x*/, 1); // y\n              }\n            }\n            \n\n            class Test {\n              Test(int x, int y) {}\n\n              {\n                new Test(/* x= */ 0, /* y= */ 1);\n                new Test(/* x= */ 0, /* y= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "parameterComment_doesNotChange_whenNestedComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              abstract Object target2(Object second);\n\n              void test(Object first, Object second) {\n                target(first, target2(/* second= */ second));\n              }\n            }\n            \n\n            abstract class Test {\n              abstract void target(Object first, Object second);\n\n              abstract Object target2(Object second);\n\n              void test(Object first, Object second) {\n                target(first, target2(/* second= */ second));\n              }\n            }"
+    },
+    {
+      "description": "parameterComment_nestedComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object first, Object second);\n\n              abstract Object target2(Object second);\n\n              void test(Object first, Object second) {\n                target(first, target2(second /* second */));\n              }\n            }\n            \n\n            abstract class Test {\n              abstract void target(Object first, Object second);\n\n              abstract Object target2(Object second);\n\n              void test(Object first, Object second) {\n                target(first, target2(/* second= */ second));\n              }\n            }"
+    },
+    {
+      "description": "negative_multiLineTernary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        236
+      ],
+      "code": "public class Test {\n              public static int foo(int x) {\n                int y = true ? foo(/* x= */ x) : foo(/* x= */ x);\n                int z = true ? foo(/* x= */ x) : foo(/* x= */ x);\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "negative_nestedLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        254
+      ],
+      "code": "import java.util.function.Consumer;\n\n            public class Test {\n              private void testcase(String s, Consumer<Boolean> c) {\n                outer(\n                    p -> {\n                      System.out.println(s);\n                      inner(/* myFunc= */ c, /* i1= */ 200, /* i2= */ 300);\n                    },\n                    /* b1= */ true,\n                    /* b2= */ false);\n              }\n\n              private void outer(Consumer<Boolean> myFunc, boolean b1, boolean b2) {}\n\n              private void inner(Consumer<Boolean> myFunc, int i1, int i2) {}\n            }"
+    },
+    {
+      "description": "matchingCommentsAfterwards",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        282
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            class Test {\n              public Test a(int a) {\n                return this;\n              }\n\n              public int b(int b) {\n                return 1;\n              }\n\n              public void test(Test x) {\n                assertThat(x.a(/* a= */ 1).b(/* b= */ 0)).isEqualTo(1);\n                assertThat(x.a(/* a= */ 2).b(/* b= */ 0)).isEqualTo(1);\n              }\n            }"
+    },
+    {
+      "description": "markdownJavadocComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        308
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            class Test {\n              public void f(int x) {}\n\n              public void test() {\n                f(\n                    /// javadoc markdown\n                    /* x= */ 42);\n              }\n            }"
+    }
+  ]
+}

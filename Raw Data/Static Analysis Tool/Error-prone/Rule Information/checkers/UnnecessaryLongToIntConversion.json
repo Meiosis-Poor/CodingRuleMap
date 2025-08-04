@@ -1,0 +1,102 @@
+{
+  "name": "UnnecessaryLongToIntConversion",
+  "language": "java",
+  "description": "Converting a long or Long to an int to pass as a long parameter is usually not necessary. If this conversion is intentional, consider `Longs.constrainToRange()` instead.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 142,
+  "branches": 18,
+  "apis": 3,
+  "test": [
+    {
+      "description": "longParameterLongToIntPositiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.primitives.Ints;\n\n/** Positive cases for {@link com.google.errorprone.bugpatterns.UnnecessaryLongToIntConversion}. */\npublic class UnnecessaryLongToIntConversionPositiveCases {\n\n\n  static void acceptsLong(long value) {}\n\n  static void acceptsMultipleParams(int intValue, long longValue) {}\n\n  public void longToIntForLongParam() {\n    long x = 1;\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong((int) x);\n  }\n\n  public void longObjectToIntForLongParam() {\n    Long x = Long.valueOf(1);\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong(x.intValue());\n  }\n\n  public void convertMultipleArgs() {\n    long x = 1;\n    // The method expects an int for the first parameter and a long for the second parameter.\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsMultipleParams(Ints.checkedCast(x), Ints.checkedCast(x));\n  }\n\n  // The following test cases test various conversion methods, including an unchecked cast.\n  public void castToInt() {\n    long x = 1;\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong((int) x);\n  }\n\n  public void checkedCast() {\n    long x = 1;\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong(Ints.checkedCast(x));\n  }\n\n  public void toIntExact() {\n    long x = 1;\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong(Math.toIntExact(x));\n  }\n\n  public void toIntExactWithLongObject() {\n    Long x = Long.valueOf(1);\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong(Math.toIntExact(x));\n  }\n\n  public void intValue() {\n    Long x = Long.valueOf(1);\n    // BUG: Diagnostic contains: UnnecessaryLongToIntConversion\n    acceptsLong(x.intValue());\n  }\n}\\"
+    },
+    {
+      "description": "longParameterLongToIntNegativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.primitives.Ints;\n\n/** Negative cases for {@link com.google.errorprone.bugpatterns.UnnecessaryLongToIntConversion}. */\npublic class UnnecessaryLongToIntConversionNegativeCases {\n\n  static void acceptsLong(long value) {}\n\n  static void acceptsInt(int value) {}\n\n  static void acceptsMultipleParams(int intValue, long longValue) {}\n\n  // Converting from a long or Long to an Integer type requires first converting to an int. This is\n  // out of scope.\n  public void longToIntegerForLongParam() {\n    long x = 1;\n    acceptsLong(Integer.valueOf((int) x));\n  }\n\n  public void longObjectToIntegerForLongParam() {\n    Long x = Long.valueOf(1);\n    acceptsLong(Integer.valueOf(x.intValue()));\n  }\n\n  public void longParameterAndLongArgument() {\n    long x = 1;\n    acceptsLong(x);\n  }\n\n  public void longParameterAndIntArgument() {\n    int i = 1;\n    acceptsLong(i);\n  }\n\n  public void longParameterAndIntegerArgument() {\n    Integer i = Integer.valueOf(1);\n    acceptsLong(i);\n  }\n\n  public void castIntToLong() {\n    int i = 1;\n    acceptsLong((long) i);\n  }\n\n  public void castLongToIntForIntParameter() {\n    long x = 1;\n    acceptsInt((int) x);\n  }\n\n  public void longValueOfLongObject() {\n    Long x = Long.valueOf(1);\n    acceptsLong(x.longValue());\n  }\n\n  public void longValueOfInteger() {\n    Integer i = Integer.valueOf(1);\n    acceptsLong(i.longValue());\n  }\n\n  public void intValueOfInteger() {\n    Integer i = Integer.valueOf(1);\n    acceptsLong(i.intValue());\n  }\n\n  public void intValueForIntParameter() {\n    Long x = Long.valueOf(1);\n    acceptsInt(x.intValue());\n  }\n\n  public void checkedCastOnInt() {\n    int i = 1;\n    acceptsLong(Ints.checkedCast(i));\n  }\n\n  public void checkedCastOnInteger() {\n    Integer i = Integer.valueOf(1);\n    acceptsLong(Ints.checkedCast(i));\n  }\n\n  public void checkedCastForIntParameter() {\n    long x = 1;\n    acceptsInt(Ints.checkedCast(x));\n  }\n\n  public void checkedCastMultipleArgs() {\n    long x = 1;\n    // The method expects an int for the first parameter and a long for the second parameter.\n    acceptsMultipleParams(Ints.checkedCast(x), x);\n  }\n\n  public void toIntExactOnInt() {\n    int i = 1;\n    acceptsLong(Math.toIntExact(i));\n  }\n\n  public void toIntExactOnInteger() {\n    Integer i = Integer.valueOf(1);\n    acceptsLong(Math.toIntExact(i));\n  }\n\n  public void toIntExactForIntParameter() {\n    long x = 1;\n    acceptsInt(Math.toIntExact(x));\n  }\n}\\"
+    },
+    {
+      "description": "suggestRemovingTypeCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        229
+      ],
+      "code": "public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong((int) x);\n              }\n            }\n            \n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(x);\n              }\n            }"
+    },
+    {
+      "description": "suggestRemovingTypeCastWithoutSpacing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        260
+      ],
+      "code": "public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong((int) x);\n              }\n            }\n            \n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(x);\n              }\n            }"
+    },
+    {
+      "description": "suggestReplacingTypeCastWithConstrainToRange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        291
+      ],
+      "code": "public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong((int) x);\n              }\n            }\n            \n\n            import com.google.common.primitives.Longs;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(Longs.constrainToRange(x, Integer.MIN_VALUE, Integer.MAX_VALUE));\n              }\n            }"
+    },
+    {
+      "description": "suggestReplacingTypeCastWithoutSpacingWithConstrainToRange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        324
+      ],
+      "code": "public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong((int) x);\n              }\n            }\n            \n\n            import com.google.common.primitives.Longs;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(Longs.constrainToRange(x, Integer.MIN_VALUE, Integer.MAX_VALUE));\n              }\n            }"
+    },
+    {
+      "description": "suggestRemovingStaticMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": "import com.google.common.primitives.Ints;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(Ints.checkedCast(x));\n              }\n            }\n            \n\n            import com.google.common.primitives.Ints;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(x);\n              }\n            }"
+    },
+    {
+      "description": "suggestRemovingStaticMethodWithBoxedLongArgument",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        392
+      ],
+      "code": "import com.google.common.primitives.Ints;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                Long x = Long.valueOf(1);\n                acceptsLong(Ints.checkedCast(x));\n              }\n            }\n            \n\n            import com.google.common.primitives.Ints;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                Long x = Long.valueOf(1);\n                acceptsLong(x);\n              }\n            }"
+    },
+    {
+      "description": "suggestReplacingStaticMethodWithConstrainToRange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        427
+      ],
+      "code": "import java.lang.Math;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(Math.toIntExact(x));\n              }\n            }\n            \n\n            import com.google.common.primitives.Longs;\n            import java.lang.Math;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                long x = 1L;\n                acceptsLong(Longs.constrainToRange(x, Integer.MIN_VALUE, Integer.MAX_VALUE));\n              }\n            }"
+    },
+    {
+      "description": "suggestRemovingInstanceMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        463
+      ],
+      "code": "public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                Long x = Long.valueOf(1);\n                acceptsLong(x.intValue());\n              }\n            }\n            \n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                Long x = Long.valueOf(1);\n                acceptsLong(x);\n              }\n            }"
+    },
+    {
+      "description": "suggestReplacingInstanceMethodWithConstrainToRange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        494
+      ],
+      "code": "public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                Long x = Long.valueOf(1);\n                acceptsLong(x.intValue());\n              }\n            }\n            \n\n            import com.google.common.primitives.Longs;\n\n            public class A {\n              void acceptsLong(long value) {}\n\n              void foo() {\n                Long x = Long.valueOf(1);\n                acceptsLong(Longs.constrainToRange(x, Integer.MIN_VALUE, Integer.MAX_VALUE));\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,222 @@
+{
+  "name": "BadImport",
+  "language": "java",
+  "description": "Importing nested classes/static methods/static fields with commonly-used names can make code harder to read, because it may not be clear from the context exactly which type is being referred to. Qualifying the name with that of the containing class can make the code clearer.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 261,
+  "branches": 29,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive_static_simpleCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              // BUG: Diagnostic contains: ImmutableList.of()\n              ImmutableList<?> list = of();\n            }"
+    },
+    {
+      "description": "positive_identifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "import static com.google.errorprone.CompilationTestHelper.newInstance;\n            import com.google.errorprone.CompilationTestHelper;\n            import com.google.errorprone.bugpatterns.BugChecker;\n\n            class Test {\n              private final CompilationTestHelper compilationTestHelper =\n                  // BUG: Diagnostic contains: CompilationTestHelper.newInstance\n                  newInstance(BugChecker.class, getClass());\n            }"
+    },
+    {
+      "description": "msg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              // BUG: Diagnostic contains: qualified class: ImmutableList\n              ImmutableList<?> list = of();\n            }"
+    },
+    {
+      "description": "positive_static_differentOverloadsInvoked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\nimport com.google.common.collect.ImmutableList;\n\nclass Test {\n  // BUG: Diagnostic contains: ImmutableList.of(ImmutableList.of(1, 2, 3), ImmutableList.of())\n  ImmutableList<?> list = of(of(1, 2, 3), of());\n}"
+    },
+    {
+      "description": "positive_truth8AssertThatTrueFlag",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "import static com.google.common.truth.Truth8.assertThat;\n            import java.util.stream.IntStream;\n\n            class Test {\n              void x(IntStream s) {\n                // BUG: Diagnostic contains: usually recommend\n                assertThat(s).isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "positive_static_locallyDefinedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              class Blah {\n                Blah() {\n                  of(); // Left unchanged, because this is invoking Test.Blah.of.\n                }\n\n                void of() {}\n              }\n\n              ImmutableList<?> list = of();\n            }\n            \n\n            import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              class Blah {\n                Blah() {\n                  of(); // Left unchanged, because this is invoking Test.Blah.of.\n                }\n\n                void of() {}\n              }\n\n              ImmutableList<?> list = ImmutableList.of();\n            }"
+    },
+    {
+      "description": "negative_static_noStaticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        165
+      ],
+      "code": "class Test {\n              void of() {}\n\n              void foo() {\n                of();\n              }\n            }"
+    },
+    {
+      "description": "positive_nested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.collect.ImmutableList;\nimport com.google.common.collect.ImmutableList.Builder;\nimport org.jspecify.annotations.Nullable;\n\n/**\n * Tests for {@link BadImport}.\n *\n * @author awturner@google.com (Andy Turner)\n */\nclass BadImportPositiveCases {\n  public void variableDeclarations() {\n    // Only the first match is reported; but all occurrences are fixed.\n    // BUG: Diagnostic contains: ImmutableList.Builder\n    Builder<String> qualified;\n    Builder raw;\n  }\n\n  public void variableDeclarationsNestedGenerics() {\n    Builder<Builder<String>> builder1;\n    Builder<Builder> builder1Raw;\n    ImmutableList.Builder<Builder<String>> builder2;\n    ImmutableList.Builder<Builder> builder2Raw;\n  }\n\n  @Nullable Builder<@Nullable Builder<@Nullable String>>\n      parameterizedWithTypeUseAnnotationMethod() {\n    return null;\n  }\n\n  public void variableDeclarationsNestedGenericsAndTypeUseAnnotations() {\n\n    @Nullable Builder<@Nullable String> parameterizedWithTypeUseAnnotation1;\n\n    @Nullable Builder<@Nullable Builder<@Nullable String>> parameterizedWithTypeUseAnnotation2;\n  }\n\n  public void newClass() {\n    new Builder<String>();\n    new Builder<Builder<String>>();\n  }\n\n  Builder<String> returnGenericExplicit() {\n    return new Builder<String>();\n  }\n\n  Builder<String> returnGenericDiamond() {\n    return new Builder<>();\n  }\n\n  Builder returnRaw() {\n    return new Builder();\n  }\n\n  void classLiteral() {\n    System.out.println(Builder.class);\n  }\n}"
+    },
+    {
+      "description": "positive_nested_parentNotAlreadyImported",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "import com.google.common.collect.ImmutableList.Builder;\n\n            class Test {\n              // BUG: Diagnostic contains: ImmutableList.Builder<String> builder = null;\n              Builder<String> builder = null;\n            }"
+    },
+    {
+      "description": "positive_nested_conflictingName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        267
+      ],
+      "code": "package thing;\n\n            public class A {\n              public static class B {\n                public static class Builder {}\n              }\n            }\n            \n\n            import thing.A.B.Builder;\n\n            class Test {\n              // BUG: Diagnostic contains: A.B.Builder builder;\n              Builder builder;\n\n              static class B {}\n            }"
+    },
+    {
+      "description": "positive_nested_conflictingNames_fullyQualified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        296
+      ],
+      "code": "package thing;\n\n            public class A {\n              public static class B {\n                public static class Builder {}\n              }\n            }\n            \n\n            import thing.A.B.Builder;\n\n            class Test {\n              // BUG: Diagnostic contains: thing.A.B.Builder builder\n              Builder builder;\n\n              static class A {}\n\n              static class B {}\n            }"
+    },
+    {
+      "description": "negative_nested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        327
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.collect.ImmutableList;\n\n            /**\n             * Tests for {@link BadImport}.\n             *\n             * @author awturner@google.com (Andy Turner)\n             */\n            public class BadImportNegativeCases {\n              public void qualified() {\n                ImmutableList.Builder<String> qualified;\n                com.google.common.collect.ImmutableList.Builder<String> fullyQualified;\n                ImmutableList.Builder raw;\n\n                new ImmutableList.Builder<String>();\n              }\n\n              static class Nested {\n                static class Builder {}\n\n                void useNestedBuilder() {\n                  new Builder();\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negative_badImportIsTopLevelClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        363
+      ],
+      "code": ""
+    },
+    {
+      "description": "nestedFixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        379
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.collect.ImmutableList;\nimport com.google.common.collect.ImmutableList.Builder;\nimport org.jspecify.annotations.Nullable;\n\n/**\n * Tests for {@link BadImport}.\n *\n * @author awturner@google.com (Andy Turner)\n */\nclass BadImportPositiveCases {\n  public void variableDeclarations() {\n    // Only the first match is reported; but all occurrences are fixed.\n    // BUG: Diagnostic contains: ImmutableList.Builder\n    Builder<String> qualified;\n    Builder raw;\n  }\n\n  public void variableDeclarationsNestedGenerics() {\n    Builder<Builder<String>> builder1;\n    Builder<Builder> builder1Raw;\n    ImmutableList.Builder<Builder<String>> builder2;\n    ImmutableList.Builder<Builder> builder2Raw;\n  }\n\n  @Nullable Builder<@Nullable Builder<@Nullable String>>\n      parameterizedWithTypeUseAnnotationMethod() {\n    return null;\n  }\n\n  public void variableDeclarationsNestedGenericsAndTypeUseAnnotations() {\n\n    @Nullable Builder<@Nullable String> parameterizedWithTypeUseAnnotation1;\n\n    @Nullable Builder<@Nullable Builder<@Nullable String>> parameterizedWithTypeUseAnnotation2;\n  }\n\n  public void newClass() {\n    new Builder<String>();\n    new Builder<Builder<String>>();\n  }\n\n  Builder<String> returnGenericExplicit() {\n    return new Builder<String>();\n  }\n\n  Builder<String> returnGenericDiamond() {\n    return new Builder<>();\n  }\n\n  Builder returnRaw() {\n    return new Builder();\n  }\n\n  void classLiteral() {\n    System.out.println(Builder.class);\n  }\n}\n\n\npackage com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.collect.ImmutableList;\nimport org.jspecify.annotations.Nullable;\n\n/**\n * Tests for {@link BadImport}.\n *\n * @author awturner@google.com (Andy Turner)\n */\nclass BadImportPositiveCases {\n  public void variableDeclarations() {\n    ImmutableList.Builder<String> qualified;\n    ImmutableList.Builder raw;\n  }\n\n  public void variableDeclarationsNestedGenerics() {\n    ImmutableList.Builder<ImmutableList.Builder<String>> builder1;\n    ImmutableList.Builder<ImmutableList.Builder> builder1Raw;\n    ImmutableList.Builder<ImmutableList.Builder<String>> builder2;\n    ImmutableList.Builder<ImmutableList.Builder> builder2Raw;\n  }\n\n  ImmutableList.@Nullable Builder<ImmutableList.@Nullable Builder<@Nullable String>>\n      parameterizedWithTypeUseAnnotationMethod() {\n    return null;\n  }\n\n  public void variableDeclarationsNestedGenericsAndTypeUseAnnotations() {\n\n    ImmutableList.@Nullable Builder<@Nullable String> parameterizedWithTypeUseAnnotation1;\n\n    ImmutableList.@Nullable Builder<ImmutableList.@Nullable Builder<@Nullable String>>\n        parameterizedWithTypeUseAnnotation2;\n  }\n\n  public void newClass() {\n    new ImmutableList.Builder<String>();\n    new ImmutableList.Builder<ImmutableList.Builder<String>>();\n  }\n\n  ImmutableList.Builder<String> returnGenericExplicit() {\n    return new ImmutableList.Builder<String>();\n  }\n\n  ImmutableList.Builder<String> returnGenericDiamond() {\n    return new ImmutableList.Builder<>();\n  }\n\n  ImmutableList.Builder returnRaw() {\n    return new ImmutableList.Builder();\n  }\n\n  void classLiteral() {\n    System.out.println(ImmutableList.Builder.class);\n  }\n}\\"
+    },
+    {
+      "description": "nestedTypeUseAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        509
+      ],
+      "code": "package test;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.TYPE_PARAMETER, ElementType.TYPE_USE})\n            @interface TypeUseAnnotation {}\n            \n\n            package test;\n\n            class SomeClass {\n              static class Builder {}\n            }\n            \n\n            package test;\n\n            import java.util.List;\n            import test.SomeClass.Builder;\n\n            abstract class Test {\n              @TypeUseAnnotation Builder builder;\n\n              @TypeUseAnnotation\n              abstract Builder method1();\n\n              abstract @TypeUseAnnotation Builder method2();\n\n              abstract void method3(@TypeUseAnnotation Builder builder);\n\n              abstract void method4(List<@TypeUseAnnotation Builder> builder);\n            }\n            \n\n            package test;\n\n            import java.util.List;\n\n            abstract class Test {\n              SomeClass.@TypeUseAnnotation Builder builder;\n\n              abstract SomeClass.@TypeUseAnnotation Builder method1();\n\n              abstract SomeClass.@TypeUseAnnotation Builder method2();\n\n              abstract void method3(SomeClass.@TypeUseAnnotation Builder builder);\n\n              abstract void method4(List<SomeClass.@TypeUseAnnotation Builder> builder);\n            }"
+    },
+    {
+      "description": "negative_truth8AssertThatFalseFlag",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        577
+      ],
+      "code": "import static com.google.common.truth.Truth8.assertThat;\n            import java.util.stream.IntStream;\n\n            class Test {\n              void x(IntStream s) {\n                assertThat(s).isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "negative_otherAssertThat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        596
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            class Test {\n              void x(Iterable<?> i) {\n                assertThat(i).isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "suppressed_class",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        613
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            @SuppressWarnings(\"BadImport\")\n            class Test {\n              ImmutableList<?> list = of();\n              ImmutableList<?> list2 = of();\n            }"
+    },
+    {
+      "description": "suppressed_field",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        631
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              @SuppressWarnings(\"BadImport\")\n              ImmutableList<?> list = of();\n\n              // BUG: Diagnostic contains: ImmutableList.of()\n              ImmutableList<?> list2 = of();\n            }"
+    },
+    {
+      "description": "suppressed_method",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        651
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.of;\n            import com.google.common.collect.ImmutableList;\n\n            class Test {\n              @SuppressWarnings(\"BadImport\")\n              void foo() {\n                ImmutableList<?> list = of();\n              }\n\n              void bar() {\n                // BUG: Diagnostic contains: ImmutableList.of()\n                ImmutableList<?> list2 = of();\n              }\n            }"
+    },
+    {
+      "description": "enumWithinSameCompilationUnitImported_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        675
+      ],
+      "code": "package pkg;\n\n            import pkg.Test.Type;\n\n            class Test {\n              enum Type {\n                A,\n                B;\n              }\n            }"
+    },
+    {
+      "description": "enumWithinDifferentCompilationUnitImported_finding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        695
+      ],
+      "code": "package a;\n\n            public enum E {\n              INSTANCE;\n            }\n            \n\n            package pkg;\n\n            import static a.E.INSTANCE;\n\n            class Test {\n              Object e = INSTANCE;\n            }\n            \n\n            package pkg;\n\n            import static a.E.INSTANCE;\n            import a.E;\n\n            class Test {\n              Object e = E.INSTANCE;\n            }"
+    },
+    {
+      "description": "doesNotMatchProtos",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        734
+      ],
+      "code": "package pkg;\n\n            import com.google.protobuf.MessageLite;\n\n            public class ProtoOuterClass {\n              public abstract static class Provider implements MessageLite {}\n            }\n            \n\n            import pkg.ProtoOuterClass.Provider;\n\n            class Test {\n              public void test(Provider p) {}\n            }"
+    },
+    {
+      "description": "badEnclosingTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        760
+      ],
+      "code": "package org.immutables.value;\n\n            public @interface Value {\n              @interface Immutable {}\n            }\n            \n\n            import org.immutables.value.Value.Immutable;\n\n            @Immutable\n            interface Test {}\n            \n\n            import org.immutables.value.Value;\n\n            @Value.Immutable\n            interface Test {}"
+    },
+    {
+      "description": "badEnclosingTypes_doesNotMatchFullyQualifiedName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        793
+      ],
+      "code": "package org.immutables.value;\n\n            public @interface Value {\n              @interface Immutable {}\n            }\n            \n\n            @org.immutables.value.Value.Immutable\n            interface Test {}"
+    },
+    {
+      "description": "badEnclosingTypes_staticMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        815
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.toImmutableList;\n            import com.google.common.collect.ImmutableList;\n            import java.util.stream.Collector;\n\n            class Test {\n              // BUG: Diagnostic contains: ImmutableList.toImmutableList()\n              Collector<?, ?, ImmutableList<Object>> immutableList = toImmutableList();\n            }"
+    }
+  ]
+}

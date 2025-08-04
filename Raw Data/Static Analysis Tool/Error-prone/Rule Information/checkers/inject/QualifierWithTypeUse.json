@@ -1,0 +1,30 @@
+{
+  "name": "QualifierWithTypeUse",
+  "language": "java",
+  "description": "Injection frameworks currently don't understand Qualifiers in TYPE_PARAMETER or TYPE_USE contexts.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 95,
+  "branches": 5,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import com.google.inject.BindingAnnotation;\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n            import javax.inject.Qualifier;\n\n            /** Tests for {@code QualifierWithTypeUse} */\n            public class QualifierWithTypeUsePositiveCases {\n\n              @Qualifier\n              // BUG: Diagnostic contains: @Target({CONSTRUCTOR})\n              @Target({ElementType.TYPE_USE, ElementType.CONSTRUCTOR})\n              @interface Qualifier1 {}\n\n              @Qualifier\n              // BUG: Diagnostic contains: remove\n              @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n              @interface Qualifier2 {}\n\n              @BindingAnnotation\n              // BUG: Diagnostic contains: @Target({FIELD})\n              @Target({ElementType.FIELD, ElementType.TYPE_USE})\n              @interface BindingAnnotation1 {}\n\n              @BindingAnnotation\n              // BUG: Diagnostic contains: remove\n              @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n              @interface BindingAnnotation2 {}\n\n              @BindingAnnotation\n              // BUG: Diagnostic contains: remove\n              @Target(ElementType.TYPE_USE)\n              @interface BindingAnnotation3 {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n            import javax.inject.Qualifier;\n\n            /** Tests for {@code QualifierWithTypeUse} */\n            public class QualifierWithTypeUseNegativeCases {\n\n              @Qualifier\n              @Target({ElementType.CONSTRUCTOR})\n              @interface Qualifier1 {}\n\n              @Target({ElementType.TYPE_USE, ElementType.TYPE_PARAMETER})\n              @interface NotAQualifier {}\n            }\\"
+    }
+  ]
+}

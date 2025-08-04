@@ -1,0 +1,78 @@
+{
+  "name": "SelfAssertion",
+  "language": "java",
+  "description": "This assertion will always fail or succeed.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 153,
+  "branches": 11,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.truth.Truth.assertThat;\n            import static com.google.common.truth.Truth.assertWithMessage;\n\n            /**\n             * Positive test cases for SelfAssertion check.\n             *\n             * @author bhagwani@google.com (Sumit Bhagwani)\n             */\n            public class SelfAssertionPositiveCases {\n\n              public void testAssertThatEq() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertThat(test).isEqualTo(test);\n              }\n\n              public void testAssertWithMessageEq() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertWithMessage(\"msg\").that(test).isEqualTo(test);\n              }\n\n              public void testAssertThatSame() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertThat(test).isSameInstanceAs(test);\n              }\n\n              public void testAssertWithMessageSame() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertWithMessage(\"msg\").that(test).isSameInstanceAs(test);\n              }\n\n              public void testAssertThatNeq() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertThat(test).isNotEqualTo(test);\n              }\n\n              public void testAssertThatNotSame() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertThat(test).isNotSameInstanceAs(test);\n              }\n\n              public void testAssertWithMessageNeq() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertWithMessage(\"msg\").that(test).isNotEqualTo(test);\n              }\n\n              public void testAssertWithMessageNotSame() {\n                String test = Boolean.TRUE.toString();\n                // BUG: Diagnostic contains:\n                assertWithMessage(\"msg\").that(test).isNotSameInstanceAs(test);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.truth.Truth.assertThat;\n\n            /**\n             * Negative test cases for SelfAssertion check.\n             *\n             * @author bhagwani@google.com (Sumit Bhagwani)\n             */\n            public class SelfAssertionNegativeCases {\n\n              public void testEq() {\n                assertThat(Boolean.TRUE.toString()).isEqualTo(Boolean.FALSE.toString());\n              }\n\n              public void testNeq() {\n                assertThat(Boolean.TRUE.toString()).isNotEqualTo(Boolean.FALSE.toString());\n              }\n            }\\"
+    },
+    {
+      "description": "customReceiver",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        134
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.truth.IntegerSubject;\n            import java.util.Arrays;\n\n            abstract class Test {\n              abstract IntegerSubject f(int i);\n\n              abstract IntegerSubject g();\n\n              void test(int x) {\n                f(x).isEqualTo(x);\n                g().isEqualTo(x);\n              }\n            }"
+    },
+    {
+      "description": "iterables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        158
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.List;\n\n            abstract class Test {\n              void test(List<String> xs) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactlyElementsIn(xs);\n              }\n            }"
+    },
+    {
+      "description": "sameIdentifierWhenNotFinal_stillFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.time.Duration;\n\n            abstract class Test {\n              void test(int x) {\n                x = 2;\n                // BUG: Diagnostic contains:\n                assertThat(x).isEqualTo(x);\n              }\n            }"
+    },
+    {
+      "description": "constantExpressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.time.Duration;\n\n            abstract class Test {\n              void test(int x) {\n                // BUG: Diagnostic contains:\n                assertThat(Duration.ofMillis(x)).isEqualTo(Duration.ofMillis(x));\n              }\n            }"
+    },
+    {
+      "description": "junitPositiveAssertion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        216
+      ],
+      "code": "import static org.junit.Assert.assertEquals;\n\n            abstract class Test {\n              void test(int x) {\n                // BUG: Diagnostic contains: pass\n                assertEquals(x, x);\n                // BUG: Diagnostic contains: pass\n                assertEquals(\"foo\", x, x);\n              }\n            }"
+    },
+    {
+      "description": "junitNegativeAssertion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        236
+      ],
+      "code": "import static org.junit.Assert.assertNotEquals;\n\n            abstract class Test {\n              void test(int x) {\n                // BUG: Diagnostic contains: fail\n                assertNotEquals(x, x);\n                // BUG: Diagnostic contains: fail\n                assertNotEquals(\"foo\", x, x);\n              }\n            }"
+    }
+  ]
+}

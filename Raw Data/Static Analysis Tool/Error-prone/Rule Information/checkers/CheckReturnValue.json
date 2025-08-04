@@ -1,0 +1,374 @@
+{
+  "name": "CheckReturnValue",
+  "language": "java",
+  "description": "The result of this call must be used",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 381,
+  "branches": 29,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.errorprone.annotations.CheckReturnValue;\nimport org.junit.rules.ExpectedException;\n\n/**\n * @author eaftan@google.com (Eddie Aftandilian)\n */\npublic class CheckReturnValuePositiveCases {\n\n  IntValue intValue = new IntValue(0);\n\n  @CheckReturnValue\n  private int increment(int bar) {\n    return bar + 1;\n  }\n\n  public void foo() {\n    int i = 1;\n    // BUG: Diagnostic contains: The result of `increment(...)` must be used\n    //\n    // If you really don't want to use the result, then assign it to a variable: `var unused = ...`.\n    //\n    // If callers of `increment(...)` shouldn't be required to use its result, then annotate it with\n    // `@CanIgnoreReturnValue`.\n    increment(i);\n    System.out.println(i);\n  }\n\n  public void bar() {\n    // BUG: Diagnostic contains: this.intValue = this.intValue.increment()\n    this.intValue.increment();\n  }\n\n  public void testIntValue() {\n    IntValue value = new IntValue(10);\n    // BUG: Diagnostic contains: value = value.increment()\n    value.increment();\n  }\n\n  private void callRunnable(Runnable runnable) {\n    runnable.run();\n  }\n\n  public void testResolvedToVoidLambda() {\n    // BUG: Diagnostic contains:\n    callRunnable(() -> this.intValue.increment());\n  }\n\n  public void testResolvedToVoidMethodReference(boolean predicate) {\n    // BUG: Diagnostic contains: The result of `increment()` must be used\n    //\n    // `this.intValue::increment` acts as an implementation of `Runnable.run`\n    // -- which is a `void` method, so it doesn't use the result of `increment()`.\n    //\n    // To use the result, you may need to restructure your code.\n    //\n    // If you really don't want to use the result, then switch to a lambda that assigns it to a\n    // variable: `() -> { var unused = ...; }`.\n    //\n    // If callers of `increment()` shouldn't be required to use its result, then annotate it with\n    // `@CanIgnoreReturnValue`.\n    callRunnable(this.intValue::increment);\n    // BUG: Diagnostic contains: The result of `increment()` must be used\n    callRunnable(predicate ? this.intValue::increment : this.intValue::increment2);\n  }\n\n  public void testConstructorResolvedToVoidMethodReference() {\n    // BUG: Diagnostic contains: The result of `new MyObject()` must be used\n    //\n    // `MyObject::new` acts as an implementation of `Runnable.run`\n    // -- which is a `void` method, so it doesn't use the result of `new MyObject()`.\n    //\n    // To use the result, you may need to restructure your code.\n    //\n    // If you really don't want to use the result, then switch to a lambda that assigns it to a\n    // variable: `() -> { var unused = ...; }`.\n    //\n    // If callers of `MyObject()` shouldn't be required to use its result, then annotate it with\n    // `@CanIgnoreReturnValue`.\n    callRunnable(MyObject::new);\n  }\n\n  public void testRegularLambda() {\n    callRunnable(\n        () -> {\n          // BUG: Diagnostic contains:\n          this.intValue.increment();\n        });\n  }\n\n  public void testBeforeAndAfterRule() {\n    // BUG: Diagnostic contains:\n    new IntValue(1).increment();\n    ExpectedException.none().expect(IllegalStateException.class);\n    new IntValue(1).increment(); // No error here, last statement in block\n  }\n\n  public void constructor() {\n    // BUG: Diagnostic contains: The result of `new MyObject()` must be used\n    new MyObject() {};\n\n    class MySubObject1 extends MyObject {}\n\n    class MySubObject2 extends MyObject {\n      MySubObject2() {}\n    }\n\n    class MySubObject3 extends MyObject {\n      MySubObject3() {\n        super();\n      }\n    }\n\n    // BUG: Diagnostic contains: The result of `new MyObject()` must be used\n    //\n    // If you really don't want to use the result, then assign it to a variable: `var unused = ...`.\n    //\n    // If callers of `MyObject()` shouldn't be required to use its result, then annotate it with\n    // `@CanIgnoreReturnValue`.\n    new MyObject();\n  }\n\n  private class IntValue {\n    final int i;\n\n    public IntValue(int i) {\n      this.i = i;\n    }\n\n    @javax.annotation.CheckReturnValue\n    public IntValue increment() {\n      return new IntValue(i + 1);\n    }\n\n    public void increment2() {\n      // BUG: Diagnostic contains:\n      this.increment();\n    }\n\n    public void increment3() {\n      // BUG: Diagnostic contains:\n      increment();\n    }\n  }\n\n  private static class MyObject {\n    @CheckReturnValue\n    MyObject() {}\n  }\n\n  private abstract static class LB1<A> {}\n\n  private static class LB2<A> extends LB1<A> {\n\n    @CheckReturnValue\n    public static <T> LB2<T> lb1() {\n      return new LB2<T>();\n    }\n\n    public static <T> LB2<T> lb2() {\n      // BUG: Diagnostic contains:\n      lb1();\n      return lb1();\n    }\n  }\n\n  private static class JavaxAnnotation {\n    @javax.annotation.CheckReturnValue\n    public static int check() {\n      return 1;\n    }\n\n    public static void ignoresCheck() {\n      // BUG: Diagnostic contains:\n      check();\n    }\n  }\n}\\"
+    },
+    {
+      "description": "customCheckReturnValueAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        237
+      ],
+      "code": "package foo.bar;\n\n            public @interface CheckReturnValue {}\n            \n\n            package test;\n\n            import foo.bar.CheckReturnValue;\n\n            public class TestCustomCheckReturnValueAnnotation {\n              @CheckReturnValue\n              public String getString() {\n                return \"string\";\n              }\n\n              public void doIt() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                getString();\n              }\n            }"
+    },
+    {
+      "description": "customCanIgnoreReturnValueAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "package foo.bar;\n\n            public @interface CanIgnoreReturnValue {}\n            \n\n            package test;\n\n            import foo.bar.CanIgnoreReturnValue;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class TestCustomCanIgnoreReturnValueAnnotation {\n              @CanIgnoreReturnValue\n              public String ignored() {\n                return null;\n              }\n\n              public void doIt() {\n                ignored();\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        301
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.errorprone.annotations.CheckReturnValue;\n            import java.util.function.Supplier;\n\n            /**\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            public class CheckReturnValueNegativeCases {\n\n              public void test1() {\n                test2();\n                Object obj = new String();\n                obj.toString();\n              }\n\n              @SuppressWarnings(\"foo\") // wrong annotation\n              public void test2() {}\n\n              @CheckReturnValue\n              private int mustCheck() {\n                return 5;\n              }\n\n              private int nothingToCheck() {\n                return 42;\n              }\n\n              private void callRunnable(Runnable runnable) {\n                runnable.run();\n              }\n\n              private void testNonCheckedCallsWithMethodReferences() {\n                Object obj = new String();\n                callRunnable(String::new);\n                callRunnable(this::test2);\n                callRunnable(obj::toString);\n              }\n\n              private void callSupplier(Supplier<Integer> supplier) {\n                supplier.get();\n              }\n\n              public void testResolvedToIntLambda(boolean predicate) {\n                callSupplier(() -> mustCheck());\n                callSupplier(predicate ? () -> mustCheck() : () -> nothingToCheck());\n              }\n\n              public void testMethodReference(boolean predicate) {\n                callSupplier(this::mustCheck);\n                callSupplier(predicate ? this::mustCheck : this::nothingToCheck);\n              }\n            }\\"
+    },
+    {
+      "description": "packageAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        364
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            package lib;\n            \n\n            package lib;\n\n            public class Lib {\n              public static int f() {\n                return 42;\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "classAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        397
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Lib {\n              public static int f() {\n                return 42;\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "voidReturningMethodInAnnotatedPackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        426
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            package lib;\n            \n\n            package lib;\n\n            public class Lib {\n              public static void f() {}\n            }\n            \n\n            class Test {\n              void m() {\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "badCRVOnProcedure",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        456
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Test {\n              @com.google.errorprone.annotations.CheckReturnValue\n              // BUG: Diagnostic contains: may not be applied to void-returning methods\n              public static void f() {}\n            }"
+    },
+    {
+      "description": "badCRVOnPseudoProcedure",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        474
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Test {\n              @com.google.errorprone.annotations.CheckReturnValue\n              // BUG: Diagnostic contains: may not be applied to void-returning methods\n              public static Void f() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "packageAnnotationButCanIgnoreReturnValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        494
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            package lib;\n            \n\n            package lib;\n\n            public class Lib {\n              @com.google.errorprone.annotations.CanIgnoreReturnValue\n              public static int f() {\n                return 42;\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "classAnnotationButCanIgnoreReturnValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        527
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Lib {\n              @com.google.errorprone.annotations.CanIgnoreReturnValue\n              public static int f() {\n                return 42;\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "badCanIgnoreReturnValueOnProcedure",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        555
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Test {\n              @com.google.errorprone.annotations.CanIgnoreReturnValue\n              // BUG: Diagnostic contains: may not be applied to void-returning methods\n              public static void f() {}\n            }"
+    },
+    {
+      "description": "nestedClassAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        573
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Lib {\n              public static class Inner {\n                public static class InnerMost {\n                  public static int f() {\n                    return 42;\n                  }\n                }\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                lib.Lib.Inner.InnerMost.f();\n              }\n            }"
+    },
+    {
+      "description": "nestedClassWithCanIgnoreAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        605
+      ],
+      "code": "package lib;\n\n            @com.google.errorprone.annotations.CheckReturnValue\n            public class Lib {\n              @com.google.errorprone.annotations.CanIgnoreReturnValue\n              public static class Inner {\n                public static class InnerMost {\n                  public static int f() {\n                    return 42;\n                  }\n                }\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                lib.Lib.Inner.InnerMost.f();\n              }\n            }"
+    },
+    {
+      "description": "packageWithCanIgnoreAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        637
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            package lib;\n            \n\n            package lib;\n\n            @com.google.errorprone.annotations.CanIgnoreReturnValue\n            public class Lib {\n              public static int f() {\n                return 42;\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "errorBothClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        670
+      ],
+      "code": "@com.google.errorprone.annotations.CanIgnoreReturnValue\n@com.google.errorprone.annotations.CheckReturnValue\n// BUG: Diagnostic contains: @CheckReturnValue and @CanIgnoreReturnValue cannot be applied to the\n// same class\nclass Test {}"
+    },
+    {
+      "description": "errorBothMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        685
+      ],
+      "code": "class Test {\n  @com.google.errorprone.annotations.CanIgnoreReturnValue\n  @com.google.errorprone.annotations.CheckReturnValue\n  // BUG: Diagnostic contains: @CheckReturnValue and @CanIgnoreReturnValue cannot be applied to the\n  // same method\n  void m() {}\n}"
+    },
+    {
+      "description": "javaLangVoidReturningMethodInAnnotatedPackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        703
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            package lib;\n            \n\n            package lib;\n\n            public class Lib {\n              public static Void f() {\n                return null;\n              }\n            }\n            \n\n            class Test {\n              void m() {\n                lib.Lib.f();\n              }\n            }"
+    },
+    {
+      "description": "ignoreVoidReturningMethodReferences",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        735
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            public class Lib {\n              public static void consume(Object o) {}\n            }\n            \n\n            class Test {\n              void m(java.util.List<Object> xs) {\n                xs.forEach(Lib::consume);\n              }\n            }"
+    },
+    {
+      "description": "noCRVonClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        768
+      ],
+      "code": "class Test {\n              void m() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                com.google.errorprone.bugpatterns.CheckReturnValueTest.CRVTest.f();\n              }\n            }"
+    },
+    {
+      "description": "constructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        785
+      ],
+      "code": "class Test {\n              @com.google.errorprone.annotations.CheckReturnValue\n              public Test() {}\n\n              public static void foo() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                new Test();\n              }\n            }"
+    },
+    {
+      "description": "constructor_telescoping",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        804
+      ],
+      "code": "class Test {\n              @com.google.errorprone.annotations.CheckReturnValue\n              public Test() {}\n\n              public Test(int foo) {\n                this();\n              }\n\n              public static void foo() {\n                Test foo = new Test(42);\n              }\n            }"
+    },
+    {
+      "description": "constructor_superCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        826
+      ],
+      "code": "class Test {\n              @com.google.errorprone.annotations.CheckReturnValue\n              public Test() {}\n\n              static class SubTest extends Test {\n                SubTest() {\n                  super();\n                }\n              }\n\n              public static void foo() {\n                Test derived = new SubTest();\n              }\n            }"
+    },
+    {
+      "description": "constructor_anonymousClassInheritsCIRV",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        850
+      ],
+      "code": "class Test {\n              @com.google.errorprone.annotations.CanIgnoreReturnValue\n              public Test() {}\n\n              public static void foo() {\n                new Test() {};\n                new Test() {\n                  {\n                    System.out.println(\"Lookie, instance initializer\");\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "constructor_anonymousClassInheritsCRV",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        873
+      ],
+      "code": "class Test {\n              @com.google.errorprone.annotations.CheckReturnValue\n              public Test() {}\n\n              public static void foo() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                new Test() {};\n              }\n            }"
+    },
+    {
+      "description": "constructor_hasOuterInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        892
+      ],
+      "code": "class Test {\n              class Inner {\n                @com.google.errorprone.annotations.CheckReturnValue\n                public Inner() {}\n              }\n\n              public static void foo() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                new Test().new Inner() {};\n              }\n            }"
+    },
+    {
+      "description": "constructor_anonymousClassInheritsCRV_syntheticConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        913
+      ],
+      "code": ""
+    },
+    {
+      "description": "constructor_inheritsFromCrvInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        929
+      ],
+      "code": ""
+    },
+    {
+      "description": "constructor_throwingContexts",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        946
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            public class Foo {}\n            \n\n            class Test {\n              void f() {\n                try {\n                  new Foo();\n                  org.junit.Assert.fail();\n                } catch (Exception expected) {\n                }\n                org.junit.Assert.assertThrows(IllegalArgumentException.class, () -> new Foo());\n              }\n            }"
+    },
+    {
+      "description": "constructor_reference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        972
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            public class Foo {}\n            \n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                Runnable ignoresResult = Foo::new;\n              }\n            }"
+    },
+    {
+      "description": "constructor_withoutCrvAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        994
+      ],
+      "code": "class Test {\n              public Test() {}\n\n              public static void foo() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                new Test();\n              }\n            }"
+    },
+    {
+      "description": "allMethods_withoutCIRVAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1012
+      ],
+      "code": "class Test {\n              public int bar() {\n                return 42;\n              }\n\n              public static void foo() {\n                // BUG: Diagnostic contains: CheckReturnValue\n                new Test().bar();\n              }\n            }"
+    },
+    {
+      "description": "allMethods_withExternallyConfiguredIgnoreList",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1035
+      ],
+      "code": "import my.java.util.List;\n\n            class Test {\n              public static void foo(List<Integer> x) {\n                x.add(42);\n                // BUG: Diagnostic contains: CheckReturnValue\n                x.get(0);\n              }\n            }\n            \n\n            package my.java.util;\n\n            public interface List<E> {\n              boolean add(E e);\n\n              E get(int index);\n            }"
+    },
+    {
+      "description": "packagesRule",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1065
+      ],
+      "code": "import my.java.util.List;\n            import my.java.util.regex.Pattern;\n\n            class Test {\n              public static void foo(List<Integer> list, Pattern pattern) {\n                // BUG: Diagnostic contains: CheckReturnValue\n                list.get(0);\n                // BUG: Diagnostic contains: CheckReturnValue\n                pattern.matcher(\"blah\");\n              }\n            }\n            \n\n            package my.java.util;\n\n            public interface List<E> {\n              E get(int index);\n            }\n            \n\n            package my.java.util.regex;\n\n            public interface Pattern {\n              String matcher(CharSequence input);\n            }"
+    },
+    {
+      "description": "packagesRule_negativePattern",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1104
+      ],
+      "code": "import my.java.util.List;\n            import my.java.util.regex.Pattern;\n\n            class Test {\n              public static void foo(List<Integer> list, Pattern pattern) {\n                // BUG: Diagnostic contains: CheckReturnValue\n                list.get(0);\n                pattern.matcher(\"blah\");\n              }\n            }\n            \n\n            package my.java.util;\n\n            public interface List<E> {\n              E get(int index);\n            }\n            \n\n            package my.java.util.regex;\n\n            public interface Pattern {\n              String matcher(CharSequence input);\n            }"
+    },
+    {
+      "description": "packagesRule_negativePattern_doesNotMakeOptional",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1142
+      ],
+      "code": "import my.java.util.List;\n            import my.java.util.regex.Pattern;\n            import my.java.util.regex.PatternSyntaxException;\n\n            class Test {\n              public static void foo(List<Integer> list, Pattern pattern) {\n                // BUG: Diagnostic contains: CheckReturnValue\n                list.get(0);\n                pattern.matcher(\"blah\");\n                // BUG: Diagnostic contains: CheckReturnValue\n                new PatternSyntaxException(\"\", \"\", 0);\n              }\n            }\n            \n\n            package my.java.util;\n\n            public interface List<E> {\n              E get(int index);\n            }\n            \n\n            package my.java.util.regex;\n\n            public interface Pattern {\n              String matcher(CharSequence input);\n            }\n            \n\n            package my.java.util.regex;\n\n            public class PatternSyntaxException extends IllegalArgumentException {\n              public PatternSyntaxException(String desc, String regex, int index) {}\n            }"
+    },
+    {
+      "description": "refactoringAssignsToOriginalBasedOnSubstitutedTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1195
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            interface Builder<B extends Builder<B>> {\n              B setFoo(String s);\n            }\n            \n\n            class Test {\n              void f(SomeBuilder builder, String s) {\n                builder.setFoo(s);\n              }\n            }\n            \n\n            class Test {\n              void f(SomeBuilder builder, String s) {\n                builder = builder.setFoo(s);\n              }\n            }"
+    },
+    {
+      "description": "suggestCanIgnoreReturnValueForMethodInvocation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1232
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              void foo() {\n                makeBarOrThrow();\n              }\n\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              void foo() {\n                makeBarOrThrow();\n              }\n\n              @CanIgnoreReturnValue\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }"
+    },
+    {
+      "description": "suggestCanIgnoreReturnValueForMethodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1272
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              Runnable r = this::makeBarOrThrow;\n\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              Runnable r = this::makeBarOrThrow;\n\n              @CanIgnoreReturnValue\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }"
+    },
+    {
+      "description": "suggestCanIgnoreReturnValueForConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1308
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              Test() {}\n\n              void run() {\n                new Test();\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              @CanIgnoreReturnValue\n              Test() {}\n\n              void run() {\n                new Test();\n              }\n            }"
+    },
+    {
+      "description": "suggestCanIgnoreReturnValueAndRemoveCheckReturnValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1344
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n\n            class Test {\n              void foo() {\n                makeBarOrThrow();\n              }\n\n              @CheckReturnValue\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            class Test {\n              void foo() {\n                makeBarOrThrow();\n              }\n\n              @CanIgnoreReturnValue\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }"
+    },
+    {
+      "description": "doesNotSuggestCanIgnoreReturnValueForOtherFile",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1383
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Lib {\n              String makeBarOrThrow() {\n                throw new UnsupportedOperationException();\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              void foo(Lib l) {\n                l.makeBarOrThrow();\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            class Test {\n              void foo(Lib l) {\n                var unused = l.makeBarOrThrow();\n              }\n            }"
+    },
+    {
+      "description": "suggestsVarUnusedForConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1427
+      ],
+      "code": "@com.google.errorprone.annotations.CheckReturnValue\n            class Test {\n              void go() {\n                new Test();\n              }\n            }\n            \n\n            @com.google.errorprone.annotations.CheckReturnValue\n            class Test {\n              void go() {\n                var unused = new Test();\n              }\n            }"
+    },
+    {
+      "description": "suggestsVarUnused2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1453
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            interface Lib {\n              int a();\n\n              int b();\n            }\n            \n\n            class Test {\n              void foo(Lib lib) {\n                var unused = lib.a();\n                lib.b();\n              }\n            }\n            \n\n            class Test {\n              void foo(Lib lib) {\n                var unused = lib.a();\n                var unused2 = lib.b();\n              }\n            }"
+    },
+    {
+      "description": "inheritsCanIgnoreReturnValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1492
+      ],
+      "code": "import com.google.errorprone.annotations.CheckReturnValue;\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CheckReturnValue\n            interface Super {\n              int a();\n\n              @CanIgnoreReturnValue\n              int b();\n            }\n            \n\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CheckReturnValue\n            interface Lib extends Super {\n              @Override\n              int a();\n\n              @Override\n              int b();\n            }\n            \n\n            class Test {\n              void foo(Lib lib) {\n                lib.a();\n                lib.b();\n              }\n            }\n            \n\n            class Test {\n              void foo(Lib lib) {\n                var unused = lib.a();\n                lib.b();\n              }\n            }"
+    }
+  ]
+}

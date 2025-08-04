@@ -1,0 +1,94 @@
+{
+  "name": "ConstantOverflow",
+  "language": "java",
+  "description": "Compile-time constant expression overflows",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 246,
+  "branches": 65,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveExpressions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "class Test {\n              static final int C = 1;\n\n              void g(int x) {}\n\n              void f() {\n                // BUG: Diagnostic contains: if (1000L * 1000 * 1000 * 10 * 1L == 0)\n                if (1000 * 1000 * 1000 * 10 * 1L == 0)\n                  ;\n                // BUG: Diagnostic contains: int x = (int) (1000L * 1000 * 1000 * 10 * 1L);\n                int x = (int) (1000 * 1000 * 1000 * 10 * 1L);\n                // BUG: Diagnostic contains: long y = 1000L * 1000 * 1000 * 10;\n                int y = 1000 * 1000 * 1000 * 10;\n                // BUG: Diagnostic contains:\n                g(C * 1000 * 1000 * 1000 * 10);\n              }\n            }"
+    },
+    {
+      "description": "positiveFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: Long a = 1000L * 1000 * 1000 * 10 * 1L;\n              Long a = 1000 * 1000 * 1000 * 10 * 1L;\n              // BUG: Diagnostic contains:\n              int b = (int) 24L * 60 * 60 * 1000 * 1000;\n              long c = (long) 24L * 60 * 60 * 1000 * 1000;\n              // BUG: Diagnostic contains: long d = 24L * 60 * 60 * 1000 * 1000;\n              long d = 24 * 60 * 60 * 1000 * 1000;\n            }"
+    },
+    {
+      "description": "negativeFloat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "class Test {\n              public static final int a = (int) (10 / 0.5);\n            }"
+    },
+    {
+      "description": "negativeCharCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "class Test {\n              public static final char a = (char) Integer.MAX_VALUE;\n              public static final char b = (char) -1;\n              public static final char c = (char) 1;\n            }"
+    },
+    {
+      "description": "negativeCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "class Test {\n              public static final byte a = (byte) 1;\n              private static final byte b = (byte) 0b1000_0000;\n              private static final byte c = (byte) 0x80;\n              private static final byte d = (byte) 0xfff;\n              private static final byte e = (byte) -1;\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "class Test {\n              long microDay = 24L * 60 * 60 * 1000 * 1000;\n            }"
+    },
+    {
+      "description": "bitAnd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        136
+      ],
+      "code": "class Test {\n              private static final int MASK = (1 << 31);\n\n              void f(int[] xs) {\n                for (final int x : xs) {\n                  final int y = (x & (MASK - 1));\n                }\n              }\n            }"
+    },
+    {
+      "description": "longOverflow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        155
+      ],
+      "code": "class Test {\n              private static final long GOLDEN_GAMMA = 0x9e3779b97f4a7c15L;\n\n              void f() {\n                System.err.println(2 * GOLDEN_GAMMA);\n              }\n            }\n            \n\n            class Test {\n              private static final long GOLDEN_GAMMA = 0x9e3779b97f4a7c15L;\n\n              void f() {\n                System.err.println(2 * GOLDEN_GAMMA);\n              }\n            }"
+    },
+    {
+      "description": "onlyFixIntegers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        183
+      ],
+      "code": "class Test {\n              int a = 'a' + Integer.MAX_VALUE;\n            }\n            \n\n            class Test {\n              int a = 'a' + Integer.MAX_VALUE;\n            }"
+    },
+    {
+      "description": "varType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "class Test {\n              void f() {\n                var x = 1 + Integer.MAX_VALUE;\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                var x = 1L + Integer.MAX_VALUE;\n              }\n            }"
+    }
+  ]
+}

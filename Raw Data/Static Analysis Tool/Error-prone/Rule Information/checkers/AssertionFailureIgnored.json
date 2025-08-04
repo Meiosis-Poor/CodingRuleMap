@@ -1,0 +1,54 @@
+{
+  "name": "AssertionFailureIgnored",
+  "language": "java",
+  "description": "This assertion throws an AssertionError if it fails, which will be caught by an enclosing try block.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 207,
+  "branches": 25,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "import org.junit.Assert;\n\n            class Test {\n              void f() {\n                try {\n                  // BUG: Diagnostic contains:\n                  Assert.fail();\n                } catch (Throwable t) {\n                }\n                try {\n                  // BUG: Diagnostic contains:\n                  Assert.fail();\n                } catch (AssertionError t) {\n                }\n                try {\n                  if (true) throw new NoSuchFieldException();\n                  if (true) throw new NoSuchMethodException();\n                  // BUG: Diagnostic contains:\n                  Assert.fail();\n                } catch (NoSuchFieldException | NoSuchMethodException | AssertionError t) {\n                }\n                AssertionError e = null;\n                try {\n                  // BUG: Diagnostic contains:\n                  Assert.fail();\n                } catch (AssertionError t) {\n                  throw e;\n                }\n                try {\n                  // BUG: Diagnostic contains:\n                  Assert.fail();\n                } catch (AssertionError t) {\n                  throw new AssertionError(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "import org.junit.Assert;\n            import java.io.IOException;\n\n            class Test {\n              void f() {\n                try {\n                  if (true) throw new IOException();\n                  Assert.fail();\n                } catch (IOException t) {\n                }\n                try {\n                  Assert.fail();\n                } catch (Exception t) {\n                }\n                try {\n                  if (true) throw new NoSuchFieldException();\n                  if (true) throw new NoSuchMethodException();\n                  Assert.fail();\n                } catch (NoSuchFieldException | NoSuchMethodException t) {\n                }\n                try {\n                } catch (Throwable t) {\n                  Assert.fail();\n                }\n                try {\n                  Assert.fail();\n                } catch (AssertionError t) {\n                  throw t;\n                }\n                try {\n                  Assert.fail();\n                } catch (AssertionError t) {\n                  throw new AssertionError(t);\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "import org.junit.Assert;\n            import java.io.IOException;\n            import static com.google.common.truth.Truth.assertThat;\n\n            class Test {\n              void f() {\n                try {\n                  System.err.println();\n                  Assert.fail();\n                } catch (AssertionError t) {\n                  assertThat(t).isInstanceOf(AssertionError.class);\n                }\n                try {\n                  System.err.println();\n                  Assert.fail();\n                } catch (AssertionError e) {\n                }\n                try {\n                  if (true) throw new IOException();\n                  Assert.fail();\n                } catch (AssertionError e) {\n                } catch (Exception e) {\n                }\n                try {\n                  if (true) throw new NoSuchFieldException();\n                  if (true) throw new NoSuchMethodException();\n                  Assert.fail();\n                } catch (AssertionError | NoSuchFieldException | NoSuchMethodException e) {\n                }\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertThrows;\n            import java.io.IOException;\n            import org.junit.Assert;\n\n            class Test {\n              void f() {\n                AssertionError t = assertThrows(AssertionError.class, () -> System.err.println());\n                assertThat(t).isInstanceOf(AssertionError.class);\n                assertThrows(AssertionError.class, () -> System.err.println());\n                try {\n                  if (true) throw new IOException();\n                  Assert.fail();\n                } catch (AssertionError e) {\n                } catch (Exception e) {\n                }\n                try {\n                  if (true) throw new NoSuchFieldException();\n                  if (true) throw new NoSuchMethodException();\n                  Assert.fail();\n                } catch (AssertionError | NoSuchFieldException | NoSuchMethodException e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactoringStatements",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "import org.junit.Assert;\n            import java.io.IOException;\n            import static com.google.common.truth.Truth.assertThat;\n\n            class Test {\n              void f() {\n                try {\n                  System.err.println();\n                  System.err.println();\n                  Assert.fail();\n                } catch (AssertionError t) {\n                  assertThat(t).isInstanceOf(AssertionError.class);\n                }\n                try {\n                  System.err.println();\n                  System.err.println();\n                  Assert.fail();\n                } catch (AssertionError e) {\n                }\n                try {\n                  if (true) throw new AssertionError();\n                  Assert.fail();\n                } catch (AssertionError e) {\n                }\n              }\n            }\n            \n\n            import static com.google.common.truth.Truth.assertThat;\n            import static org.junit.Assert.assertThrows;\n            import java.io.IOException;\n            import org.junit.Assert;\n\n            class Test {\n              void f() {\n                AssertionError t =\n                    assertThrows(\n                        AssertionError.class,\n                        () -> {\n                          System.err.println();\n                          System.err.println();\n                        });\n                assertThat(t).isInstanceOf(AssertionError.class);\n                assertThrows(\n                    AssertionError.class,\n                    () -> {\n                      System.err.println();\n                      System.err.println();\n                    });\n                assertThrows(\n                    AssertionError.class,\n                    () -> {\n                      if (true) throw new AssertionError();\n                    });\n              }\n            }"
+    },
+    {
+      "description": "union",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        261
+      ],
+      "code": "import org.junit.Assert;\n            import java.io.IOError;\n\n            class Test {\n              void f() {\n                try {\n                  if (true) throw new NullPointerException();\n                  Assert.fail();\n                } catch (NullPointerException | IOError t) {\n                }\n              }\n            }"
+    }
+  ]
+}

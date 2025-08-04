@@ -1,0 +1,30 @@
+{
+  "name": "HidingField",
+  "language": "java",
+  "description": "Hiding fields of superclasses may cause confusion and errors",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 128,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "hidingFieldPositiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author sulku@google.com (Marsela Sulku)\n * @author mariasam@google.com (Maria Sam)\n */\npublic class HidingFieldPositiveCases1 {\n\n  /** base class */\n  public static class ClassA {\n    protected String varOne;\n    public int varTwo;\n    String varThree;\n  }\n\n  /** ClassB has a field with the same name as one in its parent. */\n  public static class ClassB extends ClassA {\n    // BUG: Diagnostic contains: ClassA\n    private String varOne = \"Test\";\n  }\n\n  /** ClassC has a field with the same name as one in its grandparent. */\n  public static class ClassC extends ClassB {\n    // BUG: Diagnostic contains: ClassA\n    public int varTwo;\n  }\n\n  /**\n   * ClassD has multiple fields with the same name as those in its grandparent, as well as other\n   * unrelated members.\n   */\n  public static class ClassD extends ClassB {\n    // BUG: Diagnostic contains: ClassA\n    protected int varThree;\n    // BUG: Diagnostic contains: ClassA\n    int varTwo;\n    String randOne;\n    String randTwo;\n  }\n\n  /** ClassE has same variable name as grandparent */\n  public static class ClassE extends ClassC {\n    // BUG: Diagnostic contains: ClassC\n    public String varTwo;\n  }\n\n  public static class ClassF extends ClassA {\n    @SuppressWarnings(\"HidingField\") // no warning because it's suppressed\n    public String varThree;\n  }\n\n  public static class ClassG extends ClassF {\n    // BUG: Diagnostic contains: ClassF\n    String varThree;\n  }\n}\\\n\n\npackage com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author sulku@google.com (Marsela Sulku)\n * @author mariasam@google.com (Maria Sam)\n */\npublic class HidingFieldPositiveCases2 {\n\n  /**\n   * ClassA extends a class from a different file and ClassA has a member with the same name as its\n   * parent\n   */\n  public class ClassA extends HidingFieldPositiveCases1.ClassB {\n    // BUG: Diagnostic contains: hiding ClassA.varTwo\n    private int varTwo;\n  }\n\n  /**\n   * ClassB extends a class from a different file and ClassB has a member with the same name as its\n   * grandparent\n   */\n  public class ClassB extends HidingFieldPositiveCases1.ClassB {\n    // BUG: Diagnostic contains: hiding ClassA.varOne\n    public int varOne = 2;\n  }\n}\\"
+    },
+    {
+      "description": "hidingFieldNegativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        128
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author sulku@google.com (Marsela Sulku)\n * @author mariasam@google.com (Maria Sam)\n */\npublic class HidingFieldNegativeCases {\n  // base class\n  static class ClassA {\n    public int varOne;\n  }\n\n  // subclass with member variables of different names\n  static class ClassB extends ClassA {\n    private String varTwo;\n    private int varThree;\n    public static int varFour;\n    public int varFive;\n  }\n\n  // subclass with initialized member variable of different name\n  static class ClassC extends ClassB {\n    // publicly-visible static members in superclasses are pretty uncommon, and generally\n    // referred to by qualification, so this 'override' is OK\n    private String varFour = \"Test\";\n\n    // The supertype's visibility is private, so this redeclaration is OK.\n    private int varThree;\n\n    // warning suppressed when overshadowing variable in parent\n    @SuppressWarnings(\"HidingField\")\n    public int varFive;\n\n    // warning suppressed when overshadowing variable in grandparent\n    @SuppressWarnings(\"HidingField\")\n    public int varOne;\n  }\n\n  // subclass with member *methods* with the same name as superclass member variable -- this is ok\n  static class ClassD extends ClassC {\n    public void varThree() {}\n\n    public void varTwo() {}\n  }\n}\\"
+    }
+  ]
+}

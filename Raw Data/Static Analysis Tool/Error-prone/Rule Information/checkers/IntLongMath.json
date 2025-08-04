@@ -1,0 +1,38 @@
+{
+  "name": "IntLongMath",
+  "language": "java",
+  "description": "Expression of type int may overflow before being assigned to a long",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 116,
+  "branches": 19,
+  "apis": 1,
+  "test": [
+    {
+      "description": "ignoreNonWideningAssignments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              int f(int x) {\n                return x + 3;\n              }\n\n              long g(long x) {\n                return x + 3;\n              }\n\n              int h(long x) {\n                return (int) (x + 3);\n              }\n\n              long i(int x) {\n                // BUG: Diagnostic contains: x + 3L\n                return x + 3;\n              }\n            }"
+    },
+    {
+      "description": "lambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              interface F {\n                long f(int i);\n              }\n\n              F f =\n                  i -> {\n                    // BUG: Diagnostic contains: return i + 3L\n                    return i + 3;\n                  };\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "class Test {\n              static final int MILLION = 1_000_000;\n\n              long f(int x) {\n                long r = (x + 3) * MILLION / 3;\n                r = (x / 3) * MILLION / 3;\n                r = x / 3;\n                r = x + 3;\n                return r;\n              }\n            }\n            \n\n            class Test {\n              static final int MILLION = 1_000_000;\n\n              long f(int x) {\n                long r = (x + 3L) * MILLION / 3;\n                r = (long) (x / 3) * MILLION / 3;\n                r = x / 3;\n                r = x + 3L;\n                return r;\n              }\n            }"
+    }
+  ]
+}

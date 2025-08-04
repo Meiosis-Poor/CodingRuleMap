@@ -1,0 +1,78 @@
+{
+  "name": "IncompatibleModifiersChecker",
+  "language": "java",
+  "description": "This annotation has incompatible modifiers as specified by its @IncompatibleModifiers annotation",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 114,
+  "branches": 6,
+  "apis": 2,
+  "test": [
+    {
+      "description": "annotationWithIncompatibleModifierOnClassFails",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "package test;\n\nimport test.NotAbstract;\n\n// BUG: Diagnostic contains: The annotation '@NotAbstract' has specified that it should not be used\n// together with the following modifiers: [abstract]\n@NotAbstract\nabstract class IncompatibleModifiersTestCase {}"
+    },
+    {
+      "description": "annotationWithIncompatibleModifierOnFieldFails",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "package test;\n\nimport test.NotPrivateOrFinal;\n\npublic class IncompatibleModifiersTestCase {\n  // BUG: Diagnostic contains: The annotation '@NotPrivateOrFinal' has specified that it should not\n  // be used together with the following modifiers: [final]\n  @NotPrivateOrFinal public final int n = 0;\n}"
+    },
+    {
+      "description": "annotationWithIncompatibleModifierOnMethodFails",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "package test;\n\nimport test.NotPrivateOrFinal;\n\npublic class IncompatibleModifiersTestCase {\n  // BUG: Diagnostic contains: The annotation '@NotPrivateOrFinal' has specified that it should not\n  // be used together with the following modifiers: [private]\n  @NotPrivateOrFinal\n  private void foo() {}\n}"
+    },
+    {
+      "description": "annotationWithTwoIncompatibleModifiersFails",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        128
+      ],
+      "code": "package test;\n\nimport test.NotPublicOrFinal;\n\npublic class IncompatibleModifiersTestCase {\n  // BUG: Diagnostic contains: The annotation '@NotPublicOrFinal' has specified that it should not\n  // be used together with the following modifiers: [public, final]\n  @NotPublicOrFinal public static final int FOO = 0;\n}"
+    },
+    {
+      "description": "annotationWithCompatibleModifiersSucceeds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "package test;\n\n            import test.NotAbstract;\n\n            public class IncompatibleModifiersTestCase {}"
+    },
+    {
+      "description": "negativeNestedAnnotations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        163
+      ],
+      "code": "package test;\n\n            @interface Foos {\n              Foo[] value();\n            }\n\n            @interface Foo {}\n\n            @Foos({@Foo, @Foo})\n            public class Test {}"
+    },
+    {
+      "description": "negativePackageAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "package testdata;\n\n            import java.lang.annotation.Target;\n            import java.lang.annotation.ElementType;\n\n            @Target(ElementType.PACKAGE)\n            public @interface Anno {}\n            \n\n            @Anno\n            package testdata;"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "package test;\n\n            import static javax.lang.model.element.Modifier.ABSTRACT;\n            import com.google.errorprone.annotations.IncompatibleModifiers;\n\n            @IncompatibleModifiers(ABSTRACT)\n            public @interface NotAbstract {}\n            \n\n            package test;\n\n            import test.NotAbstract;\n\n            @NotAbstract\n            abstract class IncompatibleModifiersTestCase {}\n            \n\n            package test;\n\n            import test.NotAbstract;\n\n            @NotAbstract\n            class IncompatibleModifiersTestCase {}"
+    }
+  ]
+}

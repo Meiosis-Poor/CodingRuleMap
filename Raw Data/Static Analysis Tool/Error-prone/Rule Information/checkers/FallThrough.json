@@ -1,0 +1,70 @@
+{
+  "name": "FallThrough",
+  "language": "java",
+  "description": "Switch case may fall through",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 95,
+  "branches": 18,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            public class FallThroughPositiveCases {\n\n              class NonTerminatingTryFinally {\n\n                public int foo(int i) {\n                  int z = 0;\n                  switch (i) {\n                    case 0:\n                      try {\n                        if (z > 0) {\n                          return i;\n                        } else {\n                          z++;\n                        }\n                      } finally {\n                        z++;\n                      }\n                    // BUG: Diagnostic contains:\n                    case 1:\n                      return -1;\n                    default:\n                      return 0;\n                  }\n                }\n              }\n\n              abstract class TryWithNonTerminatingCatch {\n\n                int foo(int i) {\n                  int z = 0;\n                  switch (i) {\n                    case 0:\n                      try {\n                        return bar();\n                      } catch (RuntimeException e) {\n                        log(e);\n                        throw e;\n                      } catch (Exception e) {\n                        log(e); // don't throw\n                      }\n                    // BUG: Diagnostic contains:\n                    case 1:\n                      return -1;\n                    default:\n                      return 0;\n                  }\n                }\n\n                abstract int bar() throws Exception;\n\n                void log(Throwable e) {}\n              }\n\n              public class Tweeter {\n\n                public int numTweets = 55000000;\n\n                public int everyBodyIsDoingIt(int a, int b) {\n                  switch (a) {\n                    case 1:\n                      System.out.println(\"1\");\n                    // BUG: Diagnostic contains:\n                    case 2:\n                      System.out.println(\"2\");\n                    // BUG: Diagnostic contains:\n                    default:\n                  }\n                  return 0;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.io.FileInputStream;\n            import java.io.IOException;\n\n            public class FallThroughNegativeCases {\n\n              public class AllowAnyComment {\n\n                public int numTweets = 55000000;\n\n                public int everyBodyIsDoingIt(int a, int b) {\n                  switch (a) {\n                    case 1:\n                      System.out.println(\"1\");\n                    // fall through\n                    case 2:\n                      System.out.println(\"2\");\n                      break;\n                    default:\n                  }\n                  return 0;\n                }\n              }\n\n              static class EmptyDefault {\n\n                static void foo(String s) {\n                  switch (s) {\n                    case \"a\":\n                    case \"b\":\n                      throw new RuntimeException();\n                    default:\n                      // do nothing\n                  }\n                }\n\n                static void bar(String s) {\n                  switch (s) {\n                    default:\n                  }\n                }\n              }\n\n              class TerminatedSynchronizedBlock {\n\n                private final Object o = new Object();\n\n                int foo(int i) {\n                  switch (i) {\n                    case 0:\n                      synchronized (o) {\n                        return i;\n                      }\n                    case 1:\n                      return -1;\n                    default:\n                      return 0;\n                  }\n                }\n              }\n\n              class TryWithNonTerminatingFinally {\n\n                int foo(int i) {\n                  int z = 0;\n                  switch (i) {\n                    case 0:\n                      try {\n                        return i;\n                      } finally {\n                        z++;\n                      }\n                    case 1:\n                      return -1;\n                    default:\n                      return 0;\n                  }\n                }\n              }\n\n              abstract class TryWithTerminatingCatchBlocks {\n\n                int foo(int i) {\n                  int z = 0;\n                  switch (i) {\n                    case 0:\n                      try {\n                        return bar();\n                      } catch (RuntimeException e) {\n                        log(e);\n                        throw e;\n                      } catch (Exception e) {\n                        log(e);\n                        throw new RuntimeException(e);\n                      }\n                    case 1:\n                      return -1;\n                    default:\n                      return 0;\n                  }\n                }\n\n                int tryWithResources(String path, int i) {\n                  switch (i) {\n                    case 0:\n                      try (FileInputStream f = new FileInputStream(path)) {\n                        return f.read();\n                      } catch (IOException e) {\n                        throw new RuntimeException(e);\n                      }\n                    case 1:\n                      try (FileInputStream f = new FileInputStream(path)) {\n                        return f.read();\n                      } catch (IOException e) {\n                        throw new RuntimeException(e);\n                      }\n                    default:\n                      throw new RuntimeException(\"blah\");\n                  }\n                }\n\n                abstract int bar() throws Exception;\n\n                void log(Throwable e) {}\n              }\n\n              class TryWithTerminatingFinally {\n\n                int foo(int i) {\n                  int z = 0;\n                  switch (i) {\n                    case 0:\n                      try {\n                        z++;\n                      } finally {\n                        return i;\n                      }\n                    case 1:\n                      return -1;\n                    default:\n                      return 0;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "foreverLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "class Test {\n              void f(int x) {\n                switch (x) {\n                  case 1:\n                    for (; ; ) {}\n                  case 2:\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "commentInBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        291
+      ],
+      "code": "class Test {\n              void f(int x) {\n                switch (x) {\n                  case 0:\n                    {\n                      // fall through\n                    }\n                  case 1:\n                    {\n                      System.err.println();\n                      // fall through\n                    }\n                  case 2:\n                    break;\n                }\n              }\n            }"
+    },
+    {
+      "description": "emptyBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        318
+      ],
+      "code": "class Test {\n              void f(char c, boolean b) {\n                switch (c) {\n                  case 'a':\n                    {\n                    }\n                  // fall through\n                  default:\n                }\n              }\n            }"
+    },
+    {
+      "description": "arrowSwitch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        339
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case ONE -> {}\n                  case TWO -> {}\n                  default -> {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "i2118",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        364
+      ],
+      "code": "class Test {\n              enum Case {\n                ONE,\n                TWO\n              }\n\n              void m(Case c) {\n                switch (c) {\n                  case ONE:\n                    switch (c) {\n                      case ONE -> m(c);\n                      case TWO -> m(c);\n                    }\n                  default:\n                    assert false;\n                }\n              }\n            }"
+    }
+  ]
+}

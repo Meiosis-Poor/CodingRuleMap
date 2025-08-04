@@ -1,0 +1,142 @@
+{
+  "name": "FieldCanBeStatic",
+  "language": "java",
+  "description": "A final field initialized at compile-time with an instance of an immutable type can be static.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 198,
+  "branches": 10,
+  "apis": 4,
+  "test": [
+    {
+      "description": "simpleCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private final Duration myDuration = Duration.ofMillis(1);\n\n              public Duration d() {\n                return this.myDuration;\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            class Test {\n              private static final Duration MY_DURATION = Duration.ofMillis(1);\n\n              public Duration d() {\n                return MY_DURATION;\n              }\n            }"
+    },
+    {
+      "description": "instantWithPureMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "import java.time.Instant;\n\n            class Test {\n              private final Instant instant = Instant.ofEpochMilli(1);\n            }\n            \n\n            import java.time.Instant;\n\n            class Test {\n              private static final Instant INSTANT = Instant.ofEpochMilli(1);\n            }"
+    },
+    {
+      "description": "instantWithNonPureMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "import java.time.Instant;\n\n            class Test {\n              private final Instant instant = Instant.now();\n            }"
+    },
+    {
+      "description": "refersToStaticVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private static final int millis = 1;\n              private final Duration myDuration = Duration.ofMillis(millis);\n\n              public Duration d() {\n                return this.myDuration;\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            class Test {\n              private static final int millis = 1;\n              private static final Duration MY_DURATION = Duration.ofMillis(millis);\n\n              public Duration d() {\n                return MY_DURATION;\n              }\n            }"
+    },
+    {
+      "description": "refersToInstanceVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        140
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              final int millis = 1;\n              private final Duration myDuration = Duration.ofMillis(millis);\n\n              public Duration d() {\n                return this.myDuration;\n              }\n            }"
+    },
+    {
+      "description": "notPrivate_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              public final Duration d = Duration.ofMillis(1);\n            }"
+    },
+    {
+      "description": "notFinal_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        177
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private Duration d = Duration.ofMillis(1);\n            }"
+    },
+    {
+      "description": "exemptedAnnotation_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "import com.google.inject.testing.fieldbinder.Bind;\n            import java.time.Duration;\n\n            class Test {\n              @Bind private final Duration d = Duration.ofMillis(1);\n            }"
+    },
+    {
+      "description": "possibleImpureInitializer_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        210
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private final Duration d = getDuration();\n\n              Duration getDuration() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains:\n              private final int primitive = 3;\n              // BUG: Diagnostic contains:\n              private final String string = \"string\";\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        246
+      ],
+      "code": "class Test {\n              private static final String staticFinalInitializer;\n\n              static {\n                staticFinalInitializer = \"string\";\n              }\n\n              private static final String staticFinal = \"string\";\n              private int nonFinal = 3;\n              private static int staticNonFinal = 4;\n              private final Object finalMutable = new Object();\n              private final int nonLiteral = new java.util.Random().nextInt();\n              private final Person pojo = new Person(\"Bob\", 42);\n\n              private static class Person {\n                final String name;\n                final int age;\n\n                Person(String name, int age) {\n                  this.name = name;\n                  this.age = age;\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        280
+      ],
+      "code": "class Test {\n              private final int foo = 1;\n              private final int BAR_FIELD = 2;\n\n              int f() {\n                return foo + BAR_FIELD;\n              }\n            }\n            \n\n            class Test {\n              private static final int FOO = 1;\n              private static final int BAR_FIELD = 2;\n\n              int f() {\n                return FOO + BAR_FIELD;\n              }\n            }"
+    },
+    {
+      "description": "inner",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        310
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              class I {\n                private final Duration D = Duration.ofMillis(1);\n                // BUG: Diagnostic contains: can be static\n                private final int I = 42;\n              }\n\n              static class S {\n                // BUG: Diagnostic contains: can be static\n                private final Duration D = Duration.ofMillis(1);\n                // BUG: Diagnostic contains: can be static\n                private final int I = 42;\n              }\n\n              void f() {\n                class L {\n                  private final Duration D = Duration.ofMillis(1);\n                  // BUG: Diagnostic contains: can be static\n                  private final int I = 42;\n                }\n                new Object() {\n                  private final Duration D = Duration.ofMillis(1);\n                  // BUG: Diagnostic contains: can be static\n                  private final int I = 42;\n                };\n              }\n            }"
+    },
+    {
+      "description": "inner_static",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        350
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              class I {\n                // BUG: Diagnostic contains: can be static\n                private final Duration D = Duration.ofMillis(1);\n                // BUG: Diagnostic contains: can be static\n                private final int I = 42;\n              }\n\n              static class S {\n                // BUG: Diagnostic contains: can be static\n                private final Duration D = Duration.ofMillis(1);\n                // BUG: Diagnostic contains: can be static\n                private final int I = 42;\n              }\n\n              void f() {\n                class L {\n                  // BUG: Diagnostic contains: can be static\n                  private final Duration D = Duration.ofMillis(1);\n                  // BUG: Diagnostic contains: can be static\n                  private final int I = 42;\n                }\n                new Object() {\n                  // BUG: Diagnostic contains: can be static\n                  private final Duration D = Duration.ofMillis(1);\n                  // BUG: Diagnostic contains: can be static\n                  private final int I = 42;\n                };\n              }\n            }"
+    },
+    {
+      "description": "record",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        392
+      ],
+      "code": "package example;\n\n            public final class ExampleClass {\n              public record OtherRecord(String value) {}\n\n              public record SomeRecord(OtherRecord value) {\n                public static SomeRecord fromValue(final OtherRecord value) {\n                  return new SomeRecord(value);\n                }\n              }\n\n              private ExampleClass() {}\n            }"
+    },
+    {
+      "description": "instanceFieldsCannotBeStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        415
+      ],
+      "code": "class Test {\n              private final int foo;\n\n              Test(int foo) {\n                this.foo = foo;\n              }\n            }"
+    }
+  ]
+}

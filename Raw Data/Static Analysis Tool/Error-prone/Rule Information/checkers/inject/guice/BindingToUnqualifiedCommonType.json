@@ -1,0 +1,30 @@
+{
+  "name": "BindingToUnqualifiedCommonType",
+  "language": "java",
+  "description": "This code declares a binding for a common value type without a Qualifier annotation.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 132,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            import com.google.inject.AbstractModule;\n            import com.google.inject.Provides;\n\n            /** Tests for {@code BindingToUnqualifiedCommonType} */\n            public class BindingToUnqualifiedCommonTypePositiveCases {\n\n              /** Regular module */\n              class Module1 extends AbstractModule {\n                @Override\n                protected void configure() {\n                  // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                  bind(Integer.class).toInstance(2);\n\n                  // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                  bind(String.class).toInstance(\"Hello\");\n\n                  // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                  bind(Double.class).toProvider(() -> 42.0);\n\n                  // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                  binder().bind(Long.class).toInstance(42L);\n                }\n\n                @Provides\n                // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                int providesFoo() {\n                  return 42;\n                }\n\n                @Provides\n                // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                Integer provideBoxedFoo() {\n                  return 42;\n                }\n\n                @Provides\n                // BUG: Diagnostic contains: BindingToUnqualifiedCommonType\n                String providesGreeting() {\n                  return \"hi\";\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\nimport com.google.common.collect.ImmutableList;\nimport com.google.inject.AbstractModule;\nimport com.google.inject.Binder;\nimport com.google.inject.BindingAnnotation;\nimport com.google.inject.Module;\nimport com.google.inject.Provides;\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.RetentionPolicy;\nimport java.util.List;\nimport org.junit.runner.RunWith;\nimport org.junit.runners.JUnit4;\n\n/** Tests for {@code BindingToUnqualifiedCommonType} */\npublic class BindingToUnqualifiedCommonTypeNegativeCases {\n\n  // All of the tagged instances would normally be flagged, but aren't because it's in a JUnit4\n  // class\n  @RunWith(JUnit4.class)\n  static class MyTestClass {\n    /** Regular module */\n    class Module1 extends AbstractModule {\n      @Override\n      protected void configure() {\n        bind(Integer.class).toInstance(2);\n        bind(String.class).toInstance(\"Hello\");\n        bind(Double.class).toProvider(() -> 42.0);\n        binder().bind(Long.class).toInstance(42L);\n      }\n\n      @Provides\n      int providesFoo() {\n        return 42;\n      }\n\n      @Provides\n      Integer provideBoxedFoo() {\n        return 42;\n      }\n\n      @Provides\n      String providesGreeting() {\n        return \"hi\";\n      }\n    }\n  }\n\n  /** Regular module */\n  class Module1 extends AbstractModule {\n    @Override\n    protected void configure() {\n      // Bindings to unannotated complex instances\n      bind(A.class).toInstance(new A());\n\n      // Binding to literals, but with a binding annotation\n      bind(Integer.class).annotatedWith(MyBindingAnnotation.class).toInstance(42);\n    }\n\n    @Provides\n    List<Integer> providesFoo() {\n      return ImmutableList.of(42);\n    }\n  }\n\n  /** implements the Module interface directly */\n  class Module2 implements Module {\n    @Override\n    public void configure(Binder binder) {}\n\n    @Provides\n    @MyBindingAnnotation\n    int providesFoo() {\n      return 42;\n    }\n  }\n\n  class A {}\n\n  @BindingAnnotation\n  @Retention(RetentionPolicy.RUNTIME)\n  @interface MyBindingAnnotation {}\n}\\"
+    }
+  ]
+}

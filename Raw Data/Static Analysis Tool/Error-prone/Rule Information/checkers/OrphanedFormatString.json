@@ -1,0 +1,70 @@
+{
+  "name": "OrphanedFormatString",
+  "language": "java",
+  "description": "String literal contains format specifiers, but is not passed to a format method",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 150,
+  "branches": 16,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              void f() {\n                // BUG: Diagnostic contains:\n                System.err.println(\"%s\");\n                // BUG: Diagnostic contains:\n                new Exception(\"%s\");\n                // BUG: Diagnostic contains:\n                new StringBuilder(\"%s\");\n                // BUG: Diagnostic contains:\n                new StringBuilder().append(\"%s\", 0, 0);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "class Test {\n              static class FormatException extends Exception {\n                FormatException(String f, Object... xs) {\n                  super(String.format(f, xs));\n                }\n              }\n\n              void f() {\n                String s = \"%s\";\n                new FormatException(\"%s\");\n                System.err.printf(\"%s\");\n              }\n\n              void appendToStringBuilder(StringBuilder b) {\n                b.append(\"%s\");\n              }\n            }"
+    },
+    {
+      "description": "formatMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        80
+      ],
+      "code": ""
+    },
+    {
+      "description": "spaceAfterPercent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "class Test {\n              void f() {\n                // BUG: Diagnostic contains:\n                StringBuilder messageBuilder = new StringBuilder(\"more than 50% finished\");\n              }\n            }"
+    },
+    {
+      "description": "assertWithMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "import static com.google.common.truth.Truth.assertWithMessage;\n\n            class Test {\n              void test() {\n                // BUG: Diagnostic contains:\n                assertWithMessage(\"%s\").that(\"\").isNull();\n              }\n            }"
+    },
+    {
+      "description": "flogger",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f() {\n                // BUG: Diagnostic contains:\n                logger.atInfo().log(\"hello %d\");\n              }\n            }"
+    },
+    {
+      "description": "negativeFlogger",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        169
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void f(String arg) {\n                logger.atInfo().log(\"hello %d\", arg);\n              }\n            }"
+    }
+  ]
+}

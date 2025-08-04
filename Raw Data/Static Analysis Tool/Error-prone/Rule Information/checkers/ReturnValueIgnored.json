@@ -1,0 +1,334 @@
+{
+  "name": "ReturnValueIgnored",
+  "language": "java",
+  "description": "Return value of this method must be used",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 399,
+  "branches": 12,
+  "apis": 6,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.io.IOException;\n            import java.math.BigDecimal;\n            import java.math.BigInteger;\n            import java.nio.file.Path;\n            import java.nio.file.Paths;\n            import java.util.Arrays;\n            import java.util.Locale;\n\n            /**\n             * @author alexeagle@google.com (Alex Eagle)\n             */\n            public class ReturnValueIgnoredPositiveCases {\n              String a = \"thing\";\n\n              // BUG: Diagnostic contains: Return value of 'valueOf' must be used\n              private Runnable r = () -> String.valueOf(\"\");\n\n              { // String methods\n                // BUG: Diagnostic contains: remove this line\n                String.format(\"%d\", 10);\n                // BUG: Diagnostic contains: remove this line\n                String.format(\"%d\", 10).trim();\n                // BUG: Diagnostic contains: remove this line\n                java.lang.String.format(\"%d\", 10).trim();\n                // BUG: Diagnostic contains: a = a.intern()\n                a.intern();\n                // BUG: Diagnostic contains: a = a.trim()\n                a.trim();\n                // BUG: Diagnostic contains: a = a.trim().concat(\"b\")\n                a.trim().concat(\"b\");\n                // BUG: Diagnostic contains: a = a.concat(\"append this\")\n                a.concat(\"append this\");\n                // BUG: Diagnostic contains: a = a.replace('t', 'b')\n                a.replace('t', 'b');\n                // BUG: Diagnostic contains: a = a.replace(\"thi\", \"fli\")\n                a.replace(\"thi\", \"fli\");\n                // BUG: Diagnostic contains: a = a.replaceAll(\"i\", \"b\")\n                a.replaceAll(\"i\", \"b\");\n                // BUG: Diagnostic contains: a = a.replaceFirst(\"a\", \"b\")\n                a.replaceFirst(\"a\", \"b\");\n                // BUG: Diagnostic contains: a = a.toLowerCase()\n                a.toLowerCase();\n                // BUG: Diagnostic contains: a = a.toLowerCase(Locale.ENGLISH)\n                a.toLowerCase(Locale.ENGLISH);\n                // BUG: Diagnostic contains: a = a.toUpperCase()\n                a.toUpperCase();\n                // BUG: Diagnostic contains: a = a.toUpperCase(Locale.ENGLISH)\n                a.toUpperCase(Locale.ENGLISH);\n                // BUG: Diagnostic contains: a = a.substring(0)\n                a.substring(0);\n                // BUG: Diagnostic contains: a = a.substring(0, 1)\n                a.substring(0, 1);\n              }\n\n              StringBuffer sb = new StringBuffer(\"hello\");\n\n              {\n                // BUG: Diagnostic contains:\n                sb.toString().trim();\n              }\n\n              BigInteger b = new BigInteger(\"123456789\");\n\n              { // BigInteger methods\n                // BUG: Diagnostic contains: b = b.add(new BigInteger(\"3\"))\n                b.add(new BigInteger(\"3\"));\n                // BUG: Diagnostic contains: b = b.abs()\n                b.abs();\n                // BUG: Diagnostic contains: b = b.shiftLeft(3)\n                b.shiftLeft(3);\n                // BUG: Diagnostic contains: b = b.subtract(BigInteger.TEN)\n                b.subtract(BigInteger.TEN);\n              }\n\n              BigDecimal c = new BigDecimal(\"1234.5678\");\n\n              { // BigDecimal methods\n                // BUG: Diagnostic contains: c = c.add(new BigDecimal(\"1.3\"))\n                c.add(new BigDecimal(\"1.3\"));\n                // BUG: Diagnostic contains: c = c.abs()\n                c.abs();\n                // BUG: Diagnostic contains: c = c.divide(new BigDecimal(\"4.5\"))\n                c.divide(new BigDecimal(\"4.5\"));\n                // BUG: Diagnostic contains:\n                new BigDecimal(\"10\").add(c);\n              }\n\n              Path p = Paths.get(\"foo/bar/baz\");\n\n              { // Path methods\n                // BUG: Diagnostic contains: p = p.getFileName();\n                p.getFileName();\n                // BUG: Diagnostic contains: p = p.getName(0);\n                p.getName(0);\n                // BUG: Diagnostic contains: p = p.getParent();\n                p.getParent();\n                // BUG: Diagnostic contains: p = p.getRoot();\n                p.getRoot();\n                // BUG: Diagnostic contains: p = p.normalize();\n                p.normalize();\n                // BUG: Diagnostic contains: p = p.relativize(p);\n                p.relativize(p);\n                // BUG: Diagnostic contains: p = p.resolve(p);\n                p.resolve(p);\n                // BUG: Diagnostic contains: p = p.resolve(\"string\");\n                p.resolve(\"string\");\n                // BUG: Diagnostic contains: p = p.resolveSibling(p);\n                p.resolveSibling(p);\n                // BUG: Diagnostic contains: p = p.resolveSibling(\"string\");\n                p.resolveSibling(\"string\");\n                // BUG: Diagnostic contains: p = p.subpath(0, 1);\n                p.subpath(0, 1);\n                // BUG: Diagnostic contains: p = p.toAbsolutePath();\n                p.toAbsolutePath();\n                try {\n                  // BUG: Diagnostic contains: p = p.toRealPath();\n                  p.toRealPath();\n                } catch (IOException e) {\n                }\n              }\n\n              int[] numbers = {5, 4, 3, 2, 1};\n              Object[] objects = {new Object(), new Object()};\n\n              { // Arrays methods\n                // BUG: Diagnostic contains: Return value of 'asList' must be used\n                Arrays.asList(5, 4, 3, 2, 1);\n                // BUG: Diagnostic contains: Return value of 'binarySearch' must be used\n                Arrays.binarySearch(numbers, 3);\n                // BUG: Diagnostic contains: Return value of 'copyOf' must be used\n                Arrays.copyOf(numbers, 3);\n                // BUG: Diagnostic contains: Return value of 'copyOfRange' must be used\n                Arrays.copyOfRange(numbers, 1, 3);\n                // BUG: Diagnostic contains: Return value of 'deepEquals' must be used\n                Arrays.deepEquals(objects, objects);\n                // BUG: Diagnostic contains: Return value of 'deepHashCode' must be used\n                Arrays.deepHashCode(objects);\n                // BUG: Diagnostic contains: Return value of 'deepToString' must be used\n                Arrays.deepToString(objects);\n                // BUG: Diagnostic contains: Return value of 'equals' must be used\n                Arrays.equals(objects, objects);\n                // BUG: Diagnostic contains: Return value of 'hashCode' must be used\n                Arrays.hashCode(objects);\n                // BUG: Diagnostic contains: Return value of 'toString' must be used\n                Arrays.toString(objects);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        194
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.math.BigInteger;\n            import java.util.Arrays;\n            import java.util.HashMap;\n            import java.util.Map;\n            import java.util.function.Function;\n\n            /**\n             * @author alexeagle@google.com (Alex Eagle)\n             */\n            public class ReturnValueIgnoredNegativeCases {\n\n              private String a = \"thing\";\n\n              {\n                String b = a.trim();\n                System.out.println(a.trim());\n                new String(new BigInteger(new byte[] {0x01}).add(BigInteger.ONE).toString());\n              }\n\n              String run() {\n                return a.trim();\n              }\n\n              public void methodDoesntMatch() {\n                Map<String, Integer> map = new HashMap<String, Integer>();\n                map.put(\"test\", 1);\n              }\n\n              public void methodDoesntMatch2() {\n                final String b = a.toString().trim();\n              }\n\n              public void acceptFunctionOfVoid(Function<Integer, Void> arg) {\n                arg.apply(5);\n              }\n\n              public void passReturnValueCheckedMethodReferenceToFunctionVoid() {\n                Function<Integer, Void> fn = (i -> null);\n                acceptFunctionOfVoid(fn::apply);\n              }\n\n              public void arraysReturnValues() {\n                int[] numbers = {5, 4, 3, 2, 1};\n                int result = Arrays.binarySearch(numbers, 3);\n                int hashCode = Arrays.hashCode(numbers);\n              }\n\n              public void arraysNoReturnValues() {\n                int[] numbers = {5, 4, 3, 2, 1};\n                Arrays.fill(numbers, 0);\n                Arrays.sort(numbers);\n              }\n            }\\"
+    },
+    {
+      "description": "function",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        259
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              void f(Function<Integer, Integer> f) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                f.apply(0);\n              }\n            }"
+    },
+    {
+      "description": "consumer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        277
+      ],
+      "code": "import java.util.function.Consumer;\n\n            class Test {\n              void f(Consumer<Integer> f) {\n                f.accept(0);\n              }\n            }"
+    },
+    {
+      "description": "functionVoid",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        294
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              void f(Function<Integer, Void> f) {\n                f.apply(0);\n              }\n            }"
+    },
+    {
+      "description": "ignoreInTests",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        311
+      ],
+      "code": "import static org.junit.Assert.fail;\n            import java.util.function.Function;\n\n            class Test {\n              void f(Function<Integer, Integer> f) {\n                try {\n                  f.apply(0);\n                  fail();\n                } catch (Exception expected) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "stream",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        333
+      ],
+      "code": "class Test {\n              void f() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                \"\".codePoints().count();\n                \"\".codePoints().forEach(i -> {});\n              }\n            }"
+    },
+    {
+      "description": "javaTime",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        350
+      ],
+      "code": ""
+    },
+    {
+      "description": "optionalStaticMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        376
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void optional() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Optional.empty();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Optional.of(42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Optional.ofNullable(null);\n              }\n            }"
+    },
+    {
+      "description": "optionalInstanceMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        398
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void optional() {\n                Optional<Integer> optional = Optional.of(42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.filter(v -> v > 40);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.flatMap(v -> Optional.of(v + 1));\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.get();\n                optional.ifPresent(v -> {});\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.isPresent();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.map(v -> v + 1);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.orElse(40);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.orElseGet(() -> 40);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.orElseThrow(() -> new RuntimeException());\n              }\n            }"
+    },
+    {
+      "description": "optionalInstanceMethods_jdk9",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        432
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void optional() {\n                Optional<Integer> optional = Optional.of(42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.or(() -> Optional.empty());\n              }\n            }"
+    },
+    {
+      "description": "optionalInstanceMethods_jdk10",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        451
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void optional() {\n                Optional<Integer> optional = Optional.of(42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.orElseThrow();\n              }\n            }"
+    },
+    {
+      "description": "optionalInstanceMethods_jdk11",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        470
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void optional() {\n                Optional<Integer> optional = Optional.of(42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                optional.isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "timeUnitApis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        489
+      ],
+      "code": "import static java.util.concurrent.TimeUnit.MILLISECONDS;\n\n            class Test {\n              void timeUnit() {\n                long ms = 4200;\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                MILLISECONDS.toNanos(ms);\n              }\n            }"
+    },
+    {
+      "description": "issue1565_enumDeclaration",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        508
+      ],
+      "code": "import java.util.function.Function;\n\n            enum Test {\n              A;\n\n              void f(Function<Integer, Integer> f) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                f.apply(0);\n              }\n            }"
+    },
+    {
+      "description": "issue1363_dateTimeFormatterBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        528
+      ],
+      "code": "import java.time.format.DateTimeFormatterBuilder;\n\n            class Test {\n              void f() {\n                DateTimeFormatterBuilder formatter = new DateTimeFormatterBuilder();\n                formatter.appendZoneId();\n                formatter.optionalEnd();\n                formatter.padNext(5);\n                formatter.parseCaseSensitive();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                formatter.toFormatter();\n              }\n            }"
+    },
+    {
+      "description": "issue876",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        551
+      ],
+      "code": "import java.nio.file.Path;\n\n            abstract class Test {\n              void test(Path p) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                E e = p::toRealPath;\n              }\n\n              abstract <T> void a(T t);\n\n              public interface E {\n                void run() throws Exception;\n              }\n            }"
+    },
+    {
+      "description": "collectionContains",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        575
+      ],
+      "code": "abstract class Test {\n              void test(java.util.List p) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                p.contains(null);\n              }\n            }"
+    },
+    {
+      "description": "mapMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        591
+      ],
+      "code": "import java.util.Map;\n\n            public final class Test {\n              void doTest(Map<Integer, Integer> map) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.isEmpty();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.size();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.entrySet();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.keySet();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.values();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.containsKey(42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                map.containsValue(42);\n              }\n\n              void doTest(Map.Entry<Integer, Integer> entry) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                entry.getKey();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                entry.getValue();\n                entry.setValue(42);\n              }\n            }"
+    },
+    {
+      "description": "mapMethods_java11",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        629
+      ],
+      "code": "import java.util.Map;\n\n            class Test {\n              void doTest() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Map.of(42, 42);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Map.entry(42, 42);\n              }\n\n              void doTest(Map<Integer, Integer> map) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Map.copyOf(map);\n              }\n\n              void doTest(Map.Entry<Integer, Integer>... entries) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Map.ofEntries(entries);\n              }\n            }"
+    },
+    {
+      "description": "methodReferenceToObject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        659
+      ],
+      "code": "import java.util.function.Function;\n\n            abstract class Test {\n              void test(Function<Integer, Long> fn) {\n                foo(fn::apply);\n              }\n\n              void foo(Function<Integer, Object> fn) {}\n            }"
+    },
+    {
+      "description": "integers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        678
+      ],
+      "code": ""
+    },
+    {
+      "description": "constructors",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        702
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoMessageNewBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        717
+      ],
+      "code": "import com.google.protobuf.Duration;\n\n            class Test {\n              public void proto_newBuilder() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Duration.newBuilder();\n                Duration.Builder builder = Duration.newBuilder();\n                Duration duration = Duration.newBuilder().setSeconds(4).build();\n              }\n            }"
+    },
+    {
+      "description": "protoMessageBuildBuildPartial",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        737
+      ],
+      "code": "import com.google.protobuf.Duration;\n\n            final class Test {\n              public void proto_build() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Duration.newBuilder().setSeconds(4).build();\n                Duration duration = Duration.newBuilder().setSeconds(4).build();\n              }\n\n              public void proto_buildPartial() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                Duration.newBuilder().setSeconds(4).buildPartial();\n                Duration duration = Duration.newBuilder().setSeconds(4).buildPartial();\n              }\n            }"
+    },
+    {
+      "description": "refactoringDeletesConstantExpressionCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        762
+      ],
+      "code": "import java.util.Optional;\n            import java.util.stream.Stream;\n\n            final class Test {\n              public void f() {\n                Optional.of(42);\n                Optional.of(42).orElseThrow(AssertionError::new);\n                Stream.of(Optional.of(42)).forEach(o -> o.orElseThrow(AssertionError::new));\n              }\n            }\n            \n\n            import java.util.Optional;\n            import java.util.stream.Stream;\n\n            final class Test {\n              public void f() {\n                var unused = Optional.of(42).orElseThrow(AssertionError::new);\n                Stream.of(Optional.of(42)).forEach(o -> o.orElseThrow(AssertionError::new));\n              }\n            }"
+    },
+    {
+      "description": "refactoringAssignsToOriginal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        795
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f(Optional<Integer> o) {\n                o.map(i -> i + 1);\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              void f(Optional<Integer> o) {\n                o = o.map(i -> i + 1);\n              }\n            }"
+    },
+    {
+      "description": "refactoringDoesNotAssignToOriginalForTypeArgumentMismatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        823
+      ],
+      "code": "import java.util.Optional;\n\n            final class Test {\n              public void f() {\n                Optional<Integer> o = Optional.of(42);\n                o.map(i -> \"value is \" + i);\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            final class Test {\n              public void f() {\n                Optional<Integer> o = Optional.of(42);\n                var unused = o.map(i -> \"value is \" + i);\n              }\n            }"
+    },
+    {
+      "description": "iterableHasNext",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        853
+      ],
+      "code": ""
+    },
+    {
+      "description": "collectionToArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        878
+      ],
+      "code": ""
+    },
+    {
+      "description": "collectionToArray_java8",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        898
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            final class Test {\n              private static final ImmutableList<Long> LIST = ImmutableList.of(42L);\n\n              public void collectionToArray() {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                LIST.toArray(Long[]::new);\n              }\n            }"
+    },
+    {
+      "description": "objectMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        918
+      ],
+      "code": "class Test {\n              void test(Test t, Object o) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                t.equals(o);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                o.equals(t);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                t.hashCode();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                t.getClass();\n              }\n            }"
+    },
+    {
+      "description": "charSequenceMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        940
+      ],
+      "code": "class Test {\n              void test(CharSequence cs) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                cs.charAt(0);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                cs.chars();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                cs.codePoints();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                cs.length();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                cs.subSequence(1, 2);\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                cs.toString();\n              }\n\n              void test(StringBuilder sb) {\n                sb.append(\"hi\");\n              }\n            }"
+    },
+    {
+      "description": "enumMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        970
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            class Test {\n              void test(Enum e) {\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                e.getDeclaringClass();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                e.name();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                e.ordinal();\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                TimeUnit.valueOf(\"MILLISECONDS\");\n              }\n            }"
+    },
+    {
+      "description": "enumMethodsOnSubtype",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        994
+      ],
+      "code": "import java.lang.invoke.VarHandle;\n\n            class Test {\n              void test(VarHandle.AccessMode accessMode) {\n                accessMode.methodName();\n              }\n            }"
+    },
+    {
+      "description": "throwableMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1011
+      ],
+      "code": ""
+    },
+    {
+      "description": "objectsMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1038
+      ],
+      "code": ""
+    },
+    {
+      "description": "classMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1078
+      ],
+      "code": "class Test {\n              void test(Class<?> c) throws Exception {\n                Class.forName(\"java.sql.Date\");\n                c.getMethod(\"toString\");\n                // BUG: Diagnostic contains: ReturnValueIgnored\n                c.desiredAssertionStatus();\n              }\n            }"
+    },
+    {
+      "description": "constructorOfAbstractModule",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1096
+      ],
+      "code": "import com.google.inject.AbstractModule;\n\n            class TestModule extends AbstractModule {\n              public TestModule() {}\n\n              public static void foo() {\n                // BUG: Diagnostic contains: Ignored return value of 'TestModule'\n                new TestModule();\n              }\n            }"
+    },
+    {
+      "description": "constructorOfModule",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1116
+      ],
+      "code": "import com.google.inject.Binder;\n            import com.google.inject.Module;\n\n            class TestModule implements Module {\n              public TestModule() {}\n\n              @Override\n              public void configure(Binder binder) {}\n\n              public static void foo() {\n                // BUG: Diagnostic contains: Ignored return value of 'TestModule'\n                new TestModule();\n              }\n            }"
+    }
+  ]
+}

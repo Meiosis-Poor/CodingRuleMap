@@ -1,0 +1,46 @@
+{
+  "name": "ComputeIfAbsentAmbiguousReference",
+  "language": "java",
+  "description": "computeIfAbsent passes the map key to the provided class's constructor",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 94,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.HashMap;\n            import java.util.List;\n            import java.util.Map;\n            import java.util.concurrent.atomic.AtomicLong;\n\n            class Test {\n              private void doWorkAtomicLong(Map<Long, AtomicLong> map) {\n                Long key = 4L;\n                // BUG: Diagnostic contains: ComputeIfAbsentAmbiguousReference\n                map.computeIfAbsent(key, AtomicLong::new).incrementAndGet();\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import java.util.Map;\n            import java.util.concurrent.atomic.AtomicLong;\n            import java.util.function.Function;\n\n            class Test {\n              private void doWork(Map<Long, AtomicLong> map) {\n                Long key = 4L;\n                Function<Long, AtomicLong> longBuilder = AtomicLong::new;\n                map.computeIfAbsent(key, k -> new AtomicLong(k));\n                map.computeIfAbsent(key, longBuilder);\n                map.computeIfAbsent(key, (Function<Long, AtomicLong>) AtomicLong::new);\n              }\n\n              private void doWorkStringArray(Map<Integer, String[]> map) {\n                Integer key = 4;\n                map.computeIfAbsent(key, String[]::new);\n              }\n\n              private void doWorkInnerClass1(Map<Long, InnerClass1> map) {\n                map.computeIfAbsent(0L, InnerClass1::new);\n              }\n\n              /** Class with exactly one 1-argument constructor. * */\n              class InnerClass1 {\n                InnerClass1(long l) {}\n              }\n\n              private void doWorkInnerClass2(Map<Integer, InnerClass2> map) {\n                map.computeIfAbsent(0, InnerClass2::new);\n              }\n\n              /** Class with two 1-argument constructors. * */\n              class InnerClass2 {\n                InnerClass2(int i) {}\n\n                InnerClass2(String s) {}\n              }\n            }"
+    },
+    {
+      "description": "negativeCase_parameterNameMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "import java.util.HashMap;\n            import java.util.Map;\n            import java.util.concurrent.atomic.AtomicLong;\n\n            class Test {\n              private void doWorkAtomicLong(Map<Long, AtomicLong> map) {\n                Long initialValue = 4L;\n                map.computeIfAbsent(initialValue, AtomicLong::new);\n              }\n\n              private void doWork(Map<Integer, HashMap> map) {\n                Integer initialCapacity = 4;\n                map.computeIfAbsent(initialCapacity, HashMap::new);\n              }\n            }"
+    },
+    {
+      "description": "negativeCase_nonOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "import java.util.Map;\n\n            class Test {\n              interface SubMap extends Map<Object, Object> {\n                Object computeIfAbsent(Object key);\n              }\n\n              private void test(SubMap map) {\n                map.computeIfAbsent(4L);\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "name": "DoNotClaimAnnotations",
+  "language": "java",
+  "description": "Don't 'claim' annotations in annotation processors; Processor#process should unconditionally return `false`",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 112,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "import java.util.Set;\nimport javax.annotation.processing.Processor;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.lang.model.element.TypeElement;\n\nabstract class Test implements Processor {\n  @Override\n  public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n    return true;\n  }\n}\n\n\nimport java.util.Set;\nimport javax.annotation.processing.Processor;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.lang.model.element.TypeElement;\n\nabstract class Test implements Processor {\n  @Override\n  public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n    return false;\n  }\n}"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import java.util.Set;\nimport javax.annotation.processing.Processor;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.lang.model.element.TypeElement;\n\nabstract class Test implements Processor {\n  @Override\n  public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n    return false;\n  }\n}"
+    },
+    {
+      "description": "negative_notAProcessor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "import java.util.Set;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.lang.model.element.TypeElement;\n\nabstract class Test {\n  public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n    return true;\n  }\n}"
+    },
+    {
+      "description": "unfixable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import java.util.Set;\nimport javax.annotation.processing.Processor;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.annotation.processing.RoundEnvironment;\nimport javax.lang.model.element.TypeElement;\n\nabstract class Test implements Processor {\n  abstract boolean helper();\n\n  @Override\n  public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {\n    try {\n      // BUG: Diagnostic contains:\n      return helper();\n    } catch (Throwable t) {\n    }\n    return false;\n  }\n}"
+    }
+  ]
+}

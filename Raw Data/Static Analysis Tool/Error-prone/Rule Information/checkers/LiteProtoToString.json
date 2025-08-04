@@ -1,0 +1,78 @@
+{
+  "name": "LiteProtoToString",
+  "language": "java",
+  "description": "toString() on lite protos will not generate a useful representation of the proto from optimized builds. Consider whether using some subset of fields instead would provide useful information.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 106,
+  "branches": 7,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import com.google.protobuf.GeneratedMessageLite;\n\n            class Test {\n              private String test(GeneratedMessageLite message) {\n                // BUG: Diagnostic contains:\n                return message.toString();\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        52
+      ],
+      "code": "import com.google.protobuf.GeneratedMessageLite;\n\n            class Test {\n              private void test(GeneratedMessageLite message) {\n                atVerbose(message.toString());\n              }\n\n              public void atVerbose(String s) {}\n            }"
+    },
+    {
+      "description": "unknownFieldSet_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "import com.google.protobuf.UnknownFieldSet;\n\n            class Test {\n              private String test(UnknownFieldSet message) {\n                return message.toString();\n              }\n            }"
+    },
+    {
+      "description": "enums",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": "import com.google.protobuf.Internal.EnumLite;\n            import com.google.protobuf.ProtocolMessageEnum;\n\n            class Test {\n              private String test(EnumLite e) {\n                // BUG: Diagnostic contains:\n                return e.toString();\n              }\n\n              private String testImplicit(EnumLite e) {\n                // BUG: Diagnostic contains:\n                return \"\" + e;\n              }\n\n              private String test2(ProtocolMessageEnum e) {\n                return e.toString();\n              }\n\n              private String test3(ProtocolMessageEnum e) {\n                return e.getValueDescriptor().toString();\n              }\n            }"
+    },
+    {
+      "description": "nestedLogStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        120
+      ],
+      "code": "import com.google.protobuf.GeneratedMessageLite;\n\n            class Test {\n              private void test(GeneratedMessageLite message) {\n                atVerbose().log(message.toString());\n              }\n\n              public Test atVerbose() {\n                return this;\n              }\n\n              public Test log(String s) {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "androidLogAtInfoOrFiner_noWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "import com.google.protobuf.GeneratedMessageLite;\n\n            class Test {\n              static class Log {\n                static void i(String s) {}\n\n                static void d(String s) {}\n\n                static void v(String s) {}\n              }\n\n              private void test(GeneratedMessageLite message) {\n                Log.i(message.toString());\n                Log.d(message.toString());\n                Log.v(message.toString());\n              }\n            }"
+    },
+    {
+      "description": "androidLogAtWarning_error",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "import com.google.protobuf.GeneratedMessageLite;\n\n            class Test {\n              static class Log {\n                static void w(String s) {}\n              }\n\n              private void test(GeneratedMessageLite message) {\n                // BUG: Diagnostic contains:\n                Log.w(message.toString());\n              }\n            }"
+    },
+    {
+      "description": "customFormatMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        194
+      ],
+      "code": "import com.google.errorprone.annotations.FormatMethod;\n            import com.google.protobuf.GeneratedMessageLite;\n\n            class Test {\n              private void test(GeneratedMessageLite message) {\n                // BUG: Diagnostic contains:\n                format(null, \"%s\", message);\n                format(message, \"%s\", 1);\n              }\n\n              @FormatMethod\n              String format(Object tag, String format, Object... args) {\n                return String.format(format, args);\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,342 @@
+{
+  "name": "Inliner",
+  "language": "java",
+  "description": "Callers of this API should be inlined.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 505,
+  "branches": 66,
+  "apis": 7,
+  "test": [
+    {
+      "description": "instanceMethod_withThisLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        42
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.foo2(value)\")\n              public void foo1(String value) {\n                foo2(value);\n              }\n\n              public void foo2(String value) {}\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.foo1(\"frobber!\");\n                client.foo1(\"don't change this!\");\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.foo2(\"frobber!\");\n                client.foo2(\"don't change this!\");\n              }\n            }"
+    },
+    {
+      "description": "nestedQuotes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.after(foo)\")\n              public String before(String foo) {\n                return after(foo);\n              }\n\n              public String after(String foo) {\n                return \"frobber\";\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                String result = client.before(\"\\\\\"\");\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                String result = client.after(\"\\\\\"\");\n              }\n            }"
+    },
+    {
+      "description": "method_withParamSwap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.after(paramB, paramA)\")\n              public void before(String paramA, String paramB) {\n                after(paramB, paramA);\n              }\n\n              public void after(String paramB, String paramA) {}\n            }\n            \n\n            import java.time.Duration;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                String a = \"a\";\n                String b = \"b\";\n                client.before(a, b);\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                String a = \"a\";\n                String b = \"b\";\n                client.after(b, a);\n              }\n            }"
+    },
+    {
+      "description": "method_withReturnStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        180
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.after()\")\n              public String before() {\n                return after();\n              }\n\n              public String after() {\n                return \"frobber\";\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                String result = client.before();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                String result = client.after();\n              }\n            }"
+    },
+    {
+      "description": "staticMethod_explicitTypeParam",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        224
+      ],
+      "code": "package com.google.foo;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"Client.after()\",\n                  imports = {\"com.google.foo.Client\"})\n              public static <T> T before() {\n                return after();\n              }\n\n              public static <T> T after() {\n                return (T) null;\n              }\n            }\n            \n\n            package com.google.foo;\n\n            public final class Caller {\n              public void doTest() {\n                String str = Client.<String>before();\n              }\n            }"
+    },
+    {
+      "description": "staticMethod_explicitTypeParam_specifiedInReplacement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        272
+      ],
+      "code": "package com.google.foo;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"Client.<T>after()\",\n                  imports = {\"com.google.foo.Client\"})\n              public static <T> T before() {\n                return Client.<T>after();\n              }\n\n              public static <T> T after() {\n                return (T) null;\n              }\n            }\n            \n\n            package com.google.foo;\n\n            public final class Caller {\n              public void doTest() {\n                String str = Client.<String>before();\n              }\n            }\n            \n\n            package com.google.foo;\n\n            public final class Caller {\n              public void doTest() {\n                String str = Client.<T>after();\n              }\n            }"
+    },
+    {
+      "description": "instanceMethod_withConflictingImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        323
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n            import java.time.Duration;\n\n            public final class Client {\n              private Duration deadline = Duration.ofSeconds(5);\n\n              @Deprecated\n              @InlineMe(\n                  replacement = \"this.setDeadline(Duration.ofMillis(millis))\",\n                  imports = {\"java.time.Duration\"})\n              public void setDeadline(long millis) {\n                setDeadline(Duration.ofMillis(millis));\n              }\n\n              public void setDeadline(Duration deadline) {\n                this.deadline = deadline;\n              }\n            }\n            \n\n            import org.joda.time.Duration;\n\n            public final class Caller {\n              public void doTest() {\n                Duration jodaDuration = Duration.millis(42);\n                Client client = new Client();\n                client.setDeadline(42);\n              }\n            }\n            \n\n            import org.joda.time.Duration;\n\n            public final class Caller {\n              public void doTest() {\n                Duration jodaDuration = Duration.millis(42);\n                Client client = new Client();\n                client.setDeadline(java.time.Duration.ofMillis(42));\n              }\n            }"
+    },
+    {
+      "description": "instanceMethod_withPartiallyQualifiedInnerType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        378
+      ],
+      "code": "package com.google;\n\n            public class A {\n              public static class Inner {\n                public static void foo() {}\n              }\n            }\n            \n\n            import com.google.A;\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"A.Inner.foo()\", imports = \"com.google.A\")\n              public void something() {\n                A.Inner.foo();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.something();\n              }\n            }\n            \n\n            import com.google.A;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                A.Inner.foo();\n              }\n            }"
+    },
+    {
+      "description": "instanceMethod_withConflictingMethodNameAndParameterName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        433
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              private long deadline = 5000;\n\n              @Deprecated\n              @InlineMe(replacement = \"this.millis(millis)\")\n              public void setDeadline(long millis) {\n                millis(millis);\n              }\n\n              public void millis(long millis) {\n                this.deadline = millis;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.setDeadline(42);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.millis(42);\n              }\n            }"
+    },
+    {
+      "description": "staticMethod_withStaticImport_withImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        479
+      ],
+      "code": "package com.google.test;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"Client.after(value)\",\n                  imports = {\"com.google.test.Client\"})\n              public static void before(int value) {\n                after(value);\n              }\n\n              public static void after(int value) {}\n            }\n            \n\n            import static com.google.test.Client.before;\n\n            public final class Caller {\n              public void doTest() {\n                before(42);\n              }\n            }\n            \n\n            import static com.google.test.Client.before;\n            import com.google.test.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client.after(42);\n              }\n            }"
+    },
+    {
+      "description": "staticMethod_withStaticImport_withStaticImportReplacement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        531
+      ],
+      "code": "package com.google.test;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"after(value)\",\n                  staticImports = {\"com.google.test.Client.after\"})\n              public static void before(int value) {\n                after(value);\n              }\n\n              public static void after(int value) {}\n            }\n            \n\n            import static com.google.test.Client.before;\n\n            public final class Caller {\n              public void doTest() {\n                before(42);\n              }\n            }\n            \n\n            import static com.google.test.Client.after;\n            import static com.google.test.Client.before;\n\n            public final class Caller {\n              public void doTest() {\n                after(42);\n              }\n            }"
+    },
+    {
+      "description": "instanceMethodCalledBySubtype",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        580
+      ],
+      "code": "package com.google.test;\n\n            import com.google.errorprone.annotations.InlineMe;\n            import java.time.Duration;\n\n            public class Parent {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"this.after(Duration.ofMillis(value))\",\n                  imports = {\"java.time.Duration\"})\n              protected final void before(int value) {\n                after(Duration.ofMillis(value));\n              }\n\n              protected void after(Duration value) {}\n            }\n            \n\n            package com.google.test;\n\n            public final class Child extends Parent {\n              public void doTest() {\n                before(42);\n              }\n            }\n            \n\n            package com.google.test;\n\n            import java.time.Duration;\n\n            public final class Child extends Parent {\n              public void doTest() {\n                after(Duration.ofMillis(42));\n              }\n            }"
+    },
+    {
+      "description": "constructorCalledBySubtype",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        631
+      ],
+      "code": "package com.google.test;\n\n            import com.google.errorprone.annotations.InlineMe;\n            import java.time.Duration;\n\n            public class Parent {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"this(Duration.ofMillis(value))\",\n                  imports = {\"java.time.Duration\"})\n              protected Parent(int value) {\n                this(Duration.ofMillis(value));\n              }\n\n              protected Parent(Duration value) {}\n            }\n            \n\n            package com.google.test;\n\n            public final class Child extends Parent {\n              public Child() {\n                super(42);\n              }\n            }\n            \n\n            package com.google.test;\n\n            import java.time.Duration;\n\n            public final class Child extends Parent {\n              public Child() {\n                super(Duration.ofMillis(42));\n              }\n            }"
+    },
+    {
+      "description": "fluentMethodChain",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        682
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.baz()\")\n              public Client foo() {\n                return baz();\n              }\n\n              @Deprecated\n              @InlineMe(replacement = \"this.baz()\")\n              public Client bar() {\n                return baz();\n              }\n\n              public Client baz() {\n                return this;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client().foo().bar();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client().baz().baz();\n              }\n            }"
+    },
+    {
+      "description": "inliningWithField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        730
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n            import java.time.Duration;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(\n                  replacement = \"this.setTimeout(Duration.ZERO)\",\n                  imports = {\"java.time.Duration\"})\n              public void clearTimeout() {\n                setTimeout(Duration.ZERO);\n              }\n\n              public void setTimeout(Duration timeout) {}\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                new Client().clearTimeout();\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            public final class Caller {\n              public void doTest() {\n                new Client().setTimeout(Duration.ZERO);\n              }\n            }"
+    },
+    {
+      "description": "returnThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        775
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this\")\n              public Client noOp() {\n                return this;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client = client.noOp();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client = client;\n              }\n            }"
+    },
+    {
+      "description": "returnThis_preChained",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        815
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this\")\n              public Client noOp() {\n                return this;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client().noOp();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n              }\n            }"
+    },
+    {
+      "description": "returnThis_postChained",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        853
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this\")\n              public Client noOp() {\n                return this;\n              }\n\n              public void bar() {}\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                new Client().noOp().bar();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                new Client().bar();\n              }\n            }"
+    },
+    {
+      "description": "returnThis_alone",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        893
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this\")\n              public Client noOp() {\n                return this;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.noOp();\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n              }\n            }"
+    },
+    {
+      "description": "inlineUnvalidatedInline",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        932
+      ],
+      "code": "import foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n              }\n            }\n            \n\n            import foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = Client.create();\n              }\n            }"
+    },
+    {
+      "description": "inlineUnvalidatedInlineMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        976
+      ],
+      "code": "import foo.Client;\n\npublic final class Caller {\n  public void doTest() {\n    // BUG: Diagnostic contains: NOTE: this is an unvalidated inlining! Reasoning: Migrating to\n    // factory method\n    Client client = new Client();\n  }\n}"
+    },
+    {
+      "description": "varargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1010
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.after(inputs)\")\n              public void before(int... inputs) {\n                after(inputs);\n              }\n\n              public void after(int... inputs) {}\n\n              @Deprecated\n              @InlineMe(replacement = \"this.after(inputs)\")\n              public void extraBefore(int first, int... inputs) {\n                after(inputs);\n              }\n\n              @Deprecated\n              @InlineMe(replacement = \"this.after(first)\")\n              public void ignoreVarargs(int first, int... inputs) {\n                after(first);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.before(1);\n                client.before();\n                client.before(1, 2, 3);\n                client.extraBefore(42, 1);\n                client.extraBefore(42);\n                client.extraBefore(42, 1, 2, 3);\n                client.ignoreVarargs(42, 1);\n                client.ignoreVarargs(42);\n                client.ignoreVarargs(42, 1, 2, 3);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.after(1);\n                client.after();\n                client.after(1, 2, 3);\n                client.after(1);\n                client.after();\n                client.after(1, 2, 3);\n                client.after(42);\n                client.after(42);\n                client.after(42);\n              }\n            }"
+    },
+    {
+      "description": "varargsWithPrecedingElements",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1080
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.after(first, inputs)\")\n              public void before(int first, int... inputs) {\n                after(first, inputs);\n              }\n\n              public void after(int first, int... inputs) {}\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.before(1);\n                client.before(1, 2, 3);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.after(1);\n                client.after(1, 2, 3);\n              }\n            }"
+    },
+    {
+      "description": "replaceWithJustParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1124
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n            import java.time.Duration;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"x\")\n              public final int identity(int x) {\n                return x;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = client.identity(42);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = 42;\n              }\n            }"
+    },
+    {
+      "description": "orderOfOperations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1166
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"x * y\")\n              public int multiply(int x, int y) {\n                return x * y;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = client.multiply(5, 10);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = 5 * 10;\n              }\n            }"
+    },
+    {
+      "description": "orderOfOperationsWithParamAddition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1206
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"x * y\")\n              public int multiply(int x, int y) {\n                return x * y;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = client.multiply(5 + 3, 10);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = (5 + 3) * 10;\n              }\n            }"
+    },
+    {
+      "description": "orderOfOperationsWhenInliningAddition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1246
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"x + y\")\n              public int add(int x, int y) {\n                return x + y;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = client.add(1, 2) * 3;\n                int y = client.add(1, 2) + 3;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = (1 + 2) * 3;\n                int y = 1 + 2 + 3;\n              }\n            }"
+    },
+    {
+      "description": "orderOfOperationsWhenInliningCasts",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1288
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"(int) x\")\n              public int cast(long x) {\n                return (int) x;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = client.cast(1) * 10;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = (int) 1 * 10;\n              }\n            }"
+    },
+    {
+      "description": "orderOfOperationsWithTrailingOperand",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1328
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"x * y\")\n              public int multiply(int x, int y) {\n                return x * y;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = client.multiply(5 + 3, 10) * 5;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                int x = (5 + 3) * 10 * 5;\n              }\n            }"
+    },
+    {
+      "description": "booleanParameterWithInlineComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1368
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @InlineMe(replacement = \"this.after(/* isAdmin = */ isAdmin)\")\n              @Deprecated\n              public void before(boolean isAdmin) {\n                after(/* isAdmin= */ isAdmin);\n              }\n\n              public void after(boolean isAdmin) {}\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.before(false);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.after(/* isAdmin= */ false);\n              }\n            }"
+    },
+    {
+      "description": "trailingSemicolon",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1410
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @InlineMe(replacement = \"this.after(/* foo= */ isAdmin)\")\n              @Deprecated\n              public boolean before(boolean isAdmin) {\n                return after(/* foo= */ isAdmin);\n              }\n\n              public boolean after(boolean isAdmin) {\n                return isAdmin;\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                boolean x = (client.before(false) || true);\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                boolean x = (client.after(/* false= */ false) || true);\n              }\n            }"
+    },
+    {
+      "description": "customInlineMe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1454
+      ],
+      "code": "package bespoke;\n\n            public @interface InlineMe {\n              String replacement();\n\n              String[] imports() default {};\n\n              String[] staticImports() default {};\n            }\n            \n\n            import bespoke.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.foo2(value)\")\n              public void foo1(String value) {\n                foo2(value);\n              }\n\n              public void foo2(String value) {}\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.foo1(\"frobber!\");\n                client.foo1(\"don't change this!\");\n              }\n            }\n            \n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                client.foo2(\"frobber!\");\n                client.foo2(\"don't change this!\");\n              }\n            }"
+    },
+    {
+      "description": "varArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1513
+      ],
+      "code": "package com.google.foo;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @InlineMe(\n                  replacement = \"Client.execute2(format, args)\",\n                  imports = {\"com.google.foo.Client\"})\n              public static void execute1(String format, Object... args) {\n                execute2(format, args);\n              }\n\n              public static void execute2(String format, Object... args) {\n                // do nothing\n              }\n            }\n            \n\n            import com.google.foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client.execute1(\"hi %s\");\n              }\n            }\n            \n\n            import com.google.foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client.execute2(\"hi %s\");\n              }\n            }"
+    },
+    {
+      "description": "paramCast",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1563
+      ],
+      "code": "package com.google.foo;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @InlineMe(\n                  replacement = \"Client.after(value.doubleValue())\",\n                  imports = {\"com.google.foo.Client\"})\n              public static void before(Long value) {\n                after(value.doubleValue());\n              }\n\n              public static void after(double value) {\n                // do nothing\n              }\n            }\n            \n\n            import com.google.foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Object value = 42L;\n                Client.before((Long) value);\n              }\n            }"
+    },
+    {
+      "description": "replacementWhichRequiresParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1613
+      ],
+      "code": "package com.google.foo;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @InlineMe(replacement = \"x * 2\")\n              public static int timesTwo(int x) {\n                return x * 2;\n              }\n            }\n            \n\n            import com.google.foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                long four = Client.timesTwo(1 + 1);\n              }\n            }\n            \n\n            import com.google.foo.Client;\n\n            public final class Caller {\n              public void doTest() {\n                long four = (1 + 1) * 2;\n              }\n            }"
+    },
+    {
+      "description": "inlinerReplacesParameterValueInPackageName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1659
+      ],
+      "code": "package foo;\n\n            public class Bar {\n              public static void baz(String s) {}\n            }\n            \n\n            import com.google.errorprone.annotations.InlineMe;\n            import foo.Bar;\n\n            public class Client {\n              @InlineMe(replacement = \"Bar.baz(foo)\", imports = \"foo.Bar\")\n              public static void inlinedMethod(String foo) {\n                Bar.baz(foo);\n              }\n            }\n            \n\n            class Caller {\n              class Bar {}\n\n              void doTest() {\n                Client.inlinedMethod(\"abc\");\n              }\n            }\n            \n\n            class Caller {\n              class Bar {}\n\n              void doTest() {\n                foo.Bar.baz(\"abc\");\n              }\n            }"
+    },
+    {
+      "description": "methodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1711
+      ],
+      "code": "package p;\n\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @Deprecated\n              @InlineMe(replacement = \"this.instanceAfter()\")\n              public void instanceBefore() {\n                instanceAfter();\n              }\n\n              public void instanceAfter() {}\n            }\n            \n\n            import java.util.function.Consumer;\n            import p.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                Consumer<Client> c;\n                Runnable r;\n                r = client::instanceBefore;\n                c = Client::instanceBefore;\n              }\n            }\n            \n\n            import java.util.function.Consumer;\n            import p.Client;\n\n            public final class Caller {\n              public void doTest() {\n                Client client = new Client();\n                Consumer<Client> c;\n                Runnable r;\n                r = client::instanceAfter;\n                c = Client::instanceAfter;\n              }\n            }"
+    },
+    {
+      "description": "variableNamesInSubstitutionCollidesWithParameterName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1768
+      ],
+      "code": "package com.google.foo;\n\n            import com.google.common.collect.ImmutableList;\n            import com.google.errorprone.annotations.InlineMe;\n\n            public final class Client {\n              @InlineMe(\n                  replacement = \"new Client(a, b)\",\n                  imports = {\"com.google.foo.Client\"})\n              @Deprecated\n              public static Client create(String a, ImmutableList<String> b) {\n                return new Client(a, b);\n              }\n\n              public Client(String a, ImmutableList<String> b) {}\n            }\n            \n\n            package com.google.foo;\n\n            import com.google.common.collect.ImmutableList;\n\n            public final class Caller {\n              public void doTest() {\n                ImmutableList<String> b = ImmutableList.of(\"foo\", \"bar\");\n                Client client = Client.create(b.get(0), b.size() == 1 ? ImmutableList.of() : b);\n              }\n            }\n            \n\n            package com.google.foo;\n\n            import com.google.common.collect.ImmutableList;\n\n            public final class Caller {\n              public void doTest() {\n                ImmutableList<String> b = ImmutableList.of(\"foo\", \"bar\");\n                Client client = new Client(b.get(0), b.size() == 1 ? ImmutableList.of() : b);\n              }\n            }"
+    },
+    {
+      "description": "binaryTree_immediatelyInvoked_requiresParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1834
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Strings {\n              @InlineMe(replacement = \"string.repeat(count)\")\n              public static String repeat(String string, int count) {\n                return string.repeat(count);\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                String s = Strings.repeat(\"a\" + \"b\", 10);\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                String s = (\"a\" + \"b\").repeat(10);\n              }\n            }"
+    },
+    {
+      "description": "variousInlinings_doesNotAddParensWithinMethodCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1871
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class Strings {\n              @InlineMe(replacement = \"String.format(\\\\\"%s%s%s\\\\\", x, y, z)\")\n              public static String f(String x, String y, String z) {\n                return String.format(\"%s%s%s\", x, y, z);\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                String s = Strings.f(\"a\" + \"b\", \"c\" + \"d\", \"e\" + \"f\");\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                String s = String.format(\"%s%s%s\", \"a\" + \"b\", \"c\" + \"d\", \"e\" + \"f\");\n              }\n            }"
+    },
+    {
+      "description": "inlinedCodeRequiresParens",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1909
+      ],
+      "code": "import com.google.errorprone.annotations.InlineMe;\n\n            public final class I {\n              @InlineMe(replacement = \"foo + \\\\\"b\\\\\"\")\n              public static String ab(String foo) {\n                return foo + \"b\";\n              }\n            }\n            \n\n            class Test {\n              void test(String x) {\n                String abn = I.ab(x).repeat(10);\n              }\n            }\n            \n\n            class Test {\n              void test(String x) {\n                String abn = (x + \"b\").repeat(10);\n              }\n            }"
+    }
+  ]
+}

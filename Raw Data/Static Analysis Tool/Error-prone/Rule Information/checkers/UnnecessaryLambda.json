@@ -1,0 +1,134 @@
+{
+  "name": "UnnecessaryLambda",
+  "language": "java",
+  "description": "Returning a lambda from a helper method or saving it in a constant is unnecessary; prefer to implement the functional interface method directly and use a method reference instead.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 325,
+  "branches": 36,
+  "apis": 3,
+  "test": [
+    {
+      "description": "method",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private Function<String, String> f() {\n                return x -> {\n                  return \"hello \" + x;\n                };\n              }\n\n              void g() {\n                Function<String, String> f = f();\n                System.err.println(f().apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private String f(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> f = this::f;\n                System.err.println(f(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "method_effectivelyPrivate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private class Inner {\n                Function<String, String> f() {\n                  return x -> {\n                    return \"hello \" + x;\n                  };\n                }\n\n                void g() {\n                  Function<String, String> f = f();\n                  System.err.println(f().apply(\"world\"));\n                }\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private class Inner {\n                String f(String x) {\n                  return \"hello \" + x;\n                }\n\n                void g() {\n                  Function<String, String> f = this::f;\n                  System.err.println(f(\"world\"));\n                }\n              }\n            }"
+    },
+    {
+      "description": "method_static",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private static Function<String, String> f() {\n                return x -> \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> f = f();\n                System.err.println(f().apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private static String f(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> f = Test::f;\n                System.err.println(f(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "method_void",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "import java.util.function.Consumer;\n\n            class Test {\n              private Consumer<String> f() {\n                return x -> System.err.println(x);\n              }\n\n              void g() {\n                Consumer<String> f = f();\n                f().accept(\"world\");\n              }\n            }\n            \n\n            import java.util.function.Consumer;\n\n            class Test {\n              private void f(String x) {\n                System.err.println(x);\n              }\n\n              void g() {\n                Consumer<String> f = this::f;\n                f(\"world\");\n              }\n            }"
+    },
+    {
+      "description": "variable_instance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        191
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private final Function<String, String> camelCase = x -> \"hello \" + x;\n\n              void g() {\n                Function<String, String> f = camelCase;\n                System.err.println(camelCase.apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private String camelCase(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> f = this::camelCase;\n                System.err.println(camelCase(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "variable_static",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private static final Function<String, String> F = x -> \"hello \" + x;\n\n              void g() {\n                Function<String, String> l = Test.F;\n                System.err.println(F.apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private static String f(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> l = Test::f;\n                System.err.println(f(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "variable_static_butNotUpperCased",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private static final Function<String, String> notUpperCased = x -> \"hello \" + x;\n\n              void g() {\n                Function<String, String> l = Test.notUpperCased;\n                System.err.println(notUpperCased.apply(\"world\"));\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              private static String notUpperCased(String x) {\n                return \"hello \" + x;\n              }\n\n              void g() {\n                Function<String, String> l = Test::notUpperCased;\n                System.err.println(notUpperCased(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "method_shapes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        299
+      ],
+      "code": "import java.util.function.BiFunction;\n            import java.util.function.Supplier;\n\n            class Test {\n              private Supplier<String> f() {\n                return () -> \"hello \";\n              }\n\n              private BiFunction<String, String, String> g() {\n                return (a, b) -> a + \"hello \" + b;\n              }\n\n              private Runnable h() {\n                return () -> System.err.println();\n              }\n\n              void main() {\n                System.err.println(f().get());\n                System.err.println(g().apply(\"a\", \"b\"));\n                h().run();\n              }\n            }\n            \n\n            import java.util.function.BiFunction;\n            import java.util.function.Supplier;\n\n            class Test {\n              private String f() {\n                return \"hello \";\n              }\n\n              private String g(String a, String b) {\n                return a + \"hello \" + b;\n              }\n\n              private void h() {\n                System.err.println();\n              }\n\n              void main() {\n                System.err.println(f());\n                System.err.println(g(\"a\", \"b\"));\n                h();\n              }\n            }"
+    },
+    {
+      "description": "nonFunctionalInterfaceMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test {\n              private static final Predicate<String> F = x -> \"hello \".equals(x);\n\n              void g() {\n                Predicate<String> l = Test.F.and(x -> true);\n              }\n            }"
+    },
+    {
+      "description": "variable_bind",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        377
+      ],
+      "code": "package com.google.inject.testing.fieldbinder;\n\n            import static java.lang.annotation.ElementType.FIELD;\n            import static java.lang.annotation.RetentionPolicy.RUNTIME;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n\n            @Retention(RUNTIME)\n            @Target({FIELD})\n            public @interface Bind {}\n            \n\n            import java.util.function.Function;\n            import com.google.inject.testing.fieldbinder.Bind;\n\n            class Test {\n              @Bind private final Function<String, String> camelCase = x -> \"hello \" + x;\n\n              void g() {\n                Function<String, String> f = camelCase;\n                System.err.println(camelCase.apply(\"world\"));\n              }\n            }"
+    },
+    {
+      "description": "variable_notAFunctionalInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        414
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              private static final Object F = (Function<String, String>) x -> \"hello \" + x;\n            }"
+    },
+    {
+      "description": "recursiveLambda_ignored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        430
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test {\n              private static final Predicate<String> F = x -> Test.F.test(x);\n            }"
+    },
+    {
+      "description": "producesIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        446
+      ],
+      "code": "@interface Produces {}\n            \n\n            import javax.inject.Provider;\n\n            class Test {\n              private class A {\n                @Produces\n                public Provider<String> foo() {\n                  return () -> \"hello \";\n                }\n              }\n            }"
+    },
+    {
+      "description": "e",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        473
+      ],
+      "code": "import java.util.function.Predicate;\n\n            class Test {\n              private void foo(Predicate<Object> p) {}\n\n              public void test() {\n                foo(E.ELEM.pred());\n              }\n\n              private enum E {\n                ELEM;\n\n                Predicate<Object> pred() {\n                  return o -> true;\n                }\n              }\n            }\n            \n\n            import java.util.function.Predicate;\n\n            class Test {\n              private void foo(Predicate<Object> p) {}\n\n              public void test() {\n                foo(E.ELEM::pred);\n              }\n\n              private enum E {\n                ELEM;\n\n                boolean pred(Object o) {\n                  return true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "iterable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        521
+      ],
+      "code": "import java.util.stream.IntStream;\n\n            class Example {\n              void someLoopyCode() {\n                for (int i : someIterable()) {\n                  // Do something.\n                }\n              }\n\n              private Iterable<Integer> someIterable() {\n                return () -> IntStream.range(0, 42).boxed().iterator();\n              }\n            }"
+    }
+  ]
+}

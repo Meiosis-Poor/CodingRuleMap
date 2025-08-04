@@ -1,0 +1,78 @@
+{
+  "name": "Overrides",
+  "language": "java",
+  "description": "Varargs doesn't agree for overridden method",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 80,
+  "branches": 12,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * This tests that the a bug is reported when a method override changes the type of a parameter from\n * varargs to array, or array to varargs. It also ensures that the implementation can handles cases\n * with multiple parameters, and whitespaces between the square brackets for array types.\n *\n * @author cushon@google.com (Liam Miller-Cushon)\n */\npublic class OverridesPositiveCase1 {\n  abstract class Base {\n    abstract void varargsMethod(Object... xs);\n\n    abstract void arrayMethod(int x, Object[] xs);\n  }\n\n  abstract class Child1 extends Base {\n    @Override\n    // BUG: Diagnostic contains: abstract void arrayMethod(int x, Object[] newNames);\n    abstract void arrayMethod(int x, Object... newNames);\n  }\n\n  abstract class Child2 extends Base {\n    @Override\n    // BUG: Diagnostic contains: abstract void varargsMethod(Object... xs);\n    abstract void varargsMethod(Object[] xs);\n  }\n\n  abstract class Child3 extends Base {\n    @Override\n    // BUG: Diagnostic contains: abstract void varargsMethod(Object... xs);\n    abstract void varargsMethod(Object[] xs);\n  }\n\n  abstract class Child4 extends Base {\n    @Override\n    // BUG: Diagnostic contains: abstract void varargsMethod(Object... xs);\n    abstract void varargsMethod(Object[] xs);\n  }\n\n  abstract class Child5 extends Base {\n    @Override\n    // BUG: Diagnostic contains: Varargs\n    abstract void varargsMethod(Object[ /**/] xs);\n  }\n\n  interface Interface {\n    void varargsMethod(Object... xs);\n\n    void arrayMethod(Object[] xs);\n  }\n\n  abstract class ImplementsInterface implements Interface {\n    @Override\n    // BUG: Diagnostic contains:\n    public abstract void varargsMethod(Object[] xs);\n\n    @Override\n    // BUG: Diagnostic contains:\n    public abstract void arrayMethod(Object... xs);\n  }\n\n  abstract class MyBase {\n    abstract void f(Object... xs);\n\n    abstract void g(Object[] xs);\n  }\n\n  interface MyInterface {\n    void f(Object[] xs);\n\n    void g(Object... xs);\n  }\n\n  abstract class ImplementsAndExtends extends MyBase implements MyInterface {\n    // BUG: Diagnostic contains:\n    public abstract void f(Object... xs);\n\n    // BUG: Diagnostic contains:\n    public abstract void g(Object[] xs);\n  }\n\n  abstract class ImplementsAndExtends2 extends MyBase implements MyInterface {\n    // BUG: Diagnostic contains:\n    public abstract void f(Object[] xs);\n\n    // BUG: Diagnostic contains:\n    public abstract void g(Object... xs);\n  }\n}"
+    },
+    {
+      "description": "positiveCase2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        132
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * This tests the case where there is a chain of method overrides where the varargs constraint is\n * not met, and the root is a varargs parameter. TODO(cushon): The original implementation tried to\n * be clever and make this consistent, but didn't handle multiple interface inheritance.\n *\n * @author cushon@google.com (Liam Miller-Cushon)\n */\npublic class OverridesPositiveCase2 {\n  abstract class Base {\n    abstract void varargsMethod(Object... xs);\n  }\n\n  abstract class SubOne extends Base {\n    @Override\n    // BUG: Diagnostic contains:\n    abstract void varargsMethod(Object[] newNames);\n  }\n\n  abstract class SubTwo extends SubOne {\n    @Override\n    // BUG: Diagnostic contains:\n    abstract void varargsMethod(Object... xs);\n  }\n\n  abstract class SubThree extends SubTwo {\n    @Override\n    // BUG: Diagnostic contains:\n    abstract void varargsMethod(Object[] newNames);\n  }\n}\\"
+    },
+    {
+      "description": "positiveCase3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * This tests the case where there is a chain of method overrides where the varargs constraint is\n * not met, and the root has an array parameter. TODO(cushon): The original implementation tried to\n * be clever and make this consistent, but didn't handle multiple interface inheritance.\n *\n * @author cushon@google.com (Liam Miller-Cushon)\n */\npublic class OverridesPositiveCase3 {\n  abstract class Base {\n    abstract void arrayMethod(Object[] xs);\n  }\n\n  abstract class SubOne extends Base {\n    @Override\n    // BUG: Diagnostic contains:\n    abstract void arrayMethod(Object... newNames);\n  }\n\n  abstract class SubTwo extends SubOne {\n    @Override\n    // BUG: Diagnostic contains:\n    abstract void arrayMethod(Object[] xs);\n  }\n\n  abstract class SubThree extends SubTwo {\n    @Override\n    // BUG: Diagnostic contains:\n    abstract void arrayMethod(Object... newNames);\n  }\n}\\"
+    },
+    {
+      "description": "positiveCase4",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        216
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.Map;\n\n/**\n * Test that the suggested fix is correct in the presence of whitespace, comments.\n *\n * @author cushon@google.com (Liam Miller-Cushon)\n */\npublic class OverridesPositiveCase4 {\n\n  @interface Note {}\n\n  abstract class Base {\n    abstract void varargsMethod(@Note final Map<Object, Object>... xs);\n\n    abstract void arrayMethod(@Note final Map<Object, Object>[] xs);\n  }\n\n  abstract class Child1 extends Base {\n    @Override\n    // BUG: Diagnostic contains: (@Note final Map<Object, Object> /* asd */[] /* dsa */ xs);\n    abstract void arrayMethod(@Note final Map<Object, Object> /* asd */... /* dsa */ xs);\n  }\n\n  abstract class Child2 extends Base {\n    @Override\n    // TODO(cushon): improve testing infrastructure so we can enforce that no fix is suggested.\n    // BUG: Diagnostic contains: Varargs\n    abstract void varargsMethod(@Note final Map<Object, Object> /*dsa*/[ /* [ */] /* dsa */ xs);\n  }\n}"
+    },
+    {
+      "description": "positiveCase5",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        258
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author cushon@google.com (Liam Miller-Cushon)\n */\npublic class OverridesPositiveCase5 {\n\n  abstract class Base {\n    abstract void varargsMethod(Object[] xs, Object... ys);\n\n    abstract void arrayMethod(Object[] xs, Object[] ys);\n  }\n\n  abstract class Child1 extends Base {\n    @Override\n    // BUG: Diagnostic contains: Did you mean 'abstract void arrayMethod(Object[] xs, Object[] ys);'\n    abstract void arrayMethod(Object[] xs, Object... ys);\n\n    @Override\n    // BUG: Diagnostic contains: Did you mean 'abstract void varargsMethod(Object[] xs, Object...\n    // ys);'\n    abstract void varargsMethod(Object[] xs, Object[] ys);\n\n    void foo(Base base) {\n      base.varargsMethod(null, new Object[] {}, new Object[] {}, new Object[] {}, new Object[] {});\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        296
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n/**\n * @author cushon@google.com (Liam Miller-Cushon)\n */\npublic class OverridesNegativeCase1 {\n  abstract class Base {\n    abstract void varargsMethod(Object... xs);\n\n    abstract void arrayMethod(Object[] xs);\n  }\n\n  abstract class Child1 extends Base {\n    @Override\n    abstract void varargsMethod(final Object... newNames);\n  }\n\n  abstract class Child2 extends Base {\n    @Override\n    abstract void arrayMethod(Object[] xs);\n  }\n\n  static class StaticClass {\n    static void staticVarargsMethod(Object... xs) {}\n\n    static void staticArrayMethod(Object[] xs) {}\n  }\n\n  interface Interface {\n    void varargsMethod(Object... xs);\n\n    void arrayMethod(Object[] xs);\n  }\n\n  abstract class ImplementsInterface implements Interface {\n    public abstract void varargsMethod(Object... xs);\n\n    public abstract void arrayMethod(Object[] xs);\n  }\n}\n\n// Varargs methods might end up overriding synthetic (e.g. bridge) methods, which will have already\n// been lowered into a non-varargs form. Test that we don't report errors when a varargs method\n// overrides a synthetic non-varargs method:\n\nabstract class One {\n  static class Builder {\n    Builder varargsMethod(String... args) {\n      return this;\n    }\n  }\n}\n\nclass Two extends One {\n  static class Builder extends One.Builder {\n    @Override\n    public Builder varargsMethod(String... args) {\n      super.varargsMethod(args);\n      return this;\n    }\n  }\n}\n\nclass Three extends Two {\n  static class Builder extends Two.Builder {\n    @Override\n    public Builder varargsMethod(String... args) {\n      super.varargsMethod(args);\n      return this;\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        378
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author cushon@google.com (Liam Miller-Cushon)\n             */\n            public class OverridesNegativeCase2 {\n              abstract class Base {\n                abstract void varargsMethod(Object... xs);\n              }\n\n              abstract class SubOne extends Base {\n                @Override\n                abstract void varargsMethod(Object... newNames);\n              }\n\n              abstract class SubTwo extends SubOne {\n                @Override\n                abstract void varargsMethod(Object... xs);\n              }\n\n              abstract class SubThree extends SubTwo {\n                @Override\n                abstract void varargsMethod(Object... newNames);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        413
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author cushon@google.com (Liam Miller-Cushon)\n             */\n            public class OverridesNegativeCase3 {\n              abstract class Base {\n                abstract void arrayMethod(Object[] xs);\n              }\n\n              abstract class SubOne extends Base {\n                @Override\n                abstract void arrayMethod(Object[] xs);\n              }\n\n              abstract class SubTwo extends SubOne {\n                @Override\n                abstract void arrayMethod(Object[] xs);\n              }\n\n              abstract class SubThree extends SubTwo {\n                @Override\n                abstract void arrayMethod(Object[] xs);\n              }\n            }\\"
+    }
+  ]
+}

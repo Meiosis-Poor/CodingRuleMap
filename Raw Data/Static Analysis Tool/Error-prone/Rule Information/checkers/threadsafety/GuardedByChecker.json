@@ -1,0 +1,662 @@
+{
+  "name": "GuardedByChecker",
+  "language": "java",
+  "description": "Checks for unguarded accesses to fields and methods with @GuardedBy annotations",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 210,
+  "branches": 29,
+  "apis": 7,
+  "test": [
+    {
+      "description": "locked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.Lock;\n\n            class Test {\n              final Lock lock = null;\n\n              @GuardedBy(\"lock\")\n              int x;\n\n              void m() {\n                lock.lock();\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'this.lock'\n                x++;\n                try {\n                  x++;\n                } catch (Exception e) {\n                  x--;\n                } finally {\n                  lock.unlock();\n                }\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'this.lock'\n                x++;\n              }\n            }"
+    },
+    {
+      "description": "staticLocked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.Lock;\n\n            class Test {\n              @GuardedBy(\"Test.class\")\n              static int x;\n\n              static synchronized void m() {\n                x++;\n              }\n            }"
+    },
+    {
+      "description": "monitor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import com.google.common.util.concurrent.Monitor;\n\n            class Test {\n              final Monitor monitor = null;\n\n              @GuardedBy(\"monitor\")\n              int x;\n\n              void m() {\n                monitor.enter();\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'this.monitor'\n                x++;\n                try {\n                  x++;\n                } finally {\n                  monitor.leave();\n                }\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'this.monitor'\n                x++;\n              }\n            }"
+    },
+    {
+      "description": "wrongLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.Lock;\n\n            class Test {\n              final Lock lock1 = null;\n              final Lock lock2 = null;\n\n              @GuardedBy(\"lock1\")\n              int x;\n\n              void m() {\n                lock2.lock();\n                try {\n                  // BUG: Diagnostic contains:\n                  // access should be guarded by 'this.lock1'\n                  x++;\n                } finally {\n                  lock2.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "guardedStaticFieldAccess_1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        163
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              public static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              public static int x;\n\n              void m() {\n                synchronized (Test.lock) {\n                  Test.x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "guardedStaticFieldAccess_2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        189
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              public static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              public static int x;\n\n              void m() {\n                synchronized (lock) {\n                  Test.x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "guardedStaticFieldAccess_3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              public static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              public static int x;\n\n              void m() {\n                synchronized (Test.lock) {\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "guardedStaticFieldAccess_enclosingClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        241
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"Test.class\")\n              public static int x;\n\n              static synchronized void n() {\n                Test.x++;\n              }\n            }"
+    },
+    {
+      "description": "badStaticFieldAccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              public static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              public static int x;\n\n              void m() {\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'Test.lock'\n                Test.x++;\n              }\n            }"
+    },
+    {
+      "description": "badGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        289
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"foo\")\n              // BUG: Diagnostic contains: Invalid @GuardedBy expression\n              int y;\n            }"
+    },
+    {
+      "description": "unheldInstanceGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        331
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int y;\n            }\n\n            class Main {\n              void m(Test t) {\n                // BUG: Diagnostic contains:\n                // should be guarded by 't.mu'\n                t.y++;\n              }\n            }"
+    },
+    {
+      "description": "unheldInstanceGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        331
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int y;\n            }\n\n            class Main {\n              void m(Test t) {\n                // BUG: Diagnostic contains:\n                // should be guarded by 't.mu'\n                t.y++;\n              }\n            }"
+    },
+    {
+      "description": "unheldInstanceGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        331
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int y;\n            }\n\n            class Main {\n              void m(Test t) {\n                // BUG: Diagnostic contains:\n                // should be guarded by 't.mu'\n                t.y++;\n              }\n            }"
+    },
+    {
+      "description": "unheldItselfGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        359
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Itself {\n              @GuardedBy(\"itself\")\n              int x;\n\n              void incrementX() {\n                // BUG: Diagnostic contains:\n                // should be guarded by 'this.x'\n                x++;\n              }\n            }"
+    },
+    {
+      "description": "i541",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        383
+      ],
+      "code": "package threadsafety;\n\n            import java.util.List;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Itself {\n              @GuardedBy(\"itself\")\n              List<String> xs;\n\n              void f() {\n                // BUG: Diagnostic contains:\n                // should be guarded by 'this.xs'\n                this.xs.add(\"\");\n                synchronized (this.xs) {\n                  this.xs.add(\"\");\n                }\n                synchronized (this.xs) {\n                  xs.add(\"\");\n                }\n                synchronized (xs) {\n                  this.xs.add(\"\");\n                }\n                synchronized (xs) {\n                  xs.add(\"\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "methodQualifiedWithThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        420
+      ],
+      "code": "package threadsafety;\n\n            import java.util.List;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Itself {\n              @GuardedBy(\"this\")\n              void f() {}\n              ;\n\n              void g() {\n                // BUG: Diagnostic contains:\n                // should be guarded by 'this'\n                this.f();\n                synchronized (this) {\n                  f();\n                }\n                synchronized (this) {\n                  this.f();\n                }\n              }\n            }"
+    },
+    {
+      "description": "ctor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        452
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"this\")\n              int x;\n\n              public Test() {\n                this.x = 42;\n              }\n            }"
+    },
+    {
+      "description": "badGuardMethodAccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        474
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"this\")\n              void x() {}\n\n              void m() {\n                // BUG: Diagnostic contains: this\n                x();\n              }\n            }"
+    },
+    {
+      "description": "transitiveGuardMethodAccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        497
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"this\")\n              void x() {}\n\n              @GuardedBy(\"this\")\n              void m() {\n                x();\n              }\n            }"
+    },
+    {
+      "description": "readWriteLockCopy",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        521
+      ],
+      "code": ""
+    },
+    {
+      "description": "readWriteLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        555
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.ReentrantReadWriteLock;\n\n            class Test {\n              final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();\n\n              @GuardedBy(\"lock\")\n              boolean b = false;\n\n              void m() {\n                lock.readLock().lock();\n                try {\n                  b = true;\n                } finally {\n                  lock.readLock().unlock();\n                }\n              }\n\n              void n() {\n                lock.writeLock().lock();\n                try {\n                  b = true;\n                } finally {\n                  lock.writeLock().unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "readWriteLockIsIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        595
+      ],
+      "code": "package threadsafety.Test;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.ReentrantReadWriteLock;\n\n            class Test {\n              final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();\n\n              @GuardedBy(\"lock\")\n              boolean b = false;\n\n              void m() {\n                try {\n                  b = true;\n                } finally {\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClass_enclosingClassLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        623
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              boolean b = false;\n\n              private final class Baz {\n                public void m() {\n                  synchronized (mu) {\n                    n();\n                  }\n                }\n\n                @GuardedBy(\"Test.this.mu\")\n                private void n() {\n                  b = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClass_thisLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        657
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              @GuardedBy(\"this\")\n              boolean b = false;\n\n              private final class Baz {\n                private synchronized void n() {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'Test.this'\n                  b = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "anonymousClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        683
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              @GuardedBy(\"this\")\n              boolean b = false;\n\n              private synchronized void n() {\n                b = true;\n                new Object() {\n                  void m() {\n                    // BUG: Diagnostic contains:\n                    // should be guarded by 'Test.this'\n                    b = true;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "inheritedLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        712
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              final Object lock = new Object();\n            }\n\n            class B extends A {\n              @GuardedBy(\"lock\")\n              boolean b = false;\n\n              void m() {\n                synchronized (lock) {\n                  b = true;\n                }\n                ;\n              }\n            }"
+    },
+    {
+      "description": "enclosingSuperAccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        741
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              boolean flag = false;\n            }\n\n            class B extends A {\n              void m() {\n                new Object() {\n                  @GuardedBy(\"lock\")\n                  void n() {\n                    flag = true;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "superAccess_this",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        772
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              final Object lock = new Object();\n\n              @GuardedBy(\"this\")\n              boolean flag = false;\n            }\n\n            class B extends A {\n              synchronized void m() {\n                flag = true;\n              }\n            }"
+    },
+    {
+      "description": "superAccess_lock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        798
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              boolean flag = false;\n            }\n\n            class B extends A {\n              void m() {\n                synchronized (lock) {\n                  flag = true;\n                }\n                synchronized (this.lock) {\n                  flag = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "superAccess_staticLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        829
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              static boolean flag = false;\n            }\n\n            class B extends A {\n              void m() {\n                synchronized (A.lock) {\n                  flag = true;\n                }\n                synchronized (B.lock) {\n                  flag = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "otherClass_bad_staticLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        860
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              static boolean flag = false;\n            }\n\n            class B {\n              static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              static boolean flag = false;\n\n              void m() {\n                synchronized (B.lock) {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'A.lock'\n                  A.flag = true;\n                }\n                synchronized (A.lock) {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'B.lock'\n                  B.flag = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "otherClass_bad_staticLock_alsoSub",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        900
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              static boolean flag = false;\n            }\n\n            class B extends A {\n              static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              static boolean flag = false;\n\n              void m() {\n                synchronized (B.lock) {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'A.lock'\n                  A.flag = true;\n                }\n                synchronized (A.lock) {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'B.lock'\n                  B.flag = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "otherClass_staticLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        940
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class A {\n              static final Object lock = new Object();\n\n              @GuardedBy(\"lock\")\n              static boolean flag = false;\n            }\n\n            class B {\n              void m() {\n                synchronized (A.lock) {\n                  A.flag = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "instanceAccess_instanceGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        968
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class InstanceAccess_InstanceGuard {\n              class A {\n                final Object lock = new Object();\n\n                @GuardedBy(\"lock\")\n                int x;\n              }\n\n              class B extends A {\n                void m() {\n                  synchronized (this.lock) {\n                    this.x++;\n                  }\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'this.lock'\n                  this.x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "instanceAccess_lexicalGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1001
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class InstanceAccess_LexicalGuard {\n              class Outer {\n                final Object lock = new Object();\n\n                class Inner {\n                  @GuardedBy(\"lock\")\n                  int x;\n\n                  void m() {\n                    synchronized (Outer.this.lock) {\n                      this.x++;\n                    }\n                    // BUG: Diagnostic contains:\n                    // should be guarded by 'Outer.this.lock'\n                    this.x++;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "lexicalAccess_instanceGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1034
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class LexicalAccess_InstanceGuard {\n              class Outer {\n                final Object lock = new Object();\n\n                @GuardedBy(\"lock\")\n                int x;\n\n                class Inner {\n                  void m() {\n                    synchronized (Outer.this.lock) {\n                      Outer.this.x++;\n                    }\n                    // BUG: Diagnostic contains:\n                    // should be guarded by 'Outer.this.lock'\n                    Outer.this.x++;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "lexicalAccess_lexicalGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1067
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class LexicalAccess_LexicalGuard {\n              class Outer {\n                final Object lock = new Object();\n\n                class Inner {\n                  @GuardedBy(\"lock\")\n                  int x;\n\n                  class InnerMost {\n                    void m() {\n                      synchronized (Outer.this.lock) {\n                        Inner.this.x++;\n                      }\n                      // BUG: Diagnostic contains:\n                      // should be guarded by 'Outer.this.lock'\n                      Inner.this.x++;\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "instanceAccess_thisGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1102
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class InstanceAccess_ThisGuard {\n              class A {\n                @GuardedBy(\"this\")\n                int x;\n              }\n\n              class B extends A {\n                void m() {\n                  synchronized (this) {\n                    this.x++;\n                  }\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'this'\n                  this.x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "instanceAccess_namedThisGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1133
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class InstanceAccess_NamedThisGuard {\n              class Outer {\n                class Inner {\n                  @GuardedBy(\"Outer.this\")\n                  int x;\n\n                  void m() {\n                    synchronized (Outer.this) {\n                      x++;\n                    }\n                    // BUG: Diagnostic contains:\n                    // should be guarded by 'Outer.this'\n                    x++;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "lexicalAccess_thisGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1164
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class LexicalAccess_ThisGuard {\n              class Outer {\n                @GuardedBy(\"this\")\n                int x;\n\n                class Inner {\n                  void m() {\n                    synchronized (Outer.this) {\n                      Outer.this.x++;\n                    }\n                    // BUG: Diagnostic contains:\n                    // should be guarded by 'Outer.this'\n                    Outer.this.x++;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "lexicalAccess_namedThisGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1195
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class LexicalAccess_NamedThisGuard {\n              class Outer {\n                class Inner {\n                  @GuardedBy(\"Outer.this\")\n                  int x;\n\n                  class InnerMost {\n                    void m() {\n                      synchronized (Outer.this) {\n                        Inner.this.x++;\n                      }\n                      // BUG: Diagnostic contains:\n                      // should be guarded by 'Outer.this'\n                      Inner.this.x++;\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "complexLockExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1231
+      ],
+      "code": "package threadsafety;\n\n            class ComplexLockExpression {\n              final Object[] xs = {};\n              final int[] ys = {};\n\n              void m(int i) {\n                synchronized (xs[i]) {\n                  ys[i]++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "wrongInnerClassInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1253
+      ],
+      "code": "package threadsafety;\n\nimport com.google.errorprone.annotations.concurrent.GuardedBy;\n\nclass WrongInnerClassInstance {\n  final Object lock = new Object();\n\n  class Inner {\n    @GuardedBy(\"lock\")\n    int x = 0;\n\n    void m(Inner i) {\n      synchronized (WrongInnerClassInstance.this.lock) {\n        // BUG: Diagnostic contains:\n        // guarded by 'lock' in enclosing instance 'threadsafety.WrongInnerClassInstance' of 'i'\n        i.x++;\n      }\n    }\n  }\n}"
+    },
+    {
+      "description": "tryWithResources",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1286
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.Lock;\n\n            class Test {\n              Lock lock;\n\n              @GuardedBy(\"lock\")\n              int x;\n\n              static class LockCloser implements AutoCloseable {\n                Lock lock;\n\n                LockCloser(Lock lock) {\n                  this.lock = lock;\n                  this.lock.lock();\n                }\n\n                @Override\n                public void close() throws Exception {\n                  lock.unlock();\n                }\n              }\n\n              void m() throws Exception {\n                try (LockCloser _ = new LockCloser(lock)) {\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "tryWithResources_resourceVariables",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1327
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.Lock;\n\n            class Test {\n              Lock lock;\n\n              @GuardedBy(\"lock\")\n              int x;\n\n              void m(AutoCloseable c) throws Exception {\n                try (AutoCloseable unused = c) {\n                  // BUG: Diagnostic contains:\n                  x++;\n                } catch (Exception e) {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'this.lock'\n                  x++;\n                  throw e;\n                } finally {\n                  // BUG: Diagnostic contains:\n                  // should be guarded by 'this.lock'\n                  x++;\n                }\n              }\n\n              void n(AutoCloseable c) throws Exception {\n                lock.lock();\n                try (AutoCloseable unused = c) {\n                } catch (Exception e) {\n                  x++;\n                } finally {\n                  lock.unlock();\n                }\n              }\n            }"
+    },
+    {
+      "description": "lexicalScopingExampleOne",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1374
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Transaction {\n              @GuardedBy(\"this\")\n              int x;\n\n              interface Handler {\n                void apply();\n              }\n\n              public void handle() {\n                runHandler(\n                    new Handler() {\n                      public void apply() {\n                        // BUG: Diagnostic contains:\n                        // should be guarded by 'Transaction.this'\n                        x++;\n                      }\n                    });\n              }\n\n              private synchronized void runHandler(Handler handler) {\n                handler.apply();\n              }\n            }"
+    },
+    {
+      "description": "lexicalScopingExampleTwo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1412
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Transaction {\n              @GuardedBy(\"this\")\n              int x;\n\n              interface Handler {\n                void apply();\n              }\n\n              public void handle() {\n                runHandler(\n                    new Handler() {\n                      @GuardedBy(\"Transaction.this\")\n                      public void apply() {\n                        x++;\n                      }\n                    });\n              }\n\n              private synchronized void runHandler(Handler handler) {\n                // This isn't safe...\n                handler.apply();\n              }\n            }"
+    },
+    {
+      "description": "aliasing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1449
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Names {\n              @GuardedBy(\"this\")\n              List<String> names = new ArrayList<>();\n\n              public void addName(String name) {\n                List<String> copyOfNames;\n                synchronized (this) {\n                  copyOfNames = names; // OK: access of 'names' guarded by 'this'\n                }\n                copyOfNames.add(name); // should be an error: this access is not thread-safe!\n              }\n            }"
+    },
+    {
+      "description": "monitorGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1477
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import com.google.common.util.concurrent.Monitor;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              final Monitor monitor = new Monitor();\n\n              @GuardedBy(\"monitor\")\n              int x;\n\n              final Monitor.Guard guard =\n                  new Monitor.Guard(monitor) {\n                    @Override\n                    public boolean isSatisfied() {\n                      x++;\n                      return true;\n                    }\n                  };\n            }"
+    },
+    {
+      "description": "semaphore",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1509
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.Semaphore;\n\n            class Test {\n              final Semaphore semaphore = null;\n\n              @GuardedBy(\"semaphore\")\n              int x;\n\n              void m() throws InterruptedException {\n                semaphore.acquire();\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'this.semaphore'\n                x++;\n                try {\n                  x++;\n                } finally {\n                  semaphore.release();\n                }\n                // BUG: Diagnostic contains:\n                // access should be guarded by 'this.semaphore'\n                x++;\n              }\n            }"
+    },
+    {
+      "description": "synchronizedOnLockMethod_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1545
+      ],
+      "code": ""
+    },
+    {
+      "description": "suppressLocalVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1567
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import java.util.concurrent.locks.Lock;\n\n            class Test {\n              final Lock lock = null;\n\n              @GuardedBy(\"lock\")\n              int x;\n\n              void m() {\n                @SuppressWarnings(\"GuardedBy\")\n                int z = x++;\n              }\n            }"
+    },
+    {
+      "description": "enclosingBlockScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1594
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int x = 1;\n\n              {\n                new Object() {\n                  void f() {\n                    synchronized (mu) {\n                      x++;\n                    }\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "qualifiedType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1625
+      ],
+      "code": "package lib;\n\n            public class Lib {\n              public static class Inner {\n                public static final Object mu = new Object();\n              }\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public final Object mu = new Object();\n\n              @GuardedBy(\"lib.Lib.Inner.mu\")\n              int x = 1;\n\n              void f() {\n                synchronized (lib.Lib.Inner.mu) {\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClassTypeQualifier",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1663
+      ],
+      "code": "package lib;\n\n            public class Lib {\n              public static class Inner {\n                public static final Object mu = new Object();\n              }\n            }\n            \n\n            package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n            import lib.Lib;\n\n            public class Test {\n              public final Object mu = new Object();\n\n              @GuardedBy(\"Lib.Inner.mu\")\n              int x = 1;\n\n              void f() {\n                synchronized (Lib.Inner.mu) {\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "instanceInitializersAreUnchecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1701
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public final Object mu1 = new Object();\n              public final Object mu2 = new Object();\n\n              @GuardedBy(\"mu1\")\n              int x = 1;\n\n              {\n                synchronized (mu2) {\n                  x++;\n                }\n                synchronized (mu1) {\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "classInitializersAreUnchecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1731
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public static final Object mu1 = new Object();\n              public static final Object mu2 = new Object();\n\n              @GuardedBy(\"mu1\")\n              static int x = 1;\n\n              static {\n                synchronized (mu2) {\n                  x++;\n                }\n                synchronized (mu1) {\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "staticFieldInitializersAreUnchecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1761
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public static final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              static int x0 = 1;\n\n              static int x1 = x0++;\n            }"
+    },
+    {
+      "description": "instanceFieldInitializersAreUnchecked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1783
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int x0 = 1;\n\n              int x1 = x0++;\n            }"
+    },
+    {
+      "description": "innerClassMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1805
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public final Object mu = new Object();\n\n              class Inner {\n                @GuardedBy(\"mu\")\n                int x;\n\n                @GuardedBy(\"Test.this\")\n                int y;\n              }\n\n              void f(Inner i) {\n                synchronized (mu) {\n                  // BUG: Diagnostic contains:\n                  // guarded by 'mu' in enclosing instance 'threadsafety.Test' of 'i'\n                  i.x++;\n                }\n              }\n\n              synchronized void g(Inner i) {\n                // BUG: Diagnostic contains:\n                // guarded by enclosing instance 'threadsafety.Test' of 'i'\n                i.y++;\n              }\n            }"
+    },
+    {
+      "description": "innerClassInMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1845
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              public final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int i = 0;\n\n              void f() {\n                class Inner {\n                  @GuardedBy(\"mu\")\n                  void m() {\n                    i++;\n                  }\n                }\n                Inner i = new Inner();\n                synchronized (mu) {\n                  i.m();\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClassMethod_classBoundary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1878
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Outer {\n              public final Object mu = new Object();\n\n              class Inner {\n                @GuardedBy(\"mu\")\n                int x;\n\n                @GuardedBy(\"Outer.this\")\n                int y;\n              }\n            }\n            \n\npackage threadsafety;\n\nimport com.google.errorprone.annotations.concurrent.GuardedBy;\n\npublic class Test {\n  void f() {\n    Outer a = new Outer();\n    Outer b = new Outer();\n    Outer.Inner ai = a.new Inner();\n    synchronized (b.mu) {\n      // BUG: Diagnostic contains:\n      // Access should be guarded by 'mu' in enclosing instance 'threadsafety.Outer' of 'ai', which\n      // is not accessible in this scope; instead found: 'b.mu'\n      ai.x++;\n    }\n    synchronized (b) {\n      // BUG: Diagnostic contains:\n      // Access should be guarded by enclosing instance 'threadsafety.Outer' of 'ai', which is not\n      // accessible in this scope; instead found: 'b'\n      ai.y++;\n    }\n  }\n}"
+    },
+    {
+      "description": "regression_b27686620",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1930
+      ],
+      "code": "class A extends One {\n              void g() {}\n            }\n            \n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class One {\n              @GuardedBy(\"One.class\")\n              static int x = 1;\n\n              static void f() {\n                synchronized (One.class) {\n                  x++;\n                }\n              }\n            }\n\n            class Two {\n              @GuardedBy(\"Two.class\")\n              static int x = 1;\n\n              static void f() {\n                synchronized (Two.class) {\n                  x++;\n                }\n              }\n            }\n            \n\n            class B extends Two {\n              void g() {}\n            }"
+    },
+    {
+      "description": "qualifiedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        1977
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              @GuardedBy(\"this\")\n              void f() {}\n\n              void main() {\n                // BUG: Diagnostic contains: 'this', which could not be resolved\n                new Test().f();\n                Test t = new Test();\n                // BUG: Diagnostic contains: guarded by 't'\n                t.f();\n              }\n            }"
+    },
+    {
+      "description": "qualifiedMethodWrongThis_causesFinding_whenMatchOnErrorsFlagNotSet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2003
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\npublic class MemoryAllocatedInfoJava {\n  private static final class AllocationStats {\n    @GuardedBy(\"MemoryAllocatedInfoJava.this\")\n    void addAllocation(long size) {}\n  }\n\n  public void addStackTrace(long size) {\n    synchronized (this) {\n      AllocationStats stat = new AllocationStats();\n      // BUG: Diagnostic contains: Access should be guarded by enclosing instance\n      // 'MemoryAllocatedInfoJava' of 'stat', which is not accessible in this scope; instead found:\n      // 'this'\n      stat.addAllocation(size);\n    }\n  }\n}"
+    },
+    {
+      "description": "noSuchMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2032
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              Foo foo;\n\n              @GuardedBy(\"foo.get()\")\n              // BUG: Diagnostic contains: could not resolve guard\n              Object o = null;\n            }"
+    },
+    {
+      "description": "lambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2055
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              @GuardedBy(\"this\")\n              int x;\n\n              synchronized void f() {\n                Runnable r =\n                    () -> {\n                      // BUG: Diagnostic contains: should be guarded by 'this',\n                      x++;\n                    };\n              }\n            }"
+    },
+    {
+      "description": "staticMemberClass_enclosingInstanceLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2081
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              final Object mu = new Object();\n\n              private static final class Baz {\n                @GuardedBy(\"mu\")\n                // BUG: Diagnostic contains: could not resolve guard\n                int x;\n              }\n\n              public void m(Baz b) {\n                synchronized (mu) {\n                  // BUG: Diagnostic contains: 'mu', which could not be resolved\n                  b.x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "staticMemberClass_staticOuterClassLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2113
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Test {\n              static final Object mu = new Object();\n\n              private static final class Baz {\n                @GuardedBy(\"mu\")\n                int x;\n              }\n\n              public void m(Baz b) {\n                synchronized (mu) {\n                  b.x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "newClassBase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2141
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            public class Foo {\n              private final Object mu = new Object();\n\n              @GuardedBy(\"mu\")\n              int x;\n            }\n            \n\n            public class Bar {\n              void bar(Foo f) {\n                // BUG: Diagnostic contains: should be guarded by 'f.mu'\n                f.x = 10;\n              }\n\n              void bar() {\n                // BUG: Diagnostic contains: should be guarded by 'mu'\n                new Foo().x = 11;\n              }\n            }"
+    },
+    {
+      "description": "suppressionOnMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2174
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              final Object lock = null;\n\n              void foo() {\n                class Foo extends Object {\n                  @GuardedBy(\"lock\")\n                  int x;\n\n                  @SuppressWarnings(\"GuardedBy\")\n                  void m() {\n                    synchronized (lock) {\n                      int z = x++;\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "missingGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2205
+      ],
+      "code": "package threadsafety;\n\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            @SuppressWarnings(\"GuardedBy\")\n            class Lib {\n              @GuardedBy(\"lock\")\n              public void doSomething() {}\n            }\n            \n\n            package threadsafety;\n\n            class Test {\n              void m(Lib lib) {\n                // BUG: Diagnostic contains: 'lock', which could not be resolved\n                lib.doSomething();\n              }\n            }"
+    },
+    {
+      "description": "parameterGuard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2236
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\nclass Work {\n  final Object lock = new Object();\n\n  Object getLock() {\n    return lock;\n  }\n\n  @GuardedBy(\"getLock()\")\n  void workStarted() {}\n}\n\nclass Worker {\n  @GuardedBy(\"work.getLock()\")\n  void f(Work work) {\n    work.workStarted(); // ok\n  }\n\n  @GuardedBy(\"work2.getLock()\")\n  // BUG: Diagnostic contains: could not resolve guard\n  void g() {}\n\n  @GuardedBy(\"a.getLock()\")\n  void g(Work a, Work b) {\n    a.workStarted(); // ok\n    // BUG: Diagnostic contains: should be guarded by 'b.getLock()'; instead found: 'a.getLock()'\n    b.workStarted();\n  }\n}\n\nabstract class Test {\n  abstract Work getWork();\n\n  void t(Worker worker, Work work) {\n    synchronized (work.getLock()) {\n      worker.f(work);\n    }\n    synchronized (getWork().getLock()) {\n      // BUG: Diagnostic contains: guarded by 'work.getLock()'\n      worker.f(getWork());\n    }\n    // BUG: Diagnostic contains: guarded by 'work.getLock()'\n    worker.f(work);\n  }\n}"
+    },
+    {
+      "description": "parameterGuardNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2292
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Work {\n              final Object lock = new Object();\n\n              Object getLock() {\n                return lock;\n              }\n            }\n\n            class Worker {\n              @GuardedBy(\"work.getLock()\")\n              void f(Work work) {}\n            }\n\n            class Test {\n              void t(Worker worker, Work work) {\n                synchronized (work.getLock()) {\n                  worker.f(work);\n                }\n              }\n            }"
+    },
+    {
+      "description": "parameterGuardNegativeSimpleName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2324
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Work {\n              final Object lock = new Object();\n\n              Object getLock() {\n                return lock;\n              }\n            }\n\n            class Worker {\n              @GuardedBy(\"work.getLock()\")\n              void f(Work work) {}\n\n              void g() {\n                Work work = new Work();\n                synchronized (work.getLock()) {\n                  f(work);\n                }\n              }\n            }"
+    },
+    {
+      "description": "varargsArity",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2355
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"xs.toString()\")\n              void f(int x, Object... xs) {}\n\n              void g() {\n                Object[] xs = null;\n                synchronized (xs.toString()) {\n                  f(0, xs);\n                }\n                // BUG: Diagnostic contains:\n                f(0);\n              }\n            }"
+    },
+    {
+      "description": "immediateLambdas",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2380
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n            import java.util.Optional;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"this\")\n              private final List<String> xs = new ArrayList<>();\n\n              @GuardedBy(\"ys\")\n              private final List<String> ys = new ArrayList<>();\n\n              public synchronized void add(Optional<String> x) {\n                x.ifPresent(y -> xs.add(y));\n                x.ifPresent(xs::add);\n                // BUG: Diagnostic contains:\n                x.ifPresent(y -> ys.add(y));\n                // BUG: Diagnostic contains:\n                x.ifPresent(ys::add);\n              }\n            }"
+    },
+    {
+      "description": "methodReferences_shouldBeFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2411
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n            import java.util.Optional;\n            import java.util.function.Predicate;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"this\")\n              private final List<String> xs = new ArrayList<>();\n\n              private final List<Predicate<String>> preds = new ArrayList<>();\n\n              public synchronized void test() {\n                // BUG: Diagnostic contains:\n                preds.add(xs::contains);\n              }\n            }"
+    },
+    {
+      "description": "methodReference_referencedMethodIsFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2438
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.List;\n            import java.util.Optional;\n            import java.util.function.Predicate;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              private final List<Predicate<String>> preds = new ArrayList<>();\n\n              public synchronized void test() {\n                Optional.of(\"foo\").ifPresent(this::frobnicate);\n                // BUG: Diagnostic contains: should be guarded by\n                preds.add(this::frobnicate);\n              }\n\n              @GuardedBy(\"this\")\n              public boolean frobnicate(String x) {\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "lambdaMethodInvokedImmediately_shouldNotBeFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2468
+      ],
+      "code": "import java.util.List;\n            import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            class Test {\n              @GuardedBy(\"this\")\n              private final Object o = new Object();\n\n              public synchronized void test(List<?> xs) {\n                xs.forEach(x -> o.toString());\n              }\n            }"
+    },
+    {
+      "description": "bindingVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        2489
+      ],
+      "code": "import com.google.errorprone.annotations.concurrent.GuardedBy;\n\n            interface I {\n              class Impl implements I {\n                @GuardedBy(\"this\")\n                private int number = 42;\n              }\n\n              public static void t(I other) {\n                if (other instanceof Impl otherImpl) {\n                  synchronized (otherImpl) {\n                    int a = otherImpl.number;\n                  }\n                }\n              }\n            }"
+    }
+  ]
+}

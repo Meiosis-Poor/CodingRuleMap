@@ -1,0 +1,78 @@
+{
+  "name": "StaticQualifiedUsingExpression",
+  "language": "java",
+  "description": "A static variable or method should be qualified with a class name, not expression",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 104,
+  "branches": 17,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.math.BigDecimal;\n\n            /**\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            class MyClass {\n\n              static int STATIC_FIELD = 42;\n\n              static int staticMethod() {\n                return 42;\n              }\n\n              int FIELD = 42;\n\n              int method() {\n                return 42;\n              }\n\n              static class StaticInnerClass {\n                static final MyClass myClass = new MyClass();\n              }\n            }\n\n            class MyStaticClass {\n              static MyClass myClass = new MyClass();\n            }\n\n            public class StaticQualifiedUsingExpressionPositiveCase1 {\n\n              public static int staticVar1 = 1;\n              private StaticQualifiedUsingExpressionPositiveCase1 next;\n\n              public static int staticTestMethod() {\n                return 1;\n              }\n\n              public static Object staticTestMethod2() {\n                return new Object();\n              }\n\n              public static Object staticTestMethod3(Object x) {\n                return null;\n              }\n\n              public void test1() {\n                StaticQualifiedUsingExpressionPositiveCase1 testObj =\n                    new StaticQualifiedUsingExpressionPositiveCase1();\n                int i;\n\n                // BUG: Diagnostic contains: variable staticVar1\n                // i = staticVar1\n                i = this.staticVar1;\n                // BUG: Diagnostic contains: variable staticVar1\n                // i = staticVar1\n                i = testObj.staticVar1;\n                // BUG: Diagnostic contains: variable staticVar1\n                // i = staticVar1\n                i = testObj.next.next.next.staticVar1;\n              }\n\n              public void test2() {\n                int i;\n                Integer integer = Integer.valueOf(1);\n                // BUG: Diagnostic contains: variable MAX_VALUE\n                // i = Integer.MAX_VALUE\n                i = integer.MAX_VALUE;\n              }\n\n              public void test3() {\n                String s1 = new String();\n                // BUG: Diagnostic contains: method valueOf\n                // String s2 = String.valueOf(10)\n                String s2 = s1.valueOf(10);\n                // BUG: Diagnostic contains: method valueOf\n                // s2 = String.valueOf(10)\n                s2 = new String().valueOf(10);\n                // BUG: Diagnostic contains: method staticTestMethod\n                // int i = staticTestMethod()\n                int i = this.staticTestMethod();\n                // BUG: Diagnostic contains: method staticTestMethod2\n                // String s3 = staticTestMethod2().toString\n                String s3 = this.staticTestMethod2().toString();\n                // BUG: Diagnostic contains: method staticTestMethod\n                // i = staticTestMethod()\n                i = this.next.next.next.staticTestMethod();\n              }\n\n              public void test4() {\n                BigDecimal decimal = new BigDecimal(1);\n                // BUG: Diagnostic contains: method valueOf\n                // BigDecimal decimal2 = BigDecimal.valueOf(1)\n                BigDecimal decimal2 = decimal.valueOf(1);\n              }\n\n              public static MyClass hiding;\n\n              public void test5(MyClass hiding) {\n                // BUG: Diagnostic contains: method staticTestMethod3\n                // Object o = staticTestMethod3(this.toString())\n                Object o = this.staticTestMethod3(this.toString());\n                // BUG: Diagnostic contains: variable myClass\n                // x = MyClass.StaticInnerClass.myClass.FIELD;\n                int x = new MyClass.StaticInnerClass().myClass.FIELD;\n                // BUG: Diagnostic contains: variable STATIC_FIELD\n                // x = MyClass.STATIC_FIELD;\n                x = new MyClass.StaticInnerClass().myClass.STATIC_FIELD;\n                // BUG: Diagnostic contains: variable hiding\n                // StaticQualifiedUsingExpressionPositiveCase1.hiding = hiding;\n                this.hiding = hiding;\n                // BUG: Diagnostic contains: variable STATIC_FIELD\n                // x = MyClass.STATIC_FIELD;\n                x = MyStaticClass.myClass.STATIC_FIELD;\n                // BUG: Diagnostic contains: method staticMethod\n                // x = MyClass.staticMethod();\n                x = MyStaticClass.myClass.staticMethod();\n\n                x = MyStaticClass.myClass.FIELD;\n                x = MyStaticClass.myClass.method();\n              }\n\n              static class Bar {\n                static int baz = 0;\n\n                static int baz() {\n                  return 42;\n                }\n              }\n\n              static class Foo {\n                static Bar bar;\n              }\n\n              static void test6() {\n                Foo foo = new Foo();\n                // BUG: Diagnostic contains: method baz\n                // x = Bar.baz();\n                int x = Foo.bar.baz();\n                Bar bar = Foo.bar;\n                // BUG: Diagnostic contains: variable bar\n                // bar = Foo.bar;\n                bar = foo.bar;\n                // BUG: Diagnostic contains: variable baz\n                // x = Bar.baz;\n                x = Foo.bar.baz;\n              }\n\n              static class C<T extends String> {\n                static int foo() {\n                  return 42;\n                }\n              }\n\n              public void test7() {\n                // BUG: Diagnostic contains: method foo\n                // x = C.foo();\n                int x = new C<String>().foo();\n              }\n            }\\"
+    },
+    {
+      "description": "positiveCase2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            public class StaticQualifiedUsingExpressionPositiveCase2 {\n\n              private static class TestClass {\n                public static int staticTestMethod() {\n                  return 1;\n                }\n              }\n\n              public int test1() {\n                // BUG: Diagnostic contains: method staticTestMethod\n                // return TestClass.staticTestMethod()\n                return new TestClass().staticTestMethod();\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        236
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            public class StaticQualifiedUsingExpressionNegativeCases {\n\n              public static int staticVar1 = 1;\n\n              public static void staticTestMethod() {}\n\n              public void test1() {\n                Integer i = Integer.MAX_VALUE;\n                i = Integer.valueOf(10);\n              }\n\n              public void test2() {\n                int i = staticVar1;\n                i = StaticQualifiedUsingExpressionNegativeCases.staticVar1;\n              }\n\n              public void test3() {\n                test1();\n                this.test1();\n                new StaticQualifiedUsingExpressionNegativeCases().test1();\n                staticTestMethod();\n              }\n\n              public void test4() {\n                Class<?> klass = String[].class;\n              }\n\n              @SuppressWarnings(\"static\")\n              public void testJavacAltname() {\n                this.staticTestMethod();\n              }\n\n              @SuppressWarnings(\"static-access\")\n              public void testEclipseAltname() {\n                this.staticTestMethod();\n              }\n            }\\"
+    },
+    {
+      "description": "clash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        288
+      ],
+      "code": "package a;\n\n            public class Lib {\n              public static final int CONST = 0;\n            }\n            \n\n            package b;\n\n            public class Lib {\n              public static final int CONST = 0;\n            }\n            \n\n            import a.Lib;\n\n            class Test {\n              void test() {\n                int x = Lib.CONST + new b.Lib().CONST;\n              }\n            }\n            \n\n            import a.Lib;\n\n            class Test {\n              void test() {\n                new b.Lib();\n                int x = Lib.CONST + b.Lib.CONST;\n              }\n            }"
+    },
+    {
+      "description": "expr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        337
+      ],
+      "code": "interface I {\n              int CONST = 42;\n\n              I id();\n            }\n            \n\n            class Test {\n              void f(I i) {\n                System.err.println(((I) null).CONST);\n                System.err.println(i.id().CONST);\n              }\n            }\n            \n\n            class Test {\n              void f(I i) {\n                System.err.println(I.CONST);\n                i.id();\n                System.err.println(I.CONST);\n              }\n            }"
+    },
+    {
+      "description": "superAccess",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        374
+      ],
+      "code": "interface I {\n              interface Builder {\n                default void f() {}\n              }\n            }\n            \n\n            interface J extends I {\n              interface Builder extends I.Builder {\n                default void f() {}\n\n                default void aI() {\n                  I.Builder.super.f();\n                }\n              }\n            }"
+    },
+    {
+      "description": "enumConstantAccessedViaInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        404
+      ],
+      "code": "enum Enum {\n              A,\n              B;\n            }\n            \n\n            class Test {\n              Enum foo(Enum e) {\n                return e.B;\n              }\n            }\n            \n\n            class Test {\n              Enum foo(Enum e) {\n                return Enum.B;\n              }\n            }"
+    },
+    {
+      "description": "qualified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        437
+      ],
+      "code": "class C {\n              static Object x;\n\n              void f() {\n                Object x = this.x;\n              }\n\n              void g() {\n                Object y = this.x;\n              }\n            }\n            \n\n            class C {\n              static Object x;\n\n              void f() {\n                Object x = C.x;\n              }\n\n              void g() {\n                Object y = x;\n              }\n            }"
+    }
+  ]
+}

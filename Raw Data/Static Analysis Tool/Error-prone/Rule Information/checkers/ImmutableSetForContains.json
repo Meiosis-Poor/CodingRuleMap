@@ -1,0 +1,166 @@
+{
+  "name": "ImmutableSetForContains",
+  "language": "java",
+  "description": "This private static ImmutableList is only used for contains, containsAll or isEmpty checks; prefer ImmutableSet.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 246,
+  "branches": 21,
+  "apis": 5,
+  "test": [
+    {
+      "description": "immutableListOf_onlyContainsReplaces",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.toImmutableList;\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST_1 =\n                  ImmutableList.<String>builder().add(\"hello\").build();\n              private static final ImmutableList<String> MY_LIST_2 = ImmutableList.of(\"hello\");\n              private static final ImmutableList<String> MY_LIST_3 =\n                  new ArrayList<String>().stream().collect(toImmutableList());\n              private static final ImmutableList<String> MY_LIST_4 =\n                  new ImmutableList.Builder<String>().add(\"hello\").build();\n\n              private void myFunc() {\n                boolean myBool1 = MY_LIST_1.contains(\"he\");\n                boolean myBool2 = MY_LIST_2.containsAll(new ArrayList<String>());\n                boolean myBool3 = MY_LIST_3.isEmpty();\n                boolean myBool4 = MY_LIST_4.isEmpty();\n              }\n            }\n            \n\n            import static com.google.common.collect.ImmutableList.toImmutableList;\n            import static com.google.common.collect.ImmutableSet.toImmutableSet;\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableSet;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableSet<String> MY_LIST_1 =\n                  ImmutableSet.<String>builder().add(\"hello\").build();\n              private static final ImmutableSet<String> MY_LIST_2 = ImmutableSet.of(\"hello\");\n              private static final ImmutableSet<String> MY_LIST_3 =\n                  new ArrayList<String>().stream().collect(toImmutableSet());\n              private static final ImmutableSet<String> MY_LIST_4 =\n                  new ImmutableSet.Builder<String>().add(\"hello\").build();\n\n              private void myFunc() {\n                boolean myBool1 = MY_LIST_1.contains(\"he\");\n                boolean myBool2 = MY_LIST_2.containsAll(new ArrayList<String>());\n                boolean myBool3 = MY_LIST_3.isEmpty();\n                boolean myBool4 = MY_LIST_4.isEmpty();\n              }\n            }"
+    },
+    {
+      "description": "immutableList_initUsingStaticFunc_replacesWithCopyOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import static com.google.common.collect.ImmutableList.toImmutableList;\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST = initMyList();\n\n              private static ImmutableList<String> initMyList() {\n                return ImmutableList.of();\n              }\n\n              private void myFunc() {\n                boolean myBool = MY_LIST.contains(\"he\");\n              }\n            }\n            \n\nimport static com.google.common.collect.ImmutableList.toImmutableList;\nimport com.google.common.collect.ImmutableList;\nimport com.google.common.collect.ImmutableSet;\nimport java.util.ArrayList;\n\nclass Test {\n  private static final ImmutableSet<String> MY_LIST = ImmutableSet.copyOf(initMyList());\n\n  private static ImmutableList<String> initMyList() {\n    return ImmutableList.of();\n  }\n\n  private void myFunc() {\n    boolean myBool = MY_LIST.contains(\"he\");\n  }\n}"
+    },
+    {
+      "description": "immutableList_rawType_replacesWithImmutableSet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList MY_LIST = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                boolean myBool = MY_LIST.contains(\"he\");\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableSet;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableSet MY_LIST = ImmutableSet.of(\"hello\");\n\n              private void myFunc() {\n                boolean myBool = MY_LIST.contains(\"he\");\n              }\n            }"
+    },
+    {
+      "description": "fieldAnnotatedWithBind_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        166
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.inject.testing.fieldbinder.Bind;\n            import java.util.ArrayList;\n\n            class Test {\n              @Bind private static final ImmutableList MY_LIST = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                boolean myBool = MY_LIST.contains(\"he\");\n              }\n            }"
+    },
+    {
+      "description": "immutableVarPassedToAFunc_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                consumer(MY_LIST);\n              }\n\n              private void consumer(ImmutableList<String> arg) {}\n            }"
+    },
+    {
+      "description": "immutableList_uniqueElements_iterating_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        210
+      ],
+      "code": "import static com.sun.source.tree.Tree.Kind.METHOD_INVOCATION;\n            import com.google.common.collect.ImmutableList;\n            import com.sun.source.tree.Tree.Kind;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> STR_LIST = ImmutableList.of(\"hello\");\n              private static final ImmutableList<Kind> ENUM_LIST =\n                  ImmutableList.of(Kind.AND, METHOD_INVOCATION);\n\n              private void myFunc() {\n                STR_LIST.stream().forEach(System.out::println);\n                STR_LIST.forEach(System.out::println);\n                ENUM_LIST.stream().forEach(System.out::println);\n                ENUM_LIST.forEach(System.out::println);\n                for (String myStr : STR_LIST) {\n                  System.out.println(myStr);\n                }\n                for (Kind myKind : ENUM_LIST) {\n                  System.out.println(myKind);\n                }\n                for (Long lvar : ImmutableList.<Long>of(2L)) {\n                  System.out.println(lvar);\n                }\n                ImmutableList<Long> longList = ImmutableList.of(1L);\n                for (Long lvar : longList) {\n                  System.out.println(lvar);\n                }\n              }\n            }"
+    },
+    {
+      "description": "immutableList_duplicateElements_iterating_doesNotReplace",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\nimport java.util.ArrayList;\n\nclass Test {\n  private static final ImmutableList<String> STR_LIST_1 = ImmutableList.of(\"hello\", \"hello\");\n  private static final ImmutableList<String> STR_LIST_2 = ImmutableList.of(\"hello\", strGenFunc());\n\n  private void myFunc() {\n    STR_LIST_1.stream().forEach(System.out::println);\n    STR_LIST_2.stream().forEach(System.out::println);\n  }\n\n  private static String strGenFunc() {\n    return \"\";\n  }\n}"
+    },
+    {
+      "description": "immutableList_distinctElementsInBuilder_iterating_doesNotReplace",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> STR_LIST =\n                  ImmutableList.<String>builder().add(\"hello\").build();\n\n              private void myFunc() {\n                STR_LIST.stream().forEach(System.out::println);\n              }\n            }"
+    },
+    {
+      "description": "immutableList_passedToFunctionsAcceptingSet_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        300
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableSet;\n            import com.google.common.collect.Iterables;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                ImmutableSet<String> mySet = ImmutableSet.copyOf(MY_LIST);\n                String onlyElement = Iterables.getOnlyElement(MY_LIST);\n              }\n            }"
+    },
+    {
+      "description": "immutableList_passedToGenericFunctionAcceptingList_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        324
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.ImmutableMap;\n            import com.google.common.collect.ImmutableSet;\n            import com.google.common.collect.Iterables;\n            import java.util.ArrayList;\n            import java.util.List;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST_1 = ImmutableList.of(\"hello\");\n              private static final ImmutableList<String> MY_LIST_2 = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                ImmutableMap<String, List<String>> myMap =\n                    ImmutableMap.<String, List<String>>builder().put(\"a\", MY_LIST_1).build();\n                boolean myBool = ImmutableList.of().equals(MY_LIST_2);\n              }\n            }"
+    },
+    {
+      "description": "immutableList_uniqueElements_inLoopExprAndStatement_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        352
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                for (String myStr : MY_LIST) {\n                  System.out.println(MY_LIST.indexOf(myStr));\n                }\n              }\n            }"
+    },
+    {
+      "description": "immutableListInNestedClass_usedInParentClass_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        374
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private static final class Nested {\n                private static final ImmutableList<String> MY_LIST_1 = ImmutableList.of(\"a\");\n                private static final ImmutableList<String> MY_LIST_2 = ImmutableList.of(\"b\");\n              }\n\n              private void myFunc() {\n                String one = Nested.MY_LIST_1.get(0);\n                String two = Nested.MY_LIST_2.iterator().next();\n              }\n            }"
+    },
+    {
+      "description": "twoImmutableListsUsedInSameMethodInvocation_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        398
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST_1 = ImmutableList.of(\"hello\");\n              private static final ImmutableList<String> MY_LIST_2 = ImmutableList.of(\"world\");\n\n              private void myFunc() {\n                MY_LIST_1.forEach(elem -> System.out.println(MY_LIST_2.get(0)));\n              }\n            }"
+    },
+    {
+      "description": "listOfClassOrDistinctInstances_uniqueElements_iterating_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        420
+      ],
+      "code": "import static com.sun.source.tree.Tree.Kind.METHOD_INVOCATION;\n            import com.google.common.collect.ImmutableList;\n            import com.sun.source.tree.Tree.Kind;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<Class<?>> CLS_LIST =\n                  ImmutableList.of(Long.class, Double.class);\n              private static final ImmutableList<Object> OBJ_LIST =\n                  ImmutableList.of(new String(\"\"), new Object());\n\n              private void myFunc() {\n                CLS_LIST.stream().forEach(System.out::println);\n                OBJ_LIST.forEach(System.out::println);\n              }\n            }"
+    },
+    {
+      "description": "immutableListGetInVarArg_doesNothing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        447
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST = ImmutableList.of(\"hello\");\n\n              private String myFunc() {\n                return String.format(\"%s\", MY_LIST.get(0));\n              }\n            }"
+    },
+    {
+      "description": "suppressionOnVariableTree_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        468
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              @SuppressWarnings(\"ImmutableSetForContains\")\n              private static final ImmutableList<String> MY_LIST_1 =\n                  ImmutableList.<String>builder().add(\"hello\").build();\n\n              private void myFunc() {\n                boolean myBool1 = MY_LIST_1.contains(\"he\");\n              }\n            }"
+    },
+    {
+      "description": "bothGetDisallowedAndContainsAllowed_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        490
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST_1 = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                String myString = MY_LIST_1.get(0);\n                boolean myBool1 = MY_LIST_1.contains(\"he\");\n              }\n            }"
+    },
+    {
+      "description": "bothContainsAllowedAndGetDisallowed_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        511
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST_1 = ImmutableList.of(\"hello\");\n\n              private void myFunc() {\n                boolean myBool1 = MY_LIST_1.contains(\"he\");\n                String myString = MY_LIST_1.get(0);\n              }\n            }"
+    },
+    {
+      "description": "unusedVariable_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        532
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n\n            class Test {\n              private static final ImmutableList<String> MY_LIST = ImmutableList.of(\"hello\");\n            }"
+    }
+  ]
+}

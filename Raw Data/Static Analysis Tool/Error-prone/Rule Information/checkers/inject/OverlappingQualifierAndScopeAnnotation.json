@@ -1,0 +1,30 @@
+{
+  "name": "OverlappingQualifierAndScopeAnnotation",
+  "language": "java",
+  "description": "Annotations cannot be both Scope annotations and Qualifier annotations: this causes confusion when trying to use them.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 54,
+  "branches": 1,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class OverlappingQualifierAndScopeAnnotationPositiveCases {\n\n              @javax.inject.Scope\n              @javax.inject.Qualifier\n              // BUG: Diagnostic contains: OverlappingQualifierAndScopeAnnotation\n              @interface JavaxScopeAndJavaxQualifier {}\n\n              @com.google.inject.ScopeAnnotation\n              @javax.inject.Qualifier\n              // BUG: Diagnostic contains: OverlappingQualifierAndScopeAnnotation\n              @interface GuiceScopeAndJavaxQualifier {}\n\n              @com.google.inject.ScopeAnnotation\n              @com.google.inject.BindingAnnotation\n              // BUG: Diagnostic contains: OverlappingQualifierAndScopeAnnotation\n              @interface GuiceScopeAndGuiceBindingAnnotation {}\n\n              @javax.inject.Scope\n              @com.google.inject.BindingAnnotation\n              // BUG: Diagnostic contains: OverlappingQualifierAndScopeAnnotation\n              @interface JavaxScopeAndGuiceBindingAnnotation {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class OverlappingQualifierAndScopeAnnotationNegativeCases {\n\n              @javax.inject.Scope\n              @interface MyJavaxScope {}\n\n              @com.google.inject.ScopeAnnotation\n              @interface MyGuiceScope {}\n\n              @javax.inject.Qualifier\n              @interface MyJavaxQualifier {}\n\n              @com.google.inject.BindingAnnotation\n              @interface MyGuiceBindingAnnotation {}\n\n              // suppression tests\n              @SuppressWarnings(\"OverlappingQualifierAndScopeAnnotation\")\n              @javax.inject.Scope\n              @javax.inject.Qualifier\n              @interface JavaxScopeAndJavaxQualifier {}\n\n              @SuppressWarnings(\"OverlappingQualifierAndScopeAnnotation\")\n              @com.google.inject.ScopeAnnotation\n              @javax.inject.Qualifier\n              @interface GuiceScopeAndJavaxQualifier {}\n\n              @SuppressWarnings(\"OverlappingQualifierAndScopeAnnotation\")\n              @com.google.inject.ScopeAnnotation\n              @com.google.inject.BindingAnnotation\n              @interface GuiceScopeAndGuiceBindingAnnotation {}\n\n              @SuppressWarnings(\"OverlappingQualifierAndScopeAnnotation\")\n              @javax.inject.Scope\n              @com.google.inject.BindingAnnotation\n              @interface JavaxScopeAndGuiceBindingAnnotation {}\n            }\\"
+    }
+  ]
+}

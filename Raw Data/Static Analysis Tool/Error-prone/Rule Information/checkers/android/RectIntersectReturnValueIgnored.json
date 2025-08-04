@@ -1,0 +1,30 @@
+{
+  "name": "RectIntersectReturnValueIgnored",
+  "language": "java",
+  "description": "Return value of android.graphics.Rect.intersect() must be checked",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 51,
+  "branches": 2,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "package com.google.errorprone.bugpatterns.android.testdata;\n\nimport android.graphics.Rect;\n\n/**\n * @author avenet@google.com (Arnaud J. Venet)\n */\npublic class RectIntersectReturnValueIgnoredPositiveCases {\n  void checkSimpleCall(Rect rect, int aLeft, int aTop, int aRight, int aBottom) {\n    // BUG: Diagnostic contains: Return value of android.graphics.Rect.intersect() must be checked\n    rect.intersect(aLeft, aTop, aRight, aBottom);\n  }\n\n  void checkOverload(Rect rect1, Rect rect2) {\n    // BUG: Diagnostic contains: Return value of android.graphics.Rect.intersect() must be checked\n    rect1.intersect(rect2);\n  }\n\n  class RectContainer {\n    int xPos;\n    int yPos;\n    Rect rect;\n\n    boolean intersect(int length, int width) {\n      // BUG: Diagnostic contains: Return value of android.graphics.Rect.intersect() must be checked\n      rect.intersect(xPos, yPos, xPos + length, yPos + width);\n      return true;\n    }\n  }\n\n  void checkInMethod(int length, int width) {\n    RectContainer container = new RectContainer();\n    container.intersect(length, width);\n  }\n\n  void checkInField(RectContainer container) {\n    // BUG: Diagnostic contains: Return value of android.graphics.Rect.intersect() must be checked\n    container.rect.intersect(\n        container.xPos, container.yPos, container.xPos + 10, container.yPos + 20);\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102
+      ],
+      "code": "package com.google.errorprone.bugpatterns.android.testdata;\n\n            import android.graphics.Rect;\n\n            /**\n             * @author avenet@google.com (Arnaud J. Venet)\n             */\n            public class RectIntersectReturnValueIgnoredNegativeCases {\n              boolean checkSimpleCall(Rect rect, int aLeft, int aTop, int aRight, int aBottom) {\n                return rect.intersect(aLeft, aTop, aRight, aBottom);\n              }\n\n              boolean checkOverload(Rect rect1, Rect rect2) {\n                return rect1.intersect(rect2);\n              }\n\n              void checkInTest(Rect rect, int aLeft, int aTop, int aRight, int aBottom) {\n                if (!rect.intersect(aLeft, aTop, aRight, aBottom)) {\n                  rect.setEmpty();\n                }\n              }\n\n              class InternalScope {\n                class Rect {\n                  int left;\n                  int right;\n                  int top;\n                  int bottom;\n\n                  boolean intersect(int aLeft, int aTop, int aRight, int aBottom) {\n                    throw new RuntimeException(\"Not implemented\");\n                  }\n                }\n\n                void checkHomonym(Rect rect, int aLeft, int aTop, int aRight, int aBottom) {\n                  rect.intersect(aLeft, aTop, aRight, aBottom);\n                }\n              }\n\n              class RectContainer {\n                int xPos;\n                int yPos;\n                Rect rect;\n\n                boolean intersect(int length, int width) {\n                  return rect.intersect(xPos, yPos, xPos + length, yPos + width);\n                }\n              }\n\n              void checkInMethod(int length, int width) {\n                RectContainer container = new RectContainer();\n                container.intersect(length, width);\n              }\n            }\\"
+    }
+  ]
+}

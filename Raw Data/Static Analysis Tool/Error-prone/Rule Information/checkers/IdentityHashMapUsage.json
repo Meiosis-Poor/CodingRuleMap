@@ -1,0 +1,62 @@
+{
+  "name": "IdentityHashMapUsage",
+  "language": "java",
+  "description": "IdentityHashMap usage shouldn't be intermingled with Map",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 104,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "equals_putAll_positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              boolean test(Map map, IdentityHashMap ihm) {\n                // BUG: Diagnostic contains: IdentityHashMapUsage\n                return ihm.equals(map);\n              }\n\n              void putAll(Map map, IdentityHashMap ihm) {\n                // BUG: Diagnostic contains: IdentityHashMapUsage\n                ihm.putAll(map);\n              }\n            }"
+    },
+    {
+      "description": "equals_putAll_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              boolean test(Map map, IdentityHashMap ihm) {\n                return map.equals(ihm);\n              }\n\n              boolean equalsSameType(IdentityHashMap ihm, IdentityHashMap ihm2) {\n                return ihm.equals(ihm2);\n              }\n\n              void putAll(Map map, IdentityHashMap ihm) {\n                map.putAll(ihm);\n              }\n\n              void putAllSameType(IdentityHashMap ihm, IdentityHashMap ihm2) {\n                ihm.putAll(ihm2);\n              }\n            }"
+    },
+    {
+      "description": "assignmentToMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              Map putAll(IdentityHashMap ihm) {\n                Map map;\n                // BUG: Diagnostic contains: IdentityHashMapUsage\n                map = ihm;\n                return map;\n              }\n            }"
+    },
+    {
+      "description": "variableInitializationToSuperType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              Map putAll(IdentityHashMap ihmArg) {\n                Map map = ihmArg;\n                return map;\n              }\n            }\n            \n\n            import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              Map putAll(IdentityHashMap ihmArg) {\n                IdentityHashMap map = ihmArg;\n                return map;\n              }\n            }"
+    },
+    {
+      "description": "ihmInitializationWithNonIhm",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        140
+      ],
+      "code": "import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              IdentityHashMap something(Map mapArg) {\n                // BUG: Diagnostic contains: IdentityHashMapUsage\n                return new IdentityHashMap(mapArg);\n              }\n            }"
+    },
+    {
+      "description": "fieldType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              private final Map<String, Integer> m = new IdentityHashMap<>();\n            }\n            \n\n            import java.util.IdentityHashMap;\n            import java.util.Map;\n\n            class Test {\n              private final IdentityHashMap<String, Integer> m = new IdentityHashMap<>();\n            }"
+    }
+  ]
+}

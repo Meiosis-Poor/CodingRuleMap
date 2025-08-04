@@ -1,0 +1,238 @@
+{
+  "name": "FieldMissingNullable",
+  "language": "java",
+  "description": "Field is assigned (or compared against) a definitely null value but is not annotated @Nullable",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 131,
+  "branches": 14,
+  "apis": 5,
+  "test": [
+    {
+      "description": "literalNullAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message = \"hello\";\n\n              public void reset() {\n                // BUG: Diagnostic contains: @Nullable\n                message = null;\n              }\n            }"
+    },
+    {
+      "description": "definiteNullAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message = \"hello\";\n\n              public void setMessage(String message) {\n                // BUG: Diagnostic contains: @Nullable\n                this.message = message != null ? null : message;\n              }\n            }"
+    },
+    {
+      "description": "assignmentInsideIfNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message;\n\n              public void setMessage(String message) {\n                if (message == null) {\n                  // BUG: Diagnostic contains: @Nullable\n                  this.message = message;\n                } else {\n                  this.message = \"hello\";\n                }\n              }\n            }"
+    },
+    {
+      "description": "maybeNullAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message = \"hello\";\n\n              public void setMessage(int x) {\n                // BUG: Diagnostic contains: @Nullable\n                message = x >= 0 ? null : \"negative\";\n              }\n            }"
+    },
+    {
+      "description": "nullInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class NullableParameterTest {\n              // BUG: Diagnostic contains: @Nullable\n              public static final String MESSAGE = null;\n            }"
+    },
+    {
+      "description": "maybeNullAssignmentInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": ""
+    },
+    {
+      "description": "comparisonToNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message;\n\n              public void reset() {\n                // BUG: Diagnostic contains: @Nullable\n                if (message != null) {}\n              }\n            }"
+    },
+    {
+      "description": "comparisonToNullOnOtherInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message;\n\n              public void reset(FieldMissingNullTest other) {\n                // BUG: Diagnostic contains: @Nullable\n                if (other.message != null) {}\n              }\n            }"
+    },
+    {
+      "description": "recordComponent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            record FieldMissingNullTest(String message) {\n              boolean hasMessage() {\n                return message != null;\n              }\n            }\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import org.jspecify.annotations.Nullable;\n\n            record FieldMissingNullTest(@Nullable String message) {\n              boolean hasMessage() {\n                return message != null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_comparisonToNullConservative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        223
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message;\n\n              public void reset() {\n                if (message != null) {}\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        242
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class FieldMissingNullTest {\n              @Nullable String message;\n\n              public void reset() {\n                this.message = null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyTypeAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "package com.google.anno.my;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.TYPE_USE})\n            public @interface Nullable {}\n            \n\n            package com.google.errorprone.bugpatterns.nullness;\n\n            import com.google.anno.my.Nullable;\n\n            public class FieldMissingNullTest {\n              @Nullable String message;\n\n              public void reset() {\n                this.message = null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyAnnotatedMonotonic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        295
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.MonotonicNonNull;\n\n            public class FieldMissingNullTest {\n              private @MonotonicNonNull String message;\n\n              public void reset() {\n                if (message != null) {}\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyTypeAnnotatedInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        316
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            public class FieldMissingNullTest {\n              class Inner {}\n\n              @Nullable Inner message;\n\n              public void reset() {\n                this.message = null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_alreadyAnnotatedRecordComponent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        339
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import org.jspecify.annotations.Nullable;\n\n            record FieldMissingNullTest(@Nullable String message) {\n              boolean hasMessage() {\n                return message != null;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_initializeWithNonNullLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        358
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private final String message;\n\n              public FieldMissingNullTest() {\n                message = \"hello\";\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        377
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class FieldMissingNullTest {\n              private String message = \"hello\";\n            }"
+    },
+    {
+      "description": "negativeCases_lambdaInitializer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        392
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import java.util.function.Predicate;\n            import java.util.function.Function;\n\n            public class FieldMissingNullTest {\n              private Runnable runnable = () -> {};\n              private Predicate<?> predicate1 = p -> true;\n              private Predicate<?> predicate2 = (p -> true);\n              private Predicate<?> predicate3 =\n                  (String p) -> {\n                    return false;\n                  };\n              private Function<?, ?> function1 = p -> null;\n              private Function<?, ?> function2 = (p -> null);\n              private Function<?, ?> function3 =\n                  (String p) -> {\n                    return null;\n                  };\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        422
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class NonNullMethodTest {\n              private String message = \"hello\";\n\n              public void setMessage(int x) {\n                message = String.valueOf(x);\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        441
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class NonNullFieldTest {\n              private String message = \"hello\";\n              private String previous = \"\";\n\n              public void save() {\n                previous = message;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_nonNullParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        461
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class NonNullParameterTest {\n              private String message = \"hello\";\n\n              public void setMessage(String message) {\n                this.message = message;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_this",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        480
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class ThisTest {\n              private static ThisTest theInstance = new ThisTest();\n\n              public void makeDefault() {\n                this.theInstance = this;\n              }\n            }"
+    },
+    {
+      "description": "negativeCases_primitiveFieldType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        503
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            public class PrimitiveReturnTest {\n              private int count = (Integer) null;\n            }"
+    },
+    {
+      "description": "negativeCases_initializeWithLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        518
+      ],
+      "code": "package com.google.errorprone.bugpatterns.nullness;\n\n            import javax.annotation.Nullable;\n\n            public class NullableParameterTest {\n              private String message = \"hello\";\n\n              public void setMessageIfPresent(java.util.Optional<String> message) {\n                message.ifPresent(\n                    s -> {\n                      this.message = s;\n                    });\n              }\n            }"
+    },
+    {
+      "description": "i708",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        543
+      ],
+      "code": "import java.util.regex.Pattern;\n\n            class T {\n              private static final Pattern FULLY_QUALIFIED_METHOD_NAME_PATTERN =\n                  Pattern.compile(\"(.+)#([^()]+?)(\\\\\\\\((.*)\\\\\\\\))?\");\n            }"
+    },
+    {
+      "description": "suggestNonJsr305Nullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        559
+      ],
+      "code": "class T {\n              @Nullable private final Object obj1 = null;\n              private final Object obj2 = null;\n\n              @interface Nullable {}\n            }\n            \n\n            class T {\n              @Nullable private final Object obj1 = null;\n              @Nullable private final Object obj2 = null;\n\n              @interface Nullable {}\n            }"
+    },
+    {
+      "description": "annotationInsertedAfterModifiers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        585
+      ],
+      "code": "import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              private final Object obj1 = null;\n            }\n            \n\n            import org.checkerframework.checker.nullness.qual.Nullable;\n\n            class T {\n              private final @Nullable Object obj1 = null;\n            }"
+    },
+    {
+      "description": "nonAnnotationNullable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        609
+      ],
+      "code": "class T {\n              private final Object obj2 = null;\n\n              class Nullable {}\n            }\n            \n\n            class T {\n              private final @org.jspecify.annotations.Nullable Object obj2 = null;\n\n              class Nullable {}\n            }"
+    }
+  ]
+}

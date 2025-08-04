@@ -1,0 +1,46 @@
+{
+  "name": "MisusedWeekYear",
+  "language": "java",
+  "description": "Use of \\",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 57,
+  "branches": 6,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.text.DateFormatSymbols;\nimport java.text.SimpleDateFormat;\nimport java.util.Locale;\n\npublic class MisusedWeekYearPositiveCases {\n  void testConstructorWithLiteralPattern() {\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"yyyy-MM-dd\")\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(\"YYYY-MM-dd\");\n\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"yy-MM-dd\")\n    simpleDateFormat = new SimpleDateFormat(\"YY-MM-dd\");\n\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"y-MM-dd\")\n    simpleDateFormat = new SimpleDateFormat(\"Y-MM-dd\");\n\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"yyyyMMdd_HHmm\")\n    simpleDateFormat = new SimpleDateFormat(\"YYYYMMdd_HHmm\");\n\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"yyyy-MM-dd\", DateFormatSymbols.getInstance())\n    simpleDateFormat = new SimpleDateFormat(\"YYYY-MM-dd\", DateFormatSymbols.getInstance());\n\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"yyyy-MM-dd\", Locale.getDefault())\n    simpleDateFormat = new SimpleDateFormat(\"YYYY-MM-dd\", Locale.getDefault());\n  }\n\n  void testConstructorWithLiteralPatternWithFolding() {\n    // TODO(eaftan): javac has a bug in that when it folds string literals, the start position of\n    // the folded string literal node is set as the start position of the + operator.  We have\n    // fixed this in our internal javac, but haven't pushed the change to our external javac mirror.\n    // We should push that fix to the javac mirror repo, and then we can test that the suggested\n    // fix offered here is correct (\"yyyy-MM-dd\").\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(\"YYYY\" + \"-MM-dd\");\n  }\n\n  private static final String WEEK_YEAR_PATTERN = \"YYYY\";\n\n  private static final String WEEK_YEAR_PATTERN_2 = \"YY\";\n\n  private static final String WEEK_YEAR_PATTERN_3 = \"Y\";\n\n  void testConstructorWithConstantPattern() {\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN);\n  }\n\n  void testConstructorWithConstantPattern2() {\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN_2);\n  }\n\n  void testConstructorWithConstantPattern3() {\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN_3);\n  }\n\n  void testConstructorWithConstantPatternWithFolding() {\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN + \"-MM-dd\");\n  }\n\n  void testConstructorWithConstantPatternWithFolding2() {\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN_2 + \"-MM-dd\");\n  }\n\n  void testConstructorWithConstantPatternWithFolding3() {\n    // BUG: Diagnostic contains:\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN_3 + \"-MM-dd\");\n  }\n\n  void testApplyPatternAndApplyLocalizedPatternWithLiteralPattern() {\n    SimpleDateFormat sdf = new SimpleDateFormat();\n    // BUG: Diagnostic contains: sdf.applyPattern(\"yyyy-MM-dd\")\n    sdf.applyPattern(\"YYYY-MM-dd\");\n    // BUG: Diagnostic contains: sdf.applyLocalizedPattern(\"yyyy-MM-dd\")\n    sdf.applyLocalizedPattern(\"YYYY-MM-dd\");\n  }\n\n  void testApplyPatternAndApplyLocalizedPatternWithConstantPattern() {\n    SimpleDateFormat sdf = new SimpleDateFormat();\n    // BUG: Diagnostic contains:\n    sdf.applyPattern(WEEK_YEAR_PATTERN);\n    // BUG: Diagnostic contains:\n    sdf.applyLocalizedPattern(WEEK_YEAR_PATTERN);\n  }\n\n  void testDateTimeFormatter() {\n    // BUG: Diagnostic contains:\n    java.time.format.DateTimeFormatter.ofPattern(WEEK_YEAR_PATTERN);\n  }\n}\\"
+    },
+    {
+      "description": "positiveCases2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        136
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.ibm.icu.text.DateFormatSymbols;\nimport com.ibm.icu.text.SimpleDateFormat;\nimport com.ibm.icu.util.ULocale;\nimport java.util.Locale;\n\n/** Tests for {@link com.ibm.icu.text.SimpleDateFormat}. */\npublic class MisusedWeekYearPositiveCases2 {\n\n  void testConstructors() {\n    // BUG: Diagnostic contains: new SimpleDateFormat(\"yyyy-MM-dd\")\n    SimpleDateFormat sdf = new SimpleDateFormat(\"YYYY-MM-dd\");\n\n    // BUG: Diagnostic contains:\n    sdf = new SimpleDateFormat(\"YYYY-MM-dd\", DateFormatSymbols.getInstance());\n\n    // BUG: Diagnostic contains:\n    sdf = new SimpleDateFormat(\"YYYY-MM-dd\", DateFormatSymbols.getInstance(), ULocale.CANADA);\n\n    // BUG: Diagnostic contains:\n    sdf = new SimpleDateFormat(\"YYYY-MM-dd\", Locale.getDefault());\n\n    // BUG: Diagnostic contains:\n    sdf = new SimpleDateFormat(\"YYYY-MM-dd\", \"\", ULocale.CANADA);\n\n    // BUG: Diagnostic contains:\n    sdf = new SimpleDateFormat(\"YYYY-MM-dd\", ULocale.CANADA);\n  }\n\n  void testApplyPatternAndApplyLocalizedPattern() {\n    SimpleDateFormat sdf = new SimpleDateFormat();\n    // BUG: Diagnostic contains: sdf.applyPattern(\"yyyy-MM-dd\")\n    sdf.applyPattern(\"YYYY-MM-dd\");\n    // BUG: Diagnostic contains:\n    sdf.applyLocalizedPattern(\"YYYY-MM-dd\");\n  }\n}\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.text.DateFormatSymbols;\nimport java.text.SimpleDateFormat;\nimport java.util.Locale;\n\npublic class MisusedWeekYearNegativeCases {\n  void testLiteralPattern() {\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(\"yyyy-MM-dd\");\n    simpleDateFormat = new SimpleDateFormat(\"MM-dd\");\n    simpleDateFormat = new SimpleDateFormat(\"yyyy-MM-dd\", DateFormatSymbols.getInstance());\n    simpleDateFormat = new SimpleDateFormat(\"yyyy-MM-dd\", Locale.getDefault());\n\n    // Don't flag if the pattern contains \"ww\", the week-in-year specifier.\n    simpleDateFormat = new SimpleDateFormat(\"YYYY-ww\");\n    simpleDateFormat = new SimpleDateFormat(\"YY-ww\");\n    simpleDateFormat = new SimpleDateFormat(\"Y-ww\");\n    simpleDateFormat = new SimpleDateFormat(\"Yw\");\n  }\n\n  void testLiteralPatternWithFolding() {\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(\"yyyy\" + \"-MM-dd\");\n  }\n\n  private static final String WEEK_YEAR_PATTERN = \"yyyy-MM-dd\";\n\n  void testConstantPattern() {\n    SimpleDateFormat simpleDateFormat = new SimpleDateFormat(WEEK_YEAR_PATTERN);\n  }\n\n  private static class MySimpleDateFormat extends SimpleDateFormat {\n    public MySimpleDateFormat(String pattern) {\n      super(pattern);\n    }\n  }\n\n  // Don't match on subtypes, since we don't know what their applyPattern and\n  // applyLocalizedPattern methods might do.\n  void testSubtype() {\n    MySimpleDateFormat mySdf = new MySimpleDateFormat(\"YYYY-MM-dd\");\n    mySdf.applyPattern(\"YYYY-MM-dd\");\n    mySdf.applyLocalizedPattern(\"YYYY-MM-dd\");\n  }\n}\\"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        238
+      ],
+      "code": "import java.time.format.DateTimeFormatter;\n\n            class Test {\n              private static final String PATTERN = \"YYYY\";\n              static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);\n            }\n            \n\n            import java.time.format.DateTimeFormatter;\n\n            class Test {\n              private static final String PATTERN = \"yyyy\";\n              static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(PATTERN);\n            }"
+    }
+  ]
+}

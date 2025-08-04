@@ -1,0 +1,126 @@
+{
+  "name": "UnescapedEntity",
+  "language": "java",
+  "description": "Javadoc is interpreted as HTML, so HTML entities such as &, <, > must be escaped. If this finding seems wrong (e.g. is within a @code or @literal tag), check whether the tag could be malformed and not recognised by the compiler.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 275,
+  "branches": 20,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "/** List<Foo>, Map<Foo, Bar> */\n            interface Test {}\n            \n\n            /** {@code List<Foo>}, {@code Map<Foo, Bar>} */\n            interface Test {}"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "/** {@code List<Foo>, Map<Foo, Bar>} */\n            interface Test {}"
+    },
+    {
+      "description": "unescapedEntities_off",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "/** Foo & bar < */\n            interface Test {}"
+    },
+    {
+      "description": "withinPre",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "/**\n             *\n             *\n             * <pre>Foo</pre>\n             *\n             * <pre>Use an ImmutableMap<String,Object> please</pre>\n             *\n             * <pre>bar</pre>\n             */\n            interface Test {}\n            \n\n            /**\n             *\n             *\n             * <pre>Foo</pre>\n             *\n             * <pre>{@code Use an ImmutableMap<String,Object> please}</pre>\n             *\n             * <pre>bar</pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "withinPre_singleChar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        113
+      ],
+      "code": "/**\n             *\n             *\n             * <pre>n < 3</pre>\n             */\n            interface Test {}\n            \n\n            /**\n             *\n             *\n             * <pre>{@code n < 3}</pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "withinPre_alreadyEscaped",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "/**\n             *\n             *\n             * <pre>Use an ImmutableMap<String, Object> not a Map&lt;String, Object&gt;</pre>\n             */\n            interface Test {}\n            \n\n            /**\n             *\n             *\n             * <pre>Use an ImmutableMap&lt;String, Object&gt; not a Map&lt;String, Object&gt;</pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "withinPre_hasAnnotations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        168
+      ],
+      "code": "/**\n             * Foo\n             *\n             * <pre>\n             *   @Override\n             *   ImmutableMap<String, Object>\n             * </pre>\n             */\n            interface Test {}\n            \n\n            /**\n             * Foo\n             *\n             * <pre>\n             *   @Override\n             *   ImmutableMap&lt;String, Object&gt;\n             * </pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "escapesWithoutAddingCodeBlock_withinPreBlockWithAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "/**\n             * Foo\n             *\n             * <pre>\n             *  {@literal @}Override\n             *   ImmutableMap<String, Object>\n             * </pre>\n             */\n            interface Test {}\n            \n\n            /**\n             * Foo\n             *\n             * <pre>\n             *  {@literal @}Override\n             *   ImmutableMap&lt;String, Object&gt;\n             * </pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "correctFindingPosition_withinPreBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        238
+      ],
+      "code": "/**\n             * Foo\n             *\n             * <pre>\n             *  {@literal @}Override\n             * // BUG: Diagnostic contains: UnescapedEntity\n             *   ImmutableMap<String, Object>\n             * </pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "withinLink",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        258
+      ],
+      "code": "/** {@link List<Foo>} */\n            interface Test {}"
+    },
+    {
+      "description": "withinSee",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        270
+      ],
+      "code": "import java.util.List;\n\n            interface Test {\n              /**\n               * @see #foo(List<Integer>)\n               */\n              void foo(List<Integer> foos);\n            }"
+    },
+    {
+      "description": "badSee",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        288
+      ],
+      "code": "import java.util.List;\n\n            interface Test {\n              /**\n               * @see <a href=\"https://google.com\">google</a>\n               */\n              void foo(List<Integer> foos);\n            }"
+    },
+    {
+      "description": "extraClosingTag",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "/**\n             *\n             *\n             * <pre>Foo List<Foo> bar</pre>\n             *\n             * </pre>\n             */\n            interface Test {}\n            \n\n            /**\n             *\n             *\n             * <pre>{@code Foo List<Foo> bar}</pre>\n             *\n             * </pre>\n             */\n            interface Test {}"
+    },
+    {
+      "description": "nestedGenericType_properlyEscaped",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        336
+      ],
+      "code": "/** List<List<Integer>> */\n            interface Test {}\n            \n\n            /** {@code List<List<Integer>>} */\n            interface Test {}"
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "name": "InterruptedExceptionSwallowed",
+  "language": "java",
+  "description": "This catch block appears to be catching an explicitly declared InterruptedException as an Exception/Throwable and not handling the interruption separately.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 213,
+  "branches": 25,
+  "apis": 4,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        41
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  throw new Exception();\n                } catch (Exception e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeNestedCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  try {\n                    future.get();\n                  } catch (InterruptedException e) {\n                  }\n                } catch (Exception e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveRethrown",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        86
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  try {\n                    future.get();\n                  } catch (InterruptedException e) {\n                    throw e;\n                  }\n                  // BUG: Diagnostic contains:\n                } catch (Exception e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "thrownByClose_throwsClauseTooBroad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              void test() throws Exception {\n                try (Thrower t = new Thrower()) {}\n              }\n            }"
+    },
+    {
+      "description": "thrownByClose_caughtByOuterCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test() {\n                try {\n                  try (Thrower t = new Thrower()) {}\n                  // BUG: Diagnostic contains:\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_fieldNamedClose",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              class Mischief implements AutoCloseable {\n                public int close = 1;\n\n                public void close() {}\n              }\n\n              void test() {\n                try (Mischief m = new Mischief()) {}\n              }\n            }"
+    },
+    {
+      "description": "negative_rethrown",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test() throws InterruptedException, Exception {\n                try {\n                  try (Thrower t = new Thrower()) {}\n                } catch (Exception e) {\n                  throw e;\n                }\n              }\n            }"
+    },
+    {
+      "description": "thrownByClose_inherited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        195
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              class ThrowingParent implements AutoCloseable {\n                public void close() throws InterruptedException {}\n              }\n\n              class ThrowingChild extends ThrowingParent {}\n\n              // BUG: Diagnostic contains:\n              void test() throws Exception {\n                try (ThrowingChild t = new ThrowingChild()) {}\n              }\n            }"
+    },
+    {
+      "description": "thrownByClose_swallowedSilently",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test() {\n                try (Thrower t = new Thrower()) {\n                  // BUG: Diagnostic contains:\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveThrowFromCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        239
+      ],
+      "code": "import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  try {\n                    future.get();\n                  } catch (ExecutionException e) {\n                    if (e.getCause() instanceof IllegalStateException) {\n                      throw new InterruptedException();\n                    }\n                  } catch (InterruptedException e) {\n                    Thread.currentThread().interrupt();\n                    throw new IllegalStateException(e);\n                  }\n                  // BUG: Diagnostic contains:\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "checkedViaInstanceof_noWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        270
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  throw new Exception();\n                } catch (Exception e) {\n                  if (e instanceof InterruptedException) {\n                    Thread.currentThread().interrupt();\n                  }\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveSimpleCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        294
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                  // BUG: Diagnostic contains:\n                } catch (Exception e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveRefactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        316
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                } catch (Exception e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }\n            \n\n            import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                } catch (Exception e) {\n                  if (e instanceof InterruptedException) {\n                    Thread.currentThread().interrupt();\n                  }\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveRefactoringEmptyCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        355
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                } catch (Exception e) {\n                }\n              }\n            }\n            \n\n            import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                } catch (Exception e) {\n                  if (e instanceof InterruptedException) {\n                    Thread.currentThread().interrupt();\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeExplicitlyListed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        392
+      ],
+      "code": "import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                } catch (ExecutionException | InterruptedException e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "suppression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        414
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) {\n                try {\n                  future.get();\n                } catch (\n                    @SuppressWarnings(\"InterruptedExceptionSwallowed\")\n                    Exception e) {\n                  throw new IllegalStateException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "hiddenInMethodThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        437
+      ],
+      "code": "import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              void test(Future<?> future) throws Exception {\n                future.get();\n                throw new IllegalStateException();\n              }\n            }\n            \n\n            import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              void test(Future<?> future) throws ExecutionException, InterruptedException {\n                future.get();\n                throw new IllegalStateException();\n              }\n            }"
+    },
+    {
+      "description": "hiddenInMethodThrows_butActuallyThrowsException_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        471
+      ],
+      "code": "import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) throws Exception {\n                future.get();\n                throw new Exception();\n              }\n            }"
+    },
+    {
+      "description": "hiddenInMethodThrows_throwsSimplified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        490
+      ],
+      "code": "import java.io.IOException;\n            import java.io.FileNotFoundException;\n            import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              // BUG: Diagnostic contains: ExecutionException, IOException, InterruptedException\n              void test(Future<?> future) throws Exception {\n                future.get();\n                if (true) {\n                  throw new IOException();\n                } else {\n                  throw new FileNotFoundException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "hiddenInMethodThrows_bailsIfTooManySpecificExceptions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        516
+      ],
+      "code": "import java.io.IOException;\n            import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n            import java.util.concurrent.TimeoutException;\n\n            class Test {\n              void test(Future<?> future) throws Exception {\n                future.get();\n                if (hashCode() == 0) {\n                  throw new A();\n                }\n                if (hashCode() == 0) {\n                  throw new B();\n                }\n                if (hashCode() == 0) {\n                  throw new C();\n                }\n                if (hashCode() == 0) {\n                  throw new D();\n                }\n                if (hashCode() == 0) {\n                  throw new E();\n                }\n              }\n\n              static class A extends Exception {}\n\n              static class B extends Exception {}\n\n              static class C extends Exception {}\n\n              static class D extends Exception {}\n\n              static class E extends Exception {}\n            }"
+    },
+    {
+      "description": "throwsExceptionButNoSignOfInterrupted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        561
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) throws Exception {\n                throw new Exception();\n              }\n            }"
+    },
+    {
+      "description": "declaredInMethodThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        578
+      ],
+      "code": "import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            class Test {\n              void test(Future<?> future) throws InterruptedException, ExecutionException {\n                future.get();\n              }\n            }"
+    },
+    {
+      "description": "declaredInMain",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        596
+      ],
+      "code": "import java.util.concurrent.ExecutionException;\n            import java.util.concurrent.Future;\n\n            public class Test {\n              private static final Future<?> future = null;\n\n              public static void main(String[] argv) throws Exception {\n                future.get();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "name": "FloggerLogWithCause",
+  "language": "java",
+  "description": "Setting the caught exception as the cause of the log message may provide more context for anyone debugging errors.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 106,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void test() {\n                try {\n                } catch (Exception e) {\n                  // BUG: Diagnostic contains: logger.atWarning().withCause(e).log\n                  logger.atWarning().log(\"failed\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "loggedAtInfo_noWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void test() {\n                try {\n                } catch (Exception e) {\n                  logger.atInfo().log(\"failed\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "alreadyLoggedWithCause",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void test() {\n                try {\n                } catch (Exception e) {\n                  logger.atWarning().withCause(e).log(\"failed\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "variableUsedInOtherWay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void test() {\n                try {\n                } catch (Exception e) {\n                  logger.atWarning().log(e.getMessage());\n                }\n              }\n            }"
+    },
+    {
+      "description": "suppression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        120
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void test() {\n                try {\n                } catch (\n                    @SuppressWarnings(\"FloggerLogWithCause\")\n                    Exception e) {\n                  logger.atWarning().log(e.getMessage());\n                }\n              }\n            }"
+    }
+  ]
+}

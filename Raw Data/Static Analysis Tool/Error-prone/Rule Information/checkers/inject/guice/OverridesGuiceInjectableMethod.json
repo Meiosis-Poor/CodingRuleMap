@@ -1,0 +1,30 @@
+{
+  "name": "OverridesGuiceInjectableMethod",
+  "language": "java",
+  "description": "This method is not annotated with @Inject, but it overrides a method that is annotated with @com.google.inject.Inject. Guice will inject this method, and it is recommended to annotate it explicitly.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 68,
+  "branches": 5,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class OverridesGuiceInjectableMethodPositiveCases {\n\n  /** Class with a method foo() annotated with @com.google.inject.Inject. */\n  public class TestClass1 {\n    @com.google.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated with @Inject, but overrides a method that is\n   * annotated with @com.google.inject.Inject\n   */\n  public class TestClass2 extends TestClass1 {\n    // BUG: Diagnostic contains: @Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated with @Inject, but overrides a method that in\n   * turn is overrides a method that is annotated with @com.google.inject.Inject\n   */\n  public class TestClass3 extends TestClass2 {\n    // BUG: Diagnostic contains: @Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated with @javax.inject.Inject and overrides a\n   * method that is annotated with @com.google.inject.Inject. This class does not contain an error,\n   * but it is extended in the next test class.\n   */\n  public class TestClass4 extends TestClass1 {\n    @javax.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated with @Inject and overrides a method that is is\n   * annotated with @javax.inject.Inject. This super method in turn overrides a method that is\n   * annoatated with @com.google.inject.Inject.\n   */\n  public class TestClass5 extends TestClass4 {\n    // BUG: Diagnostic contains: @Inject\n    public void foo() {}\n  }\n\n  /** Class that extends a class with an injected method, but doesn't override it. */\n  public class TestClass6 extends TestClass1 {}\n\n  /**\n   * Class that extends a class with an injected method, but it was declared in a supertype that\n   * isn't a direct supertype.\n   */\n  public class TestClass7 extends TestClass1 {\n    // BUG: Diagnostic contains: @Inject\n    public void foo() {}\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class OverridesGuiceInjectableMethodNegativeCases {\n\n  /** Class with a method foo() annotated with @com.google.inject.Inject. */\n  public class TestClass1 {\n    @com.google.inject.Inject\n    public void foo() {}\n  }\n\n  /** Class with a method foo() annotated with @javax.inject.Inject. */\n  public class TestClass2 {\n    @javax.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() annotated with @javax.inject.Inject that overrides a method annotated\n   * with @com.google.inject.Inject.\n   */\n  public class TestClass3 extends TestClass1 {\n    @javax.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() annotated with @com.google.inject.Inject that overrides a method\n   * annotated with @javax.inject.Inject.\n   */\n  public class TestClass4 extends TestClass2 {\n    @com.google.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() annotated with @javax.inject.Inject that overrides a method annotated\n   * with @com.google.inject.Inject\n   */\n  public class TestClass5 extends TestClass1 {\n    @javax.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated with @Inject, but overrides a method that is\n   * annotated with @com.google.inject.Inject. Warning is suppressed.\n   */\n  public class TestClass6 extends TestClass1 {\n    @SuppressWarnings(\"OverridesGuiceInjectableMethod\")\n    @Override\n    public void foo() {}\n  }\n\n  /** Class that extends a class with an injected method, but doesn't override it. */\n  public class TestClass7 extends TestClass1 {}\n}\\"
+    }
+  ]
+}

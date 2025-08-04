@@ -1,0 +1,38 @@
+{
+  "name": "PrimitiveAtomicReference",
+  "language": "java",
+  "description": "Using compareAndSet with boxed primitives is dangerous, as reference rather than value equality is used. Consider using AtomicInteger, AtomicLong, AtomicBoolean from JDK or AtomicDouble from Guava instead.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 67,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              private AtomicReference<Integer> ref = new AtomicReference<>();\n\n              public boolean cas(int i) {\n                // BUG: Diagnostic contains:\n                return ref.compareAndSet(i, 10);\n              }\n            }"
+    },
+    {
+      "description": "negativeNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              private AtomicReference<Integer> ref = new AtomicReference<>();\n\n              public boolean cas() {\n                return ref.compareAndSet(null, 10);\n              }\n            }"
+    },
+    {
+      "description": "negativeNotBoxedType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              private AtomicReference<String> ref = new AtomicReference<>();\n\n              public boolean cas(String s) {\n                return ref.compareAndSet(s, \"foo\");\n              }\n            }"
+    }
+  ]
+}

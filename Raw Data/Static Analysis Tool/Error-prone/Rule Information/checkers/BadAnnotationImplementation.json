@@ -1,0 +1,102 @@
+{
+  "name": "BadAnnotationImplementation",
+  "language": "java",
+  "description": "Classes that implement Annotation must override equals and hashCode. Consider using AutoAnnotation instead of implementing Annotation by hand.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 123,
+  "branches": 11,
+  "apis": 1,
+  "test": [
+    {
+      "description": "declaredClassImplementsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains:\n            public class TestAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestAnnotation.class;\n              }\n            }"
+    },
+    {
+      "description": "anonymousClassImplementsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            public class Test {\n              public Annotation getAnnotation() {\n                // BUG: Diagnostic contains:\n                return new Annotation() {\n                  @Override\n                  public Class<? extends Annotation> annotationType() {\n                    return Annotation.class;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "anonymousClassImplementsUserDefinedAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            public class AnonymousClass {\n              public Annotation getAnnotation() {\n                // BUG: Diagnostic contains:\n                return new MyAnnotation() {\n                  @Override\n                  public Class<? extends Annotation> annotationType() {\n                    return Annotation.class;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "overridesEqualsButNotHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains:\n            public class TestAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestAnnotation.class;\n              }\n\n              @Override\n              public boolean equals(Object other) {\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "overridesHashCodeButNotEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        121
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains:\n            public class TestAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestAnnotation.class;\n              }\n\n              @Override\n              public int hashCode() {\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "wrongEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains:\n            public class TestAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestAnnotation.class;\n              }\n\n              public boolean equals(TestAnnotation other) {\n                return false;\n              }\n\n              @Override\n              public int hashCode() {\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "wrongHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains:\n            public class TestAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestAnnotation.class;\n              }\n\n              @Override\n              public boolean equals(Object other) {\n                return false;\n              }\n\n              public int hashCode(Object obj) {\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "overridesEqualsAndHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            public class TestAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestAnnotation.class;\n              }\n\n              @Override\n              public boolean equals(Object other) {\n                return false;\n              }\n\n              @Override\n              public int hashCode() {\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "declareInterfaceThatExtendsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        229
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            public interface TestAnnotation extends Annotation {}"
+    },
+    {
+      "description": "declareEnumThatImplementsAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        242
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            // BUG: Diagnostic contains: Enums cannot correctly implement Annotation\n            public enum TestEnum implements Annotation {\n              VALUE_1,\n              VALUE_2;\n\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return TestEnum.class;\n              }\n            }"
+    },
+    {
+      "description": "extendsClassThatImplementsEqualsAndHashCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        264
+      ],
+      "code": "import java.lang.annotation.Annotation;\n\n            public class BaseAnnotation implements Annotation {\n              @Override\n              public Class<? extends Annotation> annotationType() {\n                return Annotation.class;\n              }\n\n              @Override\n              public boolean equals(Object other) {\n                return false;\n              }\n\n              @Override\n              public int hashCode() {\n                return 0;\n              }\n            }\n            \n\n            import java.lang.annotation.Annotation;\n\n            public class MyAnnotation extends BaseAnnotation {}"
+    }
+  ]
+}

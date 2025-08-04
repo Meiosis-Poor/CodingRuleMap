@@ -1,0 +1,86 @@
+{
+  "name": "Interruption",
+  "language": "java",
+  "description": "Always pass 'false' to 'Future.cancel()', unless you are propagating a cancellation-with-interrupt from another caller",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 123,
+  "branches": 12,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void f(Future<?> f, boolean b) {\n                // BUG: Diagnostic contains: f.cancel(false)\n                f.cancel(true);\n                // BUG: Diagnostic contains: f.cancel(false)\n                f.cancel(b);\n              }\n            }"
+    },
+    {
+      "description": "positiveClosingFuture",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "import com.google.common.util.concurrent.ClosingFuture;\n\n            class Test {\n              void f(ClosingFuture<?> f) {\n                // BUG: Diagnostic contains: f.cancel(false)\n                f.cancel(true);\n              }\n            }"
+    },
+    {
+      "description": "positiveInterrupt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "class Test {\n              void f(Thread t) {\n                // BUG: Diagnostic contains:\n                t.interrupt();\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "import java.util.concurrent.Future;\n\n            class Test {\n              void f(Future<?> f) {\n                f.cancel(false);\n              }\n            }"
+    },
+    {
+      "description": "negativeWasInterrupted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102
+      ],
+      "code": "import com.google.common.util.concurrent.AbstractFuture;\n\n            class Test extends AbstractFuture<Object> {\n              void f() {\n                cancel(wasInterrupted());\n              }\n            }"
+    },
+    {
+      "description": "negativeDelegate",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "import com.google.common.util.concurrent.AbstractFuture;\n            import java.util.concurrent.Future;\n\n            class Test extends AbstractFuture<Object> {\n              void f(Future<?> f) {\n                new AbstractFuture<Object>() {\n                  @Override\n                  public boolean cancel(boolean mayInterruptIfRunning) {\n                    return f.cancel(mayInterruptIfRunning);\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "negativeInterrupt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "class Test {\n              void f(Thread t) {\n                Thread.currentThread().interrupt();\n              }\n            }"
+    },
+    {
+      "description": "negativeInTestonlyCode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "import org.junit.Test;\n            import org.junit.runner.RunWith;\n            import org.junit.runners.JUnit4;\n            import java.util.concurrent.Future;\n\n            @RunWith(JUnit4.class)\n            class FutureTest {\n              Future<?> f;\n\n              @Test\n              public void t() {\n                f.cancel(true);\n              }\n            }"
+    },
+    {
+      "description": "t",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": ""
+    }
+  ]
+}

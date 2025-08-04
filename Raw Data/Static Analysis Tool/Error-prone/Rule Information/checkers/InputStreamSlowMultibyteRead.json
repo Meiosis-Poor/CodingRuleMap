@@ -1,0 +1,78 @@
+{
+  "name": "InputStreamSlowMultibyteRead",
+  "language": "java",
+  "description": "Please also override int read(byte[], int, int), otherwise multi-byte reads from this input stream are likely to be slow.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 108,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "doingItRight",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class TestClass extends java.io.InputStream {\n              byte[] buf = new byte[42];\n\n              public int read(byte[] b, int a, int c) {\n                return 0;\n              }\n\n              public int read() {\n                return buf[0];\n              }\n            }"
+    },
+    {
+      "description": "basic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "class TestClass extends java.io.InputStream {\n              byte[] buf = new byte[42];\n\n              // BUG: Diagnostic contains:\n              public int read() {\n                return buf[0];\n              }\n            }"
+    },
+    {
+      "description": "abstractOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "abstract class TestClass extends java.io.InputStream {\n              // BUG: Diagnostic contains:\n              public abstract int read();\n            }"
+    },
+    {
+      "description": "nativeOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83
+      ],
+      "code": "abstract class TestClass extends java.io.InputStream {\n              // BUG: Diagnostic contains:\n              public native int read();\n            }"
+    },
+    {
+      "description": "dummyStreamIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "class TestClass extends java.io.InputStream {\n              public int read() {\n                return 0;\n              }\n            }"
+    },
+    {
+      "description": "inherited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "abstract class Super extends java.io.InputStream {\n              public int read(byte[] b, int a, int c) {\n                return 0;\n              }\n            }\n            \n\n            class TestClass extends Super {\n              byte[] buf = new byte[42];\n\n              // BUG: Diagnostic contains:\n              public int read() {\n                return buf[0];\n              }\n            }"
+    },
+    {
+      "description": "junit3TestIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "class TestClass extends junit.framework.TestCase {\n              static class SomeStream extends java.io.InputStream {\n                byte[] buf = new byte[42];\n\n                public int read() {\n                  return buf[0];\n                }\n              }\n            }"
+    },
+    {
+      "description": "junit4TestIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        160
+      ],
+      "code": "@org.junit.runner.RunWith(org.junit.runners.JUnit4.class)\n            class TestClass {\n              static class SomeStream extends java.io.InputStream {\n                byte[] buf = new byte[42];\n\n                public int read() {\n                  return buf[0];\n                }\n              }\n            }"
+    }
+  ]
+}

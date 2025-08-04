@@ -1,0 +1,166 @@
+{
+  "name": "RestrictedApiChecker",
+  "language": "java",
+  "description": "Check for non-allowlisted callers to RestrictedApiChecker.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 257,
+  "branches": 27,
+  "apis": 9,
+  "test": [
+    {
+      "description": "normalCallAllowed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo(RestrictedApiMethods m) {\n                m.normalMethod();\n                m.accept(m::normalMethod);\n              }\n            }"
+    },
+    {
+      "description": "restrictedCallProhibited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo(RestrictedApiMethods m) {\n                // BUG: Diagnostic contains: lorem\n                m.restrictedMethod();\n                // BUG: Diagnostic contains: lorem\n                m.accept(m::restrictedMethod);\n              }\n            }"
+    },
+    {
+      "description": "restrictedCallProhibited_inherited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo(RestrictedApiMethods.Subclass m) {\n                // BUG: Diagnostic contains: lorem\n                m.restrictedMethod();\n                // BUG: Diagnostic contains: ipsum\n                m.dontCallMe();\n                // BUG: Diagnostic contains: lorem\n                m.accept(m::restrictedMethod);\n                // BUG: Diagnostic contains: ipsum\n                m.accept(m::dontCallMe);\n              }\n            }"
+    },
+    {
+      "description": "restrictedCallAllowedOnAllowlistedPath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo(RestrictedApiMethods m) {\n                m.restrictedMethod();\n                m.accept(m::restrictedMethod);\n              }\n            }"
+    },
+    {
+      "description": "restrictedStaticCallProhibited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        206
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo() {\n                // BUG: Diagnostic contains: lorem\n                RestrictedApiMethods.restrictedStaticMethod();\n                // BUG: Diagnostic contains: lorem\n                RestrictedApiMethods.accept(RestrictedApiMethods::restrictedStaticMethod);\n              }\n            }"
+    },
+    {
+      "description": "restrictedConstructorProhibited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo() {\n                // BUG: Diagnostic contains: lorem\n                new RestrictedApiMethods(0);\n                // BUG: Diagnostic contains: lorem\n                RestrictedApiMethods.accept(RestrictedApiMethods::new);\n              }\n            }"
+    },
+    {
+      "description": "restrictedConstructorViaAnonymousClassProhibited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        248
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo() {\n                // BUG: Diagnostic contains: lorem\n                new RestrictedApiMethods() {};\n              }\n            }"
+    },
+    {
+      "description": "restrictedConstructorViaAnonymousClassAllowed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        267
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              @Allowlist\n              void foo() {\n                new RestrictedApiMethods() {};\n              }\n            }"
+    },
+    {
+      "description": "restrictedCallAnonymousClassFromInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        286
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              void foo() {\n                new IFaceWithRestriction() {\n                  @Override\n                  public void dontCallMe() {}\n                }\n                // BUG: Diagnostic contains: ipsum\n                .dontCallMe();\n              }\n            }"
+    },
+    {
+      "description": "implicitRestrictedConstructorProhibited",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        309
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase extends RestrictedApiMethods {\n              // BUG: Diagnostic contains: lorem\n              public Testcase() {}\n            }"
+    },
+    {
+      "description": "implicitRestrictedConstructorProhibited_implicitConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        327
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            // BUG: Diagnostic contains: lorem\n            class Testcase extends RestrictedApiMethods {}"
+    },
+    {
+      "description": "allowWithWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        342
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              @AllowlistWithWarning\n              void foo(RestrictedApiMethods m) {\n                // BUG: Diagnostic contains: lorem\n                m.restrictedMethod();\n                // BUG: Diagnostic contains: lorem\n                m.accept(m::restrictedMethod);\n              }\n            }"
+    },
+    {
+      "description": "allowWithoutWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        364
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            class Testcase {\n              @Allowlist\n              void foo(RestrictedApiMethods m) {\n                m.restrictedMethod();\n                m.accept(m::restrictedMethod);\n              }\n            }"
+    },
+    {
+      "description": "allowAllDefinitionsInFile",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        385
+      ],
+      "code": "package separate.test;\n\n            import com.google.errorprone.annotations.RestrictedApi;\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            class Testcase {\n              @Allowlist\n              void caller() {\n                restrictedMethod();\n              }\n\n              @RestrictedApi(\n                  explanation = \"test\",\n                  allowlistAnnotations = {Allowlist.class},\n                  link = \"foo\")\n              void restrictedMethod() {}\n\n              @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})\n              @interface Allowlist {}\n            }"
+    },
+    {
+      "description": "i2099",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        417
+      ],
+      "code": "package t;\n\n            class T {\n              static class Foo {\n                class Loo {}\n              }\n\n              public void testFoo(Foo foo) {\n                foo.new Loo() {};\n              }\n            }"
+    },
+    {
+      "description": "i2152",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        440
+      ],
+      "code": "class T extends S {\n              void f() {\n                this.new I(\"\") {};\n              }\n            }\n\n            abstract class S {\n              public class I {\n                public I(String name) {}\n              }\n            }"
+    },
+    {
+      "description": "enumConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        462
+      ],
+      "code": "enum E {\n              ONE(1, 2) {};\n\n              E(int x, int y) {}\n            }"
+    },
+    {
+      "description": "restrictedApiOnRecordComponent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        478
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})\n            @interface Allowlist {}\n            \n\n            import com.google.errorprone.annotations.RestrictedApi;\n\n            public record User(\n                String name,\n                @RestrictedApi(\n                        explanation = \"test\",\n                        allowlistAnnotations = {Allowlist.class},\n                        link = \"foo\")\n                    String password) {}\n            \n\n            class Testcase {\n              void ctorAllowed() {\n                new User(\"kak\", \"Hunter2\");\n              }\n\n              @Allowlist\n              void accessorAllowed(User user) {\n                user.password();\n              }\n\n              void accessorRestricted(User user) {\n                // BUG: Diagnostic contains: RestrictedApi\n                user.password();\n              }\n            }"
+    },
+    {
+      "description": "restrictedApiOnRecordConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        525
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.METHOD, ElementType.CONSTRUCTOR})\n            @interface Allowlist {}\n            \n\n            import com.google.errorprone.annotations.RestrictedApi;\n\n            public record User(String name, String password) {\n\n              @RestrictedApi(\n                  explanation = \"test\",\n                  allowlistAnnotations = {Allowlist.class},\n                  link = \"foo\")\n              public User {}\n            }\n            \n\n            class Testcase {\n              void ctorRestricted() {\n                // BUG: Diagnostic contains: RestrictedApi\n                new User(\"kak\", \"Hunter2\");\n              }\n\n              @Allowlist\n              void ctorAllowed(User user) {\n                new User(\"kak\", \"Hunter2\");\n              }\n\n              void accessorAllowed(User user) {\n                user.password();\n              }\n            }"
+    }
+  ]
+}

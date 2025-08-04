@@ -1,0 +1,70 @@
+{
+  "name": "RedundantControlFlow",
+  "language": "java",
+  "description": "This continue statement is redundant and can be removed. It may be misleading.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 58,
+  "branches": 13,
+  "apis": 1,
+  "test": [
+    {
+      "description": "onlyStatementInForLoop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "class Test {\n              void test(Iterable<String> xs) {\n                for (String x : xs) {\n                  // BUG: Diagnostic contains:\n                  continue;\n                }\n              }\n            }"
+    },
+    {
+      "description": "onlyStatementInTerminalIf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47
+      ],
+      "code": "class Test {\n              void test(Iterable<String> xs) {\n                for (String x : xs) {\n                  if (x.equals(\"foo\")) {\n                    // BUG: Diagnostic contains:\n                    continue;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "onlyStatementInNestedIf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "class Test {\n              void test(Iterable<String> xs) {\n                for (String x : xs) {\n                  if (x.equals(\"foo\")) {\n                    if (x.equals(\"bar\")) {\n                      // BUG: Diagnostic contains:\n                      continue;\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "onlyStatementInElse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "class Test {\n              void test(Iterable<String> xs) {\n                for (String x : xs) {\n                  if (x.equals(\"foo\")) {\n                  } else {\n                    // BUG: Diagnostic contains:\n                    continue;\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "class Test {\n              String test(Iterable<String> xs) {\n                for (String x : xs) {\n                  if (x.equals(\"foo\")) {\n                    continue;\n                  }\n                  return x;\n                }\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "labelledContinue_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "class Test {\n              String test(Iterable<String> xs) {\n                outer:\n                for (String x : xs) {\n                  for (int i = 0; i < x.length(); i++) {\n                    if (x.charAt(i) == 'a') {\n                      continue outer;\n                    }\n                  }\n                }\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "withinNestedIfs_statementsAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        154
+      ],
+      "code": "class Test {\n              String test(Iterable<String> xs) {\n                for (String x : xs) {\n                  if (x.equals(\"foo\")) {\n                    if (x.equals(\"bar\")) {\n                      continue;\n                    }\n                  }\n                  return x;\n                }\n                return null;\n              }\n            }"
+    }
+  ]
+}

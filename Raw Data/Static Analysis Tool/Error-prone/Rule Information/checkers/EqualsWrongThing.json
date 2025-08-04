@@ -1,0 +1,78 @@
+{
+  "name": "EqualsWrongThing",
+  "language": "java",
+  "description": "Comparing different pairs of fields/getters in an equals implementation is probably a mistake.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 156,
+  "branches": 18,
+  "apis": 5,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import com.google.common.base.Objects;\n\n            class Test {\n              private int a;\n              private int b;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return a == that.a && Objects.equal(b, that.b);\n              }\n            }"
+    },
+    {
+      "description": "negativeUnordered",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return (a == that.a && b == that.b) || (a == that.b && b == that.a);\n              }\n            }"
+    },
+    {
+      "description": "negativeMixOfGettersAndFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n              private Object c;\n\n              private int getA() {\n                return a;\n              }\n\n              private int getB() {\n                return b;\n              }\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return this.a == that.getA() && this.b == that.getB() && c.equals(that.c);\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        105
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                // BUG: Diagnostic contains: comparison between `a` and `b`\n                return a == that.b && b == that.b;\n              }\n            }"
+    },
+    {
+      "description": "positiveGetters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        126
+      ],
+      "code": "class Test {\n              private int a;\n              private int b;\n\n              private int getA() {\n                return a;\n              }\n\n              private int getB() {\n                return b;\n              }\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                // BUG: Diagnostic contains: comparison between `getA()` and `getB()`\n                return getA() == that.getB() && getB() == that.getB();\n              }\n            }"
+    },
+    {
+      "description": "positiveObjects",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        155
+      ],
+      "code": "import com.google.common.base.Objects;\n\n            class Test {\n              private int a;\n              private int b;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                // BUG: Diagnostic contains: comparison between `a` and `b`\n                return Objects.equal(a, that.b) && b == that.b;\n              }\n            }"
+    },
+    {
+      "description": "positiveEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        178
+      ],
+      "code": "class Test {\n              private Object a;\n              private Object b;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                // BUG: Diagnostic contains: comparison between `a` and `b`\n                return a.equals(that.b) && b == that.b;\n              }\n            }"
+    },
+    {
+      "description": "negativeArraysEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        199
+      ],
+      "code": "import java.util.Arrays;\n\n            class Test {\n              boolean test(int[] a, int[] b) {\n                return Arrays.equals(a, 0, 1, b, 2, 3);\n              }\n            }"
+    }
+  ]
+}

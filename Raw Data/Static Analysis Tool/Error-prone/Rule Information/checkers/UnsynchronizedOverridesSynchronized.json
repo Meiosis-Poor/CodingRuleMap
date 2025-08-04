@@ -1,0 +1,78 @@
+{
+  "name": "UnsynchronizedOverridesSynchronized",
+  "language": "java",
+  "description": "Unsynchronized method overrides a synchronized method.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 140,
+  "branches": 12,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package test;\n\n            class Super {\n              synchronized void f() {}\n            }\n            \n\n            package test;\n\n            class Test extends Super {\n              int counter;\n\n              // BUG: Diagnostic contains: f overrides synchronized method in Super\n              // synchronized void f()\n              void f() {\n                counter++;\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "package test;\n\n            class Super {\n              synchronized void f() {}\n            }\n            \n\n            package test;\n\n            class Test extends Super {\n              int counter;\n\n              synchronized void f() {\n                counter++;\n              }\n            }"
+    },
+    {
+      "description": "ignoreInputStream",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        89
+      ],
+      "code": "package test;\n\n            import java.io.InputStream;\n            import java.io.IOException;\n\n            class Test extends InputStream {\n              @Override\n              public int read() throws IOException {\n                throw new IOException();\n              }\n\n              @Override\n              public /*unsynchronized*/ void mark(int readlimit) {}\n            }"
+    },
+    {
+      "description": "callsSuperWithOtherStatements",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        113
+      ],
+      "code": "package test;\n\n            class Test {\n              class B extends Throwable {\n                // BUG: Diagnostic contains:\n                public Throwable getCause() {\n                  System.err.println();\n                  return super.getCause();\n                }\n              }\n\n              class C extends Throwable {\n                // BUG: Diagnostic contains:\n                public Exception getCause() {\n                  System.err.println();\n                  return (Exception) super.getCause();\n                }\n              }\n            }"
+    },
+    {
+      "description": "ignoreDelegatesToSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "package test;\n\n            class Test {\n              class B extends Throwable {\n                public Throwable getCause() {\n                  return super.getCause();\n                }\n              }\n\n              class C extends Throwable {\n                public Exception getCause() {\n                  return (Exception) super.getCause();\n                }\n              }\n            }"
+    },
+    {
+      "description": "ignoreEmptyOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        167
+      ],
+      "code": "package test;\n\n            class Lib {\n              public synchronized void f() {}\n            }\n            \n\n            package test;\n\n            class Test {\n              class B extends Lib {\n                public void f() {}\n              }\n\n              class C extends Lib {\n                public void f() {\n                  super.f();\n                }\n              }\n\n              class D extends Lib {\n                public void f() {\n                  return;\n                }\n              }\n            }"
+    },
+    {
+      "description": "ignoreOverrideThatReturnsThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205
+      ],
+      "code": "package test;\n\n            abstract class Test extends Throwable {\n              @Override\n              public Throwable fillInStackTrace() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "ignoreOverrideThatReturnsConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        223
+      ],
+      "code": "class A {\n              synchronized int f() {\n                return -1;\n              }\n            }\n            \n\n            class B extends A {\n              @Override\n              public int f() {\n                return 42;\n              }\n            }"
+    }
+  ]
+}

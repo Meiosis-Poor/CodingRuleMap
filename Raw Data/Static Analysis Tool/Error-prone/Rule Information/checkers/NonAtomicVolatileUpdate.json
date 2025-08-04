@@ -1,0 +1,30 @@
+{
+  "name": "NonAtomicVolatileUpdate",
+  "language": "java",
+  "description": "This update of a volatile variable is non-atomic",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 140,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /** Positive test cases for {@code NonAtomicVolatileUpdate} checker. */\n            public class NonAtomicVolatileUpdatePositiveCases {\n\n              private static class VolatileContainer {\n                public volatile int volatileInt = 0;\n              }\n\n              private volatile int myVolatileInt = 0;\n              private VolatileContainer container = new VolatileContainer();\n\n              public void increment() {\n                // BUG: Diagnostic contains:\n                myVolatileInt++;\n                // BUG: Diagnostic contains:\n                ++myVolatileInt;\n                // BUG: Diagnostic contains:\n                myVolatileInt += 1;\n                // BUG: Diagnostic contains:\n                myVolatileInt = myVolatileInt + 1;\n                // BUG: Diagnostic contains:\n                myVolatileInt = 1 + myVolatileInt;\n\n                // BUG: Diagnostic contains:\n                if (myVolatileInt++ == 0) {\n                  System.out.println(\"argh\");\n                }\n\n                // BUG: Diagnostic contains:\n                container.volatileInt++;\n                // BUG: Diagnostic contains:\n                ++container.volatileInt;\n                // BUG: Diagnostic contains:\n                container.volatileInt += 1;\n                // BUG: Diagnostic contains:\n                container.volatileInt = container.volatileInt + 1;\n                // BUG: Diagnostic contains:\n                container.volatileInt = 1 + container.volatileInt;\n              }\n\n              public void decrement() {\n                // BUG: Diagnostic contains:\n                myVolatileInt--;\n                // BUG: Diagnostic contains:\n                --myVolatileInt;\n                // BUG: Diagnostic contains:\n                myVolatileInt -= 1;\n                // BUG: Diagnostic contains:\n                myVolatileInt = myVolatileInt - 1;\n\n                // BUG: Diagnostic contains:\n                container.volatileInt--;\n                // BUG: Diagnostic contains:\n                --container.volatileInt;\n                // BUG: Diagnostic contains:\n                container.volatileInt -= 1;\n                // BUG: Diagnostic contains:\n                container.volatileInt = container.volatileInt - 1;\n              }\n\n              private volatile String myVolatileString = \"\";\n\n              public void stringUpdate() {\n                // BUG: Diagnostic contains:\n                myVolatileString += \"update\";\n                // BUG: Diagnostic contains:\n                myVolatileString = myVolatileString + \"update\";\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        111
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /** Positive test cases for {@code NonAtomicVolatileUpdate} checker. */\n            public class NonAtomicVolatileUpdateNegativeCases {\n\n              private volatile int myVolatileInt = 0;\n              private int myInt = 0;\n              private volatile String myVolatileString = \"\";\n              private String myString = \"\";\n\n              public void incrementNonVolatile() {\n                myInt++;\n                ++myInt;\n                myInt += 1;\n                myInt = myInt + 1;\n                myInt = 1 + myInt;\n\n                myInt = myVolatileInt + 1;\n                myVolatileInt = myInt + 1;\n\n                myString += \"update\";\n                myString = myString + \"update\";\n              }\n\n              public void decrementNonVolatile() {\n                myInt--;\n                --myInt;\n                myInt -= 1;\n                myInt = myInt - 1;\n              }\n\n              public synchronized void synchronizedIncrement() {\n                myVolatileInt++;\n                ++myVolatileInt;\n                myVolatileInt += 1;\n                myVolatileInt = myVolatileInt + 1;\n                myVolatileInt = 1 + myVolatileInt;\n\n                myVolatileString += \"update\";\n                myVolatileString = myVolatileString + \"update\";\n              }\n\n              public void synchronizedBlock() {\n                synchronized (this) {\n                  myVolatileInt++;\n                  ++myVolatileInt;\n                  myVolatileInt += 1;\n                  myVolatileInt = myVolatileInt + 1;\n                  myVolatileInt = 1 + myVolatileInt;\n\n                  myVolatileString += \"update\";\n                  myVolatileString = myVolatileString + \"update\";\n                }\n              }\n            }\\"
+    }
+  ]
+}

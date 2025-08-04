@@ -1,0 +1,30 @@
+{
+  "name": "ClosingStandardOutputStreams",
+  "language": "java",
+  "description": "Don't use try-with-resources to manage standard output streams, closing the stream will cause subsequent output to standard output or standard error to be lost",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 56,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import java.io.OutputStreamWriter;\n            import java.io.PrintWriter;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains:\n                try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(System.err), true)) {\n                  pw.println(\"hello\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50
+      ],
+      "code": "import java.io.OutputStreamWriter;\n            import java.io.PrintWriter;\n\n            class Test {\n              void f(OutputStreamWriter os) {\n                System.err.println(42);\n                try (PrintWriter pw = new PrintWriter(os, true)) {\n                  pw.println(\"hello\");\n                }\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "MockIllegalThrows",
+  "language": "java",
+  "description": "This exception can't be thrown by the mocked method.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 88,
+  "branches": 9,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              abstract Object foo();\n\n              void test(Test t) {\n                // BUG: Diagnostic contains: only unchecked\n                when(t.foo()).thenThrow(new Exception());\n              }\n            }"
+    },
+    {
+      "description": "positive_multipleThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              abstract Object foo();\n\n              void test(Test t) {\n                // BUG: Diagnostic contains: only unchecked\n                when(t.foo()).thenThrow(new IllegalStateException(), new Exception());\n              }\n            }"
+    },
+    {
+      "description": "positiveWithSpecificType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              static class SpecificException extends Exception {}\n\n              abstract Object foo() throws SpecificException;\n\n              void test(Test t) throws Exception {\n                // BUG: Diagnostic contains: are SpecificException, or any unchecked\n                when(t.foo()).thenThrow(new Exception());\n              }\n            }"
+    },
+    {
+      "description": "negative_exceptionTypeViaParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              static class SpecificException extends Exception {}\n\n              abstract Object foo() throws SpecificException;\n\n              void test(Test t, Exception e) throws Exception {\n                when(t.foo()).thenThrow(e);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              abstract Object foo() throws Exception;\n\n              void test(Test t) throws Exception {\n                when(t.foo()).thenThrow(new Exception());\n              }\n            }"
+    },
+    {
+      "description": "nothingThrown_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              abstract Object foo() throws Exception;\n\n              void test(Test t) throws Exception {\n                when(t.foo()).thenThrow();\n              }\n            }"
+    },
+    {
+      "description": "genericException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        150
+      ],
+      "code": "import static org.mockito.Mockito.when;\n\n            abstract class Test {\n              interface GenericException<E extends Exception> {\n                Object execute() throws E;\n              }\n\n              void test(GenericException<Exception> ge) throws Exception {\n                when(ge.execute()).thenThrow(new Exception());\n              }\n            }"
+    }
+  ]
+}

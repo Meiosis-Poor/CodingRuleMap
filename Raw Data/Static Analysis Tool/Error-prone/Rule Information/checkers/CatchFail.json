@@ -1,0 +1,142 @@
+{
+  "name": "CatchFail",
+  "language": "java",
+  "description": "Ignoring exceptions and calling fail() is unnecessary, and makes test output less useful",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 207,
+  "branches": 28,
+  "apis": 7,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail();\n                }\n              }\n\n              public void testFoo() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail();\n                }\n              }\n            }\n            \n\n            import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() throws Exception {\n                System.err.println();\n              }\n\n              public void testFoo() throws Exception {\n                System.err.println();\n              }\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        42
+      ],
+      "code": ""
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": ""
+    },
+    {
+      "description": "positive_failFail",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail();\n                } catch (Throwable unexpected) {\n                  org.junit.Assert.fail();\n                }\n              }\n            }\n            \n\n            import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() throws Exception, Throwable {\n                System.err.println();\n              }\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88
+      ],
+      "code": ""
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": ""
+    },
+    {
+      "description": "positive_finally",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "class Test {\n              public void test() {\n                try {\n                  if (true) throw new NoSuchMethodException();\n                  if (true) throw new NoSuchFieldException();\n                  System.err.println();\n                } catch (NoSuchMethodException | NoSuchFieldException expected) {\n                  org.junit.Assert.fail();\n                } finally {\n                }\n              }\n            }\n            \n\n            class Test {\n              public void test() throws NoSuchMethodException, NoSuchFieldException {\n                try {\n                  if (true) throw new NoSuchMethodException();\n                  if (true) throw new NoSuchFieldException();\n                  System.err.println();\n                } finally {\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive_otherCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "class Test {\n              public void test() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail();\n                } catch (Error e) {\n                }\n              }\n            }\n            \n\n            class Test {\n              public void test() throws Exception {\n                try {\n                  System.err.println();\n                } catch (Error e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_nonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        183
+      ],
+      "code": "import org.junit.Test;\n\n            class Foo {\n              public void f() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  // BUG: Diagnostic contains:\n                  org.junit.Assert.fail();\n                }\n              }\n            }"
+    },
+    {
+      "description": "useException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        206
+      ],
+      "code": "import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail(\"oh no \" + expected);\n                }\n              }\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": ""
+    },
+    {
+      "description": "deleteEmptyTry",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        229
+      ],
+      "code": "import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() {\n                try {\n                } catch (Exception expected) {\n                  org.junit.Assert.fail(\"oh no \");\n                }\n              }\n            }\n            \n\n            import org.junit.Test;\n\n            class Foo {\n              @Test\n              public void f() {}\n            }"
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        238
+      ],
+      "code": ""
+    },
+    {
+      "description": "f",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        253
+      ],
+      "code": ""
+    },
+    {
+      "description": "failVariations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        261
+      ],
+      "code": "class Foo {\n              public void f() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail();\n                }\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail(\"oh no \");\n                }\n              }\n            }\n            \n\n            class Foo {\n              public void f() {\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  org.junit.Assert.fail();\n                }\n                try {\n                  System.err.println();\n                } catch (Exception expected) {\n                  throw new AssertionError(\"oh no \", expected);\n                }\n              }\n            }"
+    },
+    {
+      "description": "expected",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        303
+      ],
+      "code": "import org.junit.Test;\n            import java.io.IOException;\n\n            class Foo {\n              @Test(expected = IOException.class)\n              public void f() {\n                try {\n                  throw new IOException();\n                } catch (IOException expected) {\n                  org.junit.Assert.fail();\n                }\n              }\n            }\n            \n\n            import org.junit.Test;\n            import java.io.IOException;\n\n            class Foo {\n              @Test(expected = IOException.class)\n              public void f() {\n                try {\n                  throw new IOException();\n                } catch (IOException expected) {\n                  org.junit.Assert.fail();\n                }\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "name": "NonCanonicalType",
+  "language": "java",
+  "description": "This type is referred to by a non-canonical name, which may be misleading.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 134,
+  "branches": 19,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              void test() {\n                // BUG: Diagnostic contains: `Map.Entry` was referred to by the non-canonical name\n                // `ImmutableMap.Entry`\n                ImmutableMap.Entry<?, ?> entry = null;\n              }\n            }"
+    },
+    {
+      "description": "differingOnlyByPackageName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        49
+      ],
+      "code": "package foo;\n\n            public class A {\n              public static class B {}\n            }\n            \n\n            package bar;\n\n            public class A extends foo.A {}\n            \n\npackage bar;\n\nimport bar.A;\n\npublic interface D {\n  // BUG: Diagnostic contains: The type `foo.A.B` was referred to by the non-canonical name\n  // `bar.A.B`\n  A.B test();\n}"
+    },
+    {
+      "description": "notVisibleFromUsageSite",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84
+      ],
+      "code": "package foo;\n\n            class A {\n              public static class C {}\n            }\n            \n\n            package foo;\n\n            public class B extends A {}\n            \n\n            package bar;\n\n            import foo.B;\n\n            public interface D {\n              B.C test();\n            }"
+    },
+    {
+      "description": "positiveWithGenerics",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "class A<T> {\n              class B {}\n            }\n            \n\n            class Test {\n              // BUG: Diagnostic contains: Did you mean 'A.B test() {'\n              AString.B test() {\n                return null;\n              }\n            }\n            \n\n            import java.util.Map;\n\n            class Test {\n              void test() {\n                Map.Entry<?, ?> entry = null;\n              }\n            }\n            \n\n            import java.util.function.Function;\n\n            class Test {\n              interface Rec extends Function<Rec, Rec> {}\n\n              void run() {\n                Rec f = x -> x.apply(x);\n              }\n            }\n            \n\n            interface A {\n              interface N {}\n            }\n\n            interface B extends A {}\n\n            class C implements D {}\n\n            interface E extends D {\n              interface N extends D.N {}\n            }\n\n            interface D {\n              interface N {}\n            }\n\n            class Test extends C implements E {\n              // BUG: Diagnostic contains: A.N\n              private B.N f() {\n                return null;\n              }\n            }\n            \n\n            class Test<E extends Enum<E>> {\n              E test(Class<E> clazz, String name) {\n                return E.valueOf(clazz, name);\n              }\n            }\n            \n\n            class Test {\n              int len(String[] xs) {\n                return xs.length;\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                var c = boolean.class;\n              }\n            }\n            \n\n            class Super {\n              static void f() {}\n            }\n            \n\n            class Test extends Super {\n              void test() {\n                Test.f();\n              }\n            }\n            \n\n            class Super<T> {\n              class Inner {}\n            }\n            \n\n            class Sub<T> extends Super<T> {}\n            \n\nclass Test {\n  // BUG: Diagnostic contains: `Super.Inner` was referred to by the non-canonical name `Sub.Inner`\n  Sub<?>.Inner[] x;\n}\n\n\n            module testmodule {\n              requires java.base;\n            }\n            \n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.TYPE_USE)\n            @interface TA {}\n\n            class Crash {\n              class Nested {\n                class DoublyNested {}\n              }\n\n              class SubNested extends Nested {}\n\n              void foo(Crash.@TA Nested.DoublyNested p) {}\n\n              // BUG: Diagnostic contains: Crash.Nested.DoublyNested\n              void bar(Crash.@TA SubNested.DoublyNested p) {}\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        143
+      ],
+      "code": "import java.util.Map;\n\n            class Test {\n              void test() {\n                Map.Entry<?, ?> entry = null;\n              }\n            }"
+    },
+    {
+      "description": "qualifiedName_inLambdaParameter_cantFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        160
+      ],
+      "code": "import java.util.function.Function;\n\n            class Test {\n              interface Rec extends Function<Rec, Rec> {}\n\n              void run() {\n                Rec f = x -> x.apply(x);\n              }\n            }"
+    },
+    {
+      "description": "qualifiedName_ambiguous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "interface A {\n              interface N {}\n            }\n\n            interface B extends A {}\n\n            class C implements D {}\n\n            interface E extends D {\n              interface N extends D.N {}\n            }\n\n            interface D {\n              interface N {}\n            }\n\n            class Test extends C implements E {\n              // BUG: Diagnostic contains: A.N\n              private B.N f() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "typeParameter_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": "class Test<E extends Enum<E>> {\n              E test(Class<E> clazz, String name) {\n                return E.valueOf(clazz, name);\n              }\n            }"
+    },
+    {
+      "description": "arrays",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        226
+      ],
+      "code": "class Test {\n              int len(String[] xs) {\n                return xs.length;\n              }\n            }"
+    },
+    {
+      "description": "clazz_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        241
+      ],
+      "code": "class Test {\n              void test() {\n                var c = boolean.class;\n              }\n            }"
+    },
+    {
+      "description": "method_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        256
+      ],
+      "code": "class Super {\n              static void f() {}\n            }\n            \n\n            class Test extends Super {\n              void test() {\n                Test.f();\n              }\n            }"
+    },
+    {
+      "description": "innerArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        279
+      ],
+      "code": "class Super<T> {\n              class Inner {}\n            }\n            \n\n            class Sub<T> extends Super<T> {}\n            \n\nclass Test {\n  // BUG: Diagnostic contains: `Super.Inner` was referred to by the non-canonical name `Sub.Inner`\n  Sub<?>.Inner[] x;\n}"
+    },
+    {
+      "description": "moduleInfo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "module testmodule {\n              requires java.base;\n            }"
+    },
+    {
+      "description": "typeAnnotation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        320
+      ],
+      "code": "import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target(ElementType.TYPE_USE)\n            @interface TA {}\n\n            class Crash {\n              class Nested {\n                class DoublyNested {}\n              }\n\n              class SubNested extends Nested {}\n\n              void foo(Crash.@TA Nested.DoublyNested p) {}\n\n              // BUG: Diagnostic contains: Crash.Nested.DoublyNested\n              void bar(Crash.@TA SubNested.DoublyNested p) {}\n            }"
+    }
+  ]
+}

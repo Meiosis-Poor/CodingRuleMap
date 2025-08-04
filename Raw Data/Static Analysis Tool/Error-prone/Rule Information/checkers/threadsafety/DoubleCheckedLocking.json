@@ -1,0 +1,70 @@
+{
+  "name": "DoubleCheckedLocking",
+  "language": "java",
+  "description": "Double-checked locking on non-volatile fields is unsafe",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 287,
+  "branches": 49,
+  "apis": 6,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "package threadsafety;\n\n            class Test {\n              public Object x;\n\n              void m() {\n                // BUG: Diagnostic contains: public volatile Object x\n                if (x == null) {\n                  synchronized (this) {\n                    if (x == null) {\n                      x = new Object();\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveNoFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "package threadsafety;\n\n            class Test {\n              static class Inner {\n                static Object x;\n              }\n\n              void m() {\n                // BUG: Diagnostic contains:\n                if (Inner.x == null) {\n                  synchronized (this) {\n                    if (Inner.x == null) {\n                      Inner.x = new Object();\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveTmpVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84
+      ],
+      "code": "package threadsafety;\n\n            class Test {\n              Object x;\n\n              void m() {\n                Object z = x;\n                // BUG: Diagnostic contains: volatile Object\n                if (z == null) {\n                  synchronized (this) {\n                    z = x;\n                    if (z == null) {\n                      x = z = new Object();\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "package threadsafety;\n\n            class Test {\n              volatile Object x;\n\n              void m() {\n                if (x == null) {\n                  synchronized (this) {\n                    if (x == null) {\n                      x = new Object();\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "immutable_integer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "package threadsafety;\n\n            class Test {\n              public Integer x;\n\n              void m() {\n                if (x == null) {\n                  synchronized (this) {\n                    if (x == null) {\n                      x = 1;\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "immutable_string",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "package threadsafety;\n\n            class Test {\n              public String x;\n\n              void m() {\n                if (x == null) {\n                  synchronized (this) {\n                    if (x == null) {\n                      x = \"\";\n                    }\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "b37896333",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "class Test {\n              public String x;\n\n              String m() {\n                String result = x;\n                if (result == null) {\n                  synchronized (this) {\n                    if (result == null) {\n                      x = result = \"\";\n                    }\n                  }\n                }\n                return result;\n              }\n            }"
+    }
+  ]
+}

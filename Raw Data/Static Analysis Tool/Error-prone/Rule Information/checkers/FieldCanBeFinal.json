@@ -1,0 +1,214 @@
+{
+  "name": "FieldCanBeFinal",
+  "language": "java",
+  "description": "This field is only assigned during initialization; consider making it final",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 300,
+  "branches": 27,
+  "apis": 8,
+  "test": [
+    {
+      "description": "annotationFieldsAreAlreadyFinal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "public @interface Anno {\n              int x = 42;\n              static int y = 42;\n            }"
+    },
+    {
+      "description": "simple",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private final int x\n              private int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "keepAnnotatedFields_ignored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65
+      ],
+      "code": "import com.google.errorprone.annotations.Keep;\n\n            class Test {\n              @Keep private int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "injectAnnotatedFields_ignored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84
+      ],
+      "code": "import javax.inject.Inject;\n\n            class Test {\n              @Inject private int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "initializerBlocks",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private final int x1\n              private int x1;\n              private int x2;\n              // BUG: Diagnostic contains: private static final int y1\n              private static int y1;\n              private static int y2;\n\n              {\n                x1 = 42;\n                x2 = 42;\n              }\n\n              static {\n                y1 = 42;\n                y2 = 42;\n              }\n\n              void mutate() {\n                x2 = 0;\n                y2 = 0;\n              }\n            }"
+    },
+    {
+      "description": "staticSetFromInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        136
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private static final int x1\n              private static int x1;\n              private static int x2;\n\n              static {\n                x1 = 42;\n                x2 = 42;\n              }\n\n              {\n                x2 = 42;\n              }\n            }"
+    },
+    {
+      "description": "suppressionOnField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        160
+      ],
+      "code": "class Test {\n              @SuppressWarnings(\"FieldCanBeFinal\")\n              private int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "suppressionOnClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        178
+      ],
+      "code": "@SuppressWarnings(\"FieldCanBeFinal\")\n            class Test {\n              private int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "constructorChaining",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private final int x\n              private int x;\n\n              Test(int x) {\n                this.x = x;\n              }\n\n              Test() {\n                this(42);\n              }\n            }"
+    },
+    {
+      "description": "controlFlow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private final int x\n              private int x;\n\n              Test(boolean flag, int x, int y) {\n                if (flag) {\n                  this.x = x;\n                } else {\n                  this.x = y;\n                }\n              }\n            }"
+    },
+    {
+      "description": "doubleInitialization",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        242
+      ],
+      "code": "class Test {\n              private int x;\n\n              Test(int x) {\n                this.x = x;\n                this.x = x;\n              }\n            }"
+    },
+    {
+      "description": "compoundAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        260
+      ],
+      "code": "class Test {\n              private int x;\n\n              Test() {\n                this.x = 42;\n              }\n\n              void incr() {\n                x += 1;\n              }\n            }"
+    },
+    {
+      "description": "unaryAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        281
+      ],
+      "code": "class Test {\n              private int x;\n\n              Test() {\n                this.x = 42;\n              }\n\n              void incr() {\n                x++;\n              }\n            }"
+    },
+    {
+      "description": "constructorAssignmentToOtherInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": "class Test {\n              private int x;\n              // BUG: Diagnostic contains: private final int y\n              private int y;\n\n              Test(Test other) {\n                x = 42;\n                y = 42;\n                other.x = x;\n              }\n            }"
+    },
+    {
+      "description": "assignmentFromOutsideCompilationUnit",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        323
+      ],
+      "code": "class A {\n              int x;\n\n              A(B b) {\n                x = 42;\n                b.x = 42;\n              }\n            }\n            \n\n            class B {\n              int x;\n\n              B(A a) {\n                x = 42;\n                a.x = 42;\n              }\n            }"
+    },
+    {
+      "description": "guardInitialization",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        355
+      ],
+      "code": ""
+    },
+    {
+      "description": "fieldInitialization",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        370
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private final boolean flag\n              private boolean flag = false;\n\n              Test() {}\n            }"
+    },
+    {
+      "description": "ignoreInject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        386
+      ],
+      "code": "import javax.inject.Inject;\n\n            class Test {\n              @Inject private Object x;\n\n              Test() {\n                this.x = x;\n              }\n            }"
+    },
+    {
+      "description": "allowNonFinal_nonFinalForTesting",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        405
+      ],
+      "code": "@interface NonFinalForTesting {}\n\n            class Test {\n              @NonFinalForTesting private int x;\n\n              Test(int x) {\n                this.x = x;\n              }\n            }"
+    },
+    {
+      "description": "visibleForTesting",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        424
+      ],
+      "code": "import com.google.common.annotations.VisibleForTesting;\n\n            class Test {\n              @VisibleForTesting public int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "protectedField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        443
+      ],
+      "code": "import com.google.common.annotations.VisibleForTesting;\n\n            class Test {\n              protected int x;\n\n              Test() {\n                x = 42;\n              }\n            }"
+    },
+    {
+      "description": "nonPrivateField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        462
+      ],
+      "code": "import com.google.common.annotations.VisibleForTesting;\n\n            class Test {\n              public int x;\n              int y;\n\n              Test() {\n                x = 42;\n                y = 42;\n              }\n            }"
+    },
+    {
+      "description": "allowObjectifyClasses",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        483
+      ],
+      "code": "package com.googlecode.objectify.v4.annotation;\n\n            public @interface Entity {}\n            \n\n            import com.googlecode.objectify.v4.annotation.Entity;\n\n            @Entity\n            class Test {\n              private int x;\n\n              Test(int x) {\n                this.x = x;\n              }\n            }"
+    },
+    {
+      "description": "initInLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        510
+      ],
+      "code": "class Test {\n              private int x;\n              private final Runnable r;\n\n              Test() {\n                r = () -> x = 1;\n              }\n            }"
+    },
+    {
+      "description": "constructorAssignmentWithLambdaReassignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        528
+      ],
+      "code": "class Test {\n              private Runnable r;\n\n              Test() {\n                r = foo(() -> r = null);\n              }\n\n              private static Runnable foo(Runnable r) {\n                return r;\n              }\n            }"
+    }
+  ]
+}

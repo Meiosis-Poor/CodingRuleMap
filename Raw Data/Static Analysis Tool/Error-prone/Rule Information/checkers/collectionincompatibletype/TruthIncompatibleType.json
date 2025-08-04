@@ -1,0 +1,358 @@
+{
+  "name": "TruthIncompatibleType",
+  "language": "java",
+  "description": "Argument is not compatible with the subject's type.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 475,
+  "branches": 34,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        46
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              static final class A {}\n\n              static final class B {}\n\n              public void f(A a, B b) {\n                // BUG: Diagnostic contains:\n                assertThat(a).isEqualTo(b);\n                // BUG: Diagnostic contains:\n                assertThat(a).isNotEqualTo(b);\n              }\n            }"
+    },
+    {
+      "description": "assumeTypeCheck",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import static com.google.common.truth.TruthJUnit.assume;\n\n            public class Test {\n              static final class A {}\n\n              static final class B {}\n\n              public void f(A a, B b) {\n                // BUG: Diagnostic contains:\n                assume().that(a).isEqualTo(b);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              static final class A {}\n\n              static final class B {}\n\n              public void f(A a, B b) {\n                assertThat(a).isEqualTo(a);\n                assertThat(b).isEqualTo(b);\n                assertThat(\"a\").isEqualTo(\"b\");\n              }\n            }"
+    },
+    {
+      "description": "mixedNumberTypes_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f() {\n                assertThat(2L).isEqualTo(2);\n              }\n            }"
+    },
+    {
+      "description": "mixedBoxedNumberTypes_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        132
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f() {\n                assertThat(Byte.valueOf((byte) 2)).isEqualTo(2);\n              }\n            }"
+    },
+    {
+      "description": "chainedThrowAssertion_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f(Exception e) {\n                assertThat(e).hasMessageThat().isEqualTo(\"foo\");\n              }\n            }"
+    },
+    {
+      "description": "clazz",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        166
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f(Class<InterruptedException> a, Class<? extends Throwable> b) {\n                try {\n                } catch (Exception e) {\n                  assertThat(e.getCause().getClass()).isEqualTo(IllegalArgumentException.class);\n                }\n              }\n            }"
+    },
+    {
+      "description": "containment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        186
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f(Iterable<Long> xs, String x) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).contains(x);\n              }\n            }"
+    },
+    {
+      "description": "containment_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f(Iterable<Long> xs, Number x) {\n                assertThat(xs).contains(x);\n              }\n            }"
+    },
+    {
+      "description": "vectorContainment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        221
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, String x) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactlyElementsIn(ImmutableList.of(x));\n              }\n            }"
+    },
+    {
+      "description": "vectorContainment_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        240
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, Number x) {\n                assertThat(xs).containsExactlyElementsIn(ImmutableList.of(x));\n              }\n            }"
+    },
+    {
+      "description": "variadicCall_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        258
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, Number... x) {\n                assertThat(xs).containsExactly((Object[]) x);\n              }\n            }"
+    },
+    {
+      "description": "variadicCall_notActuallyAnArray_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        276
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, Object x) {\n                assertThat(xs).containsExactlyElementsIn((Object[]) x);\n              }\n            }"
+    },
+    {
+      "description": "variadicCall_checked",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        294
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, String... x) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactly(x);\n              }\n            }"
+    },
+    {
+      "description": "variadicCall_primitiveArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        313
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<byte[]> xs, byte[] ys) {\n                assertThat(xs).containsExactly(ys);\n              }\n            }"
+    },
+    {
+      "description": "containsExactlyElementsIn_withArray_match",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        331
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<String> xs, Object... x) {\n                assertThat(xs).containsExactlyElementsIn(x);\n              }\n            }"
+    },
+    {
+      "description": "containsExactlyElementsIn_withArray_mismatched",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        349
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, String... x) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactlyElementsIn(x);\n              }\n            }"
+    },
+    {
+      "description": "containsExactlyElementsIn_numericTypes_notSpecialCased",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        368
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n\n            public class Test {\n              public void f(Iterable<Long> xs, ImmutableList<Integer> ys) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactlyElementsIn(ys);\n              }\n            }"
+    },
+    {
+      "description": "comparingElementsUsingRawCorrespondence_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        387
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.truth.Correspondence;\n\n            public class Test {\n              @SuppressWarnings(\"unchecked\")\n              public void f(Iterable<Long> xs, Correspondence c) {\n                assertThat(xs).comparingElementsUsing(c).doesNotContain(\"\");\n              }\n            }"
+    },
+    {
+      "description": "comparingElementsUsing_typeMismatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        407
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.truth.Correspondence;\n\n            public class Test {\n              public void f(Iterable<Long> xs, Correspondence<Integer, String> c) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).comparingElementsUsing(c).doesNotContain(\"\");\n              }\n            }"
+    },
+    {
+      "description": "comparingElementsUsing_typesMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        427
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.truth.Correspondence;\n\n            public class Test {\n              public void f(Iterable<Long> xs, Correspondence<Long, String> c) {\n                assertThat(xs).comparingElementsUsing(c).doesNotContain(\"\");\n              }\n            }"
+    },
+    {
+      "description": "mapContainsExactlyEntriesIn_keyTypesDiffer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        446
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.Map;\n\n            public class Test {\n              public void f(Map<String, Long> xs, Map<Long, Long> ys) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactlyEntriesIn(ys);\n              }\n            }"
+    },
+    {
+      "description": "mapContainsExactlyEntriesIn_valueTypesDiffer",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        465
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.Map;\n\n            public class Test {\n              public void f(Map<String, Long> xs, Map<String, String> ys) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactlyEntriesIn(ys);\n              }\n            }"
+    },
+    {
+      "description": "mapContainsExactly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        484
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.Map;\n\n            public class Test {\n              public void f(Map<String, Long> xs) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactly(\"\", 1L, \"foo\", 2L, \"bar\", 3);\n              }\n            }"
+    },
+    {
+      "description": "mapContainsExactly_varargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        503
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import java.util.Map;\n\n            public class Test {\n              public void f(Map<String, Long> xs, String a, Long b, Object... rest) {\n                assertThat(xs).containsExactly(a, b, rest);\n              }\n            }"
+    },
+    {
+      "description": "multimapContainsExactly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        521
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.Multimap;\n\n            public class Test {\n              public void f(Multimap<String, Long> xs) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactly(\"\", 1L, \"foo\", 2L, \"bar\", 3);\n              }\n            }"
+    },
+    {
+      "description": "streamContainsExactly",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        540
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.Multimap;\n            import java.util.stream.Stream;\n\n            public class Test {\n              public void f(Stream<String> xs) {\n                // BUG: Diagnostic contains:\n                assertThat(xs).containsExactly(1, 2);\n              }\n            }"
+    },
+    {
+      "description": "protoTruth_positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        560
+      ],
+      "code": "import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            final class Test {\n              void test(TestFieldProtoMessage a, TestProtoMessage b) {\n                // BUG: Diagnostic contains:\n                assertThat(a).isNotEqualTo(b);\n              }\n            }"
+    },
+    {
+      "description": "protoTruth_withModifiers_positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        580
+      ],
+      "code": "import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            final class Test {\n              void test(TestFieldProtoMessage a, TestProtoMessage b) {\n                // BUG: Diagnostic contains:\n                assertThat(a).ignoringFields(1).isNotEqualTo(b);\n              }\n            }"
+    },
+    {
+      "description": "protoTruth_contains",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        600
+      ],
+      "code": "import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\n            final class Test {\n              void test(Iterable<TestFieldProtoMessage> a, TestProtoMessage b) {\n                // BUG: Diagnostic contains:\n                assertThat(a).containsExactly(b);\n              }\n            }"
+    },
+    {
+      "description": "protoTruth_negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        620
+      ],
+      "code": "import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\n\n            final class Test {\n              void test(TestFieldProtoMessage a, TestFieldProtoMessage b) {\n                assertThat(a).isNotEqualTo(b);\n              }\n            }"
+    },
+    {
+      "description": "protoTruth_comparingElementsUsinng",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        638
+      ],
+      "code": "import static com.google.common.truth.extensions.proto.ProtoTruth.assertThat;\nimport com.google.common.collect.ImmutableList;\nimport com.google.common.truth.Correspondence;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestFieldProtoMessage;\nimport com.google.errorprone.bugpatterns.proto.ProtoTest.TestProtoMessage;\n\npublic class Test {\n  public void f(\n      Iterable<TestProtoMessage> xs, Correspondence<TestFieldProtoMessage, TestProtoMessage> c) {\n    // BUG: Diagnostic contains:\n    assertThat(xs).comparingElementsUsing(c).doesNotContain(TestProtoMessage.getDefaultInstance());\n  }\n}"
+    },
+    {
+      "description": "comparingElementsUsingRawCollection_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        661
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.truth.Correspondence;\n\n            public class Test {\n              @SuppressWarnings(\"unchecked\")\n              public void f(Iterable xs, Correspondence<Long, String> c) {\n                assertThat(xs).comparingElementsUsing(c).doesNotContain(\"\");\n              }\n            }"
+    },
+    {
+      "description": "casts",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        681
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n\n            public class Test {\n              public void f(int a, long b, long c) {\n                assertThat((long) a).isAnyOf(b, c);\n              }\n            }"
+    },
+    {
+      "description": "multiset_hasCount_match",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        698
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.Multiset;\n\n            public class Test {\n              public void f(Multiset<String> a, String b) {\n                assertThat(a).hasCount(b, 1);\n              }\n            }"
+    },
+    {
+      "description": "multiset_hasCount_mismatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        716
+      ],
+      "code": "import static com.google.common.truth.Truth.assertThat;\n            import com.google.common.collect.Multiset;\n\n            public class Test {\n              public void f(Multiset<String> a, Long b) {\n                // BUG: Diagnostic contains:\n                assertThat(a).hasCount(b, 1);\n              }\n            }"
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    },
+    {
+      "description": "protoTruthIterableSubjectExhaustiveness",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        790
+      ],
+      "code": ""
+    }
+  ]
+}

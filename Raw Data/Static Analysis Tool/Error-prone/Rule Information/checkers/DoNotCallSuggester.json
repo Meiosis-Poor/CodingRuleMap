@@ -1,0 +1,166 @@
+{
+  "name": "DoNotCallSuggester",
+  "language": "java",
+  "description": "Consider annotating methods that always throw with @DoNotCall. Read more at https://errorprone.info/bugpattern/DoNotCall",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 136,
+  "branches": 29,
+  "apis": 4,
+  "test": [
+    {
+      "description": "finalClass_publicFinalMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "final class Test {\n              // BUG: Diagnostic contains: Always throws java.lang.RuntimeException\n              public final void foo() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_withInlineComments_type1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47
+      ],
+      "code": "final class Test {\n              // BUG: Diagnostic contains: Always throws java.lang.RuntimeException\n              public final void foo() {\n                // inline comments get stripped and don't matter\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_withInlineComments_type2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64
+      ],
+      "code": "final class Test {\n              // BUG: Diagnostic contains: Always throws java.lang.RuntimeException\n              public final void foo() {\n                /* inline comments get stripped and don't matter */\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicNonFinalMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "final class Test {\n              // BUG: Diagnostic contains: Always throws java.lang.RuntimeException\n              public void foo() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "nonFinalClass_publicFinalMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: Always throws java.lang.RuntimeException\n              public final void foo() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "nonFinalClass_publicNonFinalMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        113
+      ],
+      "code": "class Test {\n              public void foo() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_throwsAVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        129
+      ],
+      "code": "import java.io.IOException;\n\n            final class Test {\n              private IOException ioe = new IOException();\n\n              // BUG: Diagnostic contains: Always throws java.io.IOException\n              public final void foo() throws IOException {\n                throw ioe;\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_throwsAnotherMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import java.io.IOException;\n\n            final class Test {\n              // BUG: Diagnostic contains: Always throws java.io.IOException\n              public final void foo() throws IOException {\n                throw up();\n              }\n\n              private IOException up() {\n                return new IOException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_withoutImplementingParentInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        171
+      ],
+      "code": "final class Test {\n              // BUG: Diagnostic contains: Always throws java.lang.RuntimeException\n              public final String get() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_overriddenMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "import java.util.function.Supplier;\n\n            final class Test implements Supplier<String> {\n              @Override\n              public final String get() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_effectivelyOverriddenMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205
+      ],
+      "code": "import java.util.function.Supplier;\n\n            final class Test implements Supplier<String> {\n              public final String get() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_methodStartsWithProvide",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        222
+      ],
+      "code": "final class Test {\n              public final String provideString() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_methodStartsWithProduce",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        237
+      ],
+      "code": "final class Test {\n              public final String produceString() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_methodStartsWithThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "final class Test {\n              public final void throwsRuntimeException() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicFinalMethod_extendsAbstractModule",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        267
+      ],
+      "code": "package com.google.inject;\n\n            public abstract class AbstractModule {}\n            \n\n            final class Test extends com.google.inject.AbstractModule {\n              public final String extractString() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "finalClass_publicMethod_methodReturnsException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        289
+      ],
+      "code": "final class Test {\n              public RuntimeException foo() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "insideAnonymousClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        304
+      ],
+      "code": "final class Test {\n              public final void foo() {\n                Object obj =\n                    new Object() {\n                      public void foo() {\n                        throw new RuntimeException();\n                      }\n                    };\n              }\n            }"
+    },
+    {
+      "description": "abstractClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        324
+      ],
+      "code": "abstract class Test {\n              abstract void test();\n            }"
+    },
+    {
+      "description": "annotatedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        337
+      ],
+      "code": "package net.starlark.java.annot;\n\n            public @interface StarlarkMethod {}\n            \n\n            import net.starlark.java.annot.StarlarkMethod;\n\n            final class Test {\n              @StarlarkMethod\n              public static void foo() {\n                throw new RuntimeException();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "name": "UnsafeFinalization",
+  "language": "java",
+  "description": "Finalizer may run before native code finishes execution",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 134,
+  "branches": 14,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class MyAwesomeGame {\n              private long nativeResourcePtr;\n\n              private static native long doNativeInit();\n\n              private static native void cleanUpNativeResources(long nativeResourcePtr);\n\n              private static native void playAwesomeGame(long nativeResourcePtr);\n\n              public MyAwesomeGame() {\n                nativeResourcePtr = doNativeInit();\n              }\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() throws Throwable {\n                cleanUpNativeResources(nativeResourcePtr);\n                nativeResourcePtr = 0;\n                super.finalize();\n              }\n\n              public void run() {\n                // BUG: Diagnostic contains:\n                playAwesomeGame(nativeResourcePtr);\n              }\n            }"
+    },
+    {
+      "description": "negative_instance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "class MyAwesomeGame {\n              private static long nativeResourcePtr;\n\n              private native void playAwesomeGame(long nativeResourcePtr);\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() {}\n\n              public void run() {\n                playAwesomeGame(nativeResourcePtr);\n              }\n            }"
+    },
+    {
+      "description": "negative_this",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "class NativeStuff {\n              static native void doNative(long ctx, NativeResource instance);\n            }\n            \n\n            class NativeResource {\n              private static long ctx;\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() {}\n\n              public void run() {\n                NativeStuff.doNative(ctx, this);\n              }\n            }"
+    },
+    {
+      "description": "negative_nonIntOrLong",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        118
+      ],
+      "code": "class MyAwesomeGame {\n              private static String nativeResourcePtr;\n\n              private static native void playAwesomeGame(String nativeResourcePtr);\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() {}\n\n              public static void run() {\n                playAwesomeGame(nativeResourcePtr);\n              }\n            }"
+    },
+    {
+      "description": "negative_nonNative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141
+      ],
+      "code": "class MyAwesomeGame {\n              private static long nativeResourcePtr;\n\n              private static void playAwesomeGame(long nativeResourcePtr) {}\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() {}\n\n              public static void run() {\n                playAwesomeGame(nativeResourcePtr);\n              }\n            }"
+    },
+    {
+      "description": "negative_noInstanceState",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        164
+      ],
+      "code": "class MyAwesomeGame {\n              private long nativeResourcePtr;\n\n              private static native long doNativeInit();\n\n              private static native void cleanUpNativeResources(long nativeResourcePtr);\n\n              private static native void playAwesomeGame();\n\n              public MyAwesomeGame() {\n                nativeResourcePtr = doNativeInit();\n              }\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() throws Throwable {\n                cleanUpNativeResources(nativeResourcePtr);\n                nativeResourcePtr = 0;\n                super.finalize();\n              }\n\n              public void run() {\n                playAwesomeGame();\n              }\n            }"
+    },
+    {
+      "description": "negativeFence",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        199
+      ],
+      "code": "import java.lang.ref.Reference;\n\n            class MyAwesomeGame {\n              private long nativeResourcePtr;\n\n              private static native long doNativeInit();\n\n              private static native void cleanUpNativeResources(long nativeResourcePtr);\n\n              private static native void playAwesomeGame(long nativeResourcePtr);\n\n              public MyAwesomeGame() {\n                nativeResourcePtr = doNativeInit();\n              }\n\n              @SuppressWarnings(\"removal\")\n              @Override\n              protected void finalize() throws Throwable {\n                cleanUpNativeResources(nativeResourcePtr);\n                nativeResourcePtr = 0;\n                super.finalize();\n              }\n\n              public void run() {\n                try {\n                  playAwesomeGame(nativeResourcePtr);\n                } finally {\n                  Reference.reachabilityFence(this);\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeInterface",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        240
+      ],
+      "code": "interface I {\n              int duration = 1;\n\n              default void f() throws Exception {\n                // a native static method\n                Thread.sleep(duration);\n              }\n            }"
+    }
+  ]
+}

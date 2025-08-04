@@ -1,0 +1,38 @@
+{
+  "name": "CollectionToArraySafeParameter",
+  "language": "java",
+  "description": "The type of the array parameter of Collection.toArray needs to be compatible with the array type",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 73,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.ArrayList;\n            import java.util.Collection;\n            import java.util.HashSet;\n            import java.util.Set;\n\n            /**\n             * @author mariasam@google.com (Maria Sam) on 6/27/17.\n             */\n            public class CollectionToArraySafeParameterPositiveCases<T> {\n\n              private static void basicCase() {\n                Collection<String> collection = new ArrayList<String>();\n                // BUG: Diagnostic contains: array parameter\n                Integer[] intArray = collection.toArray(new Integer[collection.size()]);\n\n                Integer[] arrayOfInts = new Integer[10];\n                // BUG: Diagnostic contains: array parameter\n                Integer[] wrongArray = collection.toArray(arrayOfInts);\n\n                Set<Integer> integerSet = new HashSet<Integer>();\n                // BUG: Diagnostic contains: array parameter\n                Long[] longArray = integerSet.toArray(new Long[10]);\n\n                Set<Long> longSet = new HashSet<Long>();\n                // BUG: Diagnostic contains: array parameter\n                Integer[] integerArray = longSet.toArray(new Integer[10]);\n              }\n\n              void test(Foo<Integer> foo) {\n                // BUG: Diagnostic contains: array parameter\n                String[] things = foo.toArray(new String[] {});\n              }\n\n              void test(FooBar<Integer> foo) {\n                // BUG: Diagnostic contains: array parameter\n                Integer[] things = foo.toArray(new Integer[] {});\n              }\n\n              class FooBar<T> extends HashSet<String> {}\n\n              class Foo<T> extends HashSet<T> {}\n            }\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        85
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.ArrayList;\nimport java.util.Collection;\nimport java.util.HashSet;\n\n/**\n * @author mariasam@google.com (Maria Sam) on 6/27/17.\n */\npublic class CollectionToArraySafeParameterNegativeCases {\n\n  private void basicCase() {\n    Collection<String> collection = new ArrayList<String>();\n    Collection<Integer> collInts = new ArrayList<Integer>();\n\n    Object[] intArrayActualNoParam = collInts.toArray();\n    Integer[] intArrayActual = collInts.toArray(new Integer[collection.size()]);\n\n    Collection<Object> collectionObjects = new ArrayList<>();\n    Integer[] intArrayObjects = collectionObjects.toArray(new Integer[collectionObjects.size()]);\n\n    Integer[] arrayOfInts = new Integer[10];\n    Integer[] otherArray = collInts.toArray(arrayOfInts);\n\n    Collection<Collection<Integer>> collectionOfCollection = new ArrayList<Collection<Integer>>();\n    Collection<Integer>[] collectionOfCollectionArray =\n        collectionOfCollection.toArray(new ArrayList[10]);\n\n    SomeObject someObject = new SomeObject();\n    Integer[] someObjectArray = someObject.toArray(new Integer[1]);\n\n    // test to make sure that when the collection has no explicit type there is no error thrown\n    // when \"toArray\" is called.\n    Collection someObjects = new ArrayList();\n    Object[] intArray = someObjects.toArray(new Integer[1]);\n  }\n\n  class FooBar<T> extends HashSet<T> {}\n\n  void testFooBar(FooBar<Integer> fooBar) {\n    Integer[] things = fooBar.toArray(new Integer[] {});\n  }\n\n  class Foo<T> extends HashSet<String> {}\n\n  void test(Foo<Integer> foo) {\n    String[] things = foo.toArray(new String[] {});\n  }\n\n  class SomeObject {\n    Integer[] toArray(Integer[] someArray) {\n      return new Integer[10];\n    }\n  }\n}\\"
+    },
+    {
+      "description": "b67022899",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "import java.util.Collection;\n\n            class Test {\n              <C extends Collection<Integer>> void f(C cx) {\n                cx.toArray(new Integer[0]);\n              }\n            }"
+    }
+  ]
+}

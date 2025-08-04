@@ -1,0 +1,30 @@
+{
+  "name": "ComparableAndComparator",
+  "language": "java",
+  "description": "Class should not implement both `Comparable` and `Comparator`",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 71,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.Comparator;\n\n            /**\n             * @author sulku@google.com (Marsela Sulku)\n             * @author mariasam@google.com (Maria Sam)\n             */\n            public class ComparableAndComparatorPositiveCases {\n\n              /** implements both interfaces */\n              // BUG: Diagnostic contains: Class should not implement both\n              public static class BadClass implements Comparable<BadClass>, Comparator<BadClass> {\n                @Override\n                public int compareTo(BadClass comparableNode) {\n                  return 0;\n                }\n\n                @Override\n                public int compare(BadClass a, BadClass b) {\n                  return 0;\n                }\n              }\n\n              /** Superclass test class */\n              public static class SuperClass implements Comparator<SuperClass> {\n                @Override\n                public int compare(SuperClass o1, SuperClass o2) {\n                  return 0;\n                }\n              }\n\n              /** SubClass test class */\n              // BUG: Diagnostic contains: Class should not implement both\n              public static class SubClass extends SuperClass implements Comparable<SubClass> {\n                @Override\n                public int compareTo(SubClass o) {\n                  return 0;\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.Comparator;\n\n/** Created by mariasam on 6/5/17. */\npublic class ComparableAndComparatorNegativeCases {\n\n  /** Class that implements comparable, but also defines a comparator */\n  public static class ComparableAndComparatorNested\n      implements Comparable<ComparableAndComparatorNested> {\n\n    /** Comparator */\n    private static final Comparator<ComparableAndComparatorNested> myComparator =\n        new Comparator<ComparableAndComparatorNested>() {\n\n          @Override\n          public int compare(ComparableAndComparatorNested o1, ComparableAndComparatorNested o2) {\n            return 0;\n          }\n        };\n\n    @Override\n    public int compareTo(ComparableAndComparatorNested o) {\n      return 0;\n    }\n  }\n\n  /** class that only implements comparable */\n  public static class OnlyComparable implements Comparable<OnlyComparable> {\n\n    @Override\n    public int compareTo(OnlyComparable o) {\n      return 0;\n    }\n  }\n\n  /** class that only implements comparator */\n  public static class OnlyComparator implements Comparator<OnlyComparator> {\n    @Override\n    public int compare(OnlyComparator o1, OnlyComparator o2) {\n      return 0;\n    }\n  }\n\n  /** This test case is here to increase readability */\n  // BUG: Diagnostic contains: Class should not implement both\n  public static class BadClass implements Comparable<BadClass>, Comparator<BadClass> {\n    @Override\n    public int compareTo(BadClass comparableNode) {\n      return 0;\n    }\n\n    @Override\n    public int compare(BadClass a, BadClass b) {\n      return 0;\n    }\n  }\n\n  /** Subclass should not cause error */\n  public static class BadClassSubclass extends BadClass {\n    public int sampleMethod() {\n      return 0;\n    }\n  }\n\n  /** Enums implementing comparator are ok */\n  enum TestEnum implements Comparator<Integer> {\n    MONDAY,\n    TUESDAY,\n    WEDNESDAY;\n\n    @Override\n    public int compare(Integer one, Integer two) {\n      return 0;\n    }\n  }\n}\\"
+    }
+  ]
+}

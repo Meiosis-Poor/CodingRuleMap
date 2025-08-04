@@ -1,0 +1,118 @@
+{
+  "name": "DifferentNameButSame",
+  "language": "java",
+  "description": "This type is referred to in different ways within this file, which may be confusing.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 259,
+  "branches": 29,
+  "apis": 4,
+  "test": [
+    {
+      "description": "classReferredToInTwoWays_usesShorterName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "package pkg;\n\n            import pkg.A.B;\n\n            interface Test {\n              A.B test();\n\n              B test2();\n            }\n            \n\n            package pkg;\n\n            import pkg.A.B;\n\n            interface Test {\n              B test();\n\n              B test2();\n            }"
+    },
+    {
+      "description": "fullyQualifiedType_notMentioned",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "package pkg;\n\n            interface Test {\n              A.B test();\n\n              pkg.A.B test2();\n            }"
+    },
+    {
+      "description": "positive2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "package pkg;\n\n            import pkg.A.B;\n\n            class Test {\n              B test() {\n                return new A.B();\n              }\n            }\n            \n\n            package pkg;\n\n            import pkg.A.B;\n\n            class Test {\n              B test() {\n                return new B();\n              }\n            }"
+    },
+    {
+      "description": "classReferredToInMultipleWaysWithinMemberSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        148
+      ],
+      "code": "package pkg;\n\n            import pkg.A.B;\n\n            class Test {\n              B.C test() {\n                A.B.C.foo();\n                return null;\n              }\n            }\n            \n\n            package pkg;\n\n            import pkg.A.B;\n\n            class Test {\n              B.C test() {\n                B.C.foo();\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "typeUseAnnotations_correctlyRefactored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        182
+      ],
+      "code": "package pkg;\n\n            import pkg.A.B;\n\n            interface Test {\n              A.@TypeUseAnnotation B test();\n\n              B test2();\n            }\n            \n\n            package pkg;\n\n            import pkg.A.B;\n\n            interface Test {\n              @TypeUseAnnotation\n              B test();\n\n              B test2();\n            }"
+    },
+    {
+      "description": "typeUseAnnotation_leftInCorrectPosition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "package pkg;\n\n            import pkg.A.B;\n\n            interface Test {\n              @TypeUseAnnotation\n              B test();\n\n              A.B test2();\n            }\n            \n\n            package pkg;\n\n            import pkg.A.B;\n\n            interface Test {\n              @TypeUseAnnotation\n              B test();\n\n              B test2();\n            }"
+    },
+    {
+      "description": "nameShadowed_noChange",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "package pkg;\n\n            interface Test {\n              interface B {\n                B get();\n              }\n\n              Test.B get();\n            }"
+    },
+    {
+      "description": "doesNotRefactorOutsideOuterClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "package pkg;\n\n            @ClassAnnotation(A.B.C.class)\n            class D extends A.B {\n              private C c;\n              private C c2;\n            }\n            \n\n            package pkg;\n\n            @ClassAnnotation(A.B.C.class)\n            class D extends A.B {\n              private A.B.C c;\n              private A.B.C c2;\n            }"
+    },
+    {
+      "description": "genericsNotRefactored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        297
+      ],
+      "code": "package pkg;\n\n            interface Test {\n              interface A<T> {\n                interface D {}\n              }\n\n              class B implements A<Long> {}\n\n              class C implements A<String> {}\n\n              B.D b();\n\n              C.D c();\n            }"
+    },
+    {
+      "description": "typesDefinedWithinSameFileIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        323
+      ],
+      "code": "package pkg;\n\n            interface Test {\n              interface Foo {\n                Foo foo();\n              }\n\n              Test.Foo foo();\n            }"
+    },
+    {
+      "description": "typesWhichMakePoorImports_disfavoured",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "package pkg;\n\n            interface Foo {\n              interface Builder {}\n            }\n            \n\n            package pkg;\n\n            import pkg.Foo.Builder;\n\n            interface Test {\n              Foo.Builder a();\n\n              Builder b();\n            }\n            \n\n            package pkg;\n\n            import pkg.Foo.Builder;\n\n            interface Test {\n              Foo.Builder a();\n\n              Foo.Builder b();\n            }"
+    },
+    {
+      "description": "classClashesWithVariableName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        385
+      ],
+      "code": "package pkg;\n\n            import pkg.A.B;\n\n            class Test {\n              A.B test(Object B) {\n                return new A.B();\n              }\n\n              B test2() {\n                return null;\n              }\n            }\n            \n\n            package pkg;\n\n            import pkg.A.B;\n\n            class Test {\n              A.B test(Object B) {\n                return new A.B();\n              }\n\n              A.B test2() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "innerClassConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        425
+      ],
+      "code": "package pkg;\n\n            class A {\n              class B {}\n            }\n            \n\n            package pkg;\n\n            class Test {\n              static void f(A a) {\n                A.B b = a.new B();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "StaticGuardedByInstance",
+  "language": "java",
+  "description": "Writes to static fields should not be guarded by instance locks",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 112,
+  "branches": 9,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              final Object lock = new Object();\n              static boolean init = false;\n\n              void m() {\n                synchronized (lock) {\n                  // BUG: Diagnostic contains:\n                  // static variable should not be guarded by instance lock 'lock'\n                  init = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive_twoWrites",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "class Test {\n              final Object lock = new Object();\n              static int x = 0;\n\n              void m() {\n                synchronized (lock) {\n                  // BUG: Diagnostic contains:\n                  // static variable should not be guarded by instance lock 'lock'\n                  x++;\n                  // BUG: Diagnostic contains:\n                  // static variable should not be guarded by instance lock 'lock'\n                  x++;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_staticLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "class Test {\n              static final Object lock = new Object();\n              static boolean init = false;\n\n              void m() {\n                synchronized (lock) {\n                  init = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_instanceVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "class Test {\n              final Object lock = new Object();\n              boolean init = false;\n\n              void m() {\n                synchronized (lock) {\n                  init = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_method",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        118
+      ],
+      "code": "class Test {\n              static boolean init = false;\n\n              void m() {\n                synchronized (getClass()) {\n                  init = true;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_nested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "class Test {\n              final Object lock = new Object();\n              static boolean init = false;\n\n              void m() {\n                synchronized (lock) {\n                  synchronized (Test.class) {\n                    init = true;\n                  }\n                  new Test() {\n                    {\n                      init = true;\n                    }\n                  };\n                }\n              }\n            }"
+    }
+  ]
+}

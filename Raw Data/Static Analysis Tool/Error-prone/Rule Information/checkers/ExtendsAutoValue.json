@@ -1,0 +1,142 @@
+{
+  "name": "ExtendsAutoValue",
+  "language": "java",
+  "description": "Do not extend an @AutoValue-like classes in non-generated code.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 89,
+  "branches": 2,
+  "apis": 2,
+  "test": [
+    {
+      "description": "extendsAutoValue_goodNoSuperclass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": ""
+    },
+    {
+      "description": "extendsAutoValue_goodSuperclass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        43
+      ],
+      "code": "class SuperClass {}\n\n            public class TestClass extends SuperClass {}"
+    },
+    {
+      "description": "extendsAutoValue_goodAutoValueExtendsSuperclass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            public class TestClass {}\n\n            @AutoValue\n            abstract class AutoClass extends TestClass {}"
+    },
+    {
+      "description": "extendsAutoValue_goodGeneratedIgnored",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        72
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n            import javax.annotation.processing.Generated;\n\n            @AutoValue\n            abstract class AutoClass {}\n\n            @Generated(value = \"hi\")\n            public class TestClass extends AutoClass {}"
+    },
+    {
+      "description": "extendsAutoValue_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class AutoClass {}\n\n            // BUG: Diagnostic contains: Do not extend an @AutoValue class in non-generated code.\n            public class TestClass extends AutoClass {}"
+    },
+    {
+      "description": "extendsAutoValue_builder_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        107
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n@AutoValue\nabstract class AutoClass {\n  @AutoValue.Builder\n  abstract static class Builder {\n    abstract AutoClass build();\n  }\n}\n\n// BUG: Diagnostic contains: Do not extend an @AutoValue.Builder class in non-generated code.\npublic class TestBuilder extends AutoClass.Builder {\n  AutoClass build() {\n    throw new RuntimeException();\n  }\n}"
+    },
+    {
+      "description": "implementsAutoValue_builder_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n@AutoValue\nabstract class AutoClass {\n  @AutoValue.Builder\n  interface Builder {\n    AutoClass build();\n  }\n}\n\n// BUG: Diagnostic contains: Do not extend an @AutoValue.Builder class in non-generated code.\npublic class TestBuilder implements AutoClass.Builder {\n  public AutoClass build() {\n    throw new RuntimeException();\n  }\n}"
+    },
+    {
+      "description": "extendsAutoBuilder_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "import com.google.auto.value.AutoBuilder;\n\n            class MyClass {\n              @AutoBuilder\n              abstract static class Builder {\n                abstract MyClass build();\n              }\n            }\n\n            // BUG: Diagnostic contains: Do not extend an @AutoBuilder class in non-generated code.\n            public class TestBuilder extends MyClass.Builder {\n              MyClass build() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "implementsAutoBuilder_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "import com.google.auto.value.AutoBuilder;\n\n            class MyClass {\n              @AutoBuilder\n              interface Builder {\n                MyClass build();\n              }\n            }\n\n            // BUG: Diagnostic contains: Do not extend an @AutoBuilder class in non-generated code.\n            public class TestBuilder implements MyClass.Builder {\n              public MyClass build() {\n                throw new RuntimeException();\n              }\n            }"
+    },
+    {
+      "description": "extendsAutoOneOf_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        209
+      ],
+      "code": "import com.google.auto.value.AutoOneOf;\n\n            @AutoOneOf(AutoClass.Kind.class)\n            class AutoClass {\n              enum Kind {}\n            }\n\n            // BUG: Diagnostic contains: Do not extend an @AutoOneOf class in non-generated code.\n            public class TestClass extends AutoClass {}"
+    },
+    {
+      "description": "extendsAutoValue_badNoImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        228
+      ],
+      "code": "@com.google.auto.value.AutoValue\n            abstract class AutoClass {}\n\n            // BUG: Diagnostic contains: Do not extend an @AutoValue class in non-generated code.\n            public class TestClass extends AutoClass {}"
+    },
+    {
+      "description": "extendsAutoValue_badInnerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        243
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            public class OuterClass {\n              @AutoValue\n              abstract static class AutoClass {}\n\n              // BUG: Diagnostic contains: Do not extend an @AutoValue class in non-generated code.\n              class TestClass extends AutoClass {}\n            }"
+    },
+    {
+      "description": "extendsAutoValue_badInnerStaticClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            class OuterClass {\n              @AutoValue\n              abstract static class AutoClass {}\n            }\n\n            // BUG: Diagnostic contains: Do not extend an @AutoValue class in non-generated code.\n            public class TestClass extends OuterClass.AutoClass {}"
+    },
+    {
+      "description": "extendsAutoValue_badButSuppressed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        281
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class AutoClass {}\n\n            @SuppressWarnings(\"ExtendsAutoValue\")\n            public class TestClass extends AutoClass {}"
+    },
+    {
+      "description": "extendsAutoValue_innerClassExtends",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        298
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class AutoClass {}\n\n            public class TestClass {\n              // BUG: Diagnostic contains: Do not extend an @AutoValue class in non-generated code.\n              public class Extends extends AutoClass {}\n            }"
+    },
+    {
+      "description": "extendsAutoValue_innerClassExtends_generated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        317
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n            import javax.annotation.processing.Generated;\n\n            @AutoValue\n            abstract class AutoClass {}\n\n            @Generated(\"generator\")\n            public class TestClass {\n              public class Extends extends AutoClass {}\n            }"
+    }
+  ]
+}

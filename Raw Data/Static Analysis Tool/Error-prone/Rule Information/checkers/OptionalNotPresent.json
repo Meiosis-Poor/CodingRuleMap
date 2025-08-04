@@ -1,0 +1,78 @@
+{
+  "name": "OptionalNotPresent",
+  "language": "java",
+  "description": "This Optional has been confirmed to be empty at this point, so the call to `get()` or `orElseThrow()` will always throw.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 140,
+  "branches": 4,
+  "apis": 4,
+  "test": [
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.Optional;\n            import java.util.function.Predicate;\n\n            /** Includes true-negative cases and false-positive cases. */\n            public class OptionalNotPresentNegativeCases {\n\n              // Test this doesn't trigger NullPointerException\n              private final Predicate<Optional<?>> asField = o -> !o.isPresent();\n\n              // False-positive\n              public String getWhenTestedSafe_referenceEquality(Optional<String> optional) {\n                if (!optional.isPresent()) {\n                  if (optional == Optional.of(\"OK\")) { // always false\n                    // BUG: Diagnostic contains:\n                    return optional.get();\n                  }\n                }\n                return \"\";\n              }\n\n              // False-positive\n              public String getWhenTestedSafe_equals(Optional<String> optional) {\n                if (!optional.isPresent()) {\n                  if (optional.equals(Optional.of(\"OK\"))) { // always false\n                    // BUG: Diagnostic contains:\n                    return optional.get();\n                  }\n                }\n                return \"\";\n              }\n\n              public String getWhenPresent_blockReassigned(Optional<String> optional) {\n                if (!optional.isPresent()) {\n                  optional = Optional.of(\"value\");\n                  return optional.get();\n                }\n                return \"\";\n              }\n\n              public String getWhenPresent_localReassigned(Optional<String> optional) {\n                if (!optional.isPresent()) {\n                  optional = Optional.of(\"value\");\n                }\n                return optional.get();\n              }\n\n              public String getWhenPresent_nestedCheck(Optional<String> optional) {\n                if (!optional.isPresent() || true) {\n                  return optional.isPresent() ? optional.get() : \"\";\n                }\n                return \"\";\n              }\n            }\\"
+    },
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.Optional;\n\n            /** Includes true-positive and false-negative cases. */\n            public class OptionalNotPresentPositiveCases {\n\n              // False-negative\n              public String getWhenUnknown(Optional<String> optional) {\n                return optional.get();\n              }\n\n              // False-negative\n              public String getWhenUnknown_testNull(Optional<String> optional) {\n                if (optional.get() != null) {\n                  return optional.get();\n                }\n                return \"\";\n              }\n\n              // False-negative\n              public String getWhenAbsent_testAndNestUnrelated(Optional<String> optional) {\n                if (true) {\n                  String str = optional.get();\n                  if (!optional.isPresent()) {\n                    return \"\";\n                  }\n                  return str;\n                }\n                return \"\";\n              }\n\n              public String getWhenAbsent(Optional<String> testStr) {\n                if (!testStr.isPresent()) {\n                  // BUG: Diagnostic contains:\n                  return testStr.get();\n                }\n                return \"\";\n              }\n\n              public String getWhenAbsent_multipleStatements(Optional<String> optional) {\n                if (!optional.isPresent()) {\n                  String test = \"test\";\n                  // BUG: Diagnostic contains:\n                  return test + optional.get();\n                }\n                return \"\";\n              }\n\n              public String getWhenAbsent_nestedCheck(Optional<String> optional) {\n                if (!optional.isPresent() || true) {\n                  // BUG: Diagnostic contains:\n                  return !optional.isPresent() ? optional.get() : \"\";\n                }\n                return \"\";\n              }\n\n              public String getWhenAbsent_compoundIf_false(Optional<String> optional) {\n                if (!optional.isPresent() && true) {\n                  // BUG: Diagnostic contains:\n                  return optional.get();\n                }\n                return \"\";\n              }\n\n              // False-negative\n              public String getWhenAbsent_compoundIf_true(Optional<String> optional) {\n                if (!optional.isPresent() || true) {\n                  return optional.get();\n                }\n                return \"\";\n              }\n\n              public String getWhenAbsent_elseClause(Optional<String> optional) {\n                if (optional.isPresent()) {\n                  return optional.get();\n                } else {\n                  // BUG: Diagnostic contains:\n                  return optional.get();\n                }\n              }\n\n              // False-negative\n              public String getWhenAbsent_localReassigned(Optional<String> optional) {\n                if (!optional.isPresent()) {\n                  optional = Optional.empty();\n                }\n                return optional.get();\n              }\n\n              // False-negative\n              public String getWhenAbsent_methodScoped(Optional<String> optional) {\n                if (optional.isPresent()) {\n                  return \"\";\n                }\n                return optional.get();\n              }\n            }\\"
+    },
+    {
+      "description": "b80065837",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205
+      ],
+      "code": "import java.util.Optional;\n            import java.util.Map;\n\n            class Test {\n              <T> Optional<T> f(T t) {\n                return Optional.ofNullable(t);\n              }\n\n              int g(Map<String, Optional<Integer>> m) {\n                if (!m.get(\"one\").isPresent()) {\n                  return m.get(\"two\").get();\n                }\n                return -1;\n              }\n            }"
+    },
+    {
+      "description": "negation_butNotNegatingOptionalCheck",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              int g(Optional<Integer> o) {\n                if (!equals(this) && o.isPresent()) {\n                  return o.orElseThrow();\n                }\n                return -1;\n              }\n            }"
+    },
+    {
+      "description": "isEmpty",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              int g(Optional<Integer> o) {\n                if (o.isEmpty()) {\n                  // BUG: Diagnostic contains:\n                  return o.get();\n                }\n                return -1;\n              }\n            }"
+    },
+    {
+      "description": "orElseThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        271
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              int g(Optional<Integer> o) {\n                if (o.isEmpty()) {\n                  // BUG: Diagnostic contains:\n                  return o.orElseThrow();\n                }\n                return -1;\n              }\n            }"
+    },
+    {
+      "description": "ternary_good",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        292
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              int g(Optional<Integer> o) {\n                return o.isEmpty() ? 0 : o.get();\n              }\n            }"
+    },
+    {
+      "description": "ternary_bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        309
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              int g(Optional<Integer> o) {\n                // BUG: Diagnostic contains:\n                return o.isEmpty() ? o.get() : 0;\n              }\n            }"
+    }
+  ]
+}

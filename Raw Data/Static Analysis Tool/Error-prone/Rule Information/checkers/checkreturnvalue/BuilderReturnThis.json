@@ -1,0 +1,30 @@
+{
+  "name": "BuilderReturnThis",
+  "language": "java",
+  "description": "Builder instance method does not return 'this'",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 130,
+  "branches": 10,
+  "apis": 2,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "class Test {\n              static class TestBuilder {\n                static TestBuilder builder() {\n                  return new TestBuilder();\n                }\n\n                Test build() {\n                  return new Test();\n                }\n\n                TestBuilder setFoo(String foo) {\n                  return this;\n                }\n\n                TestBuilder setBar(String bar) {\n                  return this;\n                }\n\n                TestBuilder setBaz(String baz) {\n                  return setFoo(baz).setBar(baz);\n                }\n\n                TestBuilder setTernary(String baz) {\n                  return true ? setFoo(baz) : this;\n                }\n\n                TestBuilder setCast(String baz) {\n                  return (TestBuilder) this;\n                }\n\n                TestBuilder setParens(String bar) {\n                  return (this);\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "class Test {\n              static class TestBuilder {\n                TestBuilder setBar(String bar) {\n                  return new TestBuilder();\n                }\n\n                TestBuilder setTernary(String baz) {\n                  return true ? new TestBuilder() : this;\n                }\n              }\n            }\n            \n\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            class Test {\n              static class TestBuilder {\n                @CheckReturnValue\n                TestBuilder setBar(String bar) {\n                  return new TestBuilder();\n                }\n\n                @CheckReturnValue\n                TestBuilder setTernary(String baz) {\n                  return true ? new TestBuilder() : this;\n                }\n              }\n            }"
+    }
+  ]
+}

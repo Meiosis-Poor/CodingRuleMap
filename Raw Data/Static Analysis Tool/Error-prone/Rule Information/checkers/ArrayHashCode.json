@@ -1,0 +1,38 @@
+{
+  "name": "ArrayHashCode",
+  "language": "java",
+  "description": "hashcode method on array does not hash array contents",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 126,
+  "branches": 18,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.base.Objects;\n\n/**\n * @author eaftan@google.com (Eddie Aftandilian)\n */\npublic class ArrayHashCodePositiveCases {\n  private Object[] objArray = {1, 2, 3};\n  private String[] stringArray = {\"1\", \"2\", \"3\"};\n  private int[] intArray = {1, 2, 3};\n  private byte[] byteArray = {1, 2, 3};\n  private int[][] multidimensionalIntArray = {{1, 2, 3}, {4, 5, 6}};\n  private String[][] multidimensionalStringArray = {{\"1\", \"2\", \"3\"}, {\"4\", \"5\", \"6\"}};\n\n  public void objectHashCode() {\n    int hashCode;\n    // BUG: Diagnostic contains: Arrays.hashCode(objArray)\n    hashCode = objArray.hashCode();\n    // BUG: Diagnostic contains: Arrays.hashCode(stringArray)\n    hashCode = stringArray.hashCode();\n    // BUG: Diagnostic contains: Arrays.hashCode(intArray)\n    hashCode = intArray.hashCode();\n\n    // BUG: Diagnostic contains: Arrays.deepHashCode(multidimensionalIntArray)\n    hashCode = multidimensionalIntArray.hashCode();\n    // BUG: Diagnostic contains: Arrays.deepHashCode(multidimensionalStringArray)\n    hashCode = multidimensionalStringArray.hashCode();\n  }\n\n  public void guavaObjectsHashCode() {\n    int hashCode;\n    // BUG: Diagnostic contains: Arrays.hashCode(intArray)\n    hashCode = Objects.hashCode(intArray);\n    // BUG: Diagnostic contains: Arrays.hashCode(byteArray)\n    hashCode = Objects.hashCode(byteArray);\n\n    // BUG: Diagnostic contains: Arrays.deepHashCode(multidimensionalIntArray)\n    hashCode = Objects.hashCode(multidimensionalIntArray);\n    // BUG: Diagnostic contains: Arrays.deepHashCode(multidimensionalStringArray)\n    hashCode = Objects.hashCode(multidimensionalStringArray);\n  }\n\n  public void varargsHashCodeOnMoreThanOneArg() {\n    int hashCode;\n    // BUG: Diagnostic contains: Objects.hashCode(Arrays.hashCode(objArray),\n    // Arrays.hashCode(intArray))\n    hashCode = Objects.hashCode(objArray, intArray);\n    // BUG: Diagnostic contains: Objects.hashCode(Arrays.hashCode(stringArray),\n    // Arrays.hashCode(byteArray))\n    hashCode = Objects.hashCode(stringArray, byteArray);\n\n    Object obj1 = new Object();\n    Object obj2 = new Object();\n    // BUG: Diagnostic contains: Objects.hashCode(obj1, obj2, Arrays.hashCode(intArray))\n    hashCode = Objects.hashCode(obj1, obj2, intArray);\n    // BUG: Diagnostic contains: Objects.hashCode(obj1, Arrays.hashCode(intArray), obj2)\n    hashCode = Objects.hashCode(obj1, intArray, obj2);\n    // BUG: Diagnostic contains: Objects.hashCode(Arrays.hashCode(intArray), obj1, obj2)\n    hashCode = Objects.hashCode(intArray, obj1, obj2);\n\n    // BUG: Diagnostic contains: Objects.hashCode(obj1, obj2,\n    // Arrays.deepHashCode(multidimensionalIntArray))\n    hashCode = Objects.hashCode(obj1, obj2, multidimensionalIntArray);\n    // BUG: Diagnostic contains: Objects.hashCode(obj1, obj2,\n    // Arrays.deepHashCode(multidimensionalStringArray))\n    hashCode = Objects.hashCode(obj1, obj2, multidimensionalStringArray);\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.base.Objects;\n\n            /**\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            public class ArrayHashCodeNegativeCases {\n\n              private Object[] objArray = {1, 2, 3};\n              private String[] stringArray = {\"1\", \"2\", \"3\"};\n              private int[] intArray = {1, 2, 3};\n              private byte[] byteArray = {1, 2, 3};\n              private Object obj = new Object();\n              private String str = \"foo\";\n\n              public void objectHashCodeOnNonArrayType() {\n                int hashCode;\n                hashCode = obj.hashCode();\n                hashCode = str.hashCode();\n              }\n\n              public void varagsHashCodeOnNonArrayType() {\n                int hashCode;\n                hashCode = Objects.hashCode(obj);\n                hashCode = Objects.hashCode(str);\n              }\n\n              public void varagsHashCodeOnObjectOrStringArray() {\n                int hashCode;\n                hashCode = Objects.hashCode(objArray);\n                hashCode = Objects.hashCode((Object[]) stringArray);\n              }\n            }\\"
+    },
+    {
+      "description": "java7NegativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.Objects;\n\n            /**\n             * Java 7 specific tests\n             *\n             * @author eaftan@google.com (Eddie Aftandilian)\n             */\n            public class ArrayHashCodeNegativeCases2 {\n\n              private Object[] objArray = {1, 2, 3};\n              private String[] stringArray = {\"1\", \"2\", \"3\"};\n              private int[] intArray = {1, 2, 3};\n              private byte[] byteArray = {1, 2, 3};\n              private Object obj = new Object();\n              private String str = \"foo\";\n\n              public void nonVaragsHashCodeOnNonArrayType() {\n                int hashCode;\n                hashCode = Objects.hashCode(obj);\n                hashCode = Objects.hashCode(str);\n              }\n\n              public void varagsHashCodeOnNonArrayType() {\n                int hashCode;\n                hashCode = Objects.hash(obj);\n                hashCode = Objects.hash(str);\n              }\n\n              public void varagsHashCodeOnObjectOrStringArray() {\n                int hashCode;\n                hashCode = Objects.hash(objArray);\n                hashCode = Objects.hash((Object[]) stringArray);\n              }\n            }\\"
+    }
+  ]
+}

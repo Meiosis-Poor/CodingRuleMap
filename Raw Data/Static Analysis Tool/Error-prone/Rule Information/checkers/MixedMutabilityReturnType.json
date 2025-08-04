@@ -1,0 +1,150 @@
+{
+  "name": "MixedMutabilityReturnType",
+  "language": "java",
+  "description": "This method returns both mutable and immutable collections or maps from different paths. This may be confusing for users of the method.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 408,
+  "branches": 39,
+  "apis": 9,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              // BUG: Diagnostic contains: MixedMutabilityReturnType\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                return new ArrayList<>();\n              }\n            }"
+    },
+    {
+      "description": "whenSuppressed_noWarning",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              @SuppressWarnings(\"MixedMutabilityReturnType\")\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                return new ArrayList<>();\n              }\n            }"
+    },
+    {
+      "description": "tracksActualVariableTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        80
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              // BUG: Diagnostic contains: MixedMutabilityReturnType\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                List<Integer> ints = new ArrayList<>();\n                return ints;\n              }\n            }"
+    },
+    {
+      "description": "uninferrableTypes_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                return bar();\n              }\n\n              List<Integer> bar() {\n                return new ArrayList<>();\n              }\n            }"
+    },
+    {
+      "description": "allImmutable_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                return Collections.singletonList(1);\n              }\n            }"
+    },
+    {
+      "description": "nullType_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "import java.util.Collections;\n            import java.util.List;\n            import java.util.ArrayList;\n\n            class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return null;\n                }\n                return Collections.singletonList(1);\n              }\n            }"
+    },
+    {
+      "description": "immutableEnumSetNotMisclassified",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "import com.google.common.collect.Sets;\n            import java.util.Set;\n\n            class Test {\n              enum E {\n                A,\n                B\n              }\n\n              Set<E> test() {\n                return Sets.immutableEnumSet(E.A);\n              }\n            }"
+    },
+    {
+      "description": "simpleRefactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        197
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            final class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                List<Integer> ints = new ArrayList<>();\n                ints.add(1);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            final class Test {\n              ImmutableList<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of();\n                }\n                ImmutableList.Builder<Integer> ints = ImmutableList.builder();\n                ints.add(1);\n                return ints.build();\n              }\n            }"
+    },
+    {
+      "description": "refactoringOverridable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        241
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                List<Integer> ints = new ArrayList<>();\n                ints.add(1);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of();\n                }\n                List<Integer> ints = new ArrayList<>();\n                ints.add(1);\n                return ImmutableList.copyOf(ints);\n              }\n            }"
+    },
+    {
+      "description": "refactoringCantReplaceWithBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            final class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of();\n                }\n                List<Integer> ints = new ArrayList<>();\n                ints.add(1);\n                ints.clear();\n                ints.add(2);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            final class Test {\n              ImmutableList<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of();\n                }\n                List<Integer> ints = new ArrayList<>();\n                ints.add(1);\n                ints.clear();\n                ints.add(2);\n                return ImmutableList.copyOf(ints);\n              }\n            }"
+    },
+    {
+      "description": "refactoringIgnoresAlreadyImmutableMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            final class Test {\n              Map<Integer, Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableMap.of(1, 1);\n                }\n                Map<Integer, Integer> ints = new HashMap<>();\n                ints.put(2, 2);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableMap;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            final class Test {\n              ImmutableMap<Integer, Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableMap.of(1, 1);\n                }\n                ImmutableMap.Builder<Integer, Integer> ints = ImmutableMap.builder();\n                ints.put(2, 2);\n                return ints.build();\n              }\n            }"
+    },
+    {
+      "description": "refactoringGuavaFactories",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        375
+      ],
+      "code": "import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.Lists;\n            import java.util.List;\n\n            final class Test {\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of(1);\n                } else if (hashCode() < 0) {\n                  List<Integer> ints = Lists.newArrayList();\n                  ints.add(2);\n                  return ints;\n                } else {\n                  List<Integer> ints = Lists.newArrayList(1, 3);\n                  ints.add(2);\n                  return ints;\n                }\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import com.google.common.collect.Lists;\n            import java.util.List;\n\n            final class Test {\n              ImmutableList<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of(1);\n                } else if (hashCode() < 0) {\n                  ImmutableList.Builder<Integer> ints = ImmutableList.builder();\n                  ints.add(2);\n                  return ints.build();\n                } else {\n                  List<Integer> ints = Lists.newArrayList(1, 3);\n                  ints.add(2);\n                  return ImmutableList.copyOf(ints);\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactoringTreeMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        428
+      ],
+      "code": "import com.google.common.collect.ImmutableMap;\n            import java.util.Map;\n            import java.util.TreeMap;\n\n            final class Test {\n              Map<Integer, Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableMap.of(1, 1);\n                }\n                Map<Integer, Integer> ints = new TreeMap<>();\n                ints.put(2, 1);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableMap;\n            import java.util.Map;\n            import java.util.TreeMap;\n\n            final class Test {\n              ImmutableMap<Integer, Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableMap.of(1, 1);\n                }\n                Map<Integer, Integer> ints = new TreeMap<>();\n                ints.put(2, 1);\n                return ImmutableMap.copyOf(ints);\n              }\n            }"
+    },
+    {
+      "description": "refactoringNonLocalReturnedVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        470
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              List<Integer> ints = new ArrayList<>();\n\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                ints.add(1);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              List<Integer> ints = new ArrayList<>();\n\n              List<Integer> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of();\n                }\n                ints.add(1);\n                return ImmutableList.copyOf(ints);\n              }\n            }"
+    },
+    {
+      "description": "refactoringWithNestedCollectionsHelper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        515
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              <T> List<T> foo(T a) {\n                if (hashCode() > 0) {\n                  return new ArrayList<>(Collections.singleton(a));\n                }\n                return Collections.singletonList(a);\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            class Test {\n              <T> List<T> foo(T a) {\n                if (hashCode() > 0) {\n                  return ImmutableList.copyOf(new ArrayList<>(Collections.singleton(a)));\n                }\n                return ImmutableList.of(a);\n              }\n            }"
+    },
+    {
+      "description": "refactoringWithVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        554
+      ],
+      "code": "import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            final class Test {\n              List<Object> foo() {\n                if (hashCode() > 0) {\n                  return Collections.emptyList();\n                }\n                var ints = new ArrayList<>();\n                ints.add(1);\n                return ints;\n              }\n            }\n            \n\n            import com.google.common.collect.ImmutableList;\n            import java.util.ArrayList;\n            import java.util.Collections;\n            import java.util.List;\n\n            final class Test {\n              ImmutableList<Object> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableList.of();\n                }\n                var ints = ImmutableList.builder();\n                ints.add(1);\n                return ints.build();\n              }\n            }"
+    },
+    {
+      "description": "biMap_doesNotCrash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        599
+      ],
+      "code": "import com.google.common.collect.BiMap;\n            import com.google.common.collect.HashBiMap;\n            import com.google.common.collect.ImmutableBiMap;\n\n            class Test {\n              // BUG: Diagnostic contains: MixedMutabilityReturnType\n              public BiMap<String, String> foo() {\n                if (hashCode() > 0) {\n                  return ImmutableBiMap.of();\n                }\n                return HashBiMap.create(5);\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "OverridesJavaxInjectableMethod",
+  "language": "java",
+  "description": "This method is not annotated with @Inject, but it overrides a method that is  annotated with @javax.inject.Inject. The method will not be Injected.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 66,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n/**\n * @author sgoldfeder@google.com (Steven Goldfeder)\n */\npublic class OverridesJavaxInjectableMethodPositiveCases {\n\n  /** Class with foo() */\n  public class TestClass0 {\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is annotated with {@code javax.inject.Inject}. Other test\n   * classes will extend this class.\n   */\n  public class TestClass1 extends TestClass0 {\n    @javax.inject.Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated, but overrides a method annotated with\n   * {@code @}javax.inject.Inject.\n   */\n  public class TestClass2 extends TestClass1 {\n    // BUG: Diagnostic contains: @Inject\n    public void foo() {}\n  }\n\n  /**\n   * Class with a method foo() that is not annotated, but overrides a method that in turn overrides\n   * a method that is annotated with @javax.inject.Inject.\n   */\n  public class TestClass3 extends TestClass2 {\n    // BUG: Diagnostic contains: @Inject\n    public void foo() {}\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.guice.testdata;\n\n            /**\n             * @author sgoldfeder@google.com (Steven Goldfeder)\n             */\n            public class OverridesJavaxInjectableMethodNegativeCases {\n              /** Class with a method foo() with no annotations. */\n              public class TestClass1 {\n                public void foo() {}\n              }\n\n              /** Class with a method foo() annotated with @com.google.inject.Inject. */\n              public class TestClass2 {\n                @com.google.inject.Inject\n                public void foo() {}\n              }\n\n              /** Class with a method foo() annotated with @javax.inject.Inject. */\n              public class TestClass3 {\n                @javax.inject.Inject\n                public void foo() {}\n              }\n\n              /** OK, as it overrides a Guice-Inject method */\n              public class TestClass4 extends TestClass2 {\n                @Override\n                public void foo() {}\n              }\n\n              /** gInject <- jInject */\n              public class TestClass5 extends TestClass3 {\n                @com.google.inject.Inject\n                public void foo() {}\n              }\n\n              /** jInject <- gInject */\n              public class TestClass6 extends TestClass2 {\n                @javax.inject.Inject\n                public void foo() {}\n              }\n\n              /** OK, as 7 <- jInject <- gInject */\n              public class TestClass7 extends TestClass6 {\n                public void foo() {}\n              }\n\n              /** OK, as 8 <- gInject */\n              public class TestClass8 extends TestClass5 {\n                public void foo() {}\n              }\n\n              /** Explicitly suppressed warning */\n              public class TestClass9 extends TestClass3 {\n                @Override\n                @SuppressWarnings(\"OverridesJavaxInjectableMethod\")\n                public void foo() {}\n              }\n            }\\"
+    }
+  ]
+}

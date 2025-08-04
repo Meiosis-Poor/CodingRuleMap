@@ -1,0 +1,38 @@
+{
+  "name": "FloggerMessageFormat",
+  "language": "java",
+  "description": "Invalid message format-style format specifier ({0}), expected printf-style (%s)",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 70,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              private static final String FORMAT_STRING = \"hello {0}\";\n\n              public void method(Exception e) {\n                // BUG: Diagnostic contains:\n                logger.atInfo().log(\"hello {0}\");\n                // BUG: Diagnostic contains:\n                logger.atInfo().log(\"hello {0}\", \"world\");\n                // BUG: Diagnostic contains:\n                logger.atInfo().log(\"\" + \"hello {0}\", \"world\");\n                // BUG: Diagnostic contains:\n                logger.atInfo().log(FORMAT_STRING, \"world\");\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              private static final String FORMAT_STRING = \"hello {0}\";\n\n              public void method(Exception e) {\n                logger.atInfo().log(\"hello %s\", \"world\");\n                logger.atInfo().log();\n              }\n            }"
+    },
+    {
+      "description": "fix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              private static final String FORMAT_STRING = \"hello {0}\";\n\n              public void method(Exception e) {\n                logger.atInfo().log(\"hello {0}\", \"world\");\n                logger.atInfo().log(\"\" + \"hello {0}\", \"world\");\n                logger.atInfo().log(FORMAT_STRING, \"world\");\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              private static final String FORMAT_STRING = \"hello {0}\";\n\n              public void method(Exception e) {\n                logger.atInfo().log(\"hello %s\", \"world\");\n                logger.atInfo().log(\"\" + \"hello %s\", \"world\");\n                logger.atInfo().log(FORMAT_STRING, \"world\");\n              }\n            }"
+    }
+  ]
+}

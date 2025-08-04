@@ -1,0 +1,102 @@
+{
+  "name": "NoCanIgnoreReturnValueOnClasses",
+  "language": "java",
+  "description": "@CanIgnoreReturnValue should not be applied to classes as it almost always overmatches (as it applies to constructors and all methods), and the CIRVness isn't conferred to its subclasses.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 203,
+  "branches": 19,
+  "apis": 8,
+  "test": [
+    {
+      "description": "simpleCase_returnsThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              public Client getValue() {\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public Client getValue() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "simpleCase_returnsParenthesizedCastThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              public Client getValue() {\n                return ((Client) (this));\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public Client getValue() {\n                return ((Client) (this));\n              }\n            }"
+    },
+    {
+      "description": "simpleCase_returnsSelf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              public Client getValue() {\n                return self();\n              }\n\n              private Client self() {\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public Client getValue() {\n                return self();\n              }\n\n              @CanIgnoreReturnValue\n              private Client self() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "simpleCase_returnsGetThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        147
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              public Client getValue() {\n                return getThis();\n              }\n\n              private Client getThis() {\n                return this;\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public Client getValue() {\n                return getThis();\n              }\n\n              @CanIgnoreReturnValue\n              private Client getThis() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "simpleCase_returnsNewInstance",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        190
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              public Client getValue() {\n                return new Client();\n              }\n            }"
+    },
+    {
+      "description": "simpleCase_explicitConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        220
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              Client() {}\n\n              public Client getValue() {\n                return this;\n              }\n            }"
+    },
+    {
+      "description": "nestedClasses_cirvAndCrv",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        254
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class Client {\n              public Client getValue() {\n                return this;\n              }\n\n              @CheckReturnValue\n              public static final class Nested {\n                public int getValue() {\n                  return 42;\n                }\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import com.google.errorprone.annotations.CheckReturnValue;\n\n            public final class Client {\n              @CanIgnoreReturnValue\n              public Client getValue() {\n                return this;\n              }\n\n              @CheckReturnValue\n              public static final class Nested {\n                public int getValue() {\n                  return 42;\n                }\n              }\n            }"
+    },
+    {
+      "description": "nestedClasses_bothCirv",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        304
+      ],
+      "code": "package com.google.gaia;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public final class User {\n              public User persist() {\n                return this;\n              }\n\n              public static final class Builder {\n                public Builder setFirstName(String firstName) {\n                  return this;\n                }\n              }\n            }\n            \n\n            package com.google.gaia;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            public final class User {\n              @CanIgnoreReturnValue\n              public User persist() {\n                return this;\n              }\n\n              public static final class Builder {\n                @CanIgnoreReturnValue\n                public Builder setFirstName(String firstName) {\n                  return this;\n                }\n              }\n            }"
+    },
+    {
+      "description": "autoValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @AutoValue\n            @CanIgnoreReturnValue\n            abstract class Animal {\n              abstract String name();\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String value);\n\n                abstract Animal build();\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @AutoValue\n            abstract class Animal {\n              abstract String name();\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String value);\n\n                abstract Animal build();\n              }\n            }"
+    },
+    {
+      "description": "autoValueBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        398
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @AutoValue\n            abstract class Animal {\n              abstract String name();\n\n              @CanIgnoreReturnValue\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String value);\n\n                abstract Animal build();\n              }\n            }\n            \n\n            package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @AutoValue\n            abstract class Animal {\n              abstract String name();\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setName(String value);\n\n                abstract Animal build();\n              }\n            }"
+    },
+    {
+      "description": "nestedAutoValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        445
+      ],
+      "code": "package com.google.frobber;\n\n            import com.google.auto.value.AutoValue;\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n\n            @CanIgnoreReturnValue\n            public class Outer {\n              public String name() {\n                return null;\n              }\n\n              @AutoValue\n              abstract static class Inner {\n                abstract String id();\n              }\n            }"
+    }
+  ]
+}

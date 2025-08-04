@@ -1,0 +1,54 @@
+{
+  "name": "UnnecessaryMethodInvocationMatcher",
+  "language": "java",
+  "description": "It is not necessary to wrap a MethodMatcher with methodInvocation().",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 79,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "replace",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "import static com.google.errorprone.matchers.Matchers.*;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.ExpressionTree;\n\n            public class Test {\n              private static final Matcher<ExpressionTree> TO_STRING =\n                  methodInvocation(instanceMethod().anyClass().named(\"toString\"));\n            }\n            \n\n            import static com.google.errorprone.matchers.Matchers.*;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.ExpressionTree;\n\n            public class Test {\n              private static final Matcher<ExpressionTree> TO_STRING =\n                  instanceMethod().anyClass().named(\"toString\");\n            }"
+    },
+    {
+      "description": "descendIntoCombinators",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63
+      ],
+      "code": "import static com.google.errorprone.matchers.Matchers.*;\nimport com.google.errorprone.matchers.Matcher;\nimport com.sun.source.tree.ExpressionTree;\n\npublic class Test {\n  private static final Matcher<ExpressionTree> STRINGIFY =\n      methodInvocation(anyOf(instanceMethod().anyClass().named(\"toString\"), allOf(staticMethod())));\n}\n\n\n            import static com.google.errorprone.matchers.Matchers.*;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.ExpressionTree;\n\n            public class Test {\n              private static final Matcher<ExpressionTree> STRINGIFY =\n                  anyOf(instanceMethod().anyClass().named(\"toString\"), allOf(staticMethod()));\n            }"
+    },
+    {
+      "description": "onlyChangeMethodMatchers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "import static com.google.errorprone.matchers.Matchers.*;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.ExpressionTree;\n\n            public class Test {\n              private static final Matcher<ExpressionTree> STRINGIFY =\n                  methodInvocation(\n                      anyOf(\n                          instanceMethod().anyClass().named(\"toString\"),\n                          allOf(hasAnnotation(\"java.lang.SuppressWarnings\"))));\n            }"
+    },
+    {
+      "description": "permitWithArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115
+      ],
+      "code": "import static com.google.errorprone.matchers.ChildMultiMatcher.MatchType.ALL;\nimport static com.google.errorprone.matchers.Matchers.*;\nimport com.google.errorprone.matchers.Matcher;\nimport com.sun.source.tree.ExpressionTree;\n\npublic class Test {\n  private static final Matcher<ExpressionTree> TO_STRING =\n      methodInvocation(instanceMethod().anyClass().named(\"toString\"), ALL, isVariable());\n}"
+    },
+    {
+      "description": "expressionStatement",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "import static com.google.errorprone.matchers.Matchers.*;\nimport com.google.errorprone.matchers.Matcher;\nimport com.sun.source.tree.StatementTree;\n\npublic class Test {\n  private static final Matcher<StatementTree> TARGETED =\n      expressionStatement(\n          methodInvocation(\n              instanceMethod().onDescendantOfAny(\"java.lang.Class\", \"java.lang.String\")));\n}\n\n\n            import static com.google.errorprone.matchers.Matchers.*;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.StatementTree;\n\n            public class Test {\n              private static final Matcher<StatementTree> TARGETED =\n                  expressionStatement(\n                      instanceMethod().onDescendantOfAny(\"java.lang.Class\", \"java.lang.String\"));\n            }"
+    }
+  ]
+}

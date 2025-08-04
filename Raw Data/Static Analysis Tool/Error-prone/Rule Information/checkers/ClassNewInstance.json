@@ -1,0 +1,174 @@
+{
+  "name": "ClassNewInstance",
+  "language": "java",
+  "description": "Class.newInstance() bypasses exception checking; prefer getDeclaredConstructor().newInstance()",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 232,
+  "branches": 57,
+  "apis": 5,
+  "test": [
+    {
+      "description": "differentHandles",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e1) {\n                  e1.printStackTrace();\n                } catch (IllegalAccessException e2) {\n                  e2.printStackTrace();\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (InstantiationException e1) {\n                  e1.printStackTrace();\n                } catch (IllegalAccessException e2) {\n                  e2.printStackTrace();\n                } catch (ReflectiveOperationException e2) {\n                  throw new LinkageError(e2.getMessage(), e2);\n                }\n              }\n            }"
+    },
+    {
+      "description": "existingRoeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e) {\n                } catch (ReflectiveOperationException e) {\n                  // \\u00af\\\\_(\\u30c4)_/\\u00af\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (InstantiationException e) {\n                } catch (ReflectiveOperationException e) {\n                  // \\u00af\\\\_(\\u30c4)_/\\u00af\n                }\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e) {\n                  e.printStackTrace();\n                } catch (IllegalAccessException e) {\n                  e.printStackTrace();\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e) {\n                  e.printStackTrace();\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveUnion",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        137
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException | IllegalAccessException e0) {\n                  e0.printStackTrace();\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e0) {\n                  e0.printStackTrace();\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveROE",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        169
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (ReflectiveOperationException e) {\n                  e.printStackTrace();\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e) {\n                  e.printStackTrace();\n                }\n              }\n            }"
+    },
+    {
+      "description": "throwsException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        201
+      ],
+      "code": "class Test {\n              void f() throws Exception {\n                getClass().newInstance();\n              }\n            }\n            \n\n            class Test {\n              void f() throws Exception {\n                getClass().getDeclaredConstructor().newInstance();\n              }\n            }"
+    },
+    {
+      "description": "throwsROE",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "class Test {\n              void f() throws ReflectiveOperationException {\n                getClass().newInstance();\n              }\n            }\n            \n\n            class Test {\n              void f() throws ReflectiveOperationException {\n                getClass().getDeclaredConstructor().newInstance();\n              }\n            }"
+    },
+    {
+      "description": "throwsIndividual",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "class Test {\n              void f() throws InstantiationException, IllegalAccessException {\n                getClass().newInstance();\n              }\n            }\n            \n\n            import java.lang.reflect.InvocationTargetException;\n\n            class Test {\n              void f()\n                  throws InstantiationException,\n                      IllegalAccessException,\n                      InvocationTargetException,\n                      NoSuchMethodException {\n                getClass().getDeclaredConstructor().newInstance();\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        279
+      ],
+      "code": "class Test {\n              void f() throws Exception {\n                getClass().getDeclaredConstructor().newInstance();\n              }\n            }"
+    },
+    {
+      "description": "catchesDoesntThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        295
+      ],
+      "code": "import java.io.IOException;\n\n            class Test {\n              void f() throws IOException {\n                try {\n                  getClass().newInstance();\n                } catch (ReflectiveOperationException e) {\n                }\n              }\n            }\n            \n\n            import java.io.IOException;\n\n            class Test {\n              void f() throws IOException {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        329
+      ],
+      "code": "class Test {\n              void f() throws Exception {\n                getClass().getDeclaredConstructor().newInstance();\n              }\n            }"
+    },
+    {
+      "description": "mergeWhitespace",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        345
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e) {\n                  // uh oh\n                } catch (IllegalAccessException e) {\n                  // uh oh\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e) {\n                  // uh oh\n                }\n              }\n            }"
+    },
+    {
+      "description": "overlap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        379
+      ],
+      "code": "class Test {\n              void f() throws Exception {\n                getClass().newInstance().getClass().newInstance();\n              }\n            }\n            \n\n            class Test {\n              void f() throws Exception {\n                getClass()\n                    .getDeclaredConstructor()\n                    .newInstance()\n                    .getClass()\n                    .getDeclaredConstructor()\n                    .newInstance();\n              }\n            }"
+    },
+    {
+      "description": "inCatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        408
+      ],
+      "code": "class Test {\n              void f() throws Exception {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e) {\n                  getClass().newInstance();\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() throws Exception {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e) {\n                  getClass().getDeclaredConstructor().newInstance();\n                }\n              }\n            }"
+    },
+    {
+      "description": "withFinally",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        440
+      ],
+      "code": "class Test {\n              void f() throws Exception {\n                try {\n                  getClass().newInstance();\n                } finally {\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() throws Exception {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } finally {\n                }\n              }\n            }"
+    },
+    {
+      "description": "inCatchRepeated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        470
+      ],
+      "code": "class Test {\n              void f() throws InstantiationException, IllegalAccessException {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e) {\n                  getClass().newInstance();\n                } catch (IllegalAccessException e) {\n                  getClass().newInstance();\n                }\n              }\n            }\n            \n\n            import java.lang.reflect.InvocationTargetException;\n\n            class Test {\n              void f()\n                  throws InstantiationException,\n                      IllegalAccessException,\n                      InvocationTargetException,\n                      NoSuchMethodException {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (InstantiationException e) {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException e) {\n                  getClass().getDeclaredConstructor().newInstance();\n                }\n              }\n            }"
+    },
+    {
+      "description": "additionalCatchClause",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        512
+      ],
+      "code": "class Test {\n              Object f() {\n                try {\n                  return getClass().newInstance();\n                } catch (InstantiationException ex) {\n                  // Suppress exception.\n                } catch (IllegalAccessException ex) {\n                  // Suppress exception.\n                } catch (ExceptionInInitializerError ex) {\n                  // Suppress exception.\n                } catch (SecurityException ex) {\n                  // Suppress exception.\n                }\n                return null;\n              }\n            }\n            \n\n            class Test {\n              Object f() {\n                try {\n                  return getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException ex) {\n                  // Suppress exception.\n                } catch (ExceptionInInitializerError ex) {\n                  // Suppress exception.\n                } catch (SecurityException ex) {\n                  // Suppress exception.\n                }\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "catchAndThrows",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        556
+      ],
+      "code": "class Test {\n              Object f() throws InstantiationException, IllegalAccessException {\n                try {\n                  return getClass().newInstance();\n                } catch (ReflectiveOperationException ex) {\n                  return getClass().newInstance();\n                }\n              }\n            }\n            \n\n            import java.lang.reflect.InvocationTargetException;\n\n            class Test {\n              Object f()\n                  throws InstantiationException,\n                      IllegalAccessException,\n                      InvocationTargetException,\n                      NoSuchMethodException {\n                try {\n                  return getClass().getDeclaredConstructor().newInstance();\n                } catch (ReflectiveOperationException ex) {\n                  return getClass().getDeclaredConstructor().newInstance();\n                }\n              }\n            }"
+    },
+    {
+      "description": "mixedMulticatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        594
+      ],
+      "code": "class Test {\n              void f() {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e) {\n                  // InstantiationException\n                } catch (IllegalAccessException | NullPointerException e) {\n                  throw new AssertionError(e);\n                }\n              }\n            }\n            \n\n            class Test {\n              void f() {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (InstantiationException e) {\n                  // InstantiationException\n                } catch (ReflectiveOperationException | NullPointerException e) {\n                  throw new AssertionError(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "freshVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        630
+      ],
+      "code": "class Test {\n              void f(Exception e) {\n                try {\n                  getClass().newInstance();\n                } catch (InstantiationException e1) {\n                  // one\n                } catch (IllegalAccessException e1) {\n                  // two\n                }\n              }\n            }\n            \n\n            class Test {\n              void f(Exception e) {\n                try {\n                  getClass().getDeclaredConstructor().newInstance();\n                } catch (InstantiationException e1) {\n                  // one\n                } catch (IllegalAccessException e1) {\n                  // two\n                } catch (ReflectiveOperationException e1) {\n                  throw new LinkageError(e1.getMessage(), e1);\n                }\n              }\n            }"
+    }
+  ]
+}

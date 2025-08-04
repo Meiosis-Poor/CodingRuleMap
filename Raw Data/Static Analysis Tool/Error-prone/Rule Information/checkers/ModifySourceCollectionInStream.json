@@ -1,0 +1,30 @@
+{
+  "name": "ModifySourceCollectionInStream",
+  "language": "java",
+  "description": "Modifying the backing source during stream operations may cause unintended results.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 126,
+  "branches": 13,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.collect.ImmutableList;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.stream.Collectors;\nimport java.util.stream.Stream;\n\n/**\n * Test cases for {@link com.google.errorprone.bugpatterns.ModifySourceCollectionInStream}.\n *\n * @author deltazulu@google.com (Donald Duo Zhao)\n */\npublic class ModifySourceCollectionInStreamPositiveCases {\n\n  private final List<Integer> mutableValues = Arrays.asList(1, 2, 3);\n\n  private void mutateStreamSourceMethodReference() {\n\n    mutableValues.stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        // BUG: Diagnostic contains:\n        .forEach(mutableValues::remove);\n\n    this.mutableValues.stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        // BUG: Diagnostic contains:\n        .forEach(mutableValues::remove);\n\n    getMutableValues().parallelStream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        // BUG: Diagnostic contains:\n        .forEach(getMutableValues()::add);\n\n    getMutableValues().stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        // BUG: Diagnostic contains:\n        .forEach(this.getMutableValues()::remove);\n\n    ModifySourceCollectionInStreamPositiveCases[] cases = {\n      new ModifySourceCollectionInStreamPositiveCases(),\n      new ModifySourceCollectionInStreamPositiveCases()\n    };\n    cases[0].mutableValues.stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        // BUG: Diagnostic contains:\n        .forEach(cases[0].mutableValues::add);\n  }\n\n  private List<Integer> mutateStreamSourceLambdaExpression(\n      ImmutableList<Integer> mutableParamList) {\n    Stream<Integer> values1 =\n        mutableParamList.stream()\n            .map(\n                x -> {\n                  // BUG: Diagnostic contains:\n                  mutableParamList.add(x);\n                  return x + 1;\n                });\n\n    Stream<Integer> values2 =\n        mutableParamList.stream()\n            .filter(\n                x -> {\n                  // BUG: Diagnostic contains:\n                  mutableParamList.remove(x);\n                  return mutableParamList.size() > 5;\n                });\n\n    return Stream.concat(values1, values2).collect(Collectors.toList());\n  }\n\n  private List<Integer> getMutableValues() {\n    return mutableValues;\n  }\n}\\"
+    },
+    {
+      "description": "negativeCasse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.ArrayList;\nimport java.util.Arrays;\nimport java.util.List;\nimport java.util.function.Consumer;\nimport java.util.stream.Collectors;\nimport java.util.stream.Stream;\n\n/**\n * Test cases for {@link com.google.errorprone.bugpatterns.ModifySourceCollectionInStream}.\n *\n * @author deltazulu@google.com (Donald Duo Zhao)\n */\npublic class ModifySourceCollectionInStreamNegativeCases {\n\n  private final List<Integer> mutableValues = Arrays.asList(1, 2, 3);\n\n  private void mutateStreamSourceMethodReference() {\n\n    List<Integer> mutableValues = new ArrayList<>();\n    mutableValues.stream().map(x -> x + 1).filter(x -> x < 5).forEach(this.mutableValues::add);\n\n    mutableValues.forEach(this.mutableValues::add);\n\n    ModifySourceCollectionInStreamNegativeCases[] cases = {\n      new ModifySourceCollectionInStreamNegativeCases(),\n      new ModifySourceCollectionInStreamNegativeCases()\n    };\n\n    cases[0].mutableValues.stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        .forEach(cases[1].mutableValues::add);\n  }\n\n  private List<Integer> mutateStreamSourceLambdaExpression() {\n\n    List<Integer> localCopy = new ArrayList<>();\n\n    Stream<Integer> values1 =\n        mutableValues.stream()\n            .map(\n                x -> {\n                  localCopy.add(x);\n                  return x + 1;\n                });\n\n    Stream<Integer> values2 =\n        mutableValues.stream()\n            .filter(\n                x -> {\n                  localCopy.remove(x);\n                  return mutableValues.size() > 5;\n                });\n\n    return Stream.concat(values1, values2).collect(Collectors.toList());\n  }\n\n  private void mutateStreamSourceInNonStreamApi() {\n    mutableValues.stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        .findAny()\n        .ifPresent(mutableValues::add);\n\n    mutableValues.stream()\n        .map(x -> x + 1)\n        .filter(x -> x < 5)\n        .findFirst()\n        .ifPresent(value -> mutableValues.remove(value));\n  }\n\n  private void mutateDifferentStreamSource() {\n    // Mutate a different stream source.\n    mutableValues.stream().filter(x -> x < 5).collect(Collectors.toList()).stream()\n        .forEach(mutableValues::remove);\n\n    // Mutate source collection whose stream has been closed.\n    mutableValues.stream()\n        .filter(x -> x < 5)\n        .collect(Collectors.toList())\n        .forEach(mutableValue -> mutableValues.remove(mutableValue));\n  }\n\n  private void mutateNonCollectionStreamSource(CustomContainer<Double> vals) {\n    vals.stream().map(x -> 2.0 * x).forEach(vals::add);\n  }\n\n  private void lambdaExpressionAsInitializer(List<Double> vals) {\n    Consumer<Double> consumer = x -> vals.remove(x);\n  }\n\n  private interface CustomContainer<T> {\n    Stream<T> stream();\n\n    boolean add(T t);\n  }\n}\\"
+    }
+  ]
+}

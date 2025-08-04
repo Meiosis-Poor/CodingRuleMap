@@ -1,0 +1,142 @@
+{
+  "name": "ArrayToString",
+  "language": "java",
+  "description": "Calling toString on an array does not provide useful information",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 89,
+  "branches": 2,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.*;\n\n            /**\n             * @author adgar@google.com (Mike Edgar)\n             */\n            public class ArrayToStringPositiveCases {\n\n              public void intArray() {\n                int[] a = {1, 2, 3};\n\n                // BUG: Diagnostic contains: Arrays.toString(a)\n                if (a.toString().isEmpty()) {\n                  System.out.println(\"int array string is empty!\");\n                } else {\n                  System.out.println(\"int array string is nonempty!\");\n                }\n              }\n\n              public void objectArray() {\n                Object[] a = new Object[3];\n\n                // BUG: Diagnostic contains: Arrays.toString(a)\n                if (a.toString().isEmpty()) {\n                  System.out.println(\"object array string is empty!\");\n                } else {\n                  System.out.println(\"object array string is nonempty!\");\n                }\n              }\n\n              public void firstMethodCall() {\n                String s = \"hello\";\n\n                // BUG: Diagnostic contains: Arrays.toString(s.toCharArray())\n                if (s.toCharArray().toString().isEmpty()) {\n                  System.out.println(\"char array string is empty!\");\n                } else {\n                  System.out.println(\"char array string is nonempty!\");\n                }\n              }\n\n              public void secondMethodCall() {\n                char[] a = new char[3];\n\n                // BUG: Diagnostic contains: Arrays.toString(a)\n                if (a.toString().isEmpty()) {\n                  System.out.println(\"array string is empty!\");\n                } else {\n                  System.out.println(\"array string is nonempty!\");\n                }\n              }\n\n              public void throwable() {\n                Exception e = new RuntimeException();\n                // BUG: Diagnostic contains: Throwables.getStackTraceAsString(e)\n                System.out.println(e.getStackTrace().toString());\n              }\n\n              public void arrayOfArrays() {\n                int[][] a = {};\n                // BUG: Diagnostic contains: Arrays.deepToString(a)\n                System.out.println(a);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.*;\n\n            /**\n             * @author adgar@google.com (Mike Edgar)\n             */\n            public class ArrayToStringNegativeCases {\n              public void objectEquals() {\n                Object a = new Object();\n\n                if (a.toString().isEmpty()) {\n                  System.out.println(\"string is empty!\");\n                } else {\n                  System.out.println(\"string is not empty!\");\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "stringConcat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        138
+      ],
+      "code": "class Test {\n              void f(int[] xs) {\n                // BUG: Diagnostic contains: (\"\" + Arrays.toString(xs));\n                System.err.println(\"\" + xs);\n                String s = \"\";\n                // BUG: Diagnostic contains: s += Arrays.toString(xs);\n                s += xs;\n              }\n            }"
+    },
+    {
+      "description": "printString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "class Test {\n              int[] g() {\n                return null;\n              }\n\n              void f(int[] xs) {\n                System.err.println(xs);\n                System.err.println(String.valueOf(xs));\n                System.err.println(String.valueOf(g()));\n              }\n            }\n            \n\n            import java.util.Arrays;\n\n            class Test {\n              int[] g() {\n                return null;\n              }\n\n              void f(int[] xs) {\n                System.err.println(Arrays.toString(xs));\n                System.err.println(Arrays.toString(xs));\n                System.err.println(Arrays.toString(g()));\n              }\n            }"
+    },
+    {
+      "description": "negativePrintString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        195
+      ],
+      "code": "class Test {\n              void f(char[] xs) {\n                System.err.println(String.valueOf(xs));\n              }\n            }"
+    },
+    {
+      "description": "stringBuilder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        210
+      ],
+      "code": "class Test {\n              void f(int[] xs) {\n                // BUG: Diagnostic contains: append(Arrays.toString(xs))\n                new StringBuilder().append(xs);\n              }\n            }"
+    },
+    {
+      "description": "customFormatMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        230
+      ],
+      "code": "import com.google.errorprone.annotations.FormatMethod;\n\n            class Test {\n              private void test(Object[] arr) {\n                format(\"%s %s\", arr, 2);\n              }\n\n              @FormatMethod\n              String format(String format, Object... args) {\n                return String.format(format, args);\n              }\n            }"
+    },
+    {
+      "description": "methodReturningArray",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "class Test {\n              private void test() {\n                // BUG: Diagnostic contains:\n                String.format(\"%s %s\", arr(), 1);\n              }\n\n              Object[] arr() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "throwableToString",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        272
+      ],
+      "code": "class Test {\n              void test(Exception e) {\n                // BUG: Diagnostic contains: Throwables.getStackTraceAsString(e)\n                String.format(\"%s, %s\", 1, e.getStackTrace());\n              }\n            }"
+    },
+    {
+      "description": "positiveCompoundAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        288
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.*;\n\n            /**\n             * @author adgar@google.com (Mike Edgar)\n             */\n            public class ArrayToStringCompoundAssignmentPositiveCases {\n\n              private static final int[] a = {1, 2, 3};\n\n              public void stringVariableAddsArrayAndAssigns() {\n                String b = \"a string\";\n                // BUG: Diagnostic contains: += Arrays.toString(a)\n                b += a;\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCompoundAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        315
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author adgar@google.com (Mike Edgar)\n             */\n            public class ArrayToStringCompoundAssignmentNegativeCases {\n              public void concatenateCompoundAssign_object() {\n                Object a = new Object();\n                String b = \" a string\";\n                b += a;\n              }\n\n              public void concatenateCompoundAssign_int() {\n                int a = 5;\n                String b = \" a string \";\n                b += a;\n              }\n            }\\"
+    },
+    {
+      "description": "positiveConcat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.*;\n\n            /**\n             * @author adgar@google.com (Mike Edgar)\n             */\n            public class ArrayToStringConcatenationPositiveCases {\n\n              private static final int[] a = {1, 2, 3};\n\n              public void stringLiteralLeftOperandIsArray() {\n                // BUG: Diagnostic contains: Arrays.toString(a) +\n                String b = a + \" a string\";\n              }\n\n              public void stringLiteralRightOperandIsArray() {\n                // BUG: Diagnostic contains: + Arrays.toString(a)\n                String b = \"a string\" + a;\n              }\n            }\\"
+    },
+    {
+      "description": "negativeConcat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        374
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author adgar@google.com (Mike Edgar)\n             */\n            public class ArrayToStringConcatenationNegativeCases {\n              public void notArray() {\n                Object a = new Object();\n                String b = a + \" a string\";\n              }\n\n              public void notArray_refactored() {\n                Object a = new Object();\n                String b = \" a string\";\n                String c = a + b;\n              }\n            }\\"
+    },
+    {
+      "description": "arrayPassedToJoiner",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        401
+      ],
+      "code": "import com.google.common.base.Joiner;\n\n            class Test {\n              String test(Joiner j, Object[] a) {\n                return j.join(a);\n              }\n            }"
+    },
+    {
+      "description": "arrayPassedToJoiner_firstSecondRest_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        418
+      ],
+      "code": "import com.google.common.base.Joiner;\n\n            class Test {\n              String test(Joiner j, Object first, Object second, Object[] rest) {\n                return j.join(first, second, rest);\n              }\n            }"
+    },
+    {
+      "description": "arrayPassedToJoiner_firstSecondRest_positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        435
+      ],
+      "code": "import com.google.common.base.Joiner;\n\n            class Test {\n              String test(Joiner j, Object first, Object second, Object third, Object[] rest) {\n                // BUG: Diagnostic contains:\n                return j.join(first, second, third, rest);\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "name": "DateChecker",
+  "language": "java",
+  "description": "Warns against suspect looking calls to java.util.Date APIs",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 174,
+  "branches": 23,
+  "apis": 2,
+  "test": [
+    {
+      "description": "badBehavior",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        41
+      ],
+      "code": ""
+    },
+    {
+      "description": "constructor_good",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "import static java.util.Calendar.JULY;\n            import java.util.Date;\n\n            public class TestClass {\n              Date good = new Date(120, JULY, 10);\n            }"
+    },
+    {
+      "description": "constructor_nonConstantMonth",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: Use Calendar.MAY instead of 4 to represent the month.\n              Date good = new Date(120, 4, 10);\n            }"
+    },
+    {
+      "description": "constructor_constants",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              private static final int MAY = 4;\n              Date good = new Date(120, MAY, 31);\n            }"
+    },
+    {
+      "description": "constructor_nonConstants",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              Date good = new Date(getYear(), getMonth(), getDay());\n\n              int getYear() {\n                return 120;\n              }\n\n              int getMonth() {\n                return 0;\n              }\n\n              int getDay() {\n                return 1;\n              }\n            }"
+    },
+    {
+      "description": "constructor_allBad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        152
+      ],
+      "code": "import java.util.Date;\n\npublic class TestClass {\n  // BUG: Diagnostic contains: The 1900-based year value (2020) is out of bounds [1..300].  The\n  // 0-based month value (13) is out of bounds [0..11].\n  Date bad1 = new Date(2020, 13, 31);\n  // BUG: Diagnostic contains: The 1900-based year value (2020) is out of bounds [1..300].  The\n  // 0-based month value (13) is out of bounds [0..11].  The hours value (-2) is out of bounds\n  // [0..23].  The minutes value (61) is out of bounds [0..59].\n  Date bad2 = new Date(2020, 13, 31, -2, 61);\n  // BUG: Diagnostic contains: The 1900-based year value (2020) is out of bounds [1..300].  The\n  // 0-based month value (13) is out of bounds [0..11].  The hours value (-2) is out of bounds\n  // [0..23].  The minutes value (61) is out of bounds [0..59].  The seconds value (75) is out of\n  // bounds [0..59].\n  Date bad3 = new Date(2020, 13, 31, -2, 61, 75);\n}"
+    },
+    {
+      "description": "constructor_badYear",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        178
+      ],
+      "code": "import static java.util.Calendar.JULY;\nimport java.util.Date;\n\npublic class TestClass {\n  // BUG: Diagnostic contains: The 1900-based year value (2020) is out of bounds [1..300].\n  Date bad = new Date(2020, JULY, 10);\n}"
+    },
+    {
+      "description": "constructor_badMonth",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        195
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: The 0-based month value (12) is out of bounds [0..11].\n              Date bad1 = new Date(120, 12, 10);\n              // BUG: Diagnostic contains: The 0-based month value (13) is out of bounds [0..11].\n              Date bad2 = new Date(120, 13, 10);\n              // BUG: Diagnostic contains: The 0-based month value (-1) is out of bounds [0..11].\n              Date bad3 = new Date(120, -1, 10);\n              // BUG: Diagnostic contains: The 0-based month value (-13) is out of bounds [0..11].\n              Date bad4 = new Date(120, -13, 10);\n              // BUG: Diagnostic contains: Use Calendar.MAY instead of 4 to represent the month.\n              Date bad5 = new Date(120, 4, 10);\n            }"
+    },
+    {
+      "description": "constructor_badDay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        219
+      ],
+      "code": "import static java.util.Calendar.JULY;\n            import java.util.Date;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: The day value (32) is out of bounds [1..31].\n              Date bad1 = new Date(120, JULY, 32);\n              // BUG: Diagnostic contains: The day value (0) is out of bounds [1..31].\n              Date bad2 = new Date(120, JULY, 0);\n              // BUG: Diagnostic contains: The day value (-32) is out of bounds [1..31].\n              Date bad3 = new Date(120, JULY, -32);\n            }"
+    },
+    {
+      "description": "setters_good",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        240
+      ],
+      "code": "import static java.util.Calendar.*;\n            import java.util.Date;\n\n            public class TestClass {\n              public void foo(Date date) {\n                date.setYear(1);\n                date.setYear(120);\n                date.setYear(300);\n                date.setMonth(JANUARY);\n                date.setMonth(FEBRUARY);\n                date.setMonth(MARCH);\n                date.setMonth(APRIL);\n                date.setMonth(MAY);\n                date.setMonth(JUNE);\n                date.setMonth(JULY);\n                date.setMonth(AUGUST);\n                date.setMonth(SEPTEMBER);\n                date.setMonth(OCTOBER);\n                date.setMonth(NOVEMBER);\n                date.setMonth(DECEMBER);\n                date.setDate(1);\n                date.setDate(15);\n                date.setDate(31);\n                date.setHours(0);\n                date.setHours(12);\n                date.setHours(23);\n                date.setMinutes(0);\n                date.setMinutes(30);\n                date.setMinutes(59);\n                date.setSeconds(0);\n                date.setSeconds(30);\n                date.setSeconds(59);\n              }\n            }"
+    },
+    {
+      "description": "setters_badYears",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        284
+      ],
+      "code": "import java.util.Date;\n\npublic class TestClass {\n  public void foo(Date date) {\n    // BUG: Diagnostic contains: The 1900-based year value (0) is out of bounds [1..300].\n    date.setYear(0);\n    // BUG: Diagnostic contains: The 1900-based year value (-1) is out of bounds [1..300].\n    date.setYear(-1);\n    // BUG: Diagnostic contains: The 1900-based year value (2020) is out of bounds [1..300].\n    date.setYear(2020);\n  }\n}"
+    },
+    {
+      "description": "setters_badMonths",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "import java.util.Date;\n\npublic class TestClass {\n  public void foo(Date date) {\n    // BUG: Diagnostic contains: The 0-based month value (-13) is out of bounds [0..11].\n    date.setMonth(-13);\n    // BUG: Diagnostic contains: The 0-based month value (-1) is out of bounds [0..11].\n    date.setMonth(-1);\n    // BUG: Diagnostic contains: The 0-based month value (12) is out of bounds [0..11].\n    date.setMonth(12);\n  }\n}"
+    },
+    {
+      "description": "setters_badDays",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        328
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              public void foo(Date date) {\n                // BUG: Diagnostic contains: The day value (-32) is out of bounds [1..31].\n                date.setDate(-32);\n                // BUG: Diagnostic contains: The day value (0) is out of bounds [1..31].\n                date.setDate(0);\n                // BUG: Diagnostic contains: The day value (32) is out of bounds [1..31].\n                date.setDate(32);\n              }\n            }"
+    },
+    {
+      "description": "setters_badHours",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        350
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              public void foo(Date date) {\n                // BUG: Diagnostic contains: The hours value (-1) is out of bounds [0..23].\n                date.setHours(-1);\n                // BUG: Diagnostic contains: The hours value (24) is out of bounds [0..23].\n                date.setHours(24);\n              }\n            }"
+    },
+    {
+      "description": "setters_badMinutes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        370
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              public void foo(Date date) {\n                // BUG: Diagnostic contains: The minutes value (-1) is out of bounds [0..59].\n                date.setMinutes(-1);\n                // BUG: Diagnostic contains: The minutes value (60) is out of bounds [0..59].\n                date.setMinutes(60);\n              }\n            }"
+    },
+    {
+      "description": "setters_badSeconds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        390
+      ],
+      "code": "import java.util.Date;\n\n            public class TestClass {\n              public void foo(Date date) {\n                // BUG: Diagnostic contains: The seconds value (-1) is out of bounds [0..59].\n                date.setSeconds(-1);\n                // BUG: Diagnostic contains: The seconds value (60) is out of bounds [0..59].\n                date.setSeconds(60);\n              }\n            }"
+    }
+  ]
+}

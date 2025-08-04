@@ -1,0 +1,78 @@
+{
+  "name": "InvalidJavaTimeConstant",
+  "language": "java",
+  "description": "This checker errors on calls to java.time methods using values that are guaranteed to throw a DateTimeException.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 302,
+  "branches": 10,
+  "apis": 7,
+  "test": [
+    {
+      "description": "cornerCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "package test;\n\n            import java.time.LocalDateTime;\n            import java.time.LocalTime;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: MonthOfYear (valid values 1 - 12): 0\n              private static final LocalDateTime LDT0 = LocalDateTime.of(0, 0, 0, 0, 0);\n              private static final LocalDateTime LDT1 = LocalDateTime.of(0, 1, 1, 0, 0);\n              private static final LocalTime LT = LocalTime.ofNanoOfDay(12345678);\n            }"
+    },
+    {
+      "description": "localDate_areOk",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        55
+      ],
+      "code": ""
+    },
+    {
+      "description": "localDate_withBadDays",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "package test;\n\n            import java.time.LocalDate;\n            import java.time.Month;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: DayOfMonth (valid values 1 - 28/31): 32\n              private static final LocalDate LD0 = LocalDate.of(1985, 5, 32);\n              // BUG: Diagnostic contains: DayOfMonth (valid values 1 - 28/31): 32\n              private static final LocalDate LD1 = LocalDate.of(1985, Month.MAY, 32);\n            }"
+    },
+    {
+      "description": "localDate_withBadMonths",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": "package test;\n\n            import java.time.LocalDate;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: MonthOfYear (valid values 1 - 12): -1\n              private static final LocalDate LD0 = LocalDate.of(1985, -1, 31);\n              // BUG: Diagnostic contains: MonthOfYear (valid values 1 - 12): 0\n              private static final LocalDate LD1 = LocalDate.of(1985, 0, 31);\n              // BUG: Diagnostic contains: MonthOfYear (valid values 1 - 12): 13\n              private static final LocalDate LD2 = LocalDate.of(1985, 13, 31);\n            }"
+    },
+    {
+      "description": "localDate_withBadYears",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        118
+      ],
+      "code": "package test;\n\n            import java.time.LocalDate;\n            import java.time.Year;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: Year (valid values -999999999 - 999999999): -1000000000\n              private static final LocalDate LD0 = LocalDate.of(Year.MIN_VALUE - 1, 5, 31);\n              // BUG: Diagnostic contains: Year (valid values -999999999 - 999999999): 1000000000\n              private static final LocalDate LD1 = LocalDate.of(Year.MAX_VALUE + 1, 5, 31);\n            }"
+    },
+    {
+      "description": "localDate_withBadDayOfMonth",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139
+      ],
+      "code": "package test;\n\n            import java.time.LocalDate;\n\n            public class TestCase {\n              private static LocalDate foo(LocalDate localDate) {\n                // BUG: Diagnostic contains: DayOfMonth (valid values 1 - 28/31): 0\n                return localDate.withDayOfMonth(0);\n              }\n            }"
+    },
+    {
+      "description": "localTime_withBadHour",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "package test;\n\n            import java.time.LocalTime;\n\n            public class TestCase {\n              private static LocalTime foo(LocalTime localTime) {\n                // BUG: Diagnostic contains: HourOfDay (valid values 0 - 23): 25\n                return localTime.withHour(25);\n              }\n            }"
+    },
+    {
+      "description": "dayOfWeek_withBadDay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "package test;\n\n            import java.time.DayOfWeek;\n\n            public class TestCase {\n              // BUG: Diagnostic contains: DayOfWeek (valid values 1 - 7): 8\n              private static final DayOfWeek DOW = DayOfWeek.of(8);\n            }"
+    }
+  ]
+}

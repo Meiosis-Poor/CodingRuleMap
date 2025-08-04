@@ -1,0 +1,30 @@
+{
+  "name": "CacheLoaderNull",
+  "language": "java",
+  "description": "The result of CacheLoader#load must be non-null.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 69,
+  "branches": 5,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.common.cache.CacheLoader;\n\n            class Test {\n              {\n                new CacheLoader<String, String>() {\n                  @Override\n                  public String load(String key) {\n                    // BUG: Diagnostic contains:\n                    return null;\n                  }\n                };\n                abstract class MyCacheLoader extends CacheLoader<String, String> {}\n                new MyCacheLoader() {\n                  @Override\n                  public String load(String key) {\n                    // BUG: Diagnostic contains:\n                    return null;\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "import com.google.common.cache.CacheLoader;\n            import java.util.function.Supplier;\n\n            class Test {\n              public String load(String key) {\n                return null;\n              }\n\n              {\n                new CacheLoader<String, String>() {\n                  @Override\n                  public String load(String key) {\n                    Supplier<String> s =\n                        () -> {\n                          return null;\n                        };\n                    Supplier<String> t =\n                        new Supplier<String>() {\n                          public String get() {\n                            return null;\n                          }\n                        };\n                    class MySupplier implements Supplier<String> {\n                      public String get() {\n                        return null;\n                      }\n                    }\n                    ;\n                    return \"\";\n                  }\n                };\n              }\n            }"
+    }
+  ]
+}

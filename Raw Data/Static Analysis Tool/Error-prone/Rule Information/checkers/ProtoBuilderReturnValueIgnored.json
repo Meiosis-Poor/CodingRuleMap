@@ -1,0 +1,46 @@
+{
+  "name": "ProtoBuilderReturnValueIgnored",
+  "language": "java",
+  "description": "Unnecessary call to proto's #build() method.  If you don't consume the return value of #build(), the result is discarded and the only effect is to verify that all required fields are set, which can be expressed more directly with #isInitialized().",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 115,
+  "branches": 5,
+  "apis": 3,
+  "test": [
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        39
+      ],
+      "code": "import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration.Builder proto) {\n                proto.clearSeconds().build();\n              }\n            }\n            \n\n            import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration.Builder proto) {\n                proto.clearSeconds();\n              }\n            }"
+    },
+    {
+      "description": "toBuilderExempted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration proto) {\n                proto.toBuilder().clearSeconds().build();\n              }\n            }"
+    },
+    {
+      "description": "refactoringReceiverIsOnlyIdentifier",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84
+      ],
+      "code": "import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration.Builder proto) {\n                proto.build();\n              }\n            }\n            \n\n            import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration.Builder proto) {}\n            }"
+    },
+    {
+      "description": "refactoringSecondFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration.Builder proto) {\n                proto.build();\n              }\n            }\n            \n\n            import static com.google.common.base.Preconditions.checkState;\n            import com.google.protobuf.Duration;\n\n            final class Test {\n              private void singleField(Duration.Builder proto) {\n                checkState(proto.isInitialized());\n              }\n            }"
+    }
+  ]
+}

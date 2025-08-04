@@ -1,0 +1,70 @@
+{
+  "name": "LambdaFunctionalInterface",
+  "language": "java",
+  "description": "Use Java's utility functional interfaces instead of Function<A, B> for primitive types.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 261,
+  "branches": 13,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.function.Function;\n\npublic class LambdaFunctionalInterfacePositiveCases {\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private double fooIntToDoubleFunctionPr(int x, Function<Integer, Double> fn) {\n    return fn.apply(x);\n  }\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private long fooIntToLongFunction(int x, Function<Integer, Long> fn) {\n    return fn.apply(x);\n  }\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private long fooIntToIntFunction(int x, Function<Integer, Long> fn) {\n    return fn.apply(x);\n  }\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private double fooDoubleToDoubleFunction(double x, Function<Double, Double> fn) {\n    return fn.apply(x);\n  }\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private int fooDoubleToIntFunction(double x, Function<Double, Integer> fn) {\n    return fn.apply(x);\n  }\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private void fooInterface(String str, Function<Integer, Double> func) {}\n\n  // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n  private double fooDouble(double x, Function<Double, Integer> fn) {\n    return fn.apply(x);\n  }\n\n  public static class WithCallSiteExplicitFunction {\n\n    private static double generateDataSeries(Function<Double, Double> curveFunction) {\n      final double scale = 100;\n      final double modX = 2.0;\n      return modX / curveFunction.apply(scale);\n    }\n\n    // call site\n    private static double generateSpendCurveForMetric(double curved) {\n      // explicit Function variable creation\n      Function<Double, Double> curveFunction = x -> Math.pow(x, 1 / curved) * 100;\n      return generateDataSeries(curveFunction);\n    }\n\n    // call site: lambda Function\n    public Double getMu() {\n      return generateDataSeries(mu -> 2.3);\n    }\n  }\n\n  public static class WithCallSiteAnonymousFunction {\n\n    private static double findOptimalMu(Function<Double, Long> costFunc, double mid) {\n      return costFunc.apply(mid);\n    }\n\n    // call site: anonymous Function\n    public Double getMu() {\n      return findOptimalMu(\n          new Function<Double, Long>() {\n            @Override\n            public Long apply(Double mu) {\n              return 0L;\n            }\n          },\n          3.0);\n    }\n  }\n\n  public static class WithCallSiteLambdaFunction {\n\n    // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n    private static double findOptimalMuLambda(Function<Double, Long> costFunc, double mid) {\n      return costFunc.apply(mid);\n    }\n\n    // call site: lambda\n    public Double getMu() {\n      return findOptimalMuLambda(mu -> 0L, 3.0);\n    }\n\n    // call site: lambda\n    public Double getTu() {\n      return findOptimalMuLambda(mu -> 2L, 4.0);\n    }\n  }\n\n  public static class TwoLambdaFunctions {\n\n    // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n    private static double find(\n        Function<Double, Long> firstFunc, Function<Integer, Long> secondFun, double mid) {\n      firstFunc.apply(mid + 2);\n\n      return firstFunc.apply(mid);\n    }\n\n    // call site: lambda\n    public Double getMu() {\n      return find(mu -> 0L, nu -> 1L, 3.0);\n    }\n\n    // call site: lambda\n    public Double getTu() {\n      return find(mu -> 2L, nu -> 3L, 4.0);\n    }\n  }\n\n  public static class NumbertoT {\n\n    // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n    private static <T extends Number> List<T> numToTFunction(Function<Double, T> converter) {\n      List<T> namedNumberIntervals = new ArrayList<>();\n      T min = converter.apply(2.9);\n      T max = converter.apply(5.6);\n      namedNumberIntervals.add(min);\n      namedNumberIntervals.add(max);\n      return namedNumberIntervals;\n    }\n\n    // call site: lambda\n    public List<Integer> getIntList() {\n      List<Integer> result = numToTFunction(num -> 2 + 3);\n\n      return result;\n    }\n\n    // call site: lambda\n    public List<Double> getDoubleList() {\n      List<Double> result = numToTFunction(num -> 2.3);\n\n      return result;\n    }\n  }\n\n  public static class TtoNumber {\n\n    // BUG: Diagnostic contains: [LambdaFunctionalInterface]\n    private <T> int sumAll(Function<T, Integer> sizeConv) {\n      return sizeConv.apply((T) Integer.valueOf(3));\n    }\n\n    public int getSumAll() {\n      return sumAll(o -> 2);\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.function.Function;\nimport java.util.function.IntToDoubleFunction;\n\npublic class LambdaFunctionalInterfaceNegativeCases {\n\n  public double fooIntToDoubleFunction(int x, Function<Integer, Double> fn) {\n    return fn.apply(x).doubleValue();\n  }\n\n  public void fooIntToDoubleUtil(int y, IntToDoubleFunction fn) {\n    fn.applyAsDouble(y);\n  }\n\n  public long fooIntToLongFunction(int x, Function<Integer, Long> fn) {\n    return fn.apply(x);\n  }\n\n  public long fooIntToIntFunction(int x, Function<Integer, Long> fn) {\n    return fn.apply(x);\n  }\n\n  public double fooDoubleToDoubleFunction(double x, Function<Double, Double> fn) {\n    return fn.apply(x);\n  }\n\n  public int fooDoubleToIntFunction(double x, Function<Double, Integer> fn) {\n    return fn.apply(x);\n  }\n\n  public String add(String string, Function<String, String> func) {\n    return func.apply(string);\n  }\n\n  public void fooInterface(String str, Function<Integer, Double> func) {}\n\n  public double fooDouble(double x, Function<Double, Integer> fn) {\n    return fn.apply(x);\n  }\n\n  public static class WithCallSiteExplicitFunction {\n\n    public static double generateDataSeries(Function<Double, Double> curveFunction) {\n      final double scale = 100;\n      final double modX = 2.0;\n      return modX / curveFunction.apply(scale);\n    }\n\n    // call site\n    private static double generateSpendCurveForMetric(double curved) {\n      // explicit Function variable creation\n      Function<Double, Double> curveFunction = x -> Math.pow(x, 1 / curved) * 100;\n      return generateDataSeries(curveFunction);\n    }\n  }\n\n  public static class WithCallSiteAnonymousFunction {\n\n    public static double findOptimalMu(Function<Double, Long> costFunc, double mid) {\n      return costFunc.apply(mid);\n    }\n\n    // call site: anonymous Function\n    public Double getMu() {\n      return findOptimalMu(\n          new Function<Double, Long>() {\n            @Override\n            public Long apply(Double mu) {\n              return 0L;\n            }\n          },\n          3.0);\n    }\n  }\n\n  public static class WithCallSiteLambdaFunction {\n\n    public static double findOptimalMuLambda(Function<Double, Long> costFunc, double mid) {\n      return costFunc.apply(mid);\n    }\n\n    // call site: anonymous Function\n    public Double getMu() {\n      return findOptimalMuLambda(mu -> 0L, 3.0);\n    }\n  }\n}\\"
+    },
+    {
+      "description": "refactoringTwo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": "import java.util.function.Function;\n\npublic class TwoLambdaFunctions {\n  private static double find(\n      Function<Double, Long> firstSpecial, Function<Integer, Long> secondSpecial, double mid) {\n    secondSpecial.apply(2);\n    return firstSpecial.apply(mid);\n  }\n\n  public Double getMu() {\n    return find(mu -> 0L, nu -> 1L, 3.0);\n  }\n\n  public Double getTu() {\n    return find(mu -> 2L, nu -> 3L, 4.0);\n  }\n}\n\n\n            import java.util.function.DoubleToLongFunction;\n            import java.util.function.Function;\n            import java.util.function.IntToLongFunction;\n\n            public class TwoLambdaFunctions {\n              private static double find(\n                  DoubleToLongFunction firstSpecial, IntToLongFunction secondSpecial, double mid) {\n                secondSpecial.applyAsLong(2);\n                return firstSpecial.applyAsLong(mid);\n              }\n\n              public Double getMu() {\n                return find(mu -> 0L, nu -> 1L, 3.0);\n              }\n\n              public Double getTu() {\n                return find(mu -> 2L, nu -> 3L, 4.0);\n              }\n            }"
+    },
+    {
+      "description": "refactoringInteger",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        353
+      ],
+      "code": "import java.util.function.Function;\n\npublic class TwoLambdaFunctions {\n  private static int find(\n      Function<Integer, Integer> firstSpecial, Function<Integer, Double> secondSpecial, int mid) {\n    secondSpecial.apply(2);\n    return firstSpecial.apply(mid);\n  }\n\n  public Integer getMu() {\n    return find(mu -> 0, nu -> 1.1, 3);\n  }\n\n  public Integer getTu() {\n    return find(mu -> 2, nu -> 3.2, 4);\n  }\n}\n\n\n            import java.util.function.Function;\n            import java.util.function.IntFunction;\n            import java.util.function.IntToDoubleFunction;\n\n            public class TwoLambdaFunctions {\n              private static int find(\n                  IntFunction<Integer> firstSpecial, IntToDoubleFunction secondSpecial, int mid) {\n                secondSpecial.applyAsDouble(2);\n                return firstSpecial.apply(mid);\n              }\n\n              public Integer getMu() {\n                return find(mu -> 0, nu -> 1.1, 3);\n              }\n\n              public Integer getTu() {\n                return find(mu -> 2, nu -> 3.2, 4);\n              }\n            }"
+    },
+    {
+      "description": "refactoringPrimitiveToGeneric",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        404
+      ],
+      "code": "import java.util.function.Function;\nimport java.util.ArrayList;\nimport java.util.List;\n\npublic class NumbertoT {\n  private static <T extends Number> List<T> numToTFunction(Function<Double, T> converter) {\n    List<T> namedNumberIntervals = new ArrayList<>();\n    T min = converter.apply(2.9);\n    T max = converter.apply(5.6);\n    namedNumberIntervals.add(min);\n    namedNumberIntervals.add(max);\n    return namedNumberIntervals;\n  }\n\n  public List<Integer> getIntList() {\n    List<Integer> result = numToTFunction(num -> 2);\n    return result;\n  }\n\n  public List<Double> getDoubleList() {\n    List<Double> result = numToTFunction(num -> 3.2);\n    return result;\n  }\n}\n\n\nimport java.util.ArrayList;\nimport java.util.List;\nimport java.util.function.DoubleFunction;\nimport java.util.function.Function;\n\npublic class NumbertoT {\n  private static <T extends Number> List<T> numToTFunction(DoubleFunction<T> converter) {\n    List<T> namedNumberIntervals = new ArrayList<>();\n    T min = converter.apply(2.9);\n    T max = converter.apply(5.6);\n    namedNumberIntervals.add(min);\n    namedNumberIntervals.add(max);\n    return namedNumberIntervals;\n  }\n\n  public List<Integer> getIntList() {\n    List<Integer> result = numToTFunction(num -> 2);\n    return result;\n  }\n\n  public List<Double> getDoubleList() {\n    List<Double> result = numToTFunction(num -> 3.2);\n    return result;\n  }\n}"
+    },
+    {
+      "description": "refactoringGenericToPrimitive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        468
+      ],
+      "code": "import java.util.function.Function;\n\n            public class NumbertoT {\n              private <T> int sumAll(Function<T, Integer> sizeConv) {\n                return sizeConv.apply((T) Integer.valueOf(3));\n              }\n\n              public int getSumAll() {\n                return sumAll(o -> 2);\n              }\n            }\n            \n\n            import java.util.function.Function;\n            import java.util.function.ToIntFunction;\n\n            public class NumbertoT {\n              private <T> int sumAll(ToIntFunction<T> sizeConv) {\n                return sizeConv.applyAsInt((T) Integer.valueOf(3));\n              }\n\n              public int getSumAll() {\n                return sumAll(o -> 2);\n              }\n            }"
+    },
+    {
+      "description": "onEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        506
+      ],
+      "code": "import java.util.function.Function;\n\n            public enum E {\n              VALUE(String::length);\n\n              // BUG: Diagnostic contains:\n              E(Function<String, Integer> func) {}\n            }"
+    }
+  ]
+}

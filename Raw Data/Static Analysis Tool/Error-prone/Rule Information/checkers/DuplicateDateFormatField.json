@@ -1,0 +1,110 @@
+{
+  "name": "DuplicateDateFormatField",
+  "language": "java",
+  "description": "Reuse of DateFormat fields is most likely unintentional",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 102,
+  "branches": 9,
+  "apis": 2,
+  "test": [
+    {
+      "description": "singleDuplicateField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              // BUG: Diagnostic contains: uses the field 'm' more than once\n              SimpleDateFormat format = new SimpleDateFormat(\"mm/dd/yyyy hh:mm:ss\");\n            }"
+    },
+    {
+      "description": "doubleDuplicateFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        46
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              // BUG: Diagnostic contains: uses the fields ['m', 's'] more than once\n              SimpleDateFormat format = new SimpleDateFormat(\"mm/dd/yyyy hh:mm:ss.sss\");\n            }"
+    },
+    {
+      "description": "constantWithDuplicateField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              static final String PATTERN = \"mm/dd/yyyy hh:mm:ss\";\n              // BUG: Diagnostic contains: uses the field 'm' more than once\n              SimpleDateFormat format = new SimpleDateFormat(PATTERN);\n            }"
+    },
+    {
+      "description": "recognizedDateTimeFormat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import java.time.format.DateTimeFormatter;\n\n            class Test {\n              // BUG: Diagnostic contains: uses the field 'm' more than once\n              DateTimeFormatter formatter = DateTimeFormatter.ofPattern(\"mm/dd/yyyy hh:mm:ss\");\n            }"
+    },
+    {
+      "description": "simpleDateFormat_applyPattern",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              public void foo() {\n                SimpleDateFormat format = new SimpleDateFormat();\n                // BUG: Diagnostic contains: uses the field 'm' more than once\n                format.applyPattern(\"mm/dd/yyyy hh:mm:ss\");\n              }\n            }"
+    },
+    {
+      "description": "simpleDateFormat_applyLocalizedPattern",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              public void foo() {\n                SimpleDateFormat format = new SimpleDateFormat();\n                // BUG: Diagnostic contains: uses the field 'm' more than once\n                format.applyLocalizedPattern(\"mm/dd/yyyy hh:mm:ss\");\n              }\n            }"
+    },
+    {
+      "description": "forgotToEscapteSpecialCharacters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              // BUG: Diagnostic contains: uses the field 'W' more than once\n              SimpleDateFormat format = new SimpleDateFormat(\"Week W ' of ' L\");\n            }"
+    },
+    {
+      "description": "withOptionalGroup",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              // BUG: Diagnostic contains: uses the field 'm' more than once\n              SimpleDateFormat format = new SimpleDateFormat(\"hh:mm[:ss] yyyy/mm/dd\");\n            }"
+    },
+    {
+      "description": "withNeestedOptionalGroup",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        165
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              // BUG: Diagnostic contains: uses the field 'm' more than once\n              SimpleDateFormat format = new SimpleDateFormat(\"hh:mm[:ss[.SSS]] yyyy/mm/dd\");\n            }"
+    },
+    {
+      "description": "noDupliatedFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        181
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              SimpleDateFormat format = new SimpleDateFormat(\"yyyy-MM-dd\");\n            }"
+    },
+    {
+      "description": "ignoresEscapedPatternCharacters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        196
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\n            class Test {\n              SimpleDateFormat format = new SimpleDateFormat(\"'Week' W ' of ' L\");\n            }"
+    },
+    {
+      "description": "ignoredOptionalGroups",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": "import java.text.SimpleDateFormat;\n\nclass Test {\n  SimpleDateFormat format = new SimpleDateFormat(\"yyyy'-'MM'-'dd'T'HH':'mm[':'ss][XXX][X]\");\n}"
+    }
+  ]
+}

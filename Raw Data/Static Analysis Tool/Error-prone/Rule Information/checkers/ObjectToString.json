@@ -1,0 +1,46 @@
+{
+  "name": "ObjectToString",
+  "language": "java",
+  "description": "Calling toString on Objects that don't override toString() doesn't provide useful information",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 89,
+  "branches": 3,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        41
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author bhagwani@google.com (Sumit Bhagwani)\n             */\n            public class ObjectToStringPositiveCases {\n\n              public static final class FinalObjectClassWithoutToString {}\n\n              public static final class FinalGenericClassWithoutToString<T> {}\n\n              void directToStringCalls() {\n                FinalObjectClassWithoutToString finalObjectClassWithoutToString =\n                    new FinalObjectClassWithoutToString();\n                // BUG: Diagnostic contains: ObjectToString\n                System.out.println(finalObjectClassWithoutToString.toString());\n              }\n\n              void genericClassShowsErasure() {\n                FinalGenericClassWithoutToString<Object> finalGenericClassWithoutToString =\n                    new FinalGenericClassWithoutToString<>();\n                // BUG: Diagnostic contains: `FinalGenericClassWithoutToString@\n                System.out.println(finalGenericClassWithoutToString.toString());\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport org.joda.time.Duration;\n\n/**\n * @author bhagwani@google.com (Sumit Bhagwani)\n */\npublic class ObjectToStringNegativeCases {\n\n  public static final class FinalObjectClassWithoutToString {}\n\n  public static class NonFinalObjectClassWithoutToString {}\n\n  public static final class FinalObjectClassWithToString {\n\n    @Override\n    public String toString() {\n      return \"hakuna\";\n    }\n  }\n\n  public static class NonFinalObjectClassWithToString {\n\n    @Override\n    public String toString() {\n      return \"matata\";\n    }\n  }\n\n  public void log(Object o) {\n    System.out.println(o.toString());\n  }\n\n  void directToStringCalls() {\n    NonFinalObjectClassWithoutToString nonFinalObjectClassWithoutToString =\n        new NonFinalObjectClassWithoutToString();\n    System.out.println(nonFinalObjectClassWithoutToString.toString());\n\n    FinalObjectClassWithToString finalObjectClassWithToString = new FinalObjectClassWithToString();\n    System.out.println(finalObjectClassWithToString.toString());\n\n    NonFinalObjectClassWithToString nonFinalObjectClassWithToString =\n        new NonFinalObjectClassWithToString();\n    System.out.println(nonFinalObjectClassWithToString.toString());\n  }\n\n  void callsTologMethod() {\n    FinalObjectClassWithoutToString finalObjectClassWithoutToString =\n        new FinalObjectClassWithoutToString();\n    log(finalObjectClassWithoutToString);\n\n    NonFinalObjectClassWithoutToString nonFinalObjectClassWithoutToString =\n        new NonFinalObjectClassWithoutToString();\n    log(nonFinalObjectClassWithoutToString);\n\n    FinalObjectClassWithToString finalObjectClassWithToString = new FinalObjectClassWithToString();\n    log(finalObjectClassWithToString);\n\n    NonFinalObjectClassWithToString nonFinalObjectClassWithToString =\n        new NonFinalObjectClassWithToString();\n    log(nonFinalObjectClassWithToString);\n  }\n\n  public void overridePresentInAbstractClassInHierarchy(Duration durationArg) {\n    String unusedString = Duration.standardSeconds(86400).toString();\n    System.out.println(\"test joda string \" + Duration.standardSeconds(86400));\n\n    unusedString = durationArg.toString();\n    System.out.println(\"test joda string \" + durationArg);\n  }\n}\\"
+    },
+    {
+      "description": "incompleteClasspath",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": ""
+    },
+    {
+      "description": "qualifiedName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "class A {\n              static final class B {}\n            }\n            \n\n            class C {\n              String test() {\n                // BUG: Diagnostic contains: A.B\n                return new A.B().toString();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,374 @@
+{
+  "name": "ParameterName",
+  "language": "java",
+  "description": "Detects `/* name= */`-style comments on actual parameters where the name doesn't match the formal parameter",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 261,
+  "branches": 35,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "class Test {\n              void f(int foo, int bar) {}\n\n              {\n                f(/* bar= */ 1, /* foo= */ 2);\n                f(\n                    /** bar= */\n                    3,\n                    /** foo= */\n                    4);\n              }\n            }\n            \n\n            class Test {\n              void f(int foo, int bar) {}\n\n              {\n                f(/* foo= */ 1, /* bar= */ 2);\n                f(/* foo= */ 3, /* bar= */ 4);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "class Test {\n              void f(int foo, int bar) {}\n\n              {\n                f(/* foo= */ 1, 2);\n              }\n            }"
+    },
+    {
+      "description": "issue781",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "package a.b;\n\n            import a.AbstractFoo;\n\n            class Baz extends AbstractFoo {\n              @Override\n              protected String getFoo() {\n                return \"foo\";\n              }\n            }\n            \n\n            package a;\n\n            import java.util.function.Function;\n\n            class Bar {\n              private final Function<String, String> args;\n\n              public Bar(Function<String, String> args) {\n                this.args = args;\n              }\n            }\n\n            public abstract class AbstractFoo {\n              protected abstract String getFoo();\n\n              private String getCommandArguments(String parameters) {\n                return null;\n              }\n\n              public AbstractFoo() {\n                new Bar(this::getCommandArguments);\n              }\n            }"
+    },
+    {
+      "description": "issue792",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        134
+      ],
+      "code": "package a;\n\n            class Bar {}\n\n            public class Foo {\n              public void setInteger(Integer i) {}\n\n              public void callSetInteger() {\n                setInteger(0);\n              }\n            }\n            \n\n            package a;\n\n            public class Baz extends Foo {}"
+    },
+    {
+      "description": "namedParametersChecker_ignoresCall_withNoComments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        162
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                target(arg1, arg2);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_findsError_withOneBadComment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        179
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                // BUG: Diagnostic contains: 'target(/* param1= */ arg1, arg2);'\n                target(/* param2= */ arg1, arg2);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_suggestsSwap_withSwappedArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                // BUG: Diagnostic contains: 'target(/* param1= */ arg2\n                target(/* param2= */ arg2, /* param1= */ arg1);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_suggestsSwap_withSwappedArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                // BUG: Diagnostic contains: 'target(/* param1= */ arg2\n                target(/* param2= */ arg2, /* param1= */ arg1);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_suggestsSwap_withOneCommentedSwappedArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        233
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                // BUG: Diagnostic contains: 'target(/* param1= */ arg2, arg1);'\n                target(/* param2= */ arg2, arg1);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_toleratesApproximateComment_onRequiredNamesMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(/*note param = */ arg);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_tolerateComment_withNoEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        268
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(/*param*/ arg);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_toleratesMatchingComment_blockAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        285
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(arg /*param*/);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_toleratesApproximateComment_blockAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(arg /*imprecise match for param*/);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_toleratesMatchingComment_lineAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(arg); // param\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_multipleComments_allowedIfAnyMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        341
+      ],
+      "code": "class Test {\n              void test(Object x) {\n                test(/* y= *//* x= */ x);\n                test(/* x= *//* y= */ x);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_multipleComments_flaggedIfNoneMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": "class Test {\n              void test(Object x) {\n                // BUG: Diagnostic contains: does not match\n                test(/* y= *//* z= */ x);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_ignoresComment_nonMatchinglineAfter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        373
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(arg); // some_other_comment\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_ignoresComment_markedUpDelimiter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        390
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                target(\n                    arg1,\n                    /* ---- param1 <-> param2 ---- */\n                    arg2);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_ignoresLineComments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        410
+      ],
+      "code": "class Test {\n              void test(int x) {\n                test(\n                    // newX =\n                    //   (x ^ 2)\n                    x * x);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_ignoresComment_wrongNameWithNoEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        428
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param);\n\n              void test(Object arg) {\n                target(/* some_other_comment */ arg);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_ignoresComment_wrongVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        445
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object... param);\n\n              void test(Object arg) {\n                target(/* param.!.= */ arg);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_matchesComment_withChainedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        462
+      ],
+      "code": "abstract class Test {\n              abstract Test getTest(Object param);\n\n              abstract void target(Object param2);\n\n              void test(Object arg, Object arg2) {\n                getTest(/* param= */ arg).target(arg2);\n              }\n            }"
+    },
+    {
+      "description": "namedParametersChecker_suggestsChangeComment_whenNoMatchingNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        481
+      ],
+      "code": "abstract class Test {\n              abstract void target(Object param1, Object param2);\n\n              void test(Object arg1, Object arg2) {\n                // BUG: Diagnostic contains:\n                // target(/* param1= */ arg1, arg2)\n                // `/* notMatching= */` does not match formal parameter name `param1`\n                target(/* notMatching= */ arg1, arg2);\n              }\n            }"
+    },
+    {
+      "description": "innerClassNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        514
+      ],
+      "code": ""
+    },
+    {
+      "description": "innerClassPositive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        529
+      ],
+      "code": ""
+    },
+    {
+      "description": "anonymousClassConstructorNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        549
+      ],
+      "code": ""
+    },
+    {
+      "description": "anonymousClassConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        565
+      ],
+      "code": ""
+    },
+    {
+      "description": "internalAnnotatedParameterNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        581
+      ],
+      "code": "class Test {\n              public static class AnnotatedParametersTestClass {\n                public @interface Annotated {}\n\n                public static void target(@Annotated int foo) {}\n              }\n\n              void test() {\n                AnnotatedParametersTestClass.target(/* foo= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "internalAnnotatedParameterPositive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        602
+      ],
+      "code": "class Test {\n              public static class AnnotatedParametersTestClass {\n                public @interface Annotated {}\n\n                public static void target(@Annotated int foo) {}\n              }\n\n              void test() {\n                // BUG: Diagnostic contains: target(/* foo= */ 1)\n                AnnotatedParametersTestClass.target(/* bar= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "externalAnnotatedParameterNegative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        634
+      ],
+      "code": ""
+    },
+    {
+      "description": "externalAnnotatedParameterPositive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        649
+      ],
+      "code": ""
+    },
+    {
+      "description": "positiveVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        664
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                // BUG: Diagnostic contains: /* args...= */\n                // /* argh */\n                foo(/* argh...= */ 1, 2, 3);\n              }\n            }"
+    },
+    {
+      "description": "emptyVarargs_shouldNotCrash",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        683
+      ],
+      "code": "class Test {\n              void foo(int first, int... rest) {}\n\n              void bar() {\n                foo(/* first= */ 1);\n                // BUG: Diagnostic contains: /* first= */\n                foo(/* second= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "negativeVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        702
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                foo(/* args...= */ 1, 2);\n              }\n            }"
+    },
+    {
+      "description": "varargsCommentAllowedWithArraySyntax",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        719
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                int[] myInts = {1, 2, 3};\n                foo(/* args...= */ myInts);\n              }\n            }"
+    },
+    {
+      "description": "normalCommentNotAllowedWithVarargsArraySyntax",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        738
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                int[] myInts = {1, 2, 3};\n                // BUG: Diagnostic contains: /* args...= */\n                foo(/* args= */ myInts);\n              }\n            }"
+    },
+    {
+      "description": "varargsCommentAllowedOnOnlyFirstArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        757
+      ],
+      "code": "class Test {\n  void foo(int... args) {}\n\n  void bar() {\n    // BUG: Diagnostic contains: parameter name comment only allowed on first varargs argument\n    foo(1, /* args...= */ 2);\n  }\n}"
+    },
+    {
+      "description": "varargsWrongFormat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        775
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                foo(/* args= */ 1, 2);\n              }\n            }\n            \n\n            class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                foo(/* args...= */ 1, 2);\n              }\n            }"
+    },
+    {
+      "description": "varargsTrailing",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        803
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                foo(1, /* foo= */ 2);\n                foo(1, /* foo...= */ 2);\n              }\n            }\n            \n\n            class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                foo(1, /* foo */ 2);\n                foo(1, /* foo... */ 2);\n              }\n            }"
+    },
+    {
+      "description": "varargsIgnoreNonParameterNameComments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        833
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                foo(/* fake */ 1, 2);\n              }\n            }"
+    },
+    {
+      "description": "varargsWrongNameAndWrongFormat",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        850
+      ],
+      "code": "class Test {\n              void foo(int... args) {}\n\n              void bar() {\n                // BUG: Diagnostic contains: /* args...= */\n                // /* argh */\n                foo(/* argh= */ 1, 2);\n              }\n            }"
+    },
+    {
+      "description": "varargsCommentNotAllowedOnNormalArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        869
+      ],
+      "code": "class Test {\n              void foo(int i) {}\n\n              void bar() {\n                // BUG: Diagnostic contains: /* i= */\n                foo(/* i...= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "varargsSeparateCompilation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        895
+      ],
+      "code": ""
+    },
+    {
+      "description": "exemptPackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        910
+      ],
+      "code": "package test.a;\n\n            public class A {\n              public static void f(int value) {}\n            }\n            \n\n            package test.b.nested;\n\n            public class B {\n              public static void f(int value) {}\n            }\n            \n\n            package test.c;\n\n            public class C {\n              public static void f(int value) {}\n            }\n            \n\n            import test.a.A;\n            import test.b.nested.B;\n            import test.c.C;\n\n            class Test {\n              void f() {\n                A.f(/* typo= */ 1);\n                B.f(/* typo= */ 1);\n                // BUG: Diagnostic contains: 'C.f(/* value= */ 1);'\n                C.f(/* typo= */ 1);\n              }\n            }"
+    },
+    {
+      "description": "nonCanonicalMockitoImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        960
+      ],
+      "code": "package test.a;\n\n            import static org.mockito.Mockito.eq;\n\n            public class A {\n              // BUG: Diagnostic contains:\n              Object x = eq(/* notValue= */ 1);\n            }"
+    }
+  ]
+}

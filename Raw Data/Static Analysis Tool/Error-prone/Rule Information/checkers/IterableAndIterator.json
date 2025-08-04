@@ -1,0 +1,30 @@
+{
+  "name": "IterableAndIterator",
+  "language": "java",
+  "description": "Class should not implement both `Iterable` and `Iterator`",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 67,
+  "branches": 8,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.Iterator;\n\n/**\n * @author jsjeon@google.com (Jinseong Jeon)\n */\npublic class IterableAndIteratorPositiveCases {\n\n  /** Test Node */\n  public static class MyNode {\n    String tag;\n    MyNode next;\n  }\n\n  /** Test List that implements both Iterator and Iterable */\n  // BUG: Diagnostic contains: both\n  public static class MyBadList implements Iterator<MyNode>, Iterable<MyNode> {\n    private MyNode head;\n\n    public MyBadList() {\n      head = null;\n    }\n\n    @Override\n    public boolean hasNext() {\n      return head != null;\n    }\n\n    @Override\n    public MyNode next() {\n      if (hasNext()) {\n        MyNode ret = head;\n        head = head.next;\n        return ret;\n      }\n      return null;\n    }\n\n    @Override\n    public void remove() {\n      throw new UnsupportedOperationException(\"remove is not supported\");\n    }\n\n    public void add(MyNode node) {\n      if (!hasNext()) {\n        head.next = node;\n      }\n      head = node;\n    }\n\n    @Override\n    public Iterator<MyNode> iterator() {\n      return this;\n    }\n  }\n\n  /** Test List that extends the above bad implementation Diagnostic should bypass this */\n  public static class MyBadListInherited extends MyBadList {\n    public MyBadListInherited() {}\n  }\n\n  /** Test List that implements only Iterator */\n  public static class MyGoodList implements Iterator<MyNode> {\n    private MyNode head;\n\n    public MyGoodList() {\n      head = null;\n    }\n\n    @Override\n    public boolean hasNext() {\n      return head != null;\n    }\n\n    @Override\n    public MyNode next() {\n      if (hasNext()) {\n        MyNode ret = head;\n        head = head.next;\n        return ret;\n      }\n      return null;\n    }\n\n    @Override\n    public void remove() {\n      throw new UnsupportedOperationException(\"remove is not supported\");\n    }\n\n    public void add(MyNode node) {\n      if (!hasNext()) {\n        head.next = node;\n      }\n      head = node;\n    }\n  }\n\n  /** Test List that implicitly implements both interfaces */\n  // BUG: Diagnostic contains: both\n  public static class MyImplicitlyBadList extends MyGoodList implements Iterable<MyNode> {\n\n    public MyImplicitlyBadList() {}\n\n    @Override\n    public Iterator<MyNode> iterator() {\n      return this;\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.Iterator;\n\n            /**\n             * @author jsjeon@google.com (Jinseong Jeon)\n             */\n            public class IterableAndIteratorNegativeCases {\n\n              /** Test Node */\n              public static class MyNode {\n                String tag;\n                MyNode next;\n              }\n\n              /** Test List that implements only Iterator */\n              public static class MyList1 implements Iterator<MyNode> {\n                private MyNode head;\n\n                public MyList1() {\n                  head = null;\n                }\n\n                @Override\n                public boolean hasNext() {\n                  return head != null;\n                }\n\n                @Override\n                public MyNode next() {\n                  if (hasNext()) {\n                    MyNode ret = head;\n                    head = head.next;\n                    return ret;\n                  }\n                  return null;\n                }\n\n                @Override\n                public void remove() {\n                  throw new UnsupportedOperationException(\"remove is not supported\");\n                }\n\n                public void add(MyNode node) {\n                  if (!hasNext()) {\n                    head.next = node;\n                  }\n                  head = node;\n                }\n              }\n\n              /** Test List that implements only Iterable */\n              public static class MyList2 implements Iterable<MyNode> {\n\n                @Override\n                public Iterator<MyNode> iterator() {\n                  MyList1 l = new MyList1();\n                  // code to populate the list goes here\n                  return l;\n                }\n              }\n            }\\"
+    }
+  ]
+}

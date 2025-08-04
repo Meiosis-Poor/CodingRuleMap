@@ -1,0 +1,62 @@
+{
+  "name": "ThrowIfUncheckedKnownUnchecked",
+  "language": "java",
+  "description": "`throwIfUnchecked(knownUnchecked)` is equivalent to `throw knownUnchecked`.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 93,
+  "branches": 7,
+  "apis": 2,
+  "test": [
+    {
+      "description": "knownRuntimeException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            class Foo {\n              void x(IllegalArgumentException e) {\n                // BUG: Diagnostic contains:\n                throwIfUnchecked(e);\n              }\n            }"
+    },
+    {
+      "description": "knownError",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48
+      ],
+      "code": "import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            class Foo {\n              void x(LinkageError e) {\n                // BUG: Diagnostic contains:\n                throwIfUnchecked(e);\n              }\n            }"
+    },
+    {
+      "description": "knownUncheckedMulticatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66
+      ],
+      "code": "import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            class Foo {\n              void x() {\n                try {\n                } catch (RuntimeException | Error e) {\n                  // BUG: Diagnostic contains:\n                  throwIfUnchecked(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "knownCheckedException",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87
+      ],
+      "code": "import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            import java.io.IOException;\n\n            class Foo {\n              void x(IOException e) {\n                throwIfUnchecked(e);\n              }\n            }"
+    },
+    {
+      "description": "unknownType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            class Foo {\n              void x(Exception e) {\n                throwIfUnchecked(e);\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        123
+      ],
+      "code": "import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            class Foo {\n              void x(IllegalArgumentException e) {\n                log(e);\n                throwIfUnchecked(e);\n                throw new RuntimeException(e);\n              }\n\n              void log(Throwable t) {}\n            }\n            \n\n            import static com.google.common.base.Throwables.throwIfUnchecked;\n\n            class Foo {\n              void x(IllegalArgumentException e) {\n                log(e);\n                throw e;\n              }\n\n              void log(Throwable t) {}\n            }"
+    }
+  ]
+}

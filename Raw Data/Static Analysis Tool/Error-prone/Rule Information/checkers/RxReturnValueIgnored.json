@@ -1,0 +1,94 @@
+{
+  "name": "RxReturnValueIgnored",
+  "language": "java",
+  "description": "Returned Rx objects must be checked. Ignoring a returned Rx value means it is never scheduled for execution",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 111,
+  "branches": 9,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.errorprone.annotations.CanIgnoreReturnValue;\nimport io.reactivex.Flowable;\nimport io.reactivex.Maybe;\nimport io.reactivex.Observable;\nimport io.reactivex.Single;\nimport java.util.Arrays;\nimport java.util.HashMap;\nimport java.util.Map;\n\n/**\n * @author friedj@google.com (Jake Fried)\n */\npublic class RxReturnValueIgnoredPositiveCases {\n  private static Observable getObservable() {\n    return null;\n  }\n\n  private static Single getSingle() {\n    return null;\n  }\n\n  private static Flowable getFlowable() {\n    return null;\n  }\n\n  private static Maybe getMaybe() {\n    return null;\n  }\n\n  {\n    new Observable();\n    new Single();\n    new Flowable();\n    new Maybe();\n\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    getObservable();\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    getSingle();\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    getFlowable();\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    getMaybe();\n\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    Arrays.asList(1, 2, 3).forEach(n -> getObservable());\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    Arrays.asList(1, 2, 3).forEach(n -> getSingle());\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    Arrays.asList(1, 2, 3).forEach(n -> getFlowable());\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    Arrays.asList(1, 2, 3).forEach(n -> getMaybe());\n  }\n\n  private abstract static class IgnoringParent<T> {\n    @CanIgnoreReturnValue\n    abstract T ignoringFunction();\n  }\n\n  private class NonIgnoringObservableChild extends IgnoringParent<Observable<Integer>> {\n    @Override\n    Observable<Integer> ignoringFunction() {\n      return null;\n    }\n  }\n\n  private class NonIgnoringSingleChild extends IgnoringParent<Single<Integer>> {\n    @Override\n    Single<Integer> ignoringFunction() {\n      return null;\n    }\n  }\n\n  private class NonIgnoringFlowableChild extends IgnoringParent<Flowable<Integer>> {\n    @Override\n    Flowable<Integer> ignoringFunction() {\n      return null;\n    }\n  }\n\n  private class NonIgnoringMaybeChild extends IgnoringParent<Maybe<Integer>> {\n    @Override\n    Maybe<Integer> ignoringFunction() {\n      return null;\n    }\n  }\n\n  public void inheritanceTest() {\n    NonIgnoringObservableChild observableChild = new NonIgnoringObservableChild();\n    NonIgnoringSingleChild singleChild = new NonIgnoringSingleChild();\n    NonIgnoringFlowableChild flowableChild = new NonIgnoringFlowableChild();\n    NonIgnoringMaybeChild maybeChild = new NonIgnoringMaybeChild();\n\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    observableChild.ignoringFunction();\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    singleChild.ignoringFunction();\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    flowableChild.ignoringFunction();\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    maybeChild.ignoringFunction();\n  }\n\n  public void conditional() {\n    if (false) {\n      // BUG: Diagnostic contains: Rx objects must be checked.\n      getObservable();\n      // BUG: Diagnostic contains: Rx objects must be checked.\n      getSingle();\n      // BUG: Diagnostic contains: Rx objects must be checked.\n      getFlowable();\n      // BUG: Diagnostic contains: Rx objects must be checked.\n      getMaybe();\n    }\n\n    return;\n  }\n\n  static void getFromMap() {\n    Map<Object, Observable> map1 = new HashMap<>();\n    Map<Object, Single> map2 = new HashMap<>();\n    Map<Object, Flowable> map3 = new HashMap<>();\n    Map<Object, Maybe> map4 = new HashMap<>();\n\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    map1.get(null);\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    map2.get(null);\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    map3.get(null);\n    // BUG: Diagnostic contains: Rx objects must be checked.\n    map4.get(null);\n  }\n}\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.errorprone.annotations.CanIgnoreReturnValue;\n            import io.reactivex.Flowable;\n            import io.reactivex.Maybe;\n            import io.reactivex.Observable;\n            import io.reactivex.Single;\n            import java.util.HashMap;\n            import java.util.Map;\n\n            /**\n             * @author friedj@google.com (Jake Fried)\n             */\n            public class RxReturnValueIgnoredNegativeCases {\n              interface CanIgnoreMethod {\n                @CanIgnoreReturnValue\n                Observable<Object> getObservable();\n\n                @CanIgnoreReturnValue\n                Single<Object> getSingle();\n\n                @CanIgnoreReturnValue\n                Flowable<Object> getFlowable();\n\n                @CanIgnoreReturnValue\n                Maybe<Object> getMaybe();\n              }\n\n              public static class CanIgnoreImpl implements CanIgnoreMethod {\n                @Override\n                public Observable<Object> getObservable() {\n                  return null;\n                }\n\n                @Override\n                public Single<Object> getSingle() {\n                  return null;\n                }\n\n                @Override\n                public Flowable<Object> getFlowable() {\n                  return null;\n                }\n\n                @Override\n                public Maybe<Object> getMaybe() {\n                  return null;\n                }\n              }\n\n              static void callIgnoredInterfaceMethod() {\n                new CanIgnoreImpl().getObservable();\n                new CanIgnoreImpl().getSingle();\n                new CanIgnoreImpl().getFlowable();\n                new CanIgnoreImpl().getMaybe();\n              }\n\n              static void putInMap() {\n                Map<Object, Observable<?>> map1 = new HashMap<>();\n                Map<Object, Single<?>> map2 = new HashMap<>();\n                Map<Object, Maybe<?>> map3 = new HashMap<>();\n                HashMap<Object, Flowable<?>> map4 = new HashMap<>();\n\n                map1.put(new Object(), null);\n                map2.put(new Object(), null);\n                map3.put(new Object(), null);\n                map4.put(new Object(), null);\n              }\n\n              @CanIgnoreReturnValue\n              Observable<Object> getObservable() {\n                return null;\n              }\n\n              @CanIgnoreReturnValue\n              Single<Object> getSingle() {\n                return null;\n              }\n\n              @CanIgnoreReturnValue\n              Flowable<Object> getFlowable() {\n                return null;\n              }\n\n              @CanIgnoreReturnValue\n              Maybe<Object> getMaybe() {\n                return null;\n              }\n\n              void checkIgnore() {\n                getObservable();\n                getSingle();\n                getFlowable();\n                getMaybe();\n              }\n            }\\"
+    },
+    {
+      "description": "rx2Observable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351
+      ],
+      "code": "import io.reactivex.Observable;\n\n            class Test {\n              Observable getObservable() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getObservable();\n              }\n            }"
+    },
+    {
+      "description": "rx2Single",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        373
+      ],
+      "code": "import io.reactivex.Single;\n\n            class Test {\n              Single getSingle() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getSingle();\n              }\n            }"
+    },
+    {
+      "description": "rx2Completable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        395
+      ],
+      "code": "import io.reactivex.Completable;\n\n            class Test {\n              Completable getCompletable() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getCompletable();\n              }\n            }"
+    },
+    {
+      "description": "rx2Flowable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        417
+      ],
+      "code": "import io.reactivex.Flowable;\n\n            class Test {\n              Flowable getFlowable() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getFlowable();\n              }\n            }"
+    },
+    {
+      "description": "rx2Maybe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        439
+      ],
+      "code": "import io.reactivex.Maybe;\n\n            class Test {\n              Maybe getMaybe() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getMaybe();\n              }\n            }"
+    },
+    {
+      "description": "rx1Observable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        461
+      ],
+      "code": "import rx.Observable;\n\n            class Test {\n              Observable getObservable() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getObservable();\n              }\n            }"
+    },
+    {
+      "description": "rx1Single",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        483
+      ],
+      "code": "import rx.Single;\n\n            class Test {\n              Single getSingle() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getSingle();\n              }\n            }"
+    },
+    {
+      "description": "rx1Completable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        505
+      ],
+      "code": "import rx.Completable;\n\n            class Test {\n              Completable getCompletable() {\n                return null;\n              }\n\n              void f() {\n                // BUG: Diagnostic contains: Rx objects must be checked.\n                getCompletable();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "name": "DirectInvocationOnMock",
+  "language": "java",
+  "description": "Methods should not be directly invoked on mocks. Should this be part of a verify(..) call?",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 192,
+  "branches": 13,
+  "apis": 1,
+  "test": [
+    {
+      "description": "directInvocationOnMock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n\n            class Test {\n              public void test() {\n                Test test = mock(Test.class);\n                // BUG: Diagnostic contains: test\n                test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMockAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        55
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n\n            class Test {\n              public void test() {\n                Test test;\n                test = mock(Test.class);\n                // BUG: Diagnostic contains:\n                test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_suggestsVerify",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.verify;\n\n            class Test {\n              public void test() {\n                Test test = mock(Test.class);\n                test.test();\n              }\n            }\n            \n\n            import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.verify;\n\n            class Test {\n              public void test() {\n                Test test = mock(Test.class);\n                verify(test).test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_mockHasExtraOptions_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        107
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import org.mockito.Answers;\n\n            class Test {\n              public void test() {\n                Test test = mock(Test.class, Answers.RETURNS_DEEP_STUBS);\n                test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMockAnnotatedField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        126
+      ],
+      "code": "import org.mockito.Mock;\n\n            class Test {\n              @Mock public Test test;\n\n              public void test() {\n                // BUG: Diagnostic contains:\n                test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMockAnnotatedField_mockHasExtraOptions_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        146
+      ],
+      "code": "import org.mockito.Answers;\n            import org.mockito.Mock;\n\n            class Test {\n              @Mock(answer = Answers.RETURNS_DEEP_STUBS)\n              public Test test;\n\n              public void test() {\n                test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_withinWhen_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        167
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                when(test.test()).thenReturn(null);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_withinGiven_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.BDDMockito.given;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                given(test.test()).willReturn(null);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_setUpToCallRealMethod_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                when(test.test()).thenCallRealMethod();\n                return test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_setUpToCallRealMethodUsingGiven_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        228
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.BDDMockito.given;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                given(test.test()).willCallRealMethod();\n                return test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_setUpWithDoCallRealMethod_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.doCallRealMethod;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                doCallRealMethod().when(test).test();\n                return test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_setUpWithDoCallRealMethodUsingGiven_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        269
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.BDDMockito.willCallRealMethod;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                willCallRealMethod().given(test).test();\n                return test.test();\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_withinCustomWhen_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        290
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import org.mockito.stubbing.OngoingStubbing;\n\n            class Test {\n              public <T> OngoingStubbing<T> when(T t) {\n                return org.mockito.Mockito.when(t);\n              }\n\n              public Object test() {\n                Test test = mock(Test.class);\n                when(test.test()).thenReturn(null);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_withinCustomGiven_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        314
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import org.mockito.BDDMockito.BDDMyOngoingStubbing;\n\n            class Test {\n              public <T> BDDMyOngoingStubbing<T> given(T t) {\n                return org.mockito.BDDMockito.given(t);\n              }\n\n              public Object test() {\n                Test test = mock(Test.class);\n                given(test.test()).willReturn(null);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_withinWhenWithCast_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        339
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.Mockito.when;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                when((Object) test.test()).thenReturn(null);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "directInvocationOnMock_withinGivenWithCast_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        359
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n            import static org.mockito.BDDMockito.given;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                given((Object) test.test()).willReturn(null);\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "finalMethodInvoked_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        380
+      ],
+      "code": "import static org.mockito.Mockito.mock;\n\n            class Test {\n              public Object test() {\n                Test test = mock(Test.class);\n                return test.getClass();\n              }\n            }"
+    }
+  ]
+}

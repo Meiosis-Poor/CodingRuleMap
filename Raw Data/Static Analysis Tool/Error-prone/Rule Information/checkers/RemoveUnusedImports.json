@@ -1,0 +1,182 @@
+{
+  "name": "RemoveUnusedImports",
+  "language": "java",
+  "description": "Unused imports",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 253,
+  "branches": 19,
+  "apis": 7,
+  "test": [
+    {
+      "description": "basicUsageTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37
+      ],
+      "code": "import static java.util.Collections.emptyList;\n            import static java.util.Collections.emptySet;\n            import static com.google.common.base.Preconditions.checkNotNull;\n\n            import java.util.ArrayList;\n            import java.util.Collection;\n            import java.util.Collections;\n            import java.util.HashSet;\n            import java.util.List;\n            import java.util.Map;\n            import java.util.Set;\n            import java.util.UUID;\n\n            public class Test {\n              private final Object object;\n\n              Test(Object object) {\n                this.object = checkNotNull(object);\n              }\n\n              Set<UUID> someMethod(Collection<UUID> collection) {\n                if (collection.isEmpty()) {\n                  return emptySet();\n                }\n                return new HashSet<>(collection);\n              }\n            }\n            \n\n            import static java.util.Collections.emptySet;\n            import static com.google.common.base.Preconditions.checkNotNull;\n\n            import java.util.Collection;\n            import java.util.HashSet;\n            import java.util.Set;\n            import java.util.UUID;\n\n            public class Test {\n              private final Object object;\n\n              Test(Object object) {\n                this.object = checkNotNull(object);\n              }\n\n              Set<UUID> someMethod(Collection<UUID> collection) {\n                if (collection.isEmpty()) {\n                  return emptySet();\n                }\n                return new HashSet<>(collection);\n              }\n            }"
+    },
+    {
+      "description": "useInSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100
+      ],
+      "code": "import java.util.Map;\n            import java.util.Map.Entry;\n\n            public class Test {\n              Map.Entry<String, String> e;\n            }\n            \n\n            import java.util.Map;\n\n            public class Test {\n              Map.Entry<String, String> e;\n            }"
+    },
+    {
+      "description": "useInJavadocSee",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125
+      ],
+      "code": "import java.util.Map;\n\n            /**\n             * @see Map\n             */\n            public class Test {}"
+    },
+    {
+      "description": "useInJavadocSeeSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        142
+      ],
+      "code": "import java.util.Map;\n\n            /**\n             * @see Map#get\n             */\n            public class Test {}"
+    },
+    {
+      "description": "useInJavadocLink",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "import java.util.Map;\n\n            /** {@link Map} */\n            public class Test {}"
+    },
+    {
+      "description": "useInJavadocLink_selfReferenceDoesNotBreak",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "/** {@link #blah} */\n            public class Test {\n              void blah() {}\n            }"
+    },
+    {
+      "description": "useInJavadocLinkSelect",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        189
+      ],
+      "code": "import java.util.Map;\n\n            /** {@link Map#get} */\n            public class Test {}"
+    },
+    {
+      "description": "diagnosticPosition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "package test;\n\n            import java.util.ArrayList;\n            import java.util.List;\n            // BUG: Diagnostic contains:\n            import java.util.LinkedList;\n\n            public class Test {\n              List<String> xs = new ArrayList<>();\n            }"
+    },
+    {
+      "description": "diagnosticListsUnusedImports",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        224
+      ],
+      "code": "package test;\n\n            import java.util.ArrayList;\n            import java.util.List;\n            // BUG: Diagnostic contains: java.util.LinkedList, java.util.Map, java.util.Set\n            import java.util.LinkedList;\n            import java.util.Map;\n            import java.util.Set;\n\n            public class Test {\n              List<String> xs = new ArrayList<>();\n            }"
+    },
+    {
+      "description": "useInJavadocParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        246
+      ],
+      "code": "import java.util.List;\n            import java.util.Collection;\n\n            /** {@link List#containsAll(Collection)} */\n            public class Test {}"
+    },
+    {
+      "description": "qualifiedJavadoc",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "import java.util.List;\n            import java.util.Map;\n            import java.util.Map.Entry;\n\n            /** {@link java.util.List} {@link Map.Entry} */\n            public class Test {}\n            \n\n            import java.util.Map;\n\n            /** {@link java.util.List} {@link Map.Entry} */\n            public class Test {}"
+    },
+    {
+      "description": "parameterErasure",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        286
+      ],
+      "code": "import java.util.Collection;\n\n            public class A<T extends Collection> {\n              public void foo(T t) {}\n            }\n            \n\n            import java.util.Collection;\n            import java.util.List;\n\n            public class B extends A<List> {\n              /** {@link #foo(Collection)} {@link #foo(List)} */\n              public void foo(List t) {}\n            }"
+    },
+    {
+      "description": "atSee",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        314
+      ],
+      "code": "import java.nio.file.Path;\n\n            class Lib {\n              static void f(Path... ps) {}\n            }\n            \n\n            import java.nio.file.Path;\n\n            class Test {\n              /**\n               * @see Lib#f(Path[])\n               */\n              void f() {}\n            }"
+    },
+    {
+      "description": "multipleTopLevelClasses",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "import java.util.List;\n            import java.util.Set;\n\n            public class MultipleTopLevelClasses {\n              List x;\n            }\n\n            class Evil {\n              Set x;\n            }"
+    },
+    {
+      "description": "unusedInPackageInfo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        363
+      ],
+      "code": "package com.example;\n\n            import java.util.Map;\n            \n\n            package com.example;"
+    },
+    {
+      "description": "b69984547",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        381
+      ],
+      "code": "package android.app;\n\n            public class PendingIntent {}\n            \n\n            package android.app;\n\n            public class AlarmManager {\n              public void set(int type, long triggerAtMillis, PendingIntent operation) {}\n            }\n            \n\n            import android.app.PendingIntent;\n\n            /** {@link android.app.AlarmManager#containsAll(int, long, PendingIntent)} */\n            public class Test {}"
+    },
+    {
+      "description": "b70690930",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        414
+      ],
+      "code": "package a;\n\n            public class One {}\n            \n\n            package a;\n\n            public class Two {}\n            \n\n            package p;\n\n            import a.One;\n            import a.Two;\n\n            public class Lib {\n              private static class I {\n                public void f(One a) {}\n              }\n\n              public static class J {\n                public void f(Two a) {}\n              }\n            }\n            \n\n            package p;\n\n            import a.One;\n            import a.Two;\n\n            /** {@link Lib.I#f(One)} {@link Lib.J#f(Two)} */\n            public class Test {}\n            \n\n            package p;\n\n            import a.Two;\n\n            /** {@link Lib.I#f(One)} {@link Lib.J#f(Two)} */\n            public class Test {}"
+    },
+    {
+      "description": "b390690031",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        476
+      ],
+      "code": "package a;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.CONSTRUCTOR, ElementType.METHOD})\n            public @interface One {}\n            \n\n            package a;\n\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Target;\n\n            @Target({ElementType.CONSTRUCTOR, ElementType.METHOD})\n            public @interface Two {}\n            \n\n            package p;\n\n            import a.One;\n            import a.Two;\n\n            public record Test(int z, @One int x, int y) {}\n            \n\n            package p;\n\n            import a.One;\n\n            public record Test(int z, @One int x, int y) {}"
+    },
+    {
+      "description": "shadowed_apparentUsageReported",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        525
+      ],
+      "code": "package pkg;\n\n            class A {\n              interface List {}\n            }\n            \n\n            package pkg;\n\n            // BUG: Diagnostic contains: resolves to pkg.A.List\n            import java.util.List;\n\n            class B extends A {\n              List foo() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "methodShadowed_apparentUsageReported",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        554
+      ],
+      "code": "package pkg;\n\n            class A {\n              String format() {\n                return null;\n              }\n            }\n            \n\n            package pkg;\n\n            // BUG: Diagnostic contains: resolves to pkg.A#format\n            import static java.lang.String.format;\n\n            class B extends A {\n              String test() {\n                return format();\n              }\n            }"
+    },
+    {
+      "description": "staticFieldImportShadowed_apparentUsageReported",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        585
+      ],
+      "code": "package pkg;\n\n            class A {\n              static final int MINUTES = 1;\n            }\n            \n\n            package pkg;\n\n            // BUG: Diagnostic contains: resolves to pkg.A#MINUTES\n            import static java.util.concurrent.TimeUnit.MINUTES;\n\n            class B extends A {\n              int test() {\n                return MINUTES;\n              }\n            }"
+    }
+  ]
+}

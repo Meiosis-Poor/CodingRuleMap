@@ -1,0 +1,70 @@
+{
+  "name": "CompatibleWithMisuse",
+  "language": "java",
+  "description": "@CompatibleWith's value is not a type argument.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 119,
+  "branches": 9,
+  "apis": 5,
+  "test": [
+    {
+      "description": "oK",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test<X> {\n              static final String CONSTANT = \"X\";\n\n              void doSomething(@CompatibleWith(\"X\") Object ok) {}\n\n              void doSomethingWithConstant(@CompatibleWith(CONSTANT) Object ok) {}\n\n              <Y extends String> void doSomethingElse(@CompatibleWith(\"Y\") Object ok) {}\n\n              <X, Z> void doSomethingTwice(@CompatibleWith(\"X\") Object ok) {}\n            }"
+    },
+    {
+      "description": "bad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test<X> {\n              static final String CONSTANT = \"Y\";\n\n              // BUG: Diagnostic contains: Valid arguments are: X\n              void doSomething(@CompatibleWith(\"Y\") Object bad) {}\n\n              // BUG: Diagnostic contains: Valid arguments are: X\n              void doSomethingWithConstant(@CompatibleWith(CONSTANT) Object bad) {}\n\n              // BUG: Diagnostic contains: not be empty (valid arguments are X)\n              void doSomethingEmpty(@CompatibleWith(\"\") Object bad) {}\n\n              // BUG: Diagnostic contains: Valid arguments are: Z, X\n              <Z> void doSomethingElse(@CompatibleWith(\"Y\") Object ok) {}\n            }"
+    },
+    {
+      "description": "overridesAlreadyAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test<X> {\n              void doSomething(@CompatibleWith(\"X\") Object bad) {}\n            }\n\n            class Foo<X> extends Test<X> {\n              // BUG: Diagnostic contains: in Test that already has @CompatibleWith\n              void doSomething(@CompatibleWith(\"X\") Object bad) {}\n            }"
+    },
+    {
+      "description": "noTypeArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test {\n              // BUG: Diagnostic contains: There are no type arguments\n              void doSomething(@CompatibleWith(\"Y\") Object bad) {}\n            }"
+    },
+    {
+      "description": "allowedOnVarargs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test<Y> {\n              void doSomething(@CompatibleWith(\"Y\") Object... ok) {}\n            }"
+    },
+    {
+      "description": "innerTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        132
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test<X> {\n              class Test2<Y> {\n                class Test3<Z> {\n                  // BUG: Diagnostic contains: Valid arguments are: Z, Y, X\n                  void doSomething(@CompatibleWith(\"P\") Object bad) {}\n\n                  // BUG: Diagnostic contains: Valid arguments are: Q, Z, Y, X\n                  <Q> void doSomethingElse(@CompatibleWith(\"P\") Object bad) {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "nestedTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        155
+      ],
+      "code": "import com.google.errorprone.annotations.CompatibleWith;\n\n            class Test<X> {\n              static class Test2<Y> {\n                class Test3<Z> {\n                  // BUG: Diagnostic contains: Valid arguments are: Z, Y\n                  void doSomething(@CompatibleWith(\"X\") Object bad) {}\n\n                  // BUG: Diagnostic contains: Valid arguments are: Q, Z, Y\n                  <Q> void doSomethingElse(@CompatibleWith(\"X\") Object bad) {}\n                }\n\n                // BUG: Diagnostic contains: Valid arguments are: Y\n                void doSomething(@CompatibleWith(\"X\") Object bad) {}\n              }\n            }"
+    }
+  ]
+}

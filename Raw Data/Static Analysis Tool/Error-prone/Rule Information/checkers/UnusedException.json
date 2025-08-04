@@ -1,0 +1,126 @@
+{
+  "name": "UnusedException",
+  "language": "java",
+  "description": "This catch block catches an exception and re-throws another, but swallows the caught exception rather than setting it as a cause. This can make debugging harder.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 175,
+  "branches": 16,
+  "apis": 4,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                  // BUG: Diagnostic contains:\n                } catch (Exception e) {\n                  throw new RuntimeException(\"foo\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  if (equals(this)) {\n                    throw new RuntimeException(toString());\n                  } else {\n                    throw new RuntimeException();\n                  }\n                }\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  if (equals(this)) {\n                    throw new RuntimeException(toString(), e);\n                  } else {\n                    throw new RuntimeException(e);\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "correctlyWrapped",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  throw new RuntimeException(e);\n                }\n              }\n            }"
+    },
+    {
+      "description": "rethrown",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        113
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  throw e;\n                }\n              }\n            }"
+    },
+    {
+      "description": "usedSomehow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        131
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  System.err.println(e.toString());\n                  throw new RuntimeException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "usedNested",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        150
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  try {\n                    // BUG: Diagnostic contains:\n                  } catch (Exception e2) {\n                    System.err.println(e.toString());\n                    throw new RuntimeException();\n                  }\n                  throw new RuntimeException();\n                }\n              }\n            }"
+    },
+    {
+      "description": "swallowedButDoesntThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  String ohNo = null;\n                }\n              }\n            }"
+    },
+    {
+      "description": "suppressible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        192
+      ],
+      "code": "class Test {\n              @SuppressWarnings(\"UnusedException\")\n              void test() {\n                try {\n                } catch (Exception e) {\n                  throw new RuntimeException(\"foo\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "suppressibleViaCatchBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (\n                    @SuppressWarnings(\"UnusedException\")\n                    Exception e) {\n                  throw new RuntimeException(\"foo\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "suppressibleByCallingExceptionUnused",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        231
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception unusedException) {\n                  throw new RuntimeException(\"foo\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "anonymousClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  throw new RuntimeException() {};\n                }\n              }\n            }\n            \n\n            class Test {\n              void test() {\n                try {\n                } catch (Exception e) {\n                  throw new RuntimeException(e) {};\n                }\n              }\n            }"
+    },
+    {
+      "description": "replacementNotVisible",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        279
+      ],
+      "code": "class MyException extends RuntimeException {\n              public MyException(int a) {}\n\n              protected MyException(int a, Throwable th) {}\n            }"
+    },
+    {
+      "description": "interruptedException_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        307
+      ],
+      "code": "class Test {\n              void test() {\n                try {\n                  throw new InterruptedException();\n                } catch (InterruptedException e) {\n                  throw new IllegalStateException(\"foo\");\n                }\n              }\n            }"
+    },
+    {
+      "description": "interruptedIOException_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        326
+      ],
+      "code": "import java.io.InterruptedIOException;\n\n            abstract class Test {\n              abstract void foo() throws InterruptedIOException;\n\n              void test() throws InterruptedIOException {\n                try {\n                  foo();\n                } catch (InterruptedIOException e) {\n                  throw new InterruptedIOException();\n                }\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "name": "AnnotateFormatMethod",
+  "language": "java",
+  "description": "This method uses a pair of parameters as a format string and its arguments, but the enclosing method wasn't annotated. Doing so gives compile-time rather than run-time protection against malformed format strings.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 124,
+  "branches": 13,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "class AnnotateFormatMethodPositiveCases {\n              // BUG: Diagnostic contains: FormatMethod\n              String formatMe(String formatString, Object... args) {\n                return String.format(formatString, args);\n              }\n            }"
+    },
+    {
+      "description": "passedThroughToLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        45
+      ],
+      "code": "class AnnotateFormatMethodPositiveCases {\n              // BUG: Diagnostic contains: FormatMethod\n              Runnable formatMe(String formatString, Object... args) {\n                return () -> String.format(formatString, args);\n              }\n            }"
+    },
+    {
+      "description": "passedThroughToAnonymousClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "class AnnotateFormatMethodPositiveCases {\n              // BUG: Diagnostic contains: FormatMethod\n              Runnable formatMe(String formatString, Object... args) {\n                return new Runnable() {\n                  @Override\n                  public void run() {\n                    String.format(formatString, args);\n                  }\n                };\n              }\n            }"
+    },
+    {
+      "description": "formatted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "class AnnotateFormatMethodPositiveCases {\n              // BUG: Diagnostic contains: FormatMethod\n              String formatMe(String formatString, Object... args) {\n                return formatString.formatted(args);\n              }\n            }"
+    },
+    {
+      "description": "alreadyAnnotated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98
+      ],
+      "code": "import com.google.errorprone.annotations.FormatMethod;\n            import com.google.errorprone.annotations.FormatString;\n\n            class AnnotateFormatMethodNegativeCases {\n              @FormatMethod\n              String formatMe(@FormatString String formatString, Object... args) {\n                return String.format(formatString, args);\n              }\n            }"
+    },
+    {
+      "description": "notTerminalArguments",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "class AnnotateFormatMethodNegativeCases {\n              // BUG: Diagnostic contains: reordered\n              String formatMe(String formatString, String surprise, Object... args) {\n                return String.format(formatString, args);\n              }\n            }"
+    },
+    {
+      "description": "notVarArgs",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "class AnnotateFormatMethodNegativeCases {\n              String formatMe(String formatString, String justTheOneArgument) {\n                return String.format(formatString, justTheOneArgument);\n              }\n            }"
+    }
+  ]
+}

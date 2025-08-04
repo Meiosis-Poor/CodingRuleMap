@@ -1,0 +1,222 @@
+{
+  "name": "OptionalOfRedundantMethod",
+  "language": "java",
+  "description": "Optional.of() always returns a non-empty optional. Using ifPresent/isPresent/orElse/orElseGet/orElseThrow/isPresent/or/orNull method on it is unnecessary and most probably a bug.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 128,
+  "branches": 13,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive_ifPresent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: ifPresent\n                Optional.of(\"test\").ifPresent(String::length);\n              }\n            }"
+    },
+    {
+      "description": "positive_ifPresent_refactoring_ofNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                Optional.of(\"test\").ifPresent(String::length);\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              void f() {\n                Optional.ofNullable(\"test\").ifPresent(String::length);\n              }\n            }"
+    },
+    {
+      "description": "positive_orElse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: orElse\n                Optional.of(\"test\").orElse(\"test2\");\n              }\n            }"
+    },
+    {
+      "description": "positive_orElse_refactoring_ofNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        99
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              String f() {\n                return Optional.of(\"test\").orElse(\"test2\");\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              String f() {\n                return Optional.ofNullable(\"test\").orElse(\"test2\");\n              }\n            }"
+    },
+    {
+      "description": "positive_orElse_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        128
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              String f() {\n                return Optional.of(\"test\").orElse(\"test2\");\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              String f() {\n                return \"test\";\n              }\n            }"
+    },
+    {
+      "description": "positive_orElseGet",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: orElseGet\n                Optional.of(\"test\").orElseGet(() -> \"test2\");\n              }\n            }"
+    },
+    {
+      "description": "positive_orElseGet_refactoring_ofNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        175
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              String f() {\n                return Optional.of(\"test\").orElseGet(() -> \"test2\");\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              String f() {\n                return Optional.ofNullable(\"test\").orElseGet(() -> \"test2\");\n              }\n            }"
+    },
+    {
+      "description": "positive_orElseGet_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        204
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              String f() {\n                return Optional.of(\"test\").orElseGet(() -> \"test2\");\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              String f() {\n                return \"test\";\n              }\n            }"
+    },
+    {
+      "description": "positive_orElseThrow",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        233
+      ],
+      "code": "import java.util.Optional;\n            import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              static String f(ImmutableMap<String, String> map) {\n                // BUG: Diagnostic contains: orElseThrow\n                return Optional.of(map.get(\"test\")).orElseThrow(IllegalArgumentException::new);\n              }\n            }"
+    },
+    {
+      "description": "positive_orElseThrow_refactoring_ofNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "import java.util.Optional;\n            import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              static String f(ImmutableMap<String, String> map) {\n                return Optional.of(map.get(\"test\")).orElseThrow(IllegalArgumentException::new);\n              }\n            }\n            \n\nimport java.util.Optional;\nimport com.google.common.collect.ImmutableMap;\n\nclass Test {\n  static String f(ImmutableMap<String, String> map) {\n    return Optional.ofNullable(map.get(\"test\")).orElseThrow(IllegalArgumentException::new);\n  }\n}"
+    },
+    {
+      "description": "positive_orElseThrow_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        283
+      ],
+      "code": "import java.util.Optional;\n            import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              static String f(ImmutableMap<String, String> map) {\n                return Optional.of(map.get(\"test\")).orElseThrow(IllegalArgumentException::new);\n              }\n            }\n            \n\n            import java.util.Optional;\n            import com.google.common.collect.ImmutableMap;\n\n            class Test {\n              static String f(ImmutableMap<String, String> map) {\n                return map.get(\"test\");\n              }\n            }"
+    },
+    {
+      "description": "positive_isPresent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        314
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: isPresent\n                if (Optional.of(\"test\").isPresent()) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_isPresent_refactoring_ofNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        332
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                if (Optional.of(\"test\").isPresent()) {}\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              void f() {\n                if (Optional.ofNullable(\"test\").isPresent()) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_isPresent_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        361
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f() {\n                if (Optional.of(\"test\").isPresent()) {}\n              }\n            }\n            \n\n            import java.util.Optional;\n\n            class Test {\n              void f() {\n                if (true) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaIsPresent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        390
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: isPresent\n                Optional.of(\"test\").isPresent();\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaIsPresent_refactoring_fromNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        408
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                Optional.of(\"test\").isPresent();\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                Optional.fromNullable(\"test\").isPresent();\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaIsPresent_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        437
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                if (Optional.of(\"test\").isPresent()) {}\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                if (true) {}\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaOr",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        466
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: or\n                Optional.of(\"test\").or(\"\");\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaOr_refactoring_fromNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        484
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                Optional.of(\"test\").or(\"\");\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                Optional.fromNullable(\"test\").or(\"\");\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaOr_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        513
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              String f() {\n                return Optional.of(\"test\").or(\"\");\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              String f() {\n                return \"test\";\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaOrNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        542
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: orNull\n                Optional.of(\"test\").orNull();\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaOrNull_refactoring_fromNullableFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        560
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                Optional.of(\"test\").orNull();\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              void f() {\n                Optional.fromNullable(\"test\").orNull();\n              }\n            }"
+    },
+    {
+      "description": "positive_guavaOrNull_refactoring_simplifyExpressionFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        589
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              String f() {\n                return Optional.of(\"test\").orNull();\n              }\n            }\n            \n\n            import com.google.common.base.Optional;\n\n            class Test {\n              String f() {\n                return \"test\";\n              }\n            }"
+    },
+    {
+      "description": "negative_ifPresent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        618
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f(Optional<String> maybeString) {\n                maybeString.ifPresent(String::length);\n              }\n            }"
+    },
+    {
+      "description": "negative_orElse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        635
+      ],
+      "code": "import java.util.Optional;\n\n            class Test {\n              void f(String value) {\n                Optional.of(value).filter(x -> x.length() < 5).orElse(\"test\");\n              }\n            }"
+    },
+    {
+      "description": "negative_guavaIsPresent",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        652
+      ],
+      "code": "import com.google.common.base.Optional;\n\n            class Test {\n              boolean f(Optional<String> maybeString) {\n                return maybeString.isPresent();\n              }\n            }"
+    }
+  ]
+}

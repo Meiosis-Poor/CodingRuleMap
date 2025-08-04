@@ -1,0 +1,46 @@
+{
+  "name": "TreeToString",
+  "language": "java",
+  "description": "Tree#toString shouldn't be used for Trees deriving from the code being compiled, as it discards whitespace and comments.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 118,
+  "branches": 6,
+  "apis": 2,
+  "test": [
+    {
+      "description": "noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        30
+      ],
+      "code": "import com.google.errorprone.BugPattern;\n            import com.google.errorprone.BugPattern.SeverityLevel;\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;\n            import com.google.errorprone.matchers.Description;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.tools.javac.code.Types;\n\n            @BugPattern(name = \"Example\", summary = \"\", severity = SeverityLevel.ERROR)\n            public class ExampleChecker extends BugChecker implements ClassTreeMatcher {\n              @Override\n              public Description matchClass(ClassTree t, VisitorState s) {\n                return Description.NO_MATCH;\n              }\n            }"
+    },
+    {
+      "description": "matchInABugChecker",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57
+      ],
+      "code": "import static com.google.errorprone.util.ASTHelpers.getSymbol;\n            import com.google.errorprone.BugPattern;\n            import com.google.errorprone.BugPattern.SeverityLevel;\n            import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.bugpatterns.BugChecker.ClassTreeMatcher;\n            import com.google.errorprone.fixes.SuggestedFix;\n            import com.google.errorprone.matchers.Description;\n            import com.google.errorprone.matchers.Matcher;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.tools.javac.code.Symbol;\n            import com.sun.tools.javac.code.Symbol.ClassSymbol;\n            import com.sun.tools.javac.tree.TreeMaker;\n            import com.sun.tools.javac.code.Type;\n            import com.sun.tools.javac.code.Types;\n\n            @BugPattern(name = \"Example\", summary = \"\", severity = SeverityLevel.ERROR)\n            public class ExampleChecker extends BugChecker implements ClassTreeMatcher {\n              private static Matcher<ClassTree> matches(String name) {\n                // BUG: Diagnostic contains: state.getSourceForNode(c).equals\n                return (Matcher<ClassTree>) (c, state) -> c.toString().equals(name);\n              }\n\n              @Override\n              public Description matchClass(ClassTree tree, VisitorState state) {\n                // BUG: Diagnostic contains: state.getSourceForNode(tree).contains\n                if (tree.toString().contains(\"match\")) {\n                  return describeMatch(tree);\n                }\n                return Description.NO_MATCH;\n              }\n\n              private String createTree(VisitorState state) {\n                TreeMaker maker = TreeMaker.instance(state.context);\n                // BUG: Diagnostic contains: state.getConstantExpression(\"val\")\n                return maker.Literal(\"val\").toString();\n              }\n            }"
+    },
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109
+      ],
+      "code": "import com.google.errorprone.VisitorState;\nimport com.google.errorprone.bugpatterns.BugChecker;\nimport com.google.errorprone.matchers.Matcher;\nimport com.sun.source.tree.ClassTree;\nimport com.sun.source.tree.ExpressionTree;\nimport com.sun.source.tree.Tree;\n\npublic class TreeToStringPositiveCases {\n\n  public static class InnerClass extends BugChecker {\n    private static void foo() {\n      Tree tree = (Tree) new Object();\n      // BUG: Diagnostic contains: [TreeToString] Tree#toString shouldn't be used\n      tree.toString();\n    }\n\n    private static final Matcher<ClassTree> MATCHER1 =\n        (tree, state) -> {\n          ExpressionTree packageName = state.getPath().getCompilationUnit().getPackageName();\n          // BUG: Diagnostic contains: [TreeToString] Tree#toString shouldn't be used\n          packageName.toString();\n\n          // BUG: Diagnostic contains: [TreeToString] Tree#toString shouldn't be used\n          state.getPath().getCompilationUnit().getPackageName().toString();\n\n          return false;\n        };\n\n    private static final Matcher<ClassTree> MATCHER2 =\n        new Matcher<ClassTree>() {\n          @Override\n          public boolean matches(ClassTree classTree, VisitorState state) {\n            ExpressionTree packageName = state.getPath().getCompilationUnit().getPackageName();\n            // BUG: Diagnostic contains:\n            packageName.toString();\n            return false;\n          }\n        };\n  }\n}\\"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "import com.google.errorprone.VisitorState;\n            import com.google.errorprone.bugpatterns.BugChecker;\n            import com.google.errorprone.util.ASTHelpers;\n            import com.sun.source.tree.ClassTree;\n            import com.sun.source.tree.Tree;\n\n            public class TreeToStringNegativeCases {\n\n              public static class InnerClass extends BugChecker {\n\n                private static void foo(VisitorState state) {\n                  Tree tree = (Tree) new Object();\n                  state.getSourceForNode(tree);\n                  state.getConstantExpression(tree);\n                  ((ClassTree) new Object()).getSimpleName().toString();\n                  ASTHelpers.getSymbol(tree).getSimpleName().toString();\n                }\n              }\n            }\\"
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "name": "StreamResourceLeak",
+  "language": "java",
+  "description": "Streams that encapsulate a closeable resource should be closed using try-with-resources",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 142,
+  "branches": 17,
+  "apis": 1,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n            import java.util.stream.Stream;\n\n            class Test {\n              String f(Path p) throws IOException {\n                try (Stream<String> stream = Files.lines(p).filter(l -> !l.isEmpty())) {\n                  stream.collect(Collectors.joining(\", \"));\n                }\n                try (Stream<String> stream = Files.lines(p)) {\n                  return stream.collect(Collectors.joining(\", \"));\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n            import java.util.stream.Stream;\n\n            class Test {\n              String f(Path p) throws IOException {\n                try (Stream<String> stream = Files.lines(p).filter(l -> !l.isEmpty())) {\n                  stream.collect(Collectors.joining(\", \"));\n                }\n                try (Stream<String> stream = Files.lines(p)) {\n                  return stream.collect(Collectors.joining(\", \"));\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n            import java.util.stream.Stream;\n\n            class Test {\n              String f(Path p) throws IOException {\n                try (Stream<String> stream = Files.lines(p).filter(l -> !l.isEmpty())) {\n                  stream.collect(Collectors.joining(\", \"));\n                }\n                try (Stream<String> stream = Files.lines(p)) {\n                  return stream.collect(Collectors.joining(\", \"));\n                }\n              }\n            }"
+    },
+    {
+      "description": "fix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n\n            class Test {\n              String f(Path p) throws IOException {\n                return Files.lines(p).collect(Collectors.joining(\", \"));\n              }\n            }\n            \n\n            import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n            import java.util.stream.Stream;\n\n            class Test {\n              String f(Path p) throws IOException {\n                try (Stream<String> stream = Files.lines(p)) {\n                  return stream.collect(Collectors.joining(\", \"));\n                }\n              }\n            }"
+    },
+    {
+      "description": "fixVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n\n            class Test {\n              void f(Path p) throws IOException {\n                String s = Files.lines(p).collect(Collectors.joining(\", \"));\n              }\n            }\n            \n\n            import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n            import java.util.stream.Stream;\n\n            class Test {\n              void f(Path p) throws IOException {\n                String s;\n                try (Stream<String> stream = Files.lines(p)) {\n                  s = stream.collect(Collectors.joining(\", \"));\n                }\n              }\n            }"
+    },
+    {
+      "description": "ternary",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        171
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Collectors;\n            import java.util.stream.Stream;\n\n            class Test {\n              String f(Path p) throws IOException {\n                String r;\n                // BUG: Diagnostic contains:\n                try (Stream<String> stream = Files.lines(p).count() > 0 ? null : null) {\n                  r = stream.collect(Collectors.joining(\", \"));\n                }\n                try (Stream<String> stream = true ? null : Files.lines(p)) {\n                  r = stream.collect(Collectors.joining(\", \"));\n                }\n                try (Stream<String> stream = true ? Files.lines(p) : null) {\n                  r = stream.collect(Collectors.joining(\", \"));\n                }\n                return r;\n              }\n            }"
+    },
+    {
+      "description": "returnFromMustBeClosedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "import com.google.errorprone.annotations.MustBeClosed;\n            import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Stream;\n\n            class Test {\n              @MustBeClosed\n              Stream<String> f(Path p) throws IOException {\n                return Files.lines(p);\n              }\n            }"
+    },
+    {
+      "description": "returnFromMustBeClosedMethodWithChaining",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225
+      ],
+      "code": "import com.google.errorprone.annotations.MustBeClosed;\n            import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Stream;\n\n            class Test {\n              @MustBeClosed\n              Stream<String> f(Path p) throws IOException {\n                return Files.list(p).map(Path::toString); // OK due to @MustBeClosed\n              }\n\n              Stream<String> g(Path p) throws IOException {\n                // BUG: Diagnostic contains: should be closed\n                return Files.list(p).map(Path::toString);\n              }\n            }"
+    },
+    {
+      "description": "moreRefactorings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        252
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.DirectoryStream;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n\n            class Test {\n              void f(Path p) throws IOException {\n                DirectoryStream<Path> l = Files.newDirectoryStream(p);\n                for (Path x : Files.newDirectoryStream(p)) {\n                  System.err.println(x);\n                }\n                System.err.println(l);\n                System.err.println(Files.newDirectoryStream(p));\n              }\n            }\n            \n\n            import java.io.IOException;\n            import java.nio.file.DirectoryStream;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n\n            class Test {\n              void f(Path p) throws IOException {\n                try (DirectoryStream<Path> l = Files.newDirectoryStream(p)) {\n                  try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {\n                    for (Path x : stream) {\n                      System.err.println(x);\n                    }\n                  }\n                  System.err.println(l);\n                }\n                try (DirectoryStream<Path> stream = Files.newDirectoryStream(p)) {\n                  System.err.println(stream);\n                }\n              }\n            }"
+    },
+    {
+      "description": "defaultMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        301
+      ],
+      "code": "import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.nio.file.DirectoryStream;\n\n            interface I {\n              default DirectoryStream<Path> f(Path path) throws IOException {\n                // BUG: Diagnostic contains: should be closed\n                return Files.newDirectoryStream(path);\n              }\n            }"
+    },
+    {
+      "description": "record",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": "package example;\n\n            import java.io.IOException;\n            import java.nio.file.Files;\n            import java.nio.file.Path;\n            import java.util.stream.Stream;\n\n            record ExampleRecord(Path path) {\n              public Stream<Path> list() throws IOException {\n                // BUG: Diagnostic contains: should be closed\n                return Files.list(path);\n              }\n            }"
+    }
+  ]
+}

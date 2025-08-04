@@ -1,0 +1,38 @@
+{
+  "name": "AutoValueBuilderDefaultsInConstructor",
+  "language": "java",
+  "description": "Defaults for AutoValue Builders should be set in the factory method returning Builder instances, not the constructor",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 7,
+  "apis": 1,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38
+      ],
+      "code": "import com.google.auto.value.AutoValue;\n\n            class Test {\n              @AutoValue.Builder\n              abstract class Builder {\n                Builder() {}\n\n                abstract void setFoo(int foo);\n              }\n            }"
+    },
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58
+      ],
+      "code": "package test;\n\n            import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Test {\n              abstract int foo();\n\n              Builder builder() {\n                return new AutoValue_Test.Builder();\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                Builder() {\n                  this.setFoo(1);\n                }\n\n                abstract Builder setFoo(int foo);\n\n                abstract Test build();\n              }\n            }\n            \n\n            package test;\n\n            import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Test {\n              abstract int foo();\n\n              Builder builder() {\n                return new AutoValue_Test.Builder().setFoo(1);\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                abstract Builder setFoo(int foo);\n\n                abstract Test build();\n              }\n            }"
+    },
+    {
+      "description": "negative_nonAbstractMethodCalled",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "package test;\n\n            import com.google.auto.value.AutoValue;\n\n            @AutoValue\n            abstract class Test {\n              abstract int foo();\n\n              Builder builder() {\n                return new AutoValue_Test.Builder();\n              }\n\n              @AutoValue.Builder\n              abstract static class Builder {\n                Builder() {\n                  doSomethingOdd();\n                }\n\n                void doSomethingOdd() {}\n\n                abstract Builder setFoo(int foo);\n\n                abstract Test build();\n              }\n            }"
+    }
+  ]
+}

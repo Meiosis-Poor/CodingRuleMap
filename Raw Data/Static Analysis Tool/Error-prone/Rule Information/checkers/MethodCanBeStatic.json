@@ -1,0 +1,286 @@
+{
+  "name": "MethodCanBeStatic",
+  "language": "java",
+  "description": "A private method that does not reference the enclosing instance can be static",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 295,
+  "branches": 32,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: private static int add(\n              private int add(int x, int y) {\n                return x + y;\n              }\n            }"
+    },
+    {
+      "description": "positiveCycle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "class Test {\n              private int a(int x) {\n                return b(x);\n              }\n\n              private int b(int x) {\n                return a(x);\n              }\n            }\n            \n\n            class Test {\n              private static int a(int x) {\n                return b(x);\n              }\n\n              private static int b(int x) {\n                return a(x);\n              }\n            }"
+    },
+    {
+      "description": "negativeCycle",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83
+      ],
+      "code": "class Test {\n              public int f(int x) {\n                return x;\n              }\n\n              private int a(int x) {\n                return b(x) + f(x);\n              }\n\n              private int b(int x) {\n                return a(x) + f(x);\n              }\n            }"
+    },
+    {
+      "description": "positiveChain",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "class Test {\n              private static final int FOO = 1;\n\n              private int a() {\n                return FOO;\n              }\n\n              private int b() {\n                return a();\n              }\n\n              private int c() {\n                return b();\n              }\n\n              private int d() {\n                return c();\n              }\n            }\n            \n\n            class Test {\n              private static final int FOO = 1;\n\n              private static int a() {\n                return FOO;\n              }\n\n              private static int b() {\n                return a();\n              }\n\n              private static int c() {\n                return b();\n              }\n\n              private static int d() {\n                return c();\n              }\n            }"
+    },
+    {
+      "description": "positiveChain_oneFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        158
+      ],
+      "code": "class Test {\n              private static final int FOO = 1;\n\n              // BUG: Diagnostic contains: MethodCanBeStatic\n              private int a() {\n                return FOO;\n              }\n\n              private int b() {\n                return a();\n              }\n\n              private int c() {\n                return b();\n              }\n\n              private int d() {\n                return c();\n              }\n            }"
+    },
+    {
+      "description": "positiveRecursive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "class Test {\n              private int a(int x) {\n                return a(x);\n              }\n            }\n            \n\n            class Test {\n              private static int a(int x) {\n                return a(x);\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        212
+      ],
+      "code": "class Test {\n              int base = 0;\n\n              private int f(int x, int y) {\n                return base++ + x + y;\n              }\n            }"
+    },
+    {
+      "description": "positiveTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        229
+      ],
+      "code": "class Test<T> {\n              // BUG: Diagnostic contains: private static <T> T f(\n              private <T> T f(int x, int y) {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeSuppressedByKeep",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245
+      ],
+      "code": "import com.google.errorprone.annotations.Keep;\n\n            class Test {\n              @Keep\n              private int add(int x, int y) {\n                return x + y;\n              }\n            }"
+    },
+    {
+      "description": "negativeTypeParameter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        263
+      ],
+      "code": "class Test<T> {\n              private T f(int x, int y) {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "negativeConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "class Test {\n              Test() {}\n            }"
+    },
+    {
+      "description": "negativePublic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        291
+      ],
+      "code": "class Test {\n              public String toString() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeSynchronized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        306
+      ],
+      "code": "class Test {\n              private synchronized String frobnicate() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeSuppressed",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        321
+      ],
+      "code": "class Test {\n              @SuppressWarnings(\"MethodCanBeStatic\")\n              private String f() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeSuppressedAlt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        337
+      ],
+      "code": "class Test {\n              @SuppressWarnings(\"static-method\")\n              private String f() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        353
+      ],
+      "code": "class Test {\n              @Override\n              public String toString() {\n                return \"\";\n              }\n            }"
+    },
+    {
+      "description": "negativeMethodCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        369
+      ],
+      "code": "class Test {\n              int x;\n\n              int f() {\n                return x++;\n              }\n\n              private int g() {\n                return f();\n              }\n            }"
+    },
+    {
+      "description": "nativeMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        390
+      ],
+      "code": "class Test {\n              private native int f();\n            }"
+    },
+    {
+      "description": "innerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        403
+      ],
+      "code": "class Test {\n              class Inner {\n                private int incr(int x) {\n                  return x + 1;\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClass_static",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        421
+      ],
+      "code": "class Test {\n              class Inner {\n                // BUG: Diagnostic contains: static\n                private int incr(int x) {\n                  return x + 1;\n                }\n              }\n            }"
+    },
+    {
+      "description": "negativeEnum",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        439
+      ],
+      "code": "enum Test {\n              VALUE {\n                private void foo() {}\n              }\n            }"
+    },
+    {
+      "description": "negativeAnonymous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        454
+      ],
+      "code": "class Test {\n              static void foo() {\n                new Object() {\n                  private void foo() {}\n                };\n              }\n            }"
+    },
+    {
+      "description": "negativeLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        471
+      ],
+      "code": "class Test {\n              static void foo() {\n                class Local {\n                  private void foo() {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveLocal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        489
+      ],
+      "code": "class Test {\n              static void foo() {\n                class Local {\n                  // BUG: Diagnostic contains: static\n                  private void foo() {}\n                }\n              }\n            }"
+    },
+    {
+      "description": "negative_referencesTypeVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        507
+      ],
+      "code": "class Test<T> {\n              private int add(int x, int y) {\n                T t = null;\n                return x + y;\n              }\n            }"
+    },
+    {
+      "description": "negative_baseClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        523
+      ],
+      "code": "class A {\n              void foo() {}\n            }\n            \n\n            class B extends A {\n              private void bar() {\n                foo();\n              }\n            }"
+    },
+    {
+      "description": "serialization",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        545
+      ],
+      "code": "import java.io.ObjectInputStream;\nimport java.io.ObjectOutputStream;\nimport java.io.ObjectStreamException;\nimport java.io.IOException;\nimport java.io.Serializable;\n\nclass Test implements Serializable {\n  private void readObject(ObjectInputStream stream) throws IOException, ClassNotFoundException {}\n\n  private void writeObject(ObjectOutputStream stream) throws IOException {}\n\n  private void readObjectNoData() throws ObjectStreamException {}\n\n  private Object readResolve() {\n    return null;\n  }\n\n  private Object writeReplace() {\n    return null;\n  }\n}"
+    },
+    {
+      "description": "methodReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        576
+      ],
+      "code": "import java.util.function.ToIntBiFunction;\n\n            class Test {\n              private int add(int x, int y) {\n                return x + y;\n              }\n\n              ToIntBiFunction<Integer, Integer> f = this::add;\n              ToIntBiFunction<Integer, Integer> g = (x, y) -> this.add(x, y);\n            }\n            \n\n            import java.util.function.ToIntBiFunction;\n\n            class Test {\n              private static int add(int x, int y) {\n                return x + y;\n              }\n\n              ToIntBiFunction<Integer, Integer> f = Test::add;\n              ToIntBiFunction<Integer, Integer> g = (x, y) -> Test.add(x, y);\n            }"
+    },
+    {
+      "description": "multipleReports",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        610
+      ],
+      "code": "class Test {\n              // BUG: Diagnostic contains: static\n              private int a(int x) {\n                return b(x);\n              }\n\n              // BUG: Diagnostic contains: static\n              private int b(int x) {\n                return a(x);\n              }\n            }"
+    },
+    {
+      "description": "abstractMethod_notFlagged",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        632
+      ],
+      "code": "class Test {\n              private abstract static class Foo {\n                abstract void frobnicate();\n              }\n            }"
+    },
+    {
+      "description": "defaultMethodExempted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        647
+      ],
+      "code": "class Test {\n              private interface Foo {\n                default void foo() {}\n              }\n            }"
+    },
+    {
+      "description": "keepAnnotationsExempted",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        662
+      ],
+      "code": "package org.apache.beam.sdk.transforms;\n\n            public class DoFn {\n              public @interface ProcessElement {}\n            }\n            \n\n            class Test {\n              @org.apache.beam.sdk.transforms.DoFn.ProcessElement\n              private void foo() {}\n            }"
+    },
+    {
+      "description": "privateMethod_overriddenWithinFile_cannotBeStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        685
+      ],
+      "code": "class Test {\n              private static class A {\n                public int get() {\n                  return 0;\n                }\n              }\n\n              private static class B extends A {\n                private final int x = 1;\n\n                @Override\n                public int get() {\n                  return x;\n                }\n              }\n            }"
+    },
+    {
+      "description": "privateMethod_overriddenWithinFile_bothDoNotReferenceInstanceState_cannotBeStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        711
+      ],
+      "code": "class Test {\n              private static class A {\n                public int get() {\n                  return 0;\n                }\n              }\n\n              private static class B extends A {\n                @Override\n                public int get() {\n                  return 1;\n                }\n              }\n            }"
+    }
+  ]
+}

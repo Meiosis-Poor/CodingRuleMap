@@ -1,0 +1,70 @@
+{
+  "name": "UnnecessaryTypeArgument",
+  "language": "java",
+  "description": "Non-generic methods should not be invoked with type arguments",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 83,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              void f() {}\n\n              void m() {\n                // BUG: Diagnostic contains: this.f()\n                this.<String>f();\n              }\n            }"
+    },
+    {
+      "description": "positiveThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              static class C {\n                public <T> C() {\n                  // BUG: Diagnostic contains: /*START*/ this(42)\n                  /*START*/ <String>this(42);\n                }\n\n                public C(int i) {}\n              }\n            }"
+    },
+    {
+      "description": "positiveSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              static class B {\n                public B() {}\n              }\n\n              static class C extends B {\n                public <T> C() {\n                  // BUG: Diagnostic contains: /*START*/ super()\n                  /*START*/ <String>super();\n                }\n              }\n            }"
+    },
+    {
+      "description": "positiveInstantiation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              static class C {\n                public C() {}\n              }\n\n              void m() {\n                // BUG: Diagnostic contains: new C()\n                new <String, Integer>C();\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              <T> void f() {}\n\n              void m() {\n                this.<String>f();\n              }\n            }"
+    },
+    {
+      "description": "negativeGenericSuper",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        138
+      ],
+      "code": "public class Super {\n              public <T> T f(T x) {\n                return x;\n              }\n            }\n            \n\n            @SuppressWarnings(\"unchecked\")\n            public class Sub extends Super {\n              public Object f(Object x) {\n                return x;\n              }\n            }\n            \n\n            public class Test {\n              void m(Sub s) {\n                s.<String>f(null);\n              }\n            }"
+    },
+    {
+      "description": "whitespaceFix",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "package foo.bar;\n\n            class Test {\n              void f() {}\n\n              void m() {\n                // BUG: Diagnostic contains: this.f()\n                this.</*  */ String /*  */>f();\n              }\n            }"
+    }
+  ]
+}

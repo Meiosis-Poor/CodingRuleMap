@@ -1,0 +1,30 @@
+{
+  "name": "InvalidTimeZoneID",
+  "language": "java",
+  "description": "Invalid time zone identifier. TimeZone.getTimeZone(String) will silently return GMT instead of the time zone you intended.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 81,
+  "branches": 10,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package a;\n\n            import java.util.TimeZone;\n\n            class A {\n              private static final String TIMEZONE_ID = \"unknown\";\n\n              public static void test() {\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"\");\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"unknown\");\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(TIMEZONE_ID);\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"America/Los_Angele\");\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"KST\");\n              }\n\n              public static void invalidCustomIDs() {\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"UTC+0\");\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"GMT+24\");\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"GMT1\");\n                // BUG: Diagnostic contains:\n                TimeZone.getTimeZone(\"GMT/0\");\n              }\n\n              public static void underscoreSuggestion() {\n                // BUG: Diagnostic contains: America/Los_Angeles\n                TimeZone.getTimeZone(\"America/Los Angeles\");\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "package a;\n\n            import java.util.TimeZone;\n\n            class A {\n              private static final String TIMEZONE_ID = \"America/New_York\";\n\n              public static void ianaIDs() {\n                TimeZone.getTimeZone(\"America/Los_Angeles\");\n                TimeZone.getTimeZone(TIMEZONE_ID);\n                TimeZone.getTimeZone(\"Europe/London\");\n              }\n\n              public static void customIDs() {\n                // Custom IDs\n                TimeZone.getTimeZone(\"GMT+0\");\n                TimeZone.getTimeZone(\"GMT+00\");\n                TimeZone.getTimeZone(\"GMT+00:00\");\n              }\n\n              public static void threeLetterIDs() {\n                TimeZone.getTimeZone(\"GMT\");\n                TimeZone.getTimeZone(\"UTC\");\n                // Some 3-letter IDs are deprecated, but are still recognized.\n                TimeZone.getTimeZone(\"PST\");\n              }\n            }"
+    }
+  ]
+}

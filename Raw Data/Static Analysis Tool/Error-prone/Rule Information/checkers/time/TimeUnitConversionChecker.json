@@ -1,0 +1,102 @@
+{
+  "name": "TimeUnitConversionChecker",
+  "language": "java",
+  "description": "This TimeUnit conversion looks buggy: converting from a smaller unit to a larger unit (and passing a constant), converting to/from the same TimeUnit, or converting TimeUnits where the result is statically known to be 0 or 1 are all buggy patterns.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 124,
+  "branches": 29,
+  "apis": 4,
+  "test": [
+    {
+      "description": "literalConvertToSelf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: private long value = 42L /* milliseconds */;\n              private long value = TimeUnit.MILLISECONDS.toMillis(42);\n            }"
+    },
+    {
+      "description": "literalConvertToSelf_withStaticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        45
+      ],
+      "code": "import static java.util.concurrent.TimeUnit.MILLISECONDS;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: private long value = 42L /* milliseconds */;\n              private long value = MILLISECONDS.toMillis(42);\n            }"
+    },
+    {
+      "description": "variableConvertToSelf_withStaticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "import static java.util.concurrent.TimeUnit.MILLISECONDS;\n\n            public class TestClass {\n              private long toConvert = 42;\n              // BUG: Diagnostic contains: private long value = toConvert /* milliseconds */;\n              private long value = MILLISECONDS.toMillis(toConvert);\n            }"
+    },
+    {
+      "description": "expressionEvaluatesToZero",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: private static final long VALUE1 = 0L /* seconds */;\n              private static final long VALUE1 = TimeUnit.MILLISECONDS.toSeconds(4);\n              // BUG: Diagnostic contains: private static final long VALUE2 = 0L /* seconds */;\n              private static final long VALUE2 = TimeUnit.MILLISECONDS.toSeconds(400);\n            }"
+    },
+    {
+      "description": "expressionEvaluatesToZero_withStaticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96
+      ],
+      "code": "import static java.util.concurrent.TimeUnit.MILLISECONDS;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: private static final long VALUE1 = 0L /* seconds */;\n              private static final long VALUE1 = MILLISECONDS.toSeconds(4);\n              // BUG: Diagnostic contains: private static final long VALUE2 = 0L /* seconds */;\n              private static final long VALUE2 = MILLISECONDS.toSeconds(400);\n            }"
+    },
+    {
+      "description": "expressionEvaluatesToOne",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: private static final long VALUE1 = 1L /* seconds */;\n              private static final long VALUE1 = TimeUnit.MILLISECONDS.toSeconds(1000);\n              // BUG: Diagnostic contains: private static final long VALUE2 = 1L /* seconds */;\n              private static final long VALUE2 = TimeUnit.MILLISECONDS.toSeconds(1999);\n            }"
+    },
+    {
+      "description": "expressionEvaluatesToNegativeOne",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        132
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: TimeUnitConversionChecker\n              private static final long VALUE1 = TimeUnit.MILLISECONDS.toSeconds(-1000);\n              // BUG: Diagnostic contains: TimeUnitConversionChecker\n              private static final long VALUE2 = TimeUnit.MILLISECONDS.toSeconds(-1999);\n            }"
+    },
+    {
+      "description": "expressionEvaluatesToLargeNumber",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        150
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: TimeUnitConversionChecker\n              private static final long VALUE1 = TimeUnit.MILLISECONDS.toSeconds(4321);\n              // BUG: Diagnostic contains: TimeUnitConversionChecker\n              private static final long VALUE2 = TimeUnit.MILLISECONDS.toSeconds(-4321);\n            }"
+    },
+    {
+      "description": "expressionEvaluatesToLargeNumber_withStaticImport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        168
+      ],
+      "code": "import static java.util.concurrent.TimeUnit.MILLISECONDS;\n\n            public class TestClass {\n              // BUG: Diagnostic contains: TimeUnitConversionChecker\n              private static final long VALUE1 = MILLISECONDS.toSeconds(4321);\n              // BUG: Diagnostic contains: TimeUnitConversionChecker\n              private static final long VALUE2 = MILLISECONDS.toSeconds(-4321);\n            }"
+    },
+    {
+      "description": "largeUnitToSmallUnit_succeeds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        186
+      ],
+      "code": "import static java.util.concurrent.TimeUnit.SECONDS;\n\n            public class TestClass {\n              private static final long VALUE1 = SECONDS.toMillis(4321);\n              private static final long VALUE2 = SECONDS.toMillis(-4321);\n            }"
+    },
+    {
+      "description": "receiverExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": "import java.util.concurrent.TimeUnit;\n\n            public class TestClass {\n              long f(TimeUnit timeUnit, long time) {\n                return (timeUnit != null ? timeUnit : TimeUnit.MILLISECONDS).toMillis(time);\n              }\n            }"
+    }
+  ]
+}

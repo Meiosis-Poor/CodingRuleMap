@@ -1,0 +1,38 @@
+{
+  "name": "NestedInstanceOfConditions",
+  "language": "java",
+  "description": "Nested instanceOf conditions of disjoint types create blocks of code that never execute",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 114,
+  "branches": 13,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        36
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            /**\n             * @author mariasam@google.com (Maria Sam)\n             * @author sulku@google.com (Marsela Sulku)\n             */\n            public class NestedInstanceOfConditionsPositiveCases {\n\n              public static void nestedInstanceOfPost() {\n                Object foo = new ClassA();\n                Object bar = new ClassB();\n\n                // BUG: Diagnostic contains: Nested instanceOf conditions of disjoint types\n                if (foo instanceof ClassA) {\n                  if (foo instanceof ClassB) {\n                    System.out.println(\"test\");\n                  }\n                }\n\n                // BUG: Diagnostic contains: Nested instanceOf conditions of disjoint types\n                if (foo instanceof ClassA) {\n                  System.out.println(\"test\");\n                  if (foo instanceof ClassB) {\n                    System.out.println(\"test\");\n                  }\n                  System.out.println(\"test\");\n                }\n\n                // BUG: Diagnostic contains: Nested instanceOf conditions of disjoint types\n                if (foo instanceof ClassA) {\n                  // BUG: Diagnostic contains: Nested instanceOf conditions of disjoint types\n                  if (foo instanceof ClassA) {\n                    if (foo instanceof ClassB) {\n                      System.out.println(\"test\");\n                    }\n                  }\n                }\n\n                // BUG: Diagnostic contains: Nested instanceOf conditions of disjoint types\n                if (foo instanceof ClassA) {\n                  // BUG: Diagnostic contains: Nested instanceOf conditions of disjoint types\n                  if (foo instanceof ClassB) {\n                    if (foo instanceof ClassC) {\n                      System.out.println(\"test\");\n                    }\n                  }\n                }\n\n                // BUG: Diagnostic contains: Nested instanceOf conditions\n                if (foo instanceof ClassA) {\n                  if (bar instanceof ClassB) {\n                    if (foo instanceof ClassC) {\n                      System.out.println(\"test\");\n                    }\n                  }\n                }\n\n                if (foo instanceof ClassA) {\n                  System.out.println(\"yay\");\n                  // BUG: Diagnostic contains: Nested instanceOf conditions\n                } else if (foo instanceof ClassB) {\n                  if (foo instanceof ClassC) {\n                    System.out.println(\"uh oh\");\n                  }\n                }\n              }\n\n              static class ClassA {}\n\n              static class ClassB {}\n\n              static class ClassC {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.util.ArrayList;\nimport java.util.List;\n\n/**\n * @author mariasam@google.com (Maria Sam)\n * @author sulku@google.com (Marsela Sulku)\n */\npublic class NestedInstanceOfConditionsNegativeCases {\n  public static void nestedInstanceOfPositiveCases() {\n    Object objectA = new Object();\n    Object objectB = new Object();\n\n    // different objects\n    if (objectA instanceof SuperClass) {\n      if (objectB instanceof DisjointClass) {\n        System.out.println(\"yay\");\n      }\n    }\n\n    // nested if checks to see if subtype of first\n    if (objectA instanceof SuperClass) {\n      if (objectA instanceof SubClass) {\n        System.out.println(\"yay\");\n      }\n    }\n\n    if (objectA instanceof SuperClass) {\n      if (objectA instanceof SubClass) {\n        if (objectB instanceof DisjointClass) {\n          System.out.println(\"yay\");\n        }\n      }\n    }\n\n    if (objectA instanceof SuperClass) {\n      if (objectB instanceof DisjointClass) {\n        if (objectA instanceof SubClass) {\n          System.out.println(\"yay\");\n        }\n      }\n    }\n\n    if (objectA instanceof SuperClass) {\n      System.out.println(\"yay\");\n    } else if (objectA instanceof DisjointClass) {\n      System.out.println(\"boo\");\n    } else if (objectA instanceof String) {\n      System.out.println(\"aww\");\n    }\n\n    if (objectA instanceof SuperClass) {\n      objectA = \"yay\";\n      if (objectA instanceof String) {\n        System.out.println();\n      }\n    }\n\n    if (objectA instanceof SuperClass) {\n      if (objectA instanceof String) {\n        objectA = \"yay\";\n      }\n    }\n\n    List<Object> ls = new ArrayList<Object>();\n    ls.add(\"hi\");\n\n    // even though this could potentially be an error, ls.get(0) can be altered in many ways in\n    // between the two instanceof statements, therefore we do not match this case\n    if (ls.get(0) instanceof String) {\n      if (ls.get(0) instanceof SuperClass) {\n        System.out.println(\"lol\");\n      }\n    }\n  }\n\n  /** test class */\n  public static class SuperClass {}\n  ;\n\n  /** test class */\n  public static class SubClass extends SuperClass {}\n  ;\n\n  /** test class */\n  public static class DisjointClass {}\n  ;\n}\\"
+    },
+    {
+      "description": "patternMatchingInstanceof",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        218
+      ],
+      "code": "public class Test {\n              record Struct(Object a) {}\n\n              public void test(Object x, Object y) {\n                if (x instanceof Struct(Integer a1)) {\n                  if (y instanceof Struct(Integer a2)) {}\n                }\n              }\n            }"
+    }
+  ]
+}

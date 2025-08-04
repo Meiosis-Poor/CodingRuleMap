@@ -1,0 +1,62 @@
+{
+  "name": "IdentityBinaryExpression",
+  "language": "java",
+  "description": "A binary expression where both operands are the same is usually incorrect.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 138,
+  "branches": 37,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "class Test {\n              boolean f(boolean a) {\n                // BUG: Diagnostic contains:\n                return a || a;\n              }\n\n              boolean g(boolean a) {\n                // BUG: Diagnostic contains:\n                return a && a;\n              }\n\n              boolean h(boolean a) {\n                // BUG: Diagnostic contains:\n                return f(a) && f(a);\n              }\n\n              boolean i(boolean a) {\n                boolean r;\n                // BUG: Diagnostic contains:\n                r = a & a;\n                // BUG: Diagnostic contains:\n                r = a | a;\n                return r;\n              }\n\n              int j(int x) {\n                int r;\n                // BUG: Diagnostic contains:\n                r = x & x;\n                // BUG: Diagnostic contains:\n                r = x | x;\n                return x;\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "class Test {\n              boolean f(boolean a, boolean b) {\n                return a || b;\n              }\n\n              boolean g(boolean a, boolean b) {\n                return a && b;\n              }\n\n              boolean h(boolean a, boolean b) {\n                return a & b;\n              }\n\n              boolean i(boolean a, boolean b) {\n                return a | b;\n              }\n\n              int j(int a, int b) {\n                return a & b;\n              }\n\n              int k(int a, int b) {\n                return a | b;\n              }\n            }"
+    },
+    {
+      "description": "negativeLiteral",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "class Test {\n              double f() {\n                return 1.0 / 1.0;\n              }\n            }"
+    },
+    {
+      "description": "fixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125
+      ],
+      "code": "class Test {\n              void f(int a) {\n                // BUG: Diagnostic contains: equivalent to `1`\n                int r = a / a;\n                // BUG: Diagnostic contains: equivalent to `0`\n                r = a - a;\n                // BUG: Diagnostic contains: equivalent to `0`\n                r = a % a;\n                // BUG: Diagnostic contains: equivalent to `true`\n                boolean b = a >= a;\n                // BUG: Diagnostic contains: equivalent to `true`\n                b = a == a;\n                // BUG: Diagnostic contains: equivalent to `true`\n                b = a <= a;\n                // BUG: Diagnostic contains: equivalent to `false`\n                b = a > a;\n                // BUG: Diagnostic contains: equivalent to `false`\n                b = a < a;\n                // BUG: Diagnostic contains: equivalent to `false`\n                b = a != a;\n                // BUG: Diagnostic contains: equivalent to `false`\n                b = b ^ b;\n              }\n            }"
+    },
+    {
+      "description": "negativeAssert",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159
+      ],
+      "code": "import static org.junit.Assert.assertTrue;\n            import static org.junit.Assert.assertFalse;\n\n            class Test {\n              void f(int x) {\n                assertTrue(x == x);\n                assertFalse(x != x);\n              }\n            }"
+    },
+    {
+      "description": "isNaN",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        178
+      ],
+      "code": "class Test {\n              boolean f(float a, Float b, double c, Double d) {\n                boolean r = false;\n                // BUG: Diagnostic contains: equivalent to `!Float.isNaN(a)`\n                r |= a == a;\n                // BUG: Diagnostic contains: equivalent to `Float.isNaN(a)`\n                r |= a != a;\n                // BUG: Diagnostic contains: equivalent to `!Float.isNaN(b)`\n                r |= b == b;\n                // BUG: Diagnostic contains: equivalent to `Float.isNaN(b)`\n                r |= b != b;\n                // BUG: Diagnostic contains: equivalent to `!Double.isNaN(c)`\n                r |= c == c;\n                // BUG: Diagnostic contains: equivalent to `Double.isNaN(c)`\n                r |= c != c;\n                // BUG: Diagnostic contains: equivalent to `!Double.isNaN(d)`\n                r |= d == d;\n                // BUG: Diagnostic contains: equivalent to `Double.isNaN(d)`\n                r |= d != d;\n                return r;\n              }\n            }"
+    }
+  ]
+}

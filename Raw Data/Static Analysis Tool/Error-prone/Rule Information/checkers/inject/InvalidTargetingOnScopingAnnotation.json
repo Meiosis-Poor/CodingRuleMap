@@ -1,0 +1,30 @@
+{
+  "name": "InvalidTargetingOnScopingAnnotation",
+  "language": "java",
+  "description": "A scoping annotation's Target should include TYPE and METHOD.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 102,
+  "branches": 6,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\n            import static java.lang.annotation.ElementType.CONSTRUCTOR;\n            import static java.lang.annotation.ElementType.METHOD;\n            import static java.lang.annotation.ElementType.PARAMETER;\n            import static java.lang.annotation.ElementType.TYPE;\n            import static java.lang.annotation.RetentionPolicy.RUNTIME;\n\n            import com.google.inject.ScopeAnnotation;\n            import java.lang.annotation.ElementType;\n            import java.lang.annotation.Retention;\n            import java.lang.annotation.Target;\n            import javax.inject.Scope;\n\n            /**\n             * @author sgoldfeder@google.com(Steven Goldfeder)\n             */\n            public class InvalidTargetingOnScopingAnnotationPositiveCases {\n\n              /** Scoping excludes METHOD */\n              // BUG: Diagnostic contains: @Target({TYPE, METHOD})\n              @Target(TYPE)\n              @Scope\n              @Retention(RUNTIME)\n              public @interface TestAnnotation1 {}\n\n              /** Scoping excludes TYPE */\n              // BUG: Diagnostic contains: @Target({TYPE, METHOD})\n              @Target(METHOD)\n              @Scope\n              @Retention(RUNTIME)\n              public @interface TestAnnotation2 {}\n\n              /** Scoping excludes both, but has other elements to preserve */\n              // BUG: Diagnostic contains: @Target({TYPE, METHOD, PARAMETER})\n              @Target(PARAMETER)\n              @Scope\n              @Retention(RUNTIME)\n              public @interface TestAnnotation4 {}\n\n              /** Scoping includes one of the required ones. */\n              // BUG: Diagnostic contains: @Target({TYPE, METHOD, PARAMETER, CONSTRUCTOR})\n              @Target({PARAMETER, METHOD, CONSTRUCTOR})\n              @Scope\n              @Retention(RUNTIME)\n              public @interface TestAnnotation5 {}\n\n              /** Same as above, but with a different physical manifestation */\n              // BUG: Diagnostic contains: @Target({TYPE, METHOD, PARAMETER, CONSTRUCTOR})\n              @Target(value = {ElementType.PARAMETER, METHOD, CONSTRUCTOR})\n              @Scope\n              @Retention(RUNTIME)\n              public @interface TestAnnotation6 {}\n\n              /** Target annotation is empty, nonsensical since it can't be applied to anything */\n              // BUG: Diagnostic contains: @Target({TYPE, METHOD})\n              @Target({})\n              @ScopeAnnotation\n              @Retention(RUNTIME)\n              public @interface TestAnnotation7 {}\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104
+      ],
+      "code": "package com.google.errorprone.bugpatterns.inject.testdata;\n\nimport static java.lang.annotation.ElementType.METHOD;\nimport static java.lang.annotation.ElementType.PARAMETER;\nimport static java.lang.annotation.ElementType.TYPE;\nimport static java.lang.annotation.RetentionPolicy.RUNTIME;\n\nimport java.lang.annotation.Retention;\nimport java.lang.annotation.Target;\nimport javax.inject.Scope;\n\n/**\n * @author sgoldfeder@google.com(Steven Goldfeder)\n */\npublic class InvalidTargetingOnScopingAnnotationNegativeCases {\n\n  /** A scoping annotation with no specified target. */\n  @Scope\n  @Retention(RUNTIME)\n  public @interface TestAnnotation1 {}\n\n  /** A scoping annotation that contains more than the required */\n  @Target({TYPE, METHOD, PARAMETER})\n  @Scope\n  @Retention(RUNTIME)\n  public @interface TestAnnotation2 {}\n\n  /** A scoping annotation with legal targeting. */\n  @Target({TYPE, METHOD})\n  @Scope\n  @Retention(RUNTIME)\n  public @interface TestAnnotation3 {}\n\n  /**\n   * A non-scoping annotation with targeting that would be illegal if it were a scoping annotation.\n   */\n  @Target(PARAMETER)\n  @Retention(RUNTIME)\n  public @interface TestAnnotation4 {}\n}\\"
+    }
+  ]
+}

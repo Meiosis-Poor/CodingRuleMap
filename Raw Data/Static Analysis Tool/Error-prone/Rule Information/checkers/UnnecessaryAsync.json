@@ -1,0 +1,94 @@
+{
+  "name": "UnnecessaryAsync",
+  "language": "java",
+  "description": "Variables which are initialized and do not escape the current scope do not need to worry about concurrency. Using the non-concurrent type will reduce overhead and verbosity.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 212,
+  "branches": 36,
+  "apis": 5,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicInteger;\n\n            class Test {\n              int test() {\n                // BUG: Diagnostic contains:\n                var ai = new AtomicInteger();\n                ai.set(1);\n                return ai.get();\n              }\n            }"
+    },
+    {
+      "description": "refactoringInteger",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        52
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicInteger;\n\n            class Test {\n              int test() {\n                var ai = new AtomicInteger();\n                ai.set(1);\n                return ai.get();\n              }\n            }\n            \n\n            import java.util.concurrent.atomic.AtomicInteger;\n\n            class Test {\n              int test() {\n                int ai = 0;\n                ai = 1;\n                return ai;\n              }\n            }"
+    },
+    {
+      "description": "refactoringReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              String test() {\n                var ar = new AtomicReference<String>(null);\n                ar.compareAndSet(null, \"foo\");\n                return ar.get();\n              }\n            }\n            \n\n            import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              String test() {\n                String ar = null;\n                ar = \"foo\";\n                return ar;\n              }\n            }"
+    },
+    {
+      "description": "refactoring_unfixable_noAttempt",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              String test() {\n                var ar = new AtomicReference<String>(null);\n                return ar.toString();\n              }\n            }"
+    },
+    {
+      "description": "refactoring_rawType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              Object test() {\n                var ar = new AtomicReference();\n                ar.set(\"foo\");\n                return ar.get();\n              }\n            }\n            \n\n            import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              Object test() {\n                Object ar = null;\n                ar = \"foo\";\n                return ar;\n              }\n            }"
+    },
+    {
+      "description": "negative_escapesScope",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        167
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicInteger;\n\n            class Test {\n              AtomicInteger test() {\n                var ai = new AtomicInteger();\n                ai.set(1);\n                return ai;\n              }\n            }"
+    },
+    {
+      "description": "negative_passedToAnotherMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        186
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicInteger;\n\n            class Test {\n              void test() {\n                var ai = new AtomicInteger();\n                ai.set(1);\n                frobnicate(ai);\n              }\n\n              void frobnicate(Number n) {}\n            }"
+    },
+    {
+      "description": "positive_uselessConcurrentMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        207
+      ],
+      "code": "import java.util.concurrent.ConcurrentHashMap;\n\n            class Test {\n              int test() {\n                // BUG: Diagnostic contains:\n                var chm = new ConcurrentHashMap<>();\n                chm.put(1, 2);\n                return chm.size();\n              }\n            }"
+    },
+    {
+      "description": "negative_capturedByLambda",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicInteger;\n            import java.util.List;\n\n            class Test {\n              long test(List<String> xs) {\n                var ai = new AtomicInteger();\n                return xs.stream().mapToLong(x -> ai.getAndIncrement()).sum();\n              }\n            }"
+    },
+    {
+      "description": "atomicReference_unfixable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        246
+      ],
+      "code": "import java.util.concurrent.atomic.AtomicReference;\n\n            class Test {\n              void f() {\n                // BUG: Diagnostic contains: String result = null;\n                AtomicReference<String> result = new AtomicReference<>();\n              }\n            }"
+    }
+  ]
+}

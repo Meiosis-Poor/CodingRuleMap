@@ -1,0 +1,46 @@
+{
+  "name": "ModifyCollectionInEnhancedForLoop",
+  "language": "java",
+  "description": "Modifying a collection while iterating over it in a loop may cause a ConcurrentModificationException to be thrown or lead to undefined behavior.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 145,
+  "branches": 22,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "package com.google.errorprone.bugpatterns;\n\n            import java.util.ArrayList;\n            import java.util.HashMap;\n            import java.util.HashSet;\n            import java.util.LinkedList;\n            import java.util.Map;\n\n            /**\n             * @author anishvisaria98@gmail.com (Anish Visaria)\n             */\n            public class ModifyCollectionInEnhancedForLoopPositiveCases {\n\n              public static void testBasic(ArrayList<Integer> arr, HashSet<Integer> set) {\n                for (Integer a : arr) {\n                  // BUG: Diagnostic contains:\n                  arr.add(new Integer(\"42\"));\n                  // BUG: Diagnostic contains:\n                  arr.addAll(set);\n                  // BUG: Diagnostic contains:\n                  arr.clear();\n                  // BUG: Diagnostic contains:\n                  arr.remove(a);\n                  // BUG: Diagnostic contains:\n                  arr.removeAll(set);\n                  // BUG: Diagnostic contains:\n                  arr.retainAll(set);\n                }\n              }\n\n              public static void testNested(ArrayList<Integer> arr, LinkedList<Integer> list) {\n                for (Integer x : arr) {\n                  for (Integer y : list) {\n                    // BUG: Diagnostic contains:\n                    arr.add(y);\n                    // BUG: Diagnostic contains:\n                    arr.addAll(list);\n                    // BUG: Diagnostic contains:\n                    arr.clear();\n                    // BUG: Diagnostic contains:\n                    arr.remove(x);\n                    // BUG: Diagnostic contains:\n                    arr.removeAll(list);\n                    // BUG: Diagnostic contains:\n                    arr.retainAll(list);\n                    // BUG: Diagnostic contains:\n                    list.add(x);\n                    // BUG: Diagnostic contains:\n                    list.addAll(arr);\n                    // BUG: Diagnostic contains:\n                    list.clear();\n                    // BUG: Diagnostic contains:\n                    list.remove(y);\n                    // BUG: Diagnostic contains:\n                    list.removeAll(arr);\n                    // BUG: Diagnostic contains:\n                    list.retainAll(arr);\n                  }\n                }\n              }\n\n              public static void testMapKeySet(HashMap<Integer, Integer> map) {\n                for (Integer a : map.keySet()) {\n                  // BUG: Diagnostic contains:\n                  map.putIfAbsent(new Integer(\"42\"), new Integer(\"43\"));\n                  // BUG: Diagnostic contains:\n                  map.clear();\n                  // BUG: Diagnostic contains:\n                  map.remove(a);\n                }\n              }\n\n              public static void testMapValues(HashMap<Integer, Integer> map) {\n                for (Integer a : map.values()) {\n                  // BUG: Diagnostic contains:\n                  map.putIfAbsent(new Integer(\"42\"), new Integer(\"43\"));\n                  // BUG: Diagnostic contains:\n                  map.putIfAbsent(new Integer(\"42\"), a);\n                  // BUG: Diagnostic contains:\n                  map.clear();\n                }\n              }\n\n              public static void testMapEntrySet(HashMap<Integer, Integer> map) {\n                for (Map.Entry<Integer, Integer> a : map.entrySet()) {\n                  // BUG: Diagnostic contains:\n                  map.putIfAbsent(new Integer(\"42\"), new Integer(\"43\"));\n                  // BUG: Diagnostic contains:\n                  map.clear();\n                  // BUG: Diagnostic contains:\n                  map.remove(a.getKey());\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "package com.google.errorprone.bugpatterns;\n\nimport java.util.ArrayList;\nimport java.util.HashMap;\nimport java.util.HashSet;\nimport java.util.LinkedList;\nimport java.util.Map;\nimport java.util.concurrent.BlockingQueue;\nimport java.util.concurrent.CopyOnWriteArrayList;\n\n/**\n * @author anishvisaria98@gmail.com (Anish Visaria)\n */\npublic class ModifyCollectionInEnhancedForLoopNegativeCases {\n\n  public static void testBasic(ArrayList<Integer> arr, HashSet<Integer> set) {\n    for (Integer a : arr) {\n      set.add(a);\n      set.addAll(arr);\n      set.clear();\n      set.removeAll(arr);\n      set.retainAll(arr);\n    }\n\n    for (Integer i : set) {\n      arr.add(i);\n      arr.addAll(set);\n      arr.clear();\n      arr.removeAll(set);\n      arr.retainAll(set);\n    }\n  }\n\n  public static void testNested(ArrayList<Integer> arr, LinkedList<Integer> list) {\n    for (Integer x : arr) {\n      for (Integer y : list) {}\n\n      list.add(x);\n      list.addAll(arr);\n      list.clear();\n      list.removeAll(arr);\n      list.retainAll(arr);\n    }\n  }\n\n  public static void testBreakOutOfLoop(ArrayList<Integer> xs) {\n    for (Integer x : xs) {\n      xs.remove(x);\n      return;\n    }\n    for (Integer x : xs) {\n      xs.remove(x);\n      System.err.println();\n      break;\n    }\n  }\n\n  public static void testMapKeySet(HashMap<Integer, Integer> map1, HashMap<Integer, Integer> map2) {\n    for (Integer a : map1.keySet()) {\n      map2.putIfAbsent(Integer.parseInt(\"42\"), Integer.parseInt(\"43\"));\n      map2.clear();\n      map2.remove(a);\n    }\n  }\n\n  public static void testMapValues(HashMap<Integer, Integer> map1, HashMap<Integer, Integer> map2) {\n    for (Integer a : map1.values()) {\n      map2.putIfAbsent(Integer.parseInt(\"42\"), a);\n      map2.clear();\n      map2.remove(Integer.parseInt(\"42\"));\n    }\n  }\n\n  public static void testMapEntrySet(\n      HashMap<Integer, Integer> map1, HashMap<Integer, Integer> map2) {\n    for (Map.Entry<Integer, Integer> a : map1.entrySet()) {\n      map2.putIfAbsent(Integer.parseInt(\"42\"), Integer.parseInt(\"43\"));\n      map2.clear();\n      map2.remove(a.getKey());\n    }\n  }\n\n  private static void concurrent() {\n    CopyOnWriteArrayList<Integer> cowal = new CopyOnWriteArrayList<>();\n    for (int i : cowal) {\n      cowal.remove(i);\n    }\n  }\n\n  interface MyBlockingQueue<T> extends BlockingQueue<T> {}\n\n  private static void customConcurrent(MyBlockingQueue<Integer> mbq) {\n    for (Integer i : mbq) {\n      mbq.add(i);\n    }\n  }\n}\\"
+    },
+    {
+      "description": "modifyCollectionInItself",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        242
+      ],
+      "code": "import java.util.AbstractCollection;\n            import java.util.Collection;\n\n            abstract class Test<E> extends AbstractCollection<E> {\n              public boolean addAll(Collection<? extends E> c) {\n                boolean modified = false;\n                for (E e : c) if (add(e)) modified = true;\n                return modified;\n              }\n            }"
+    },
+    {
+      "description": "concurrentMap",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        262
+      ],
+      "code": "import java.util.Map;\n            import java.util.concurrent.ConcurrentMap;\n\n            class Test {\n              void f(ConcurrentMap<String, Integer> map) {\n                for (Map.Entry<String, Integer> e : map.entrySet()) {\n                  map.remove(e.getKey());\n                }\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "name": "FloggerRequiredModifiers",
+  "language": "java",
+  "description": "FluentLogger.forEnclosingClass should always be saved to a private static final field.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 413,
+  "branches": 55,
+  "apis": 7,
+  "test": [
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Holder {\n              public FluentLogger logger;\n\n              public FluentLogger get() {\n                return logger;\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              public void log(FluentLogger l) {\n                l.atInfo().log(\"bland\");\n              }\n\n              public void delegate(Holder h) {\n                h.logger.atInfo().log(\"held\");\n              }\n\n              public void read(Holder h) {\n                h.get().atInfo().log(\"got\");\n              }\n            }"
+    },
+    {
+      "description": "positive_addsStatic",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }"
+    },
+    {
+      "description": "positive_extractsExpression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              void doIt() {\n                FluentLogger.forEnclosingClass().atInfo().log();\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              void doIt() {\n                logger.atInfo().log();\n              }\n            }"
+    },
+    {
+      "description": "negative_doesntCreateSelfAssignment",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger;\n\n              static {\n                logger = register(FluentLogger.forEnclosingClass());\n              }\n\n              private static <T> T register(T t) {\n                return t;\n              }\n            }"
+    },
+    {
+      "description": "negative_doesntIndirectWrappers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        151
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static FluentLogger logger = register(FluentLogger.forEnclosingClass());\n\n              private static <T> T register(T t) {\n                return t;\n              }\n            }\n            \n\nimport com.google.common.flogger.FluentLogger;\n\nclass Test {\n  private static final FluentLogger logger = register(FluentLogger.forEnclosingClass());\n\n  private static <T> T register(T t) {\n    return t;\n  }\n}"
+    },
+    {
+      "description": "negative_allowsSiblingLoggerUse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        184
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              static class A {\n                public A() {\n                  B.logger.atInfo().log();\n                }\n              }\n\n              static class B {\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_hidesLoggersFromInterfaces",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            interface Test {\n              static FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              default void foo() {\n                logger.atInfo().log();\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            interface Test {\n              default void foo() {\n                Private.logger.atInfo().log();\n              }\n\n              public static final class Private {\n                private Private() {}\n\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_extractsHiddenLoggersForInterfaces",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        244
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            interface Test {\n              default void foo() {\n                FluentLogger.forEnclosingClass().atInfo().log();\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            interface Test {\n              default void foo() {\n                Private.logger.atInfo().log();\n              }\n\n              public static final class Private {\n                private Private() {}\n\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              }\n            }"
+    },
+    {
+      "description": "positive_fixesVisibility",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              public static final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }"
+    },
+    {
+      "description": "positive_goalsDontConflict",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        302
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              public FluentLogger logger = FluentLogger.forEnclosingClass();\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }"
+    },
+    {
+      "description": "positive_replacesInheritedLogger",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        326
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            @SuppressWarnings(\"FloggerRequiredModifiers\")\n            class Parent {\n              protected static final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }\n            \n\n            class Child extends Parent {\n              Child() {\n                logger.atInfo().log(\"child\");\n                super.logger.atInfo().log(\"super\");\n                Parent.logger.atInfo().log(\"parent\");\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Child extends Parent {\n              private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              Child() {\n                logger.atInfo().log(\"child\");\n                logger.atInfo().log(\"super\");\n                logger.atInfo().log(\"parent\");\n              }\n            }"
+    },
+    {
+      "description": "positive_doesntCreateSelfReference",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        369
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            @SuppressWarnings(\"FloggerRequiredModifiers\")\n            class Parent {\n              protected static final FluentLogger logger = FluentLogger.forEnclosingClass();\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Child extends Parent {\n              private static final FluentLogger logger = Parent.logger;\n\n              Child() {\n                logger.atInfo().log(\"child\");\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            class Child extends Parent {\n              private static final FluentLogger flogger = FluentLogger.forEnclosingClass();\n              private static final FluentLogger logger = flogger;\n\n              Child() {\n                logger.atInfo().log(\"child\");\n              }\n            }"
+    },
+    {
+      "description": "positive_handlesRewritesInMultipleFiles",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        413
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            interface Parent {}\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            interface Child extends Parent {\n              static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              default void go() {\n                logger.atInfo().log();\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            interface Child extends Parent {\n              default void go() {\n                Private.logger.atInfo().log();\n              }\n\n              public static final class Private {\n                private Private() {}\n\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            interface Sibling extends Parent {\n              static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n              default void go() {\n                logger.atInfo().log();\n              }\n            }\n            \n\n            import com.google.common.flogger.FluentLogger;\n\n            interface Sibling extends Parent {\n              default void go() {\n                Private.logger.atInfo().log();\n              }\n\n              public static final class Private {\n                private Private() {}\n\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              }\n            }"
+    },
+    {
+      "description": "negative_allowsSiblingLoggers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        487
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            class Test {\n              private static final class Inner {\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n              }\n\n              private void go() {\n                Inner.logger.atInfo().log();\n              }\n            }"
+    },
+    {
+      "description": "negative_doesntNeedlesslyMoveLoggersToInterfaces",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        509
+      ],
+      "code": "import com.google.common.flogger.FluentLogger;\n\n            interface Test {\n              class Inner {\n                private static final FluentLogger logger = FluentLogger.forEnclosingClass();\n\n                private static final class MoreInner {\n                  private void go() {\n                    logger.atInfo().log();\n                  }\n                }\n              }\n            }"
+    }
+  ]
+}

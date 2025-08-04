@@ -1,0 +1,150 @@
+{
+  "name": "FragmentInjection",
+  "language": "java",
+  "description": "Classes extending PreferenceActivity must implement isValidFragment such that it does not unconditionally return true to prevent vulnerability to fragment injection attacks.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 139,
+  "branches": 14,
+  "apis": 1,
+  "test": [
+    {
+      "description": "isValidFragmentNotImplementedOnPreferenceActivity",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            // BUG: Diagnostic contains: does not implement isValidFragment\n            class MyPrefActivity extends PreferenceActivity {}"
+    },
+    {
+      "description": "methodNamedIsValidFragmentButDoesNotOverride",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        61
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            // BUG: Diagnostic contains: does not implement isValidFragment\n            class MyPrefActivity extends PreferenceActivity {\n              protected boolean isValidFragment(String fragment, String unused) {\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentTriviallyImplemented",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        79
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              // BUG: Diagnostic contains: isValidFragment unconditionally returns true\n              protected boolean isValidFragment(String fragment) {\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentReturnsConstantField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              static final boolean known = true;\n\n              // BUG: Diagnostic contains: isValidFragment unconditionally returns true\n              protected boolean isValidFragment(String fragment) {\n                return known;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentReturnsFalse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              protected boolean isValidFragment(String fragment) {\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentReturnsBoxedTrue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        134
+      ],
+      "code": ""
+    },
+    {
+      "description": "isValidFragmentReturnsVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        148
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              boolean unknown;\n\n              protected boolean isValidFragment(String fragment) {\n                return unknown;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentFullyImplemented",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        167
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              protected boolean isValidFragment(String fragment) {\n                if (\"VALID_FRAGMENT\".equals(fragment)) {\n                  return true;\n                }\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "methodWithSameSignatureImplementedOnOtherClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187
+      ],
+      "code": "class MyPrefActivity {\n              protected boolean isValidFragment(String fragment) {\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentImplementedOnSuperClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MySuperPrefActivity extends PreferenceActivity {\n              protected boolean isValidFragment(String fragment) {\n                if (\"VALID_FRAGMENT\".equals(fragment)) {\n                  return true;\n                }\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentImplementedOnAbstractSuperClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        226
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            abstract class MySuperPrefActivity extends PreferenceActivity {\n              protected boolean isValidFragment(String fragment) {\n                if (\"VALID_FRAGMENT\".equals(fragment)) {\n                  return true;\n                }\n                return false;\n              }\n            }"
+    },
+    {
+      "description": "abstractClassWithoutIsValidFragmentIsOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": ""
+    },
+    {
+      "description": "noIsValidFragmentOnAbstractSuperClassOrImplementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        261
+      ],
+      "code": "// BUG: Diagnostic contains: does not implement isValidFragment\n            class MyPrefActivity extends MyAbstractPrefActivity {}"
+    },
+    {
+      "description": "isValidFragmentTriviallyImplementedOnAbstractClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        278
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            abstract class MyAbstractPrefActivity extends PreferenceActivity {\n              // BUG: Diagnostic contains: isValidFragment unconditionally returns true\n              protected boolean isValidFragment(String fragment) {\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "isValidFragmentThrowsExceptionReturnsTrue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        296
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              // BUG: Diagnostic contains: isValidFragment unconditionally returns true\n              protected boolean isValidFragment(String fragment) {\n                if (\"VALID_FRAGMENT\".equals(fragment)) {\n                  throw new RuntimeException(\"Not a valid fragment!\");\n                }\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "ifTrueElseTrue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              // BUG: Diagnostic contains: isValidFragment unconditionally returns true\n              protected boolean isValidFragment(String fragment) {\n                if (\"VALID_FRAGMENT\".equals(fragment)) {\n                  return true;\n                }\n                return true;\n              }\n            }"
+    },
+    {
+      "description": "finalLocalVariableIsConstant",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        340
+      ],
+      "code": "import android.preference.PreferenceActivity;\n\n            class MyPrefActivity extends PreferenceActivity {\n              // BUG: Diagnostic contains: isValidFragment unconditionally returns true\n              protected boolean isValidFragment(String fragment) {\n                final boolean constTrue = true;\n                return constTrue;\n              }\n            }"
+    }
+  ]
+}

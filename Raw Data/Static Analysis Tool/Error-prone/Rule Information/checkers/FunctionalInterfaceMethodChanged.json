@@ -1,0 +1,30 @@
+{
+  "name": "FunctionalInterfaceMethodChanged",
+  "language": "java",
+  "description": "Casting a lambda to this @FunctionalInterface can cause a behavior change from casting to a functional superinterface, which is surprising to users.  Prefer decorator methods to this surprising behavior.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 135,
+  "branches": 13,
+  "apis": 3,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            public class FunctionalInterfaceMethodChangedPositiveCases {\n              @FunctionalInterface\n              interface SuperFI {\n                void superSam();\n              }\n\n              @FunctionalInterface\n              interface OtherSuperFI {\n                void otherSuperSam();\n              }\n\n              @FunctionalInterface\n              interface SubFI extends SuperFI {\n                void subSam();\n\n                @Override\n                // BUG: Diagnostic contains:\n                default void superSam() {\n                  subSam();\n                  System.out.println(\"do something else\");\n                }\n              }\n\n              @FunctionalInterface\n              interface MultipleInheritanceSubFIOneBad extends SuperFI, OtherSuperFI {\n                void subSam();\n\n                @Override\n                default void superSam() {\n                  subSam();\n                }\n\n                @Override\n                // BUG: Diagnostic contains:\n                default void otherSuperSam() {\n                  subSam();\n                  System.out.println(\"do something else\");\n                }\n              }\n\n              @FunctionalInterface\n              interface MultipleInheritanceSubFIBothBad extends SuperFI, OtherSuperFI {\n                void subSam();\n\n                @Override\n                // BUG: Diagnostic contains:\n                default void superSam() {\n                  superSam();\n                  System.out.println(\"do something else\");\n                }\n\n                @Override\n                // BUG: Diagnostic contains:\n                default void otherSuperSam() {\n                  subSam();\n                  System.out.println(\"do something else\");\n                }\n              }\n\n              @FunctionalInterface\n              interface ValueReturningSuperFI {\n                String superSam();\n              }\n\n              @FunctionalInterface\n              interface ValueReturningSubFI extends ValueReturningSuperFI {\n                String subSam();\n\n                @Override\n                // BUG: Diagnostic contains:\n                default String superSam() {\n                  System.out.println(\"do something else\");\n                  return subSam();\n                }\n              }\n\n              @FunctionalInterface\n              public interface ValueReturningSubFI2 extends ValueReturningSuperFI {\n\n                String subSam();\n\n                @Override\n                // BUG: Diagnostic contains:\n                default String superSam() {\n                  subSam();\n                  return null;\n                }\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        134
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import java.util.concurrent.Callable;\n\n            public class FunctionalInterfaceMethodChangedNegativeCases {\n              @FunctionalInterface\n              interface SuperFI {\n                void superSam();\n              }\n\n              @FunctionalInterface\n              interface OtherSuperFI {\n                void otherSuperSam();\n              }\n\n              @FunctionalInterface\n              interface SubFI extends SuperFI {\n                void subSam();\n\n                @Override\n                default void superSam() {\n                  subSam();\n                }\n              }\n\n              @FunctionalInterface\n              interface MultipleInheritanceSubFI extends SuperFI, OtherSuperFI {\n                void subSam();\n\n                @Override\n                default void superSam() {\n                  subSam();\n                }\n\n                @Override\n                default void otherSuperSam() {\n                  subSam();\n                }\n              }\n\n              @FunctionalInterface\n              interface ValueReturningSuperFI {\n                String superSam();\n              }\n\n              @FunctionalInterface\n              interface ValueReturningSubFI extends ValueReturningSuperFI {\n                String subSam();\n\n                @Override\n                default String superSam() {\n                  return subSam();\n                }\n              }\n\n              // Regression test for b/68075767\n              @FunctionalInterface\n              public interface VoidCallable extends Callable<Void> {\n\n                void voidCall() throws Exception;\n\n                @Override\n                default Void call() throws Exception {\n                  voidCall();\n                  return null;\n                }\n              }\n            }\\"
+    }
+  ]
+}

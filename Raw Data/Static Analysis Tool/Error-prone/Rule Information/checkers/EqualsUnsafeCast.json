@@ -1,0 +1,54 @@
+{
+  "name": "EqualsUnsafeCast",
+  "language": "java",
+  "description": "The contract of #equals states that it should return false for incompatible types, while this implementation may throw ClassCastException.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 96,
+  "branches": 9,
+  "apis": 1,
+  "test": [
+    {
+      "description": "fixes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                Test that = (Test) o;\n                return that.a == a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                Test that = (Test) o;\n                return that.a == a;\n              }\n            }"
+    },
+    {
+      "description": "fixesInlineCheck",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                return o != null && a == ((Test) o).a;\n              }\n            }\n            \n\n            class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                return o != null && a == ((Test) o).a;\n              }\n            }"
+    },
+    {
+      "description": "positiveWrongType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "class SubTest extends Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                // BUG: Diagnostic contains: instanceof SubTest\n                return o != null && a == ((SubTest) o).a;\n              }\n            }\n\n            class Test {}"
+    },
+    {
+      "description": "negative_classEquality",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        127
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (getClass() == o.getClass()) {\n                  return false;\n                }\n                return o != null && a == ((Test) o).a;\n              }\n            }"
+    },
+    {
+      "description": "negative_instanceOf",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        148
+      ],
+      "code": "class Test {\n              private int a;\n\n              @Override\n              public boolean equals(Object o) {\n                if (!(o instanceof Test)) {\n                  return false;\n                }\n                return o != null && a == ((Test) o).a;\n              }\n            }"
+    }
+  ]
+}

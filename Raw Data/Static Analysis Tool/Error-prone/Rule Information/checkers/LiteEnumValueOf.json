@@ -1,0 +1,38 @@
+{
+  "name": "LiteEnumValueOf",
+  "language": "java",
+  "description": "Instead of converting enums to string and back, its numeric value should be used instead as it is the stable part of the protocol defined by the enum.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 62,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75
+      ],
+      "code": "class Test {\n              void test() {\n                // BUG: Diagnostic contains:\n                FakeLiteEnum.valueOf(\"FOO\");\n                // BUG: Diagnostic contains:\n                FakeLiteEnum.FOO.valueOf(\"FOO\");\n              }\n            }"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93
+      ],
+      "code": "import com.google.errorprone.bugpatterns.proto.ProtoTest.TestEnum;\n\n            class Usage {\n              private TestEnum testMethod() {\n                return TestEnum.valueOf(\"FOO\");\n              }\n            }"
+    },
+    {
+      "description": "negativeCaseJDK9OrAbove",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        110
+      ],
+      "code": "enum ProtoLiteEnum {\n              FOO(1),\n              BAR(2);\n              private final int number;\n\n              private ProtoLiteEnum(int number) {\n                this.number = number;\n              }\n\n              public int getNumber() {\n                return number;\n              }\n            }\n            \n\n            import javax.annotation.processing.Generated;\n\n            @Generated(\"com.google.auto.value.processor.AutoValueProcessor\")\n            class $AutoValue_TestData extends TestData {}\n            \n\n            import android.os.Parcel;\n            import android.os.Parcelable;\n            import com.google.errorprone.bugpatterns.proto.ProtoTest.TestEnum;\n            import javax.annotation.processing.Generated;\n\n            @Generated(\"com.ryanharter.auto.value.parcel.AutoValueParcelExtension\")\n            class AutoValue_TestData extends $AutoValue_TestData {\n              AutoValue_TestData(ProtoLiteEnum protoLiteEnum) {}\n\n              public static final Parcelable.Creator<AutoValue_TestData> CREATOR =\n                  new Parcelable.Creator<AutoValue_TestData>() {\n                    @Override\n                    public AutoValue_TestData createFromParcel(Parcel in) {\n                      return new AutoValue_TestData(ProtoLiteEnum.valueOf(\"FOO\"));\n                    }\n\n                    @Override\n                    public AutoValue_TestData[] newArray(int size) {\n                      return null;\n                    }\n                  };\n            }"
+    }
+  ]
+}

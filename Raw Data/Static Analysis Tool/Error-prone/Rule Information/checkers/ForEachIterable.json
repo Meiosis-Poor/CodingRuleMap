@@ -1,0 +1,70 @@
+{
+  "name": "ForEachIterable",
+  "language": "java",
+  "description": "This loop can be replaced with an enhanced for loop.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 216,
+  "branches": 33,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "import java.util.Iterator;\n\n            abstract class Test<T> {\n              abstract void doSomething(T element);\n\n              void iteratorFor(Iterable<T> list) {\n                for (Iterator<T> iterator = list.iterator(); iterator.hasNext(); ) {\n                  doSomething(iterator.next());\n                }\n              }\n\n              void iteratorWhile(Iterable<T> list) {\n                Iterator<T> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  doSomething(iterator.next());\n                }\n              }\n            }\n            \n\n            import java.util.Iterator;\n\n            abstract class Test<T> {\n              abstract void doSomething(T element);\n\n              void iteratorFor(Iterable<T> list) {\n                for (T element : list) {\n                  doSomething(element);\n                }\n              }\n\n              void iteratorWhile(Iterable<T> list) {\n                for (T element : list) {\n                  doSomething(element);\n                }\n              }\n            }"
+    },
+    {
+      "description": "reuseVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        78
+      ],
+      "code": "import java.util.Iterator;\n\n            abstract class Test<T> {\n              abstract void doSomething(T element);\n\n              void iteratorWhile(Iterable<T> list) {\n                Iterator<T> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  T t = iterator.next();\n                  doSomething(t);\n                }\n              }\n            }\n            \n\n            import java.util.Iterator;\n\n            abstract class Test<T> {\n              abstract void doSomething(T element);\n\n              void iteratorWhile(Iterable<T> list) {\n                for (T t : list) {\n                  doSomething(t);\n                }\n              }\n            }"
+    },
+    {
+      "description": "wildcard",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116
+      ],
+      "code": "import java.util.Iterator;\n\n            abstract class Test {\n              abstract void doSomething(Object element);\n\n              void iteratorWhile(Iterable<?> list) {\n                Iterator<?> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  doSomething(iterator.next());\n                }\n              }\n            }\n            \n\n            import java.util.Iterator;\n\n            abstract class Test {\n              abstract void doSomething(Object element);\n\n              void iteratorWhile(Iterable<?> list) {\n                for (Object element : list) {\n                  doSomething(element);\n                }\n              }\n            }"
+    },
+    {
+      "description": "empty",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153
+      ],
+      "code": "import java.util.Iterator;\n\n            abstract class Test {\n              abstract void doSomething(Object element);\n\n              void iteratorWhile(Iterable<?> list) {\n                Iterator<?> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  iterator.next();\n                }\n              }\n            }\n            \n\n            import java.util.Iterator;\n\n            abstract class Test {\n              abstract void doSomething(Object element);\n\n              void iteratorWhile(Iterable<?> list) {\n                for (Object element : list) {}\n              }\n            }"
+    },
+    {
+      "description": "wildcardExtends",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        188
+      ],
+      "code": "import java.util.Iterator;\n\n            abstract class Test {\n              abstract void doSomething(String element);\n\n              void iteratorWhile(Iterable<? extends String> list) {\n                Iterator<? extends String> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  iterator.next();\n                }\n              }\n            }\n            \n\n            import java.util.Iterator;\n\n            abstract class Test {\n              abstract void doSomething(String element);\n\n              void iteratorWhile(Iterable<? extends String> list) {\n                for (String element : list) {}\n              }\n            }"
+    },
+    {
+      "description": "iteratorMemberMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        223
+      ],
+      "code": "import java.util.Iterator;\n            import java.lang.Iterable;\n\n            class Test<V> implements Iterable<V> {\n              @Override\n              public Iterator<V> iterator() {\n                return null;\n              }\n\n              void test() {\n                Iterator<V> iter = iterator();\n                while (iter.hasNext()) {\n                  iter.next();\n                }\n              }\n            }\n            \n\n            import java.util.Iterator;\n            import java.lang.Iterable;\n\n            class Test<V> implements Iterable<V> {\n              @Override\n              public Iterator<V> iterator() {\n                return null;\n              }\n\n              void test() {\n                for (V element : this) {}\n              }\n            }"
+    },
+    {
+      "description": "negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        266
+      ],
+      "code": "import java.util.Iterator;\n\n            abstract class Test<T> {\n              abstract void doSomething(T element);\n\n              void forUpdate(Iterable<T> list) {\n                for (Iterator<T> it = list.iterator(); it.hasNext(); it.next()) {\n                  doSomething(it.next());\n                }\n              }\n\n              void forMultiVariable(Iterable<T> list) {\n                for (Iterator<T> iterator = list.iterator(), y = null; iterator.hasNext(); ) {\n                  doSomething(iterator.next());\n                }\n              }\n\n              void forTwoStep(Iterable<T> list) {\n                for (Iterator<T> iterator = list.iterator(); iterator.hasNext(); ) {\n                  doSomething(iterator.next());\n                  doSomething(iterator.next());\n                }\n              }\n\n              void whileTwoStep(Iterable<T> list) {\n                Iterator<T> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  doSomething(iterator.next());\n                  doSomething(iterator.next());\n                }\n              }\n\n              void whileUseOutsideLoop(Iterable<T> list) {\n                Iterator<T> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  doSomething(iterator.next());\n                }\n                doSomething(iterator.next());\n              }\n\n              void forIteratorUse(Iterable<?> list) {\n                Iterator<?> iterator = list.iterator();\n                while (iterator.hasNext()) {\n                  iterator.next();\n                  iterator.remove();\n                }\n              }\n            }"
+    }
+  ]
+}

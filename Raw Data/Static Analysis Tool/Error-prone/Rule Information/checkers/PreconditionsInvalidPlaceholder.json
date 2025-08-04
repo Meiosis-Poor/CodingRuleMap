@@ -1,0 +1,30 @@
+{
+  "name": "PreconditionsInvalidPlaceholder",
+  "language": "java",
+  "description": "Preconditions only accepts the %s placeholder in error message strings",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 105,
+  "branches": 8,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        32
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import static com.google.common.base.Preconditions.checkArgument;\n\n            import com.google.common.base.Preconditions;\n            import com.google.common.base.Verify;\n\n            public class PreconditionsInvalidPlaceholderPositiveCase1 {\n              int foo;\n\n              public void checkPositive(int x) {\n                // BUG: Diagnostic contains: %s > 0\n                checkArgument(x > 0, \"%d > 0\", x);\n              }\n\n              public void checkFoo() {\n                // BUG: Diagnostic contains: foo must be equal to 0 but was %s\n                Preconditions.checkState(foo == 0, \"foo must be equal to 0 but was {0}\", foo);\n              }\n\n              public void verifyFoo(int x) {\n                // BUG: Diagnostic contains:\n                Verify.verify(x > 0, \"%d > 0\", x);\n              }\n            }\\"
+    },
+    {
+      "description": "negativeCase1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport static com.google.common.base.Preconditions.checkArgument;\n\nimport com.google.common.base.Preconditions;\n\npublic class PreconditionsInvalidPlaceholderNegativeCase1 {\n  Integer foo;\n\n  public void checkPositive(int x) {\n    checkArgument(x > 0, \"%s > 0\", x);\n  }\n\n  public void checkTooFewArgs(int x) {\n    checkArgument(x > 0, \"%s %s\", x);\n  }\n\n  public void checkFoo() {\n    Preconditions.checkState(foo.intValue() == 0, \"foo must be equal to 0 but was %s\", foo);\n  }\n\n  public static void checkNotNull(Object foo, String bar, Object baz) {}\n\n  public void checkSelf() {\n    checkNotNull(foo, \"Foo\", this);\n  }\n}\\"
+    }
+  ]
+}

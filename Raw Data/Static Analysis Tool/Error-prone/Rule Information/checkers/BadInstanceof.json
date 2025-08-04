@@ -1,0 +1,38 @@
+{
+  "name": "BadInstanceof",
+  "language": "java",
+  "description": "instanceof used in a way that is equivalent to a null check.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 78,
+  "branches": 4,
+  "apis": 1,
+  "test": [
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35
+      ],
+      "code": "class A {\n              boolean foo(C c) {\n                return c instanceof A;\n              }\n\n              boolean notFoo(C c) {\n                return !(c instanceof A);\n              }\n\n              static class C extends A {}\n            }\n            \n\n            class A {\n              boolean foo(C c) {\n                return c != null;\n              }\n\n              boolean notFoo(C c) {\n                return c == null;\n              }\n\n              static class C extends A {}\n            }"
+    },
+    {
+      "description": "positiveCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71
+      ],
+      "code": "class A {\n  // BUG: Diagnostic contains: `new C()` is a non-null instance of C which is a subtype of A\n  boolean t = new C() instanceof A;\n\n  boolean foo(C c) {\n    // BUG: Diagnostic contains: `c` is an instance of C which is a subtype of A\n    return c instanceof A;\n  }\n\n  boolean notFoo(C c) {\n    // BUG: Diagnostic contains: `c` is an instance of C which is a subtype of A\n    return !(c instanceof A);\n  }\n}\n\nclass C extends A {}"
+    },
+    {
+      "description": "negativeCases",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        97
+      ],
+      "code": "class A {\n              boolean foo(A a) {\n                return a instanceof C;\n              }\n            }\n\n            class C extends A {}"
+    }
+  ]
+}

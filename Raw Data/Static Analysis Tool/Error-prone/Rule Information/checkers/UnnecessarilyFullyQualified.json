@@ -1,0 +1,134 @@
+{
+  "name": "UnnecessarilyFullyQualified",
+  "language": "java",
+  "description": "This fully qualified name is unambiguous to the compiler if imported.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 248,
+  "branches": 33,
+  "apis": 4,
+  "test": [
+    {
+      "description": "singleUse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        33
+      ],
+      "code": "interface Test {\n              java.util.List foo();\n\n              java.util.List bar();\n            }\n            \n\n            import java.util.List;\n\n            interface Test {\n              List foo();\n\n              List bar();\n            }"
+    },
+    {
+      "description": "wouldBeAmbiguous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        59
+      ],
+      "code": "interface Test {\n              java.util.List foo();\n            }"
+    },
+    {
+      "description": "refersToMultipleTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77
+      ],
+      "code": "package a;\n\n            public class List {}\n            \n\n            package b;\n\n            interface Test {\n              java.util.List foo();\n\n              a.List bar();\n            }"
+    },
+    {
+      "description": "refersToMultipleTypes_dependingOnLocation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        103
+      ],
+      "code": "package a;\n\n            public class Outer {\n              public class List {}\n            }\n            \n\n            package b;\n\n            import a.Outer;\n\n            interface Test {\n              java.util.List foo();\n\n              public abstract class Inner extends Outer {\n                abstract List bar();\n              }\n            }"
+    },
+    {
+      "description": "inconsistentImportUsage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135
+      ],
+      "code": "import java.util.List;\n\n            public class Test {\n              public java.util.List<?> foo(List<?> list) {\n                return list;\n              }\n            }\n            \n\n            import java.util.List;\n\n            public class Test {\n              public List<?> foo(List<?> list) {\n                return list;\n              }\n            }"
+    },
+    {
+      "description": "clashesWithTypeInSuperType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        163
+      ],
+      "code": "package a;\n\n            public interface A {\n              public static class List {}\n            }\n            \n\n            package b;\n\n            import a.A;\n\n            class Test implements A {\n              java.util.List foo() {\n                return null;\n              }\n            }"
+    },
+    {
+      "description": "builder",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        193
+      ],
+      "code": "package a;\n\n            public class Foo {\n              public static final class Builder {}\n            }\n            \n\n            package b;\n\n            interface Test {\n              a.Foo foo();\n\n              a.Foo.Builder fooBuilder();\n            }\n            \n\n            package b;\n\n            import a.Foo;\n\n            interface Test {\n              Foo foo();\n\n              Foo.Builder fooBuilder();\n            }"
+    },
+    {
+      "description": "exemptedNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        233
+      ],
+      "code": "package pkg;\n\n            public class Annotation {}\n            \n\n            interface Test {\n              pkg.Annotation foo();\n            }"
+    },
+    {
+      "description": "innerClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        255
+      ],
+      "code": "package test;\n\n            public class A {\n              class B {}\n\n              void test(A a) {\n                a.new B() {};\n              }\n            }"
+    },
+    {
+      "description": "packageInfo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        275
+      ],
+      "code": "package a;\n\n            public @interface A {}\n            \n\n            @a.A\n            package b;"
+    },
+    {
+      "description": "staticNestedClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        294
+      ],
+      "code": "package test;\n\n            public final class EnclosingType {\n              public static final class StaticNestedClass {}\n            }\n            \n\n            interface Test {\n              test.EnclosingType.StaticNestedClass method();\n            }\n            \n\n            import test.EnclosingType.StaticNestedClass;\n\n            interface Test {\n              StaticNestedClass method();\n            }"
+    },
+    {
+      "description": "exemptedEnclosingTypes",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        326
+      ],
+      "code": "package org.immutables.value;\n\n            public @interface Value {\n              @interface Immutable {}\n            }\n            \n\n            import org.immutables.value.Value.Immutable;\n\n            class Test {\n              @org.immutables.value.Value.Immutable\n              abstract class AbstractType {}\n            }\n            \n\n            import org.immutables.value.Value;\n            import org.immutables.value.Value.Immutable;\n\n            class Test {\n              @Value.Immutable\n              abstract class AbstractType {}\n            }"
+    },
+    {
+      "description": "exemptedEnclosingTypes_importWouldBeAmbiguous",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        364
+      ],
+      "code": "package org.immutables.value;\n\n            public @interface Value {\n              @interface Immutable {}\n            }\n            \n\n            package annotation;\n\n            public @interface Value {\n              String value();\n            }\n            \n\n            import annotation.Value;\n\n            final class Test {\n              Test(@Value(\"test\") String value) {}\n\n              @org.immutables.value.Value.Immutable\n              abstract class AbstractType {}\n            }"
+    },
+    {
+      "description": "unbatchedFindings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        404
+      ],
+      "code": "interface Test {\n              // BUG: Diagnostic contains:\n              java.util.List foo();\n\n              // BUG: Diagnostic contains:\n              java.util.List bar();\n            }"
+    },
+    {
+      "description": "batchedFindings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        421
+      ],
+      "code": "interface Test {\n              // BUG: Diagnostic contains:\n              java.util.List foo();\n\n              java.util.List bar();\n            }"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "name": "FromTemporalAccessor",
+  "language": "java",
+  "description": "Certain combinations of javaTimeType.from(TemporalAccessor) will always throw a DateTimeException or return the parameter directly.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 445,
+  "branches": 12,
+  "apis": 3,
+  "test": [
+    {
+      "description": "typeFromTypeIsBad",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        31
+      ],
+      "code": ""
+    },
+    {
+      "description": "typeFromTemporalAccessor_knownGood",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        107
+      ],
+      "code": "import java.time.DayOfWeek;\n            import java.time.Instant;\n            import java.time.LocalDate;\n            import java.time.LocalDateTime;\n            import java.time.LocalTime;\n            import java.time.Month;\n            import java.time.MonthDay;\n            import java.time.OffsetDateTime;\n            import java.time.OffsetTime;\n            import java.time.Year;\n            import java.time.YearMonth;\n            import java.time.ZonedDateTime;\n            import java.time.ZoneOffset;\n            import java.time.temporal.TemporalAccessor;\n\n            public class TestClass {\n              void from(TemporalAccessor value) {\n                DayOfWeek.from(value);\n                Instant.from(value);\n                LocalDate.from(value);\n                LocalDateTime.from(value);\n                LocalTime.from(value);\n                Month.from(value);\n                MonthDay.from(value);\n                OffsetDateTime.from(value);\n                OffsetTime.from(value);\n                Year.from(value);\n                YearMonth.from(value);\n                ZonedDateTime.from(value);\n                ZoneOffset.from(value);\n              }\n            }"
+    },
+    {
+      "description": "typeFromType_knownGood",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149
+      ],
+      "code": "import java.time.LocalDate;\n            import java.time.Year;\n\n            public class TestClass {\n              void from(LocalDate value) {\n                Year.from(value);\n              }\n            }"
+    },
+    {
+      "description": "typeFromType_threeTenExtra_knownGood",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        167
+      ],
+      "code": "import java.time.LocalTime;\n            import org.threeten.extra.AmPm;\n\n            public class TestClass {\n              void from(LocalTime value) {\n                AmPm.from(value);\n              }\n            }"
+    },
+    {
+      "description": "typeFromType_threeTenExtra_self",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        185
+      ],
+      "code": "import org.threeten.extra.AmPm;\n\n            public class TestClass {\n              void from(AmPm value) {\n                // BUG: Diagnostic contains: Did you mean 'value;'\n                AmPm.from(value);\n              }\n            }"
+    },
+    {
+      "description": "typeFromType_customType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        203
+      ],
+      "code": "import java.time.DateTimeException;\n            import java.time.temporal.TemporalAccessor;\n            import java.time.temporal.TemporalField;\n\n            public class Frobber implements TemporalAccessor {\n              static Frobber from(TemporalAccessor temporalAccessor) {\n                if (temporalAccessor instanceof Frobber) {\n                  return (Frobber) temporalAccessor;\n                }\n                throw new DateTimeException(\"failure\");\n              }\n\n              @Override\n              public long getLong(TemporalField field) {\n                return 0;\n              }\n\n              @Override\n              public boolean isSupported(TemporalField field) {\n                return false;\n              }\n            }\n            \n\n            public class TestClass {\n              void from(Frobber value) {\n                Frobber frobber = Frobber.from(value);\n              }\n            }"
+    },
+    {
+      "description": "typeFromType_knownBadConversions",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        244
+      ],
+      "code": "import java.time.LocalDate;\n            import java.time.LocalDateTime;\n            import org.threeten.extra.Quarter;\n\n            public class TestClass {\n              void from(LocalDate localDate, Quarter quarter) {\n                // BUG: Diagnostic contains: FromTemporalAccessor\n                LocalDateTime.from(localDate);\n                // BUG: Diagnostic contains: FromTemporalAccessor\n                LocalDateTime.from(quarter);\n              }\n            }"
+    },
+    {
+      "description": "typeFromType_knownBadConversions_insideJavaTime",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        266
+      ],
+      "code": "package java.time;\n\n              import java.time.LocalDate;\n              import java.time.LocalDateTime;\n\n              public class TestClass {\n                void from(LocalDate localDate) {\n                  LocalDateTime.from(localDate);\n                }\n              }"
+    },
+    {
+      "description": "typeFromType_knownBadConversions_insideThreeTenExtra",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        289
+      ],
+      "code": "package org.threeten.extra;\n\n            import java.time.LocalDateTime;\n\n            public class TestClass {\n              void from(Quarter quarter) {\n                LocalDateTime.from(quarter);\n              }\n            }"
+    }
+  ]
+}

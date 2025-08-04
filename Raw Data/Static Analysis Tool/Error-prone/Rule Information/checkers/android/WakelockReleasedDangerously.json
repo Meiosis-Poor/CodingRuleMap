@@ -1,0 +1,158 @@
+{
+  "name": "WakelockReleasedDangerously",
+  "language": "java",
+  "description": "On Android versions < P, a wakelock acquired with a timeout may be released by the system before calling `release`, even after checking `isHeld()`. If so, it will throw a RuntimeException. Please wrap in a try/catch block.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 182,
+  "branches": 21,
+  "apis": 3,
+  "test": [
+    {
+      "description": "dangerousWakelockRelease_refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                if (wakelock.isHeld()) {\n                  doSomethingElse();\n                  wakelock.release();\n\n                  // Make sure comments are preserved\n                }\n              }\n\n              void doSomethingElse() {}\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                doSomethingElse();\n                try {\n                  wakelock.release();\n                } catch (RuntimeException unused) {\n                  // Ignore: wakelock already released by timeout.\n                  // TODO: Log this exception.\n                }\n\n                // Make sure comments are preserved\n              }\n\n              void doSomethingElse() {}\n            }"
+    },
+    {
+      "description": "doesNotRemoveIsHeldOnDifferentSymbol",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        130
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wl1, WakeLock wl2) {\n                wl1.acquire(100);\n                if (wl2.isHeld()) {\n                  wl1.release();\n                }\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wl1, WakeLock wl2) {\n                wl1.acquire(100);\n                if (wl2.isHeld()) {\n                  try {\n                    wl1.release();\n                  } catch (RuntimeException unused) {\n                    // Ignore: wakelock already released by timeout.\n                    // TODO: Log this exception.\n                  }\n                }\n              }\n            }"
+    },
+    {
+      "description": "dangerousWakelockRelease_lambda_refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        169
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                doThing(() -> wakelock.release());\n              }\n\n              void doThing(Runnable thing) {}\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                doThing(\n                    () -> {\n                      try {\n                        wakelock.release();\n                      } catch (RuntimeException unused) {\n                        // Ignore: wakelock already released by timeout.\n                        // TODO: Log this exception.\n                      }\n                    });\n              }\n\n              void doThing(Runnable thing) {}\n            }"
+    },
+    {
+      "description": "acquiredWithoutTimeout_shouldBeOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        211
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class WithoutTimeout {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire();\n                wakelock.release();\n              }\n            }"
+    },
+    {
+      "description": "catchesRuntimeException_shouldBeOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        229
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  wakelock.release();\n                } catch (RuntimeException e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "noCatch_shouldWarn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        250
+      ],
+      "code": ""
+    },
+    {
+      "description": "catchesSuperclassOfRuntimeException_shouldBeOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        272
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  wakelock.release();\n                } catch (Exception e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "catchesSubclassOfRuntimeException_shouldWarn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        293
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  // BUG: Diagnostic contains: Wakelock\n                  wakelock.release();\n                } catch (MyRuntimeException e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "catchesOtherException_shouldWarn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        318
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  // BUG: Diagnostic contains: Wakelock\n                  wakelock.release();\n                  throw new MyOtherException();\n                } catch (MyOtherException e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "nestedCatch_shouldWarn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        343
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  try {\n                    // BUG: Diagnostic contains: Wakelock\n                    wakelock.release();\n                    throw new MyOtherException();\n                  } catch (MyOtherException e) {\n                  }\n                } catch (RuntimeException err) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "catchesUnion_withRuntimeException_shouldBeOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        371
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  wakelock.release();\n                  throw new MyOtherException();\n                } catch (RuntimeException | MyOtherException e) {\n                }\n              }\n            }"
+    },
+    {
+      "description": "catchesUnion_withLeastUpperBoundException_shouldWarn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        395
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n            import java.io.IOException;\n\n            public class TestApp {\n              void foo(WakeLock wakelock) {\n                wakelock.acquire(100);\n                try {\n                  // BUG: Diagnostic contains: Wakelock\n                  wakelock.release();\n                  throw new IOException();\n                } catch (IOException | NullPointerException e) {\n                  // union with a 'least upper bound' of Exception, won't catch RuntimeException.\n                }\n              }\n            }"
+    },
+    {
+      "description": "acquiredElsewhere_shouldBeRecognized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        420
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class WithTimeout {\n              WakeLock wakelock;\n\n              WithTimeout(WakeLock wl) {\n                this.wakelock = wl;\n                this.wakelock.acquire(100);\n              }\n\n              void foo() {\n                // BUG: Diagnostic contains: Wakelock\n                wakelock.release();\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class WithoutTimeout {\n              WakeLock wakelock;\n\n              WithoutTimeout(WakeLock wl) {\n                this.wakelock = wl;\n                this.wakelock.acquire();\n              }\n\n              void foo() {\n                wakelock.release();\n              }\n            }"
+    },
+    {
+      "description": "differentWakelock_shouldNotBeRecognized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        463
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class WithTimeout {\n              void bar(WakeLock wakelock) {\n                wakelock.acquire(100);\n              }\n\n              void foo(WakeLock wakelock) {\n                wakelock.release();\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class WithoutTimeout {\n              void bar(WakeLock wakelock) {\n                wakelock.acquire();\n              }\n\n              void foo(WakeLock wakelock) {\n                wakelock.release();\n              }\n            }"
+    },
+    {
+      "description": "wakelockFromMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        499
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class WithTimeout {\n              WakeLock wakelock;\n\n              WakeLock getWakelock() {\n                return wakelock;\n              }\n\n              void bar() {\n                getWakelock().acquire(100);\n              }\n\n              void foo() {\n                // BUG: Diagnostic contains: Wakelock\n                getWakelock().release();\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class WithoutTimeout {\n              WakeLock wakelock;\n\n              WakeLock getWakelock() {\n                return wakelock;\n              }\n\n              void bar(WakeLock wakelock) {\n                getWakelock().acquire();\n              }\n\n              void foo(WakeLock wakelock) {\n                getWakelock().release();\n              }\n            }"
+    },
+    {
+      "description": "wakelockNotReferenceCounted_shouldBeOkay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        548
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class NotReferenceCountedTimeout {\n              void foo(WakeLock wakelock) {\n                wakelock.setReferenceCounted(false);\n                wakelock.acquire(100);\n                wakelock.release();\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class ExplicitlyReferenceCountedTimeout {\n              void foo(WakeLock wakelock) {\n                wakelock.setReferenceCounted(true);\n                wakelock.acquire(100);\n                // BUG: Diagnostic contains: Wakelock\n                wakelock.release();\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class NotReferenceCountedNoTimeout {\n              void foo(WakeLock wakelock) {\n                wakelock.setReferenceCounted(false);\n                wakelock.acquire();\n                wakelock.release();\n              }\n            }\n            \n\n            import android.os.PowerManager.WakeLock;\n\n            public class ExplicitlyReferenceCountedNoTimeout {\n              void foo(WakeLock wakelock) {\n                wakelock.setReferenceCounted(true);\n                wakelock.acquire();\n                wakelock.release();\n              }\n            }"
+    },
+    {
+      "description": "innerClass_negative",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        607
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class OuterClass {\n              WakeLock wakelock;\n\n              OuterClass(WakeLock wl) {\n                this.wakelock = wl;\n                this.wakelock.setReferenceCounted(false);\n              }\n\n              public class InnerClass {\n                void foo() {\n                  wakelock.acquire(100);\n                  wakelock.release();\n                }\n              }\n            }"
+    },
+    {
+      "description": "innerClass_positive",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        634
+      ],
+      "code": "import android.os.PowerManager.WakeLock;\n\n            public class OuterClass {\n              WakeLock wakelock;\n\n              OuterClass(WakeLock wl) {\n                wakelock = wl;\n                wakelock.acquire(100);\n              }\n\n              public class InnerClass {\n                void foo() {\n                  // BUG: Diagnostic contains: Wakelock\n                  wakelock.release();\n                }\n              }\n            }"
+    }
+  ]
+}

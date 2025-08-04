@@ -1,0 +1,38 @@
+{
+  "name": "PrivateSecurityContractProtoAccess",
+  "language": "java",
+  "description": "Access to a private protocol buffer field is forbidden. This protocol buffer carries a security contract, and can only be created using an approved library. Direct access to the fields is forbidden.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 75,
+  "branches": 3,
+  "apis": 1,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport com.google.common.html.types.SafeHtmlProto;\nimport com.google.protobuf.ByteString;\n\npublic class PrivateSecurityContractProtoAccessPositiveCases {\n  static SafeHtmlProto safeHtmlProto;\n\n  static {\n    safeHtmlProto =\n        SafeHtmlProto.newBuilder()\n            // BUG: Diagnostic contains: Forbidden access to a private proto field\n            .clearPrivateDoNotAccessOrElseSafeHtmlWrappedValue()\n            // BUG: Diagnostic contains: Forbidden access to a private proto field\n            .setPrivateDoNotAccessOrElseSafeHtmlWrappedValue(\"foo\")\n            .build();\n  }\n\n  static SafeHtmlProto safeHtmlProtoFromBytes;\n\n  static {\n    safeHtmlProtoFromBytes =\n        SafeHtmlProto.newBuilder()\n            // BUG: Diagnostic contains: Forbidden access to a private proto field\n            .setPrivateDoNotAccessOrElseSafeHtmlWrappedValueBytes(ByteString.copyFromUtf8(\"foo\"))\n            .build();\n  }\n\n  static String readSafeHtmlProto(SafeHtmlProto safeHtmlProto) {\n    // BUG: Diagnostic contains: Forbidden access to a private proto field\n    if (safeHtmlProto.hasPrivateDoNotAccessOrElseSafeHtmlWrappedValue()) {\n      // BUG: Diagnostic contains: Forbidden access to a private proto field\n      return safeHtmlProto.getPrivateDoNotAccessOrElseSafeHtmlWrappedValue();\n    }\n    return \"\";\n  }\n\n  static ByteString readSafeHtmlProtoBytes(SafeHtmlProto safeHtmlProto) {\n    // BUG: Diagnostic contains: Forbidden access to a private proto field\n    return safeHtmlProto.getPrivateDoNotAccessOrElseSafeHtmlWrappedValueBytes();\n  }\n\n  static String readSafeHtmlProtoBuilder(SafeHtmlProto.Builder safeHtmlProto) {\n    // BUG: Diagnostic contains: Forbidden access to a private proto field\n    if (safeHtmlProto.hasPrivateDoNotAccessOrElseSafeHtmlWrappedValue()) {\n      // BUG: Diagnostic contains: Forbidden access to a private proto field\n      return safeHtmlProto.getPrivateDoNotAccessOrElseSafeHtmlWrappedValue();\n    }\n    return \"\";\n  }\n\n  static ByteString readSafeHtmlProtoBuilderBytes(SafeHtmlProto.Builder safeHtmlProto) {\n    // BUG: Diagnostic contains: Forbidden access to a private proto field\n    return safeHtmlProto.getPrivateDoNotAccessOrElseSafeHtmlWrappedValueBytes();\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\n            import com.google.common.html.types.SafeHtml;\n            import com.google.common.html.types.SafeHtmlProto;\n            import com.google.common.html.types.SafeHtmls;\n\n            public class PrivateSecurityContractProtoAccessNegativeCases {\n              static SafeHtmlProto safeHtmlProto;\n\n              static {\n                safeHtmlProto = SafeHtmls.toProto(SafeHtml.EMPTY);\n              }\n\n              static SafeHtml safeHtml;\n\n              static {\n                safeHtml = SafeHtmls.fromProto(safeHtmlProto);\n              }\n            }\\"
+    },
+    {
+      "description": "safeHtmlAccessWithinPackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124
+      ],
+      "code": "package com.google.common.html.types;\n\n            import com.google.common.html.types.SafeHtmlProto;\n\n            class Test {\n              SafeHtmlProto buildProto() {\n                return SafeHtmlProto.newBuilder()\n                    .setPrivateDoNotAccessOrElseSafeHtmlWrappedValue(\"foo\")\n                    .build();\n              }\n            }"
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "name": "StronglyTypeTime",
+  "language": "java",
+  "description": "This primitive integral type is only used to construct time types. It would be clearer to strongly type the field instead.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 93,
+  "branches": 1,
+  "apis": 1,
+  "test": [
+    {
+      "description": "findingLocatedOnField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              // BUG: Diagnostic contains: Duration instances\n              private static final long FOO_MILLIS = 100;\n\n              public Duration get() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n            }"
+    },
+    {
+      "description": "findingOnBoxedField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              private static final Long FOO_MILLIS = 100L;\n\n              public Duration get() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n            }"
+    },
+    {
+      "description": "jodaInstantConstructor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        74
+      ],
+      "code": "import org.joda.time.Instant;\n\n            class Test {\n              private static final long FOO_MILLIS = 100L;\n\n              public Instant get() {\n                return new Instant(FOO_MILLIS);\n              }\n            }\n            \n\n            import org.joda.time.Instant;\n\n            class Test {\n              private static final Instant FOO = new Instant(100L);\n\n              public Instant get() {\n                return FOO;\n              }\n            }"
+    },
+    {
+      "description": "jodaInstantStaticFactory",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106
+      ],
+      "code": "import org.joda.time.Instant;\n\n            class Test {\n              private static final long FOO_MILLIS = 100L;\n\n              public Instant get() {\n                return Instant.ofEpochMilli(FOO_MILLIS);\n              }\n            }\n            \n\n            import org.joda.time.Instant;\n\n            class Test {\n              private static final Instant FOO = Instant.ofEpochMilli(100L);\n\n              public Instant get() {\n                return FOO;\n              }\n            }"
+    },
+    {
+      "description": "protoTimestamp",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        138
+      ],
+      "code": "import com.google.protobuf.Timestamp;\n            import com.google.protobuf.util.Timestamps;\n\n            class Test {\n              private static final long FOO_MILLIS = 100L;\n\n              public Timestamp get() {\n                return Timestamps.fromMillis(FOO_MILLIS);\n              }\n            }\n            \n\n            import com.google.protobuf.Timestamp;\n            import com.google.protobuf.util.Timestamps;\n\n            class Test {\n              private static final Timestamp FOO = Timestamps.fromMillis(100L);\n\n              public Timestamp get() {\n                return FOO;\n              }\n            }"
+    },
+    {
+      "description": "fieldQualifiedByThis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        172
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              // BUG: Diagnostic contains:\n              private final long fooMillis = 100;\n\n              public Duration get() {\n                return Duration.ofMillis(this.fooMillis);\n              }\n            }"
+    },
+    {
+      "description": "notInitializedInline_noFinding",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        192
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private static final long FOO_MILLIS;\n\n              static {\n                FOO_MILLIS = 100;\n              }\n\n              public Duration get() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n            }"
+    },
+    {
+      "description": "refactoring",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private final long FOO_MILLIS = 100;\n\n              public Duration get() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            class Test {\n              private final Duration FOO = Duration.ofMillis(100);\n\n              public Duration get() {\n                return FOO;\n              }\n            }"
+    },
+    {
+      "description": "fieldRenaming",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        247
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private final long FOO_MILLIS = 100;\n              private final long BAR_IN_MILLIS = 100;\n              private final long BAZ_MILLI = 100;\n\n              public Duration foo() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n\n              public Duration bar() {\n                return Duration.ofMillis(BAR_IN_MILLIS);\n              }\n\n              public Duration baz() {\n                return Duration.ofMillis(BAZ_MILLI);\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            class Test {\n              private final Duration FOO = Duration.ofMillis(100);\n              private final Duration BAR = Duration.ofMillis(100);\n              private final Duration BAZ = Duration.ofMillis(100);\n\n              public Duration foo() {\n                return FOO;\n              }\n\n              public Duration bar() {\n                return BAR;\n              }\n\n              public Duration baz() {\n                return BAZ;\n              }\n            }"
+    },
+    {
+      "description": "variableUsedInOtherWays_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        299
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private final long FOO_MILLIS = 100;\n\n              public Duration get() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n\n              public long frobnicate() {\n                return FOO_MILLIS + 1;\n              }\n            }"
+    },
+    {
+      "description": "fieldNotPrivate_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        322
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              final long FOO_MILLIS = 100;\n\n              public Duration get() {\n                return Duration.ofMillis(FOO_MILLIS);\n              }\n            }"
+    },
+    {
+      "description": "unusedField_noMatch",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        341
+      ],
+      "code": "import java.io.Serializable;\n\n            class Test implements Serializable {\n              private static final long serialVersionUID = 1L;\n            }"
+    },
+    {
+      "description": "whenJodaAndJavaInstantUsed_fullyQualifiesName",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        357
+      ],
+      "code": "import java.time.Instant;\n\n            class Test {\n              private static final long FOO_MILLIS = 100L;\n              private static final Instant INSTANT = null;\n\n              public org.joda.time.Instant get() {\n                return new org.joda.time.Instant(FOO_MILLIS);\n              }\n            }\n            \n\n            import java.time.Instant;\n\n            class Test {\n              private static final org.joda.time.Instant FOO = new org.joda.time.Instant(100L);\n              private static final Instant INSTANT = null;\n\n              public org.joda.time.Instant get() {\n                return FOO;\n              }\n            }"
+    },
+    {
+      "description": "milliseconds",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        391
+      ],
+      "code": "import java.time.Duration;\n\n            class Test {\n              private static final long F1_RETRY_MILLISECONDS = 5000;\n\n              public Duration frobber() {\n                return Duration.ofMillis(F1_RETRY_MILLISECONDS);\n              }\n            }\n            \n\n            import java.time.Duration;\n\n            class Test {\n              private static final Duration F1_RETRY = Duration.ofMillis(5000);\n\n              public Duration frobber() {\n                return F1_RETRY;\n              }\n            }"
+    }
+  ]
+}

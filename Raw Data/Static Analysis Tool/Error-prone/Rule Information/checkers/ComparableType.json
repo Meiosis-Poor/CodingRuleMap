@@ -1,0 +1,30 @@
+{
+  "name": "ComparableType",
+  "language": "java",
+  "description": "Implementing 'Comparable<T>' where T is not the same as the implementing class is incorrect, since it violates the symmetry contract of compareTo.",
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 65,
+  "branches": 3,
+  "apis": 2,
+  "test": [
+    {
+      "description": "positiveCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.io.Serializable;\nimport java.util.Comparator;\n\npublic class ComparableTypePositiveCases {\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class CompareClass implements Comparable<Integer> {\n\n    @Override\n    public int compareTo(Integer o) {\n      return 0;\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class SerializableComparable implements Serializable, Comparable<Long> {\n\n    @Override\n    public int compareTo(Long o) {\n      return 0;\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class ComparableSerializable implements Comparable<Long>, Serializable {\n\n    @Override\n    public int compareTo(Long o) {\n      return 0;\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class BadClass implements Comparable<Double>, Comparator<Double> {\n\n    @Override\n    public int compareTo(Double o) {\n      return 0;\n    }\n\n    @Override\n    public int compare(Double o1, Double o2) {\n      return 0;\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class AnotherBadClass implements Comparator<Double>, Comparable<Double> {\n\n    @Override\n    public int compareTo(Double o) {\n      return 0;\n    }\n\n    @Override\n    public int compare(Double o1, Double o2) {\n      return 0;\n    }\n  }\n\n  public static class A {}\n\n  public static class B extends A {}\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class C extends A implements Comparable<B> {\n\n    @Override\n    public int compareTo(B o) {\n      return 0;\n    }\n  }\n\n  interface Foo {}\n\n  // BUG: Diagnostic contains: [ComparableType]\n  static final class Open implements Comparable<Foo> {\n    @Override\n    public int compareTo(Foo o) {\n      return 0;\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public abstract static class AClass implements Comparable<Integer> {}\n\n  public static class BClass extends AClass {\n    @Override\n    public int compareTo(Integer o) {\n      return 0;\n    }\n  }\n\n  // found via flume\n  public static class SpendXGetYValues {\n    public Comparable<SpendXGetYValues> yToXRatio() {\n      // BUG: Diagnostic contains:  [ComparableType]\n      return new Comparable<SpendXGetYValues>() {\n        @Override\n        public int compareTo(SpendXGetYValues other) {\n          return 0;\n        }\n      };\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public abstract static class One<T> implements Comparable<T> {}\n\n  public static class Two extends One<Integer> {\n    @Override\n    public int compareTo(Integer o) {\n      return 0;\n    }\n  }\n}\\"
+    },
+    {
+      "description": "negativeCase",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157
+      ],
+      "code": "package com.google.errorprone.bugpatterns.testdata;\n\nimport java.io.Serializable;\nimport java.util.Comparator;\n\npublic class ComparableTypeNegativeCases {\n\n  /** Class that implements comparable, with castable type */\n  public static class ComparableTypeNegative implements Comparable<ComparableTypeNegative> {\n\n    @Override\n    public int compareTo(ComparableTypeNegative o) {\n      return 0;\n    }\n  }\n\n  /** abstract class that implements comparable */\n  public abstract static class OnlyComparable implements Comparable<OnlyComparable> {}\n\n  /** class that implements comparable and something else like Serializable */\n  public static class SerializableComparable\n      implements Serializable, Comparable<SerializableComparable> {\n\n    @Override\n    public int compareTo(SerializableComparable o) {\n      return 0;\n    }\n  }\n\n  /** class that implements comparable and something else with a type */\n  public static class SomeClass implements Comparable<SomeClass>, Comparator<SomeClass> {\n    @Override\n    public int compareTo(SomeClass comparableNode) {\n      return 0;\n    }\n\n    @Override\n    public int compare(SomeClass a, SomeClass b) {\n      return 0;\n    }\n  }\n\n  // Example interfaces\n  interface Door {}\n\n  public static class HalfOpen implements Door {}\n\n  // BUG: Diagnostic contains: [ComparableType]\n  static final class Open extends HalfOpen implements Comparable<Door> {\n    @Override\n    public int compareTo(Door o) {\n      return 0;\n    }\n  }\n\n  public static class A {}\n\n  // BUG: Diagnostic contains: [ComparableType]\n  public static class B extends A implements Comparable<A> {\n\n    @Override\n    public int compareTo(A o) {\n      return 0;\n    }\n  }\n\n  // ignore enums\n  enum Location {\n    TEST_TARGET\n  }\n\n  public abstract static class AClass implements Comparable<AClass> {}\n\n  public static class BClass extends AClass {\n    @Override\n    public int compareTo(AClass o) {\n      return 0;\n    }\n  }\n\n  abstract class Foo<T> implements Comparable<Foo<T>> {}\n\n  class T extends Foo<String> {\n    public int compareTo(Foo<String> o) {\n      return 0;\n    }\n  }\n\n  // BUG: Diagnostic contains: [ComparableType]\n  static final class XGram implements Comparable {\n\n    @Override\n    public int compareTo(Object o) {\n      return 0;\n    }\n  }\n}\\"
+    }
+  ]
+}
