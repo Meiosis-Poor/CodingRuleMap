@@ -1,0 +1,77 @@
+{
+  "name": "ClassScreener",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 224,
+  "branches": 18,
+  "apis": 46,
+  "test": [
+    {
+      "description": "testEmptyClassScreener",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82,
+        91
+      ],
+      "code": "@Test\n    void testEmptyClassScreener() {\n        Assertions.assertTrue(emptyScreener.matches(SOME_CLASS_FILENAME));\n        Assertions.assertTrue(emptyScreener.matches(SOME_OTHER_CLASS_FILENAME));\n        Assertions.assertTrue(emptyScreener.matches(UNRELATED_THING_CLASS_FILENAME));\n\n        Assertions.assertTrue(emptyScreener.matches(SOME_CLASS_JARFILENAME));\n        Assertions.assertTrue(emptyScreener.matches(SOME_OTHER_CLASS_JARFILENAME));\n        Assertions.assertTrue(emptyScreener.matches(UNRELATED_THING_CLASS_JARFILENAME));\n    }"
+    },
+    {
+      "description": "testParticularClassScreener",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        93,
+        102
+      ],
+      "code": "@Test\n    void testParticularClassScreener() {\n        Assertions.assertTrue(particularClassScreener.matches(SOME_CLASS_FILENAME));\n        Assertions.assertFalse(particularClassScreener.matches(SOME_OTHER_CLASS_FILENAME));\n        Assertions.assertFalse(particularClassScreener.matches(UNRELATED_THING_CLASS_FILENAME));\n\n        Assertions.assertTrue(particularClassScreener.matches(SOME_CLASS_JARFILENAME));\n        Assertions.assertFalse(particularClassScreener.matches(SOME_OTHER_CLASS_JARFILENAME));\n        Assertions.assertFalse(particularClassScreener.matches(UNRELATED_THING_CLASS_JARFILENAME));\n    }"
+    },
+    {
+      "description": "testParticularPackageScreener",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104,
+        108
+      ],
+      "code": "@Test\n    void testParticularPackageScreener() {\n        testPackageScreener(particularPackageScreener);\n        testPackageScreener(particularPackageScreener2);\n    }"
+    },
+    {
+      "description": "testExcludeOneClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        119,
+        133
+      ],
+      "code": "@Test\n    void testExcludeOneClass() {\n        ClassScreener screener = new ClassScreener();\n        screener.addAllowedClass(\"!\" + SOME_CLASS);\n\n        Assertions.assertFalse(screener.vacuous());\n\n        Assertions.assertFalse(screener.matches(SOME_CLASS_FILENAME));\n        Assertions.assertTrue(screener.matches(SOME_OTHER_CLASS_FILENAME));\n        Assertions.assertTrue(screener.matches(UNRELATED_THING_CLASS_FILENAME));\n\n        Assertions.assertFalse(screener.matches(SOME_CLASS_JARFILENAME));\n        Assertions.assertTrue(screener.matches(SOME_OTHER_CLASS_JARFILENAME));\n        Assertions.assertTrue(screener.matches(UNRELATED_THING_CLASS_JARFILENAME));\n    }"
+    },
+    {
+      "description": "testExcludeHasPrecendence",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135,
+        143
+      ],
+      "code": "@Test\n    void testExcludeHasPrecendence() {\n        ClassScreener screener = new ClassScreener();\n        screener.addAllowedClass(SOME_CLASS);\n        screener.addAllowedClass(\"!\" + SOME_CLASS);\n\n        Assertions.assertFalse(screener.matches(SOME_CLASS_FILENAME));\n        Assertions.assertFalse(screener.matches(SOME_CLASS_JARFILENAME));\n    }"
+    },
+    {
+      "description": "testPackageClassExclude",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145,
+        155
+      ],
+      "code": "@Test\n    void testPackageClassExclude() {\n        ClassScreener screener = new ClassScreener();\n        screener.addAllowedPackage(FOOBAR_PACKAGE);\n        screener.addAllowedClass(\"!\" + SOME_CLASS);\n\n        Assertions.assertFalse(screener.matches(SOME_CLASS_FILENAME));\n        Assertions.assertFalse(screener.matches(SOME_CLASS_JARFILENAME));\n        Assertions.assertTrue(screener.matches(SOME_OTHER_CLASS_FILENAME));\n        Assertions.assertTrue(screener.matches(SOME_OTHER_CLASS_JARFILENAME));\n    }"
+    },
+    {
+      "description": "testPrefixExcludesPackage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157,
+        167
+      ],
+      "code": "@Test\n    void testPrefixExcludesPackage() {\n        ClassScreener screener = new ClassScreener();\n        screener.addAllowedPackage(FOOBAR_PACKAGE);\n        screener.addAllowedPrefix(\"!com.\");\n\n        Assertions.assertFalse(screener.matches(SOME_CLASS_FILENAME));\n        Assertions.assertFalse(screener.matches(SOME_CLASS_JARFILENAME));\n        Assertions.assertFalse(screener.matches(SOME_OTHER_CLASS_FILENAME));\n        Assertions.assertFalse(screener.matches(SOME_OTHER_CLASS_JARFILENAME));\n    }"
+    }
+  ]
+}

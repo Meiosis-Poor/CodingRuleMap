@@ -1,0 +1,41 @@
+{
+  "name": "WarningSuppressor",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 122,
+  "branches": 15,
+  "apis": 21,
+  "test": [
+    {
+      "description": "testIssue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        13,
+        35
+      ],
+      "code": "@Test\n    void testIssue() {\n        performAnalysis(\"suppress/SuppressedBugs.class\");\n\n        assertMethodBugsCount(\"suppressedNpePrefix\", 0);\n\n        assertBugInMethodAtLine(\"NP_ALWAYS_NULL\", \"suppress.SuppressedBugs\", \"nonSuppressedNpePrefix\", 19);\n        assertBugInMethodAtLine(\"NP_LOAD_OF_KNOWN_NULL_VALUE\", \"suppress.SuppressedBugs\", \"nonSuppressedNpePrefix\", 19);\n        assertBugInMethod(\"US_USELESS_SUPPRESSION_ON_METHOD\", \"suppress.SuppressedBugs\", \"nonSuppressedNpePrefix\");\n\n        assertMethodBugsCount(\"suppressedNpeExact\", 0);\n\n        assertBugInMethodAtLine(\"NP_ALWAYS_NULL\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeExact\", 33);\n        assertBugInMethodAtLine(\"NP_LOAD_OF_KNOWN_NULL_VALUE\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeExact\", 33);\n        assertBugInMethodAtLine(\"NP_ALWAYS_NULL\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeExactDifferentCase\", 41);\n        assertBugInMethodAtLine(\"NP_LOAD_OF_KNOWN_NULL_VALUE\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeExactDifferentCase\", 41);\n        assertBugInMethod(\"US_USELESS_SUPPRESSION_ON_METHOD\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeExact\");\n\n        assertMethodBugsCount(\"suppressedNpeRegex\", 0);\n        assertBugInMethodAtLine(\"NP_ALWAYS_NULL\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeRegex\", 55);\n        assertBugInMethodAtLine(\"NP_LOAD_OF_KNOWN_NULL_VALUE\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeRegex\", 55);\n        assertBugInMethod(\"US_USELESS_SUPPRESSION_ON_METHOD\", \"suppress.SuppressedBugs\", \"nonSuppressedNpeRegex\");\n    }"
+    },
+    {
+      "description": "customSuppressAnnotationMethodTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37,
+        46
+      ],
+      "code": "@Test\n    void customSuppressAnnotationMethodTest() {\n        performAnalysis(\"suppress/custom/CustomSuppressedBugs.class\", \"suppress/custom/SuppressFBWarnings.class\");\n\n        assertMethodBugsCount(\"suppressedNpePrefix\", 0);\n\n        assertMethodBugsCount(\"suppressedNpeExact\", 0);\n\n        assertNoBugType(\"US_USELESS_SUPPRESSION_ON_FIELD\");\n    }"
+    },
+    {
+      "description": "customSuppressAnnotationFieldTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        48,
+        69
+      ],
+      "code": "@Test\n    void customSuppressAnnotationFieldTest() {\n        performAnalysis(\"suppress/custom/ExampleWithUnusedFields.class\", \"suppress/custom/SuppressFBWarnings.class\");\n\n        // Field with an useless suppression\n        assertBugAtField(\"US_USELESS_SUPPRESSION_ON_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", \"uselessSuppression\");\n        assertBugAtField(\"UUF_UNUSED_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", \"uselessSuppression\");\n\n        // Field with an unknown annotation and an useless annotation\n        assertBugAtField(\"US_USELESS_SUPPRESSION_ON_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", \"injectedAndUselessSuppression\");\n\n        // unused field\n        assertBugAtField(\"UUF_UNUSED_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", \"unused\");\n\n        // unused field with suppress annotation: no bug expected here\n        assertNoBugAtField(\"UUF_UNUSED_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", \"unusedSuppressed\");\n        assertNoBugAtField(\"US_USELESS_SUPPRESSION_ON_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", \"unusedSuppressed\");\n\n        // Check the bug counts for this class\n        assertBugInClassCount(\"US_USELESS_SUPPRESSION_ON_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", 2);\n        assertBugInClassCount(\"UUF_UNUSED_FIELD\", \"suppress.custom.ExampleWithUnusedFields\", 2);\n    }"
+    }
+  ]
+}

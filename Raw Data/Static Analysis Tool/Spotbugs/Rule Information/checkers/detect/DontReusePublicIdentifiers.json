@@ -1,0 +1,86 @@
+{
+  "name": "DontReusePublicIdentifiers",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 124,
+  "branches": 14,
+  "apis": 32,
+  "test": [
+    {
+      "description": "testShadowedPublicIdentifiersClassNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        13,
+        39
+      ],
+      "code": "@Test\n    void testShadowedPublicIdentifiersClassNames() {\n        // check shadowed public identifiers as standalone classes\n        performAnalysis(\"publicIdentifiers/standalone/InputStream.class\");\n        assertBugTypeCount(PI_CLASS_BUG, 1);\n        assertBugInClass(PI_CLASS_BUG, \"InputStream\");\n\n        // check shadowed public identifiers as inner classes\n        performAnalysis(\"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$Vector.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$Buffer.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$File.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$BigInteger.class\");\n        assertBugTypeCount(PI_CLASS_BUG, 4);\n        assertBugInClass(PI_CLASS_BUG, \"ShadowedPublicIdentifiersInnerClassNames$Vector\");\n        assertBugInClass(PI_CLASS_BUG, \"ShadowedPublicIdentifiersInnerClassNames$Buffer\");\n        assertBugInClass(PI_CLASS_BUG, \"ShadowedPublicIdentifiersInnerClassNames$File\");\n        assertBugInClass(PI_CLASS_BUG, \"ShadowedPublicIdentifiersInnerClassNames$BigInteger\");\n\n        // check shadowed public identifiers as repeatedly nested classes\n        performAnalysis(\"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames2.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames2$List.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames2$List$Node.class\");\n        assertBugTypeCount(PI_CLASS_BUG, 2);\n        assertBugInClass(PI_CLASS_BUG, \"ShadowedPublicIdentifiersInnerClassNames2$List\");\n        assertBugInClass(PI_CLASS_BUG, \"ShadowedPublicIdentifiersInnerClassNames2$List$Node\");\n    }"
+    },
+    {
+      "description": "testGoodPublicIdentifiersClassNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        41,
+        65
+      ],
+      "code": "@Test\n    void testGoodPublicIdentifiersClassNames() {\n        // check good public identifiers as standalone classes\n        performAnalysis(\"publicIdentifiers/standalone/GoodPublicIdentifiersStandaloneClassNames.class\");\n        assertZeroPublicIdentifierBug();\n\n        // check good public identifiers as inner classes\n        performAnalysis(\"publicIdentifiers/inner/GoodPublicIdentifiersInnerClassNames.class\",\n                \"publicIdentifiers/inner/GoodPublicIdentifiersInnerClassNames$MyBuffer.class\",\n                \"publicIdentifiers/inner/GoodPublicIdentifiersInnerClassNames$MyFile.class\",\n                \"publicIdentifiers/inner/GoodPublicIdentifiersInnerClassNames$MyBigInteger.class\");\n        assertZeroPublicIdentifierBug();\n\n        // check inner classes imported from the standard library\n        performAnalysis(\"publicIdentifiers/inner/GoodPublicIdentifiersInnerClassNames2.class\");\n        assertZeroPublicIdentifierBug();\n\n        performAnalysis(\"publicIdentifiers/inner/GoodPublicIdentifiersInnerClassNames3.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$BigInteger.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$Buffer.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$File.class\",\n                \"publicIdentifiers/inner/ShadowedPublicIdentifiersInnerClassNames$Vector.class\");\n        assertZeroPublicIdentifierBugInClass(\"GoodPublicIdentifiersInnerClassNames3\");\n    }"
+    },
+    {
+      "description": "testShadowedPublicIdentifiersFieldNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        67,
+        73
+      ],
+      "code": "@Test\n    void testShadowedPublicIdentifiersFieldNames() {\n        performAnalysis(\"publicIdentifiers/ShadowedPublicIdentifiersFieldNames.class\");\n        assertBugTypeCount(PI_FIELD_BUG, 2);\n        assertBugAtField(PI_FIELD_BUG, \"ShadowedPublicIdentifiersFieldNames\", \"String\");\n        assertBugAtField(PI_FIELD_BUG, \"ShadowedPublicIdentifiersFieldNames\", \"Integer\");\n    }"
+    },
+    {
+      "description": "testGoodPublicIdentifiersFieldNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75,
+        79
+      ],
+      "code": "@Test\n    void testGoodPublicIdentifiersFieldNames() {\n        performAnalysis(\"publicIdentifiers/GoodPublicIdentifiersFieldNames.class\");\n        assertZeroPublicIdentifierBug();\n    }"
+    },
+    {
+      "description": "testShadowedPublicIdentifiersMethodNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81,
+        89
+      ],
+      "code": "@Test\n    void testShadowedPublicIdentifiersMethodNames() {\n        performAnalysis(\"publicIdentifiers/ShadowedPublicIdentifiersMethodNames.class\");\n        assertBugTypeCount(PI_METHOD_BUG, 3);\n\n        assertBugInMethodAtLine(PI_METHOD_BUG, \"ShadowedPublicIdentifiersMethodNames\", \"InputStream\", 5);\n        assertBugInMethodAtLine(PI_METHOD_BUG, \"ShadowedPublicIdentifiersMethodNames\", \"Integer\", 9);\n        assertBugInMethodAtLine(PI_METHOD_BUG, \"ShadowedPublicIdentifiersMethodNames\", \"ArrayList\", 14);\n    }"
+    },
+    {
+      "description": "testGoodPublicIdentifiersMethodNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91,
+        102
+      ],
+      "code": "@Test\n    void testGoodPublicIdentifiersMethodNames() {\n        performAnalysis(\"publicIdentifiers/GoodPublicIdentifiersMethodNames.class\");\n        assertZeroPublicIdentifierBug();\n\n        // check that the overridden method is detected only once inside superclass\n        performAnalysis(\"publicIdentifiers/ShadowedPublicIdentifiersOverriddenMethods.class\",\n                \"publicIdentifiers/ShadowedPublicIdentifiersOverridableMethods.class\");\n\n        assertBugTypeCount(PI_METHOD_BUG, 1);\n        assertBugInMethodAtLine(PI_METHOD_BUG, \"ShadowedPublicIdentifiersOverridableMethods\", \"ArrayList\", 5);\n    }"
+    },
+    {
+      "description": "testShadowedPublicIdentifiersVariableNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        104,
+        112
+      ],
+      "code": "@Test\n    void testShadowedPublicIdentifiersVariableNames() {\n        performAnalysis(\"publicIdentifiers/ShadowedPublicIdentifiersVariableNames.class\");\n        assertBugTypeCount(PI_VARIABLE_BUG, 3);\n\n        assertBugInMethodAtVariable(PI_VARIABLE_BUG, \"ShadowedPublicIdentifiersVariableNames\", \"containsShadowedLocalVariable1\", \"ArrayList\");\n        assertBugInMethodAtVariable(PI_VARIABLE_BUG, \"ShadowedPublicIdentifiersVariableNames\", \"containsShadowedLocalVariable2\", \"Integer\");\n        assertBugInMethodAtVariable(PI_VARIABLE_BUG, \"ShadowedPublicIdentifiersVariableNames\", \"containsShadowedLocalVariable3\", \"File\");\n    }"
+    },
+    {
+      "description": "testGoodPublicIdentifiersVariableNames",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114,
+        118
+      ],
+      "code": "@Test\n    void testGoodPublicIdentifiersVariableNames() {\n        performAnalysis(\"publicIdentifiers/GoodPublicIdentifiersVariableNames.class\");\n        assertZeroPublicIdentifierBug();\n    }"
+    }
+  ]
+}

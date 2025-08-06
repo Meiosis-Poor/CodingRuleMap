@@ -1,0 +1,41 @@
+{
+  "name": "VersionInsensitiveBugComparator",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 288,
+  "branches": 36,
+  "apis": 64,
+  "test": [
+    {
+      "description": "compare1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        74,
+        93
+      ],
+      "code": "@Test\n    void compare1() {\n        BugInstance lbi = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n        BugInstance rbi = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n\n        List<BugAnnotation> llist = new LinkedList<>();\n        llist.add(new StringAnnotation(\"ABC\"));\n        llist.add(new SourceLineAnnotation(\"A\", \"B\", 1, 2, 3, 4));\n        llist.add(new MyBugAnnotation(\"ABC\"));\n        lbi.addAnnotations(llist);\n\n        List<BugAnnotation> rlist = new LinkedList<>();\n        rlist.add(new StringAnnotation(\"ABC\"));\n        rlist.add(new SourceLineAnnotation(\"A\", \"B\", 1, 2, 3, 4));\n        rlist.add(new MyBugAnnotation(\"DEF\"));\n        rbi.addAnnotations(rlist);\n\n        VersionInsensitiveBugComparator cmp = new VersionInsensitiveBugComparator();\n        Assertions.assertEquals(cmp.compare(lbi, rbi), -cmp.compare(rbi, lbi));\n    }"
+    },
+    {
+      "description": "compare2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        95,
+        124
+      ],
+      "code": "@Test\n    void compare2() {\n        BugInstance bi1 = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n        BugInstance bi2 = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n        BugInstance bi3 = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n\n        List<BugAnnotation> list1 = new LinkedList<>();\n        list1.add(new StringAnnotation(\"ABC\"));\n        list1.add(new MyBugAnnotation(\"ABC\"));\n        list1.add(new SourceLineAnnotation(\"A\", \"B\", 1, 2, 3, 4));\n        bi1.addAnnotations(list1);\n\n        List<BugAnnotation> list2 = new LinkedList<>();\n        list2.add(new MyBugAnnotation(\"DEF\"));\n        list2.add(new StringAnnotation(\"ABC\"));\n        list2.add(new SourceLineAnnotation(\"A\", \"B\", 1, 2, 3, 4));\n        bi2.addAnnotations(list2);\n\n        List<BugAnnotation> list3 = new LinkedList<>();\n        list3.add(new MyBugAnnotation(\"GHI\"));\n        bi3.addAnnotations(list3);\n\n        VersionInsensitiveBugComparator cmp = new VersionInsensitiveBugComparator();\n        // Because\n        Assertions.assertTrue(cmp.compare(bi3, bi2) > 0);\n        Assertions.assertTrue(cmp.compare(bi2, bi1) > 0);\n\n        // So\n        Assertions.assertTrue(cmp.compare(bi3, bi1) > 0);\n    }"
+    },
+    {
+      "description": "compare3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        126,
+        155
+      ],
+      "code": "@Test\n    void compare3() {\n        BugInstance bi1 = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n        BugInstance bi2 = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n        BugInstance bi3 = new BugInstance(\"NP_NULL_ON_SOME_PATH\", Priorities.NORMAL_PRIORITY);\n\n        List<BugAnnotation> list1 = new LinkedList<>();\n        list1.add(new MyBugAnnotation(\"ABC\"));\n        list1.add(new StringAnnotation(\"ABC\"));\n        list1.add(new SourceLineAnnotation(\"A\", \"B\", 1, 2, 3, 4));\n        bi1.addAnnotations(list1);\n\n        List<BugAnnotation> list2 = new LinkedList<>();\n        list2.add(new MyBugAnnotation(\"ABC\"));\n        list2.add(new StringAnnotation(\"ABC\"));\n        list2.add(new SourceLineAnnotation(\"A\", \"B\", 1, 2, 3, 4));\n        bi2.addAnnotations(list2);\n\n        List<BugAnnotation> list3 = new LinkedList<>();\n        list3.add(new MyBugAnnotation(\"GHI\"));\n        bi3.addAnnotations(list3);\n\n        VersionInsensitiveBugComparator cmp = new VersionInsensitiveBugComparator();\n\n        // because\n        Assertions.assertTrue(cmp.compare(bi1, bi2) == 0);\n        Assertions.assertTrue(cmp.compare(bi1, bi3) < 0);\n        // so\n        Assertions.assertTrue(cmp.compare(bi2, bi3) < 0);\n    }"
+    }
+  ]
+}

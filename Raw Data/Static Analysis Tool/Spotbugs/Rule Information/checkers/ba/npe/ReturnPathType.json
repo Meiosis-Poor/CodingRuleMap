@@ -1,0 +1,104 @@
+{
+  "name": "ReturnPathType",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 158,
+  "branches": 16,
+  "apis": 7,
+  "test": [
+    {
+      "description": "testTop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50,
+        60
+      ],
+      "code": "@Test\n    void testTop() throws Exception {\n        Assertions.assertFalse(top.isValid());\n        Assertions.assertTrue(top.isTop());\n        try {\n            top.canReturnNormally();// should throw exception\n            Assertions.assertTrue(false);\n        } catch (DataflowAnalysisException e) {\n            // Good\n        }\n    }"
+    },
+    {
+      "description": "testCanReturnNormally",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        62,
+        66
+      ],
+      "code": "@Test\n    void testCanReturnNormally() throws Exception {\n        Assertions.assertTrue(normal.isValid());\n        Assertions.assertTrue(normal.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testCannotReturnNormally",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        68,
+        72
+      ],
+      "code": "@Test\n    void testCannotReturnNormally() throws Exception {\n        Assertions.assertTrue(abnormal.isValid());\n        Assertions.assertFalse(abnormal.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testMergeWithTop",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        74,
+        80
+      ],
+      "code": "@Test\n    void testMergeWithTop() throws Exception {\n        normal.mergeWith(top);\n        Assertions.assertTrue(normal.canReturnNormally());\n        abnormal.mergeWith(top);\n        Assertions.assertFalse(abnormal.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testTopMergeWithNormalReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82,
+        86
+      ],
+      "code": "@Test\n    void testTopMergeWithNormalReturn() throws Exception {\n        top.mergeWith(normal);\n        Assertions.assertTrue(top.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testTopMergeWithAbnormalReturn",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        88,
+        92
+      ],
+      "code": "@Test\n    void testTopMergeWithAbnormalReturn() throws Exception {\n        top.mergeWith(abnormal);\n        Assertions.assertFalse(top.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testNormalMergeWIthAbnormal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94,
+        98
+      ],
+      "code": "@Test\n    void testNormalMergeWIthAbnormal() throws Exception {\n        normal.mergeWith(abnormal);\n        Assertions.assertTrue(normal.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testAbnormalMergeWithNormal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        100,
+        104
+      ],
+      "code": "@Test\n    void testAbnormalMergeWithNormal() throws Exception {\n        abnormal.mergeWith(normal);\n        Assertions.assertTrue(abnormal.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testNormalMergeWithNormal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        106,
+        113
+      ],
+      "code": "@Test\n    void testNormalMergeWithNormal() throws Exception {\n        ReturnPathType otherNormal = new ReturnPathType();\n        otherNormal.setCanReturnNormally(true);\n\n        normal.mergeWith(otherNormal);\n        Assertions.assertTrue(normal.canReturnNormally());\n    }"
+    },
+    {
+      "description": "testAbnormalMergeWithAbnormal",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        115,
+        122
+      ],
+      "code": "@Test\n    void testAbnormalMergeWithAbnormal() throws Exception {\n        ReturnPathType otherAbnormal = new ReturnPathType();\n        otherAbnormal.setCanReturnNormally(false);\n\n        abnormal.mergeWith(otherAbnormal);\n        Assertions.assertFalse(abnormal.canReturnNormally());\n    }"
+    }
+  ]
+}

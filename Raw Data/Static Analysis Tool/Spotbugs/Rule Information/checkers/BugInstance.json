@@ -1,0 +1,104 @@
+{
+  "name": "BugInstance",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 2561,
+  "branches": 214,
+  "apis": 330,
+  "test": [
+    {
+      "description": "testWriteXML",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        43,
+        62
+      ],
+      "code": "@Test\n    void testWriteXML() throws Exception {\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 0);\n        // test all PackageMemberAnnotations\n        String className = \"ghIssues.issue543.ImmutableFoobarValue.class\";\n        ClassAnnotation classAnnotation = new ClassAnnotation(className);\n        classAnnotation.setJavaAnnotationNames(List.of(\"org.immutables.value.Generated\"));\n        bug.add(classAnnotation);\n\n        MethodAnnotation methodAnnotation = new MethodAnnotation(className, \"foo\", \"int\", false);\n        methodAnnotation.setJavaAnnotationNames(List.of(\"org.immutables.value.Generated\"));\n        bug.add(methodAnnotation);\n\n        FieldAnnotation fieldAnnotation = new FieldAnnotation(className, \"foo\", \"int\", false);\n        fieldAnnotation.setJavaAnnotationNames(List.of(\"org.immutables.value.Generated\"));\n        bug.add(fieldAnnotation);\n\n        String xml = writeXMLAndGetStringOutput(bug);\n        assertThat(xml, equalTo(EXPECTED_XML));\n    }"
+    },
+    {
+      "description": "testPropertyIterator",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64,
+        67
+      ],
+      "code": "@Test\n    void testPropertyIterator() {\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"A\", \"B\", \"C\" }, new String[] { \"a\", \"b\", \"c\" });\n    }"
+    },
+    {
+      "description": "testRemoveThroughIterator1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        69,
+        73
+      ],
+      "code": "@Test\n    void testRemoveThroughIterator1() {\n        removeThroughIterator(b.propertyIterator(), \"A\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"B\", \"C\" }, new String[] { \"b\", \"c\" });\n    }"
+    },
+    {
+      "description": "testRemoveThroughIterator2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75,
+        79
+      ],
+      "code": "@Test\n    void testRemoveThroughIterator2() {\n        removeThroughIterator(b.propertyIterator(), \"B\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"A\", \"C\" }, new String[] { \"a\", \"c\" });\n    }"
+    },
+    {
+      "description": "testRemoveThroughIterator3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        81,
+        85
+      ],
+      "code": "@Test\n    void testRemoveThroughIterator3() {\n        removeThroughIterator(b.propertyIterator(), \"C\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"A\", \"B\" }, new String[] { \"a\", \"b\" });\n    }"
+    },
+    {
+      "description": "testIterateTooFar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        87,
+        96
+      ],
+      "code": "@Test\n    void testIterateTooFar() {\n        Iterator<BugProperty> iter = b.propertyIterator();\n        get(iter);\n        get(iter);\n        get(iter);\n        Assertions.assertThrows(NoSuchElementException.class, () -> {\n            iter.next();\n        });\n    }"
+    },
+    {
+      "description": "testMultipleRemove",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98,
+        106
+      ],
+      "code": "@Test\n    void testMultipleRemove() {\n        Iterator<BugProperty> iter = b.propertyIterator();\n        iter.next();\n        iter.remove();\n        Assertions.assertThrows(IllegalStateException.class, () -> {\n            iter.remove();\n        });\n    }"
+    },
+    {
+      "description": "testRemoveBeforeNext",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108,
+        114
+      ],
+      "code": "@Test\n    void testRemoveBeforeNext() {\n        Iterator<BugProperty> iter = b.propertyIterator();\n        Assertions.assertThrows(IllegalStateException.class, () -> {\n            iter.remove();\n        });\n    }"
+    },
+    {
+      "description": "testRemoveAndAdd",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        116,
+        123
+      ],
+      "code": "@Test\n    void testRemoveAndAdd() {\n        removeThroughIterator(b.propertyIterator(), \"C\");\n        b.setProperty(\"D\", \"d\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"A\", \"B\", \"D\" }, new String[] { \"a\", \"b\", \"d\" });\n        b.setProperty(\"E\", \"e\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"A\", \"B\", \"D\", \"E\" }, new String[] { \"a\", \"b\", \"d\", \"e\" });\n    }"
+    },
+    {
+      "description": "testRemoveAll1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125,
+        133
+      ],
+      "code": "@Test\n    void testRemoveAll1() {\n        removeThroughIterator(b.propertyIterator(), \"A\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"B\", \"C\" }, new String[] { \"b\", \"c\" });\n        removeThroughIterator(b.propertyIterator(), \"B\");\n        checkPropertyIterator(b.propertyIterator(), new String[] { \"C\" }, new String[] { \"c\" });\n        removeThroughIterator(b.propertyIterator(), \"C\");\n        checkPropertyIterator(b.propertyIterator(), new String[0], new String[0]);\n    }"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "name": "BugCollectionAnalyser",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 172,
+  "branches": 2,
+  "apis": 57,
+  "test": [
+    {
+      "description": "testGetRulesGetResultsGetCweTaxonomyNoBug",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        21,
+        35
+      ],
+      "code": "@Test\n    void testGetRulesGetResultsGetCweTaxonomyNoBug() {\n        BugCollection bugCollection = new SortedBugCollection();\n\n        BugCollectionAnalyser analyser = new BugCollectionAnalyser(bugCollection);\n\n        /* test taxonomy */\n        assertThat(analyser.getCweTaxonomy(), nullValue());\n\n        /* test rules */\n        assertThat(analyser.getRules().size(), is(0));\n\n        /* test result */\n        assertThat(analyser.getResults().size(), is(0));\n    }"
+    },
+    {
+      "description": "testGetRulesGetResultsGetCweTaxonomyOneBugWithCwe",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37,
+        82
+      ],
+      "code": "@Test\n    void testGetRulesGetResultsGetCweTaxonomyOneBugWithCwe() {\n        int cweid = 78;\n        String type = \"TYPE\";\n\n        BugPattern bugPattern = new BugPattern(type, \"abbrev\", \"category\", false, \"shortDescription\", \"longDescription\",\n                \"detailText\", \"https://example.com/help.html\", cweid);\n        DetectorFactoryCollection.instance().registerBugPattern(bugPattern);\n\n        BugCollection bugCollection = new SortedBugCollection();\n\n        BugInstance bug1 = new BugInstance(bugPattern.getType(), bugPattern.getPriorityAdjustment()).addInt(10)\n                .addClass(\"SampleClass\");\n\n        SourceLineAnnotation lineAnnotation = new SourceLineAnnotation(\"SimpleTest\", \"Test.java\", 1, 3, 0, 0);\n        bug1.addSourceLine(lineAnnotation);\n\n        bugCollection.add(bug1);\n        bugCollection.bugsPopulated();\n\n        BugCollectionAnalyser analyser = new BugCollectionAnalyser(bugCollection);\n\n        /* test taxonomy */\n        JsonObject taxonomyJson = analyser.getCweTaxonomy();\n        JsonArray taxaJson = taxonomyJson.get(\"taxa\").getAsJsonArray();\n\n        assertThat(taxonomyJson.get(\"name\").getAsString(), is(\"CWE\"));\n\n        JsonObject taxonJson = taxaJson.get(0).getAsJsonObject();\n        assertThat(taxonJson.get(\"id\").getAsString(), is(String.valueOf(cweid)));\n        assertThat(taxonJson.get(\"defaultConfiguration\").getAsJsonObject().get(\"level\").getAsString(), is(\"error\"));\n\n        /* test rules */\n        JsonObject ruleJson = analyser.getRules().get(0).getAsJsonObject();\n        JsonObject cweRelationshipJson = ruleJson.get(\"relationships\").getAsJsonArray().get(0).getAsJsonObject();\n        JsonObject target = cweRelationshipJson.get(\"target\").getAsJsonObject();\n\n        assertThat(ruleJson.get(\"id\").getAsString(), is(type));\n        assertThat(target.get(\"id\").getAsString(), is(String.valueOf(cweid)));\n        assertThat(cweRelationshipJson.get(\"kinds\").getAsJsonArray().get(0).getAsString(), is(\"superset\"));\n\n        /* test result */\n        JsonObject resultJson = analyser.getResults().get(0).getAsJsonObject();\n\n        assertThat(resultJson.get(\"ruleId\").getAsString(), is(type));\n    }"
+    },
+    {
+      "description": "testGetRulesGetResultsGetCweTaxonomyOneBugNoCweId",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84,
+        118
+      ],
+      "code": "@Test\n    void testGetRulesGetResultsGetCweTaxonomyOneBugNoCweId() {\n        String type = \"TYPE\";\n\n        BugPattern bugPattern = new BugPattern(type, \"abbrev\", \"category\", false, \"shortDescription\",\n                \"longDescription\", \"detailText\", \"https://example.com/help.html\", 0);\n        DetectorFactoryCollection.instance().registerBugPattern(bugPattern);\n\n        BugCollection bugCollection = new SortedBugCollection();\n\n        BugInstance bug1 = new BugInstance(bugPattern.getType(), bugPattern.getPriorityAdjustment())\n                .addInt(10)\n                .addClass(\"SampleClass\");\n\n        SourceLineAnnotation lineAnnotation = new SourceLineAnnotation(\"SimpleTest\", \"Test.java\", 1, 3, 0, 0);\n        bug1.addSourceLine(lineAnnotation);\n\n        bugCollection.add(bug1);\n        bugCollection.bugsPopulated();\n\n        BugCollectionAnalyser analyser = new BugCollectionAnalyser(bugCollection);\n\n        /* test taxonomy */\n        assertThat(analyser.getCweTaxonomy(), nullValue());\n\n        /* test rules */\n        JsonObject ruleJson = analyser.getRules().get(0).getAsJsonObject();\n\n        assertThat(ruleJson.get(\"id\").getAsString(), is(type));\n\n        /* test result */\n        JsonObject resultJson = analyser.getResults().get(0).getAsJsonObject();\n\n        assertThat(resultJson.get(\"ruleId\").getAsString(), is(type));\n    }"
+    },
+    {
+      "description": "testGetRulesGetResultsGetCweTaxonomyMultipleBugsWithAndWithoutCweId",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        120,
+        172
+      ],
+      "code": "@Test\n    void testGetRulesGetResultsGetCweTaxonomyMultipleBugsWithAndWithoutCweId() {\n\n        BugPattern bugPattern = new BugPattern(\"TYPE_NO_CWE\", \"abbrev\", \"category\", false, \"shortDescription\",\n                \"longDescription\", \"detailText\", \"https://example.com/help.html\", 0);\n        BugPattern bugPattern2 = new BugPattern(\"TYPE_WITH_CWE\", \"abbrev\", \"category\", false, \"shortDescription\",\n                \"longDescription\",\n                \"detailText\", \"https://example.com/help.html\", 0);\n\n        DetectorFactoryCollection.instance().registerBugPattern(bugPattern);\n        DetectorFactoryCollection.instance().registerBugPattern(bugPattern2);\n\n        BugCollection bugCollection = new SortedBugCollection();\n\n        BugInstance bug = new BugInstance(bugPattern.getType(), bugPattern.getPriorityAdjustment()).addInt(10)\n                .addClass(\"SampleClass\");\n\n        BugInstance bug2 = new BugInstance(bugPattern2.getType(), bugPattern2.getPriorityAdjustment()).addInt(3)\n                .addClass(\"ExampleClass\");\n\n        BugInstance bug3 = new BugInstance(bugPattern.getType(), bugPattern.getPriorityAdjustment()).addInt(10)\n                .addClass(\"TestClass\");\n\n        BugInstance bug4 = new BugInstance(bugPattern2.getType(), bugPattern2.getPriorityAdjustment()).addInt(10)\n                .addClass(\"SimpleClass\");\n\n        BugInstance bug5 = new BugInstance(bugPattern2.getType(), bugPattern2.getPriorityAdjustment()).addInt(10)\n                .addClass(\"NoClass\");\n\n        bug.addSourceLine(new SourceLineAnnotation(\"SimpleTest\", \"Test.java\", 1, 3, 0, 0));\n        bug2.addSourceLine(new SourceLineAnnotation(\"SimpleTest2\", \"Test2.java\", 56, 3, 0, 0));\n        bug3.addSourceLine(new SourceLineAnnotation(\"SimpleTest3\", \"Test3.java\", 0, 0, 367, 956));\n        bug4.addSourceLine(new SourceLineAnnotation(\"SimpleTest\", \"Test4.java\", 4389, 47, 0, 0));\n        bug5.addSourceLine(new SourceLineAnnotation(\"SimpleTest\", \"Test5.java\", 0, 0, 1, 3));\n\n        bugCollection.add(bug);\n        bugCollection.add(bug2);\n        bugCollection.add(bug3);\n        bugCollection.add(bug4);\n        bugCollection.add(bug5);\n        bugCollection.bugsPopulated();\n\n        BugCollectionAnalyser analyser = new BugCollectionAnalyser(bugCollection);\n\n        /* test taxonomy */\n        assertThat(analyser.getCweTaxonomy(), nullValue());\n\n        /* test rules */\n        assertThat(analyser.getRules().size(), is(2));\n\n        /* test result */\n        assertThat(analyser.getResults().size(), is(5));\n    }"
+    }
+  ]
+}

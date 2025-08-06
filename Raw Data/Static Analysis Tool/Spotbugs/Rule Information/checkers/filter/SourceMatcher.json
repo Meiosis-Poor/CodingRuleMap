@@ -1,0 +1,59 @@
+{
+  "name": "SourceMatcher",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 86,
+  "branches": 8,
+  "apis": 15,
+  "test": [
+    {
+      "description": "writeXML",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65,
+        75
+      ],
+      "code": "@Test\n    void writeXML() throws Exception {\n        SourceMatcher sm = new SourceMatcher(fileName);\n\n        String xmlOutput = writeXMLAndGetStringOutput(sm, false);\n        assertEquals(\"<Source name=\\\"\" + fileName + \"\\\"/>\", xmlOutput);\n\n        sm = new SourceMatcher(fileName);\n        xmlOutput = writeXMLAndGetStringOutput(sm, true);\n        assertEquals(\"<Source name=\\\"\" + fileName + \"\\\" disabled=\\\"true\\\"/>\", xmlOutput);\n    }"
+    },
+    {
+      "description": "readXML",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        77,
+        95
+      ],
+      "code": "@Test\n    void readXML() throws Exception {\n        SourceMatcher sm = new SourceMatcher(fileName);\n\n        String xml = writeXMLAndGetStringOutput(sm, false);\n        xml = \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?>\"\n                + \"\\n<FindBugsFilter>\"\n                + \"\\n<Match>\"\n                + \"\\n\" + xml\n                + \"\\n</Match>\"\n                + \"\\n</FindBugsFilter>\\n\";\n\n        Filter filter = new Filter(new StringInputStream(xml));\n\n        assertFalse(filter.match(bug));\n\n        bug.addClass(\"bla\", fileName);\n        assertTrue(filter.match(bug));\n    }"
+    },
+    {
+      "description": "match",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        98,
+        131
+      ],
+      "code": "@Test\n    void match() {\n        SourceMatcher sm = new SourceMatcher(fileName);\n\n        // no source set: test incomplete data\n        assertFalse(sm.match(bug));\n\n        bug.addClass(\"bla\", null);\n        assertFalse(sm.match(bug));\n\n        ClassAnnotation primaryClass = bug.getPrimaryClass();\n        primaryClass.setSourceLines(SourceLineAnnotation.createUnknown(\"bla\", \"\"));\n        assertFalse(sm.match(bug));\n\n        // set right source file\n        primaryClass.setSourceLines(SourceLineAnnotation.createUnknown(\"bla\", fileName));\n\n        // exact match\n        assertTrue(sm.match(bug));\n\n        // regexp first part\n        sm = new SourceMatcher(\"~bla.*\");\n        assertTrue(sm.match(bug));\n\n        sm = new SourceMatcher(\"~blup.*\");\n        assertFalse(sm.match(bug));\n\n        // regexp second part\n        sm = new SourceMatcher(\"~.*\\\\.groovy\");\n        assertTrue(sm.match(bug));\n\n        sm = new SourceMatcher(\"~.*\\\\.java\");\n        assertFalse(sm.match(bug));\n    }"
+    },
+    {
+      "description": "testRealPathMatchWithRegexpAndProject",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133,
+        155
+      ],
+      "code": "@Test\n    void testRealPathMatchWithRegexpAndProject() {\n        // add this test class as the bug target\n        bug.addClass(\"SourceMatcherTest\", null);\n        ClassAnnotation primaryClass = bug.getPrimaryClass();\n\n        // set source file\n        primaryClass.setSourceLines(SourceLineAnnotation.createUnknown(\"SourceMatcherTest\", \"SourceMatcherTest.java\"));\n\n        // setup a testing project with source directory, as of right now the source directory should really exist!!\n        Project testProject = new Project();\n        String sourceDir = \"src/test/java/edu/umd/cs/findbugs/filter\";\n        testProject.addSourceDirs(Collections.singletonList(sourceDir));\n\n        // add test project to SourceLineAnnotation\n        SourceLineAnnotation.generateRelativeSource(new File(sourceDir), testProject);\n\n        // regexp match source folder with project\n        SourceMatcher sm = new SourceMatcher(\"~.*findbugs.*.java\");\n        assertTrue(sm.match(bug), \"The regex matches the source directory of the given java file\");\n        sm = new SourceMatcher(\"~.*notfound.*.java\");\n        assertFalse(sm.match(bug), \"The regex does not match the source directory of the given java file\");\n    }"
+    },
+    {
+      "description": "testRealPathMatchWithRegexpAndAnalysisContext",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157,
+        179
+      ],
+      "code": "@Test\n    void testRealPathMatchWithRegexpAndAnalysisContext() {\n        // add this test class as the bug target\n        bug.addClass(\"SourceMatcherTest\", null);\n        ClassAnnotation primaryClass = bug.getPrimaryClass();\n\n        // set source file\n        primaryClass.setSourceLines(SourceLineAnnotation.createUnknown(\"SourceMatcherTest\", \"SourceMatcherTest.java\"));\n\n        // setup a testing project with source directory, as of right now the source directory should really exist!!\n        Project testProject = new Project();\n        String sourceDir = \"src/test/java/edu/umd/cs/findbugs/filter\";\n        testProject.addSourceDirs(Collections.singletonList(sourceDir));\n\n        // setup test analysis context\n        AnalysisContext.setCurrentAnalysisContext(new AnalysisContext(testProject));\n\n        // regexp match source folder with analysis context\n        SourceMatcher sm = new SourceMatcher(\"~.*findbugs.*.java\");\n        assertTrue(sm.match(bug), \"The regex matches the source directory of the given java file\");\n        sm = new SourceMatcher(\"~.*notfound.*.java\");\n        assertFalse(sm.match(bug), \"The regex does not match the source directory of the given java file\");\n    }"
+    }
+  ]
+}

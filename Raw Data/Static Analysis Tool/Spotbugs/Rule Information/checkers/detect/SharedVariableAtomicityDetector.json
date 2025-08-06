@@ -1,0 +1,527 @@
+{
+  "name": "SharedVariableAtomicityDetector",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 256,
+  "branches": 29,
+  "apis": 67,
+  "test": [
+    {
+      "description": "bugForStalePrimitiveWriteWhenOtherMethodHasSynchronizedBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        11,
+        18
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenOtherMethodHasSynchronizedBlock() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlockAndBadVisibilityOnField.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"SynchronizedBlockAndBadVisibilityOnField\", \"shutdown\", 17);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenMethodHasIrrelevantSynchronizedBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        20,
+        27
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenMethodHasIrrelevantSynchronizedBlock() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlockWithBadVisibilityOnField.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"SynchronizedBlockWithBadVisibilityOnField\", \"shutdown\", 20);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenOtherMethodIsSynchronized",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29,
+        36
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenOtherMethodIsSynchronized() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedMethodAndBadVisibilityOnField.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"SynchronizedMethodAndBadVisibilityOnField\", \"shutdown\", 17);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenSetAndGetAreReordered",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        38,
+        45
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenSetAndGetAreReordered() {\n        performAnalysis(\"multithreaded/primitivewrite/FieldWithBadVisibilityReordered.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"FieldWithBadVisibilityReordered\", \"shutdown\", 7);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenClassHasTwoSetters",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47,
+        55
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenClassHasTwoSetters() {\n        performAnalysis(\"multithreaded/primitivewrite/FieldWithBadVisibilityTwoSetters.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 2);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"FieldWithBadVisibilityTwoSetters\", \"shutdown\", 18);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"FieldWithBadVisibilityTwoSetters\", \"up\", 22);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenClassExtendsThread",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        57,
+        64
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenClassExtendsThread() {\n        performAnalysis(\"multithreaded/primitivewrite/FieldWithBadVisibilityThread.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"FieldWithBadVisibilityThread\", \"shutdown\", 18);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenClassImplementsRunnable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        66,
+        73
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenClassImplementsRunnable() {\n        performAnalysis(\"multithreaded/primitivewrite/FieldWithBadVisibilityRunnable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"FieldWithBadVisibilityRunnable\", \"shutdown\", 18);\n    }"
+    },
+    {
+      "description": "bugForStalePrimitiveWriteWhenHavingSeparateMethods",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        75,
+        82
+      ],
+      "code": "@Test\n    void bugForStalePrimitiveWriteWhenHavingSeparateMethods() {\n        performAnalysis(\"multithreaded/primitivewrite/NonsynchronizedSeparateMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"NonsynchronizedSeparateMethod\", \"shutdown\", 23);\n    }"
+    },
+    {
+      "description": "noBugWhenHavingAllCallsSynced",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84,
+        90
+      ],
+      "code": "@Test\n    void noBugWhenHavingAllCallsSynced() {\n        performAnalysis(\"multithreaded/primitivewrite/AllCallSynchronizedSeparateMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugWhenIssue3428",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        92,
+        98
+      ],
+      "code": "@Test\n    void noBugWhenIssue3428() {\n        performAnalysis(\"multithreaded/primitivewrite/Issue3428.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugAtomicField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101,
+        107
+      ],
+      "code": "@Test\n    void noBugAtomicField() {\n        performAnalysis(\"multithreaded/primitivewrite/AtomicField.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSimpleVolatileField",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109,
+        115
+      ],
+      "code": "@Test\n    void noBugSimpleVolatileField() {\n        performAnalysis(\"multithreaded/primitivewrite/VolatileField.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        117,
+        123
+      ],
+      "code": "@Test\n    void noBugSynchronizedBlock() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlock.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        125,
+        131
+      ],
+      "code": "@Test\n    void noBugSynchronizedMethod() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedSeparateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        133,
+        139
+      ],
+      "code": "@Test\n    void noBugSynchronizedSeparateMethod() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedSeparateMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedBlockSeparateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        141,
+        147
+      ],
+      "code": "@Test\n    void noBugSynchronizedBlockSeparateMethod() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlockSeparateMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedLong",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        149,
+        155
+      ],
+      "code": "@Test\n    void noBugSynchronizedLong() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedLong.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugVolatileLong",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        157,
+        163
+      ],
+      "code": "@Test\n    void noBugVolatileLong() {\n        performAnalysis(\"multithreaded/primitivewrite/VolatileLong.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedBlockDouble",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        165,
+        171
+      ],
+      "code": "@Test\n    void noBugSynchronizedBlockDouble() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlockDouble.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedBlockDoubleFromOtherMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173,
+        179
+      ],
+      "code": "@Test\n    void noBugSynchronizedBlockDoubleFromOtherMethod() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlockDoubleFromOtherMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "reportFor64bitWriteNotAllReadSyncedOuter",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        181,
+        188
+      ],
+      "code": "@Test\n    void reportFor64bitWriteNotAllReadSyncedOuter() {\n        performAnalysis(\"multithreaded/primitivewrite/NotAllUsageSynchronizedDoubleOuter.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 1);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(WRITE_64BIT_BUG, \"NotAllUsageSynchronizedDoubleOuter\", \"setValue\", 7);\n    }"
+    },
+    {
+      "description": "reportFor64bitWriteNotSyncedWrite",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        190,
+        197
+      ],
+      "code": "@Test\n    void reportFor64bitWriteNotSyncedWrite() {\n        performAnalysis(\"multithreaded/primitivewrite/NonSynchronizedWriteLong.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 1);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(WRITE_64BIT_BUG, \"NonSynchronizedWriteLong\", \"setValue\", 7);\n    }"
+    },
+    {
+      "description": "reportFor64bitWriteNotAllSyncedWrite",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        199,
+        206
+      ],
+      "code": "@Test\n    void reportFor64bitWriteNotAllSyncedWrite() {\n        performAnalysis(\"multithreaded/primitivewrite/NotAllSynchronizedWriteLong.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 1);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(WRITE_64BIT_BUG, \"NotAllSynchronizedWriteLong\", \"setValue\", 7);\n    }"
+    },
+    {
+      "description": "reportFor64bitWriteNotSynced",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208,
+        215
+      ],
+      "code": "@Test\n    void reportFor64bitWriteNotSynced() {\n        performAnalysis(\"multithreaded/primitivewrite/NotSynchronizedLong.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 1);\n        assertBugTypeCount(OPS_BUG, 0);\n        assertBugInMethodAtLine(WRITE_64BIT_BUG, \"NotSynchronizedLong\", \"setValue\", 7);\n    }"
+    },
+    {
+      "description": "noBugSynchronizedBlockPrimitiveSeparateMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        217,
+        223
+      ],
+      "code": "@Test\n    void noBugSynchronizedBlockPrimitiveSeparateMethod() {\n        performAnalysis(\"multithreaded/primitivewrite/SynchronizedBlockPrimitiveSeparateMethod.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugCompoundOpOnAtomicVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        225,
+        231
+      ],
+      "code": "@Test\n    void noBugCompoundOpOnAtomicVariable() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundOperationOnSharedAtomicVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugCompoundOperationVolatileReadSyncWrite",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        233,
+        239
+      ],
+      "code": "@Test\n    void noBugCompoundOperationVolatileReadSyncWrite() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundAdditionOnSharedVolatileReadSyncWrite.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugCompoundOperationReadWriteLock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        241,
+        247
+      ],
+      "code": "@Test\n    void noBugCompoundOperationReadWriteLock() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundNegateReadWriteLock.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugCompoundOperationOnNotSharedVariable",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        249,
+        255
+      ],
+      "code": "@Test\n    void noBugCompoundOperationOnNotSharedVariable() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundDivisionOnVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugCompoundOperationInSynchronizedBlock",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        257,
+        263
+      ],
+      "code": "@Test\n    void noBugCompoundOperationInSynchronizedBlock() {\n        performAnalysis(\"multithreaded/compoundoperation/SynchronizedBlockCompoundOperationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugCompoundOperationInSynchronizedMethod",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        265,
+        271
+      ],
+      "code": "@Test\n    void noBugCompoundOperationInSynchronizedMethod() {\n        performAnalysis(\"multithreaded/compoundoperation/SynchronizedMethodCompoundOperationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugNotRealDependentOp",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        273,
+        279
+      ],
+      "code": "@Test\n    void noBugNotRealDependentOp() {\n        performAnalysis(\"multithreaded/compoundoperation/NotRealCompoundOp.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugNoCompoundOp",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        281,
+        287
+      ],
+      "code": "@Test\n    void noBugNoCompoundOp() {\n        performAnalysis(\"multithreaded/compoundoperation/NoCompoundOp.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "noBugInnerLocalVarFields",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        289,
+        296
+      ],
+      "code": "@Test\n    void noBugInnerLocalVarFields() {\n        // Inner local vars\n        performAnalysis(\"multithreaded/compoundoperation/InnerLocalVarFields.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 0);\n    }"
+    },
+    {
+      "description": "bugForCompoundPreDecrementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        299,
+        306
+      ],
+      "code": "@Test\n    void bugForCompoundPreDecrementation() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundPreDecrementationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundPreDecrementationOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundPostDecrementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        309,
+        316
+      ],
+      "code": "@Test\n    void bugForCompoundPostDecrementation() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundPostDecrementationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundPostDecrementationOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundPreIncrementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        319,
+        326
+      ],
+      "code": "@Test\n    void bugForCompoundPreIncrementation() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundPreIncrementationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundPreIncrementationOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundPostIncrementation",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        329,
+        337
+      ],
+      "code": "@Test\n    void bugForCompoundPostIncrementation() {\n        // The order of the functions is reversed\n        performAnalysis(\"multithreaded/compoundoperation/CompoundPostIncrementationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundPostIncrementationOnSharedVariable\", \"toggle\", 11);\n    }"
+    },
+    {
+      "description": "bugForCompoundIAND",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        340,
+        348
+      ],
+      "code": "@Test\n    void bugForCompoundIAND() {\n        // considered multithreaded because it has a volatile field (not the problematic)\n        performAnalysis(\"multithreaded/compoundoperation/CompoundIANDOperationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundIANDOperationOnSharedVariable\", \"toggle\", 8);\n    }"
+    },
+    {
+      "description": "bugForCompoundIOR",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        351,
+        359
+      ],
+      "code": "@Test\n    void bugForCompoundIOR() {\n        // considered multithreaded because it has a field (not the problematic) from the java.util.concurrent.atomic package\n        performAnalysis(\"multithreaded/compoundoperation/CompoundIOROperationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundIOROperationOnSharedVariable\", \"toggle\", 10);\n    }"
+    },
+    {
+      "description": "bugForCompoundLogicalRightShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        362,
+        370
+      ],
+      "code": "@Test\n    void bugForCompoundLogicalRightShift() {\n        // considered multithreaded because it extends Thread\n        performAnalysis(\"multithreaded/compoundoperation/CompoundLogicalRightShiftingOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundLogicalRightShiftingOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundRightShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        373,
+        381
+      ],
+      "code": "@Test\n    void bugForCompoundRightShift() {\n        // considered multithreaded because it has a method with synchronized block\n        performAnalysis(\"multithreaded/compoundoperation/CompoundRightShiftingOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundRightShiftingOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundLeftShift",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        384,
+        392
+      ],
+      "code": "@Test\n    void bugForCompoundLeftShift() {\n        // considered multithreaded because it has synchronized method\n        performAnalysis(\"multithreaded/compoundoperation/CompoundLeftShiftingOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundLeftShiftingOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundModulo",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        395,
+        403
+      ],
+      "code": "@Test\n    void bugForCompoundModulo() {\n        // considered multithreaded because it implements Runnable\n        performAnalysis(\"multithreaded/compoundoperation/CompoundModuloOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundModuloOnSharedVariable\", \"run\", 8);\n    }"
+    },
+    {
+      "description": "bugForCompoundMultiplication",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        406,
+        413
+      ],
+      "code": "@Test\n    void bugForCompoundMultiplication() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundMultiplicationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundMultiplicationOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundDivision",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        416,
+        423
+      ],
+      "code": "@Test\n    void bugForCompoundDivision() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundDivisionOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundDivisionOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundSubtraction",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        426,
+        433
+      ],
+      "code": "@Test\n    void bugForCompoundSubtraction() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundSubtractionOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundSubtractionOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundAdditionOnVolatileVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        437,
+        445
+      ],
+      "code": "@Test\n    void bugForCompoundAdditionOnVolatileVar() {\n        // simply defining the field as volatile is not enough\n        performAnalysis(\"multithreaded/compoundoperation/CompoundAdditionOnSharedVolatileVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundAdditionOnSharedVolatileVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundXOR",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        448,
+        456
+      ],
+      "code": "@Test\n    void bugForCompoundXOR() {\n        // considered multithreaded because it has a field (not the problematic) with synchronized assignment\n        performAnalysis(\"multithreaded/compoundoperation/CompoundXOROperationOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundXOROperationOnSharedVariable\", \"toggle\", 12);\n    }"
+    },
+    {
+      "description": "bugForSimpleAdditionDependingOnPrevValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        459,
+        466
+      ],
+      "code": "@Test\n    void bugForSimpleAdditionDependingOnPrevValue() {\n        performAnalysis(\"multithreaded/compoundoperation/AdditionOnSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"AdditionOnSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForNegateDependingOnPrevValue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        469,
+        476
+      ],
+      "code": "@Test\n    void bugForNegateDependingOnPrevValue() {\n        performAnalysis(\"multithreaded/compoundoperation/NegateSharedVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"NegateSharedVariable\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundSubtractionComplex",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        479,
+        486
+      ],
+      "code": "@Test\n    void bugForCompoundSubtractionComplex() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundSubstractComplexExpression.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundSubstractComplexExpression\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundAdditionComplexWithAnotherVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        489,
+        496
+      ],
+      "code": "@Test\n    void bugForCompoundAdditionComplexWithAnotherVar() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundAdditionComplexExpressionWithAnotherVar.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundAdditionComplexExpressionWithAnotherVar\", \"toggle\", 8);\n    }"
+    },
+    {
+      "description": "bugForCompoundAdditionWithAnotherVar",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        499,
+        507
+      ],
+      "code": "@Test\n    void bugForCompoundAdditionWithAnotherVar() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundAdditionWithAnotherVar.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 1);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(PRIMITIVE_BUG, \"CompoundAdditionWithAnotherVar\", \"toggle\", 8);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundAdditionWithAnotherVar\", \"toggle\", 9);\n    }"
+    },
+    {
+      "description": "bugForCompoundSubstractionOfArg",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        510,
+        517
+      ],
+      "code": "@Test\n    void bugForCompoundSubstractionOfArg() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundSubstractionOfArg.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundSubstractionOfArg\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForCompoundSubstractionOfFunCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        520,
+        527
+      ],
+      "code": "@Test\n    void bugForCompoundSubstractionOfFunCall() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundSubstractionOfMethodReturnValue.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 1);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundSubstractionOfMethodReturnValue\", \"toggle\", 7);\n    }"
+    },
+    {
+      "description": "bugForTwoCompoundOperations",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        529,
+        537
+      ],
+      "code": "@Test\n    void bugForTwoCompoundOperations() {\n        performAnalysis(\"multithreaded/compoundoperation/CompoundDivideMultiplyOnVariable.class\");\n        assertBugTypeCount(PRIMITIVE_BUG, 0);\n        assertBugTypeCount(WRITE_64BIT_BUG, 0);\n        assertBugTypeCount(OPS_BUG, 2);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundDivideMultiplyOnVariable\", \"divide\", 7);\n        assertBugInMethodAtLine(OPS_BUG, \"CompoundDivideMultiplyOnVariable\", \"multiply\", 11);\n    }"
+    }
+  ]
+}

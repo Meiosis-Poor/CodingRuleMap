@@ -1,0 +1,41 @@
+{
+  "name": "FindUnreleasedLock",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 515,
+  "branches": 59,
+  "apis": 99,
+  "test": [
+    {
+      "description": "doesNotFindSSDBugIfLockIsClosedInAProperWay",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        8,
+        14
+      ],
+      "code": "@Test\n    void doesNotFindSSDBugIfLockIsClosedInAProperWay() {\n        performAnalysis(\"unreleasedLock/ProperlyClosedLock.class\");\n        assertNoBugType(\"UL_UNRELEASED_LOCK\");\n        assertNoBugType(\"UL_UNRELEASED_LOCK_EXCEPTION_PATH\");\n        assertNoBugType(\"CWO_CLOSED_WITHOUT_OPENED\");\n    }"
+    },
+    {
+      "description": "findPossibleUnlockCallWithoutLockCall",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        16,
+        23
+      ],
+      "code": "@Test\n    void findPossibleUnlockCallWithoutLockCall() {\n        performAnalysis(\"unreleasedLock/ThrowExceptionAndUnlockBeforeLock.class\");\n        assertNoBugType(\"UL_UNRELEASED_LOCK\");\n        assertNoBugType(\"UL_UNRELEASED_LOCK_EXCEPTION_PATH\");\n        assertBugTypeCount(\"CWO_CLOSED_WITHOUT_OPENED\", 1);\n        assertBugInMethod(\"CWO_CLOSED_WITHOUT_OPENED\", \"ThrowExceptionAndUnlockBeforeLock\", \"doSomething\");\n    }"
+    },
+    {
+      "description": "findUnresolvedLockOnExceptionalCondition",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        25,
+        32
+      ],
+      "code": "@Test\n    void findUnresolvedLockOnExceptionalCondition() {\n        performAnalysis(\"unreleasedLock/UnreleasedLock.class\");\n        assertNoBugType(\"UL_UNRELEASED_LOCK\");\n        assertNoBugType(\"CWO_CLOSED_WITHOUT_OPENED\");\n        assertBugTypeCount(\"UL_UNRELEASED_LOCK_EXCEPTION_PATH\", 1);\n        assertBugInMethod(\"UL_UNRELEASED_LOCK_EXCEPTION_PATH\", \"UnreleasedLock\", \"doSomething\");\n    }"
+    }
+  ]
+}

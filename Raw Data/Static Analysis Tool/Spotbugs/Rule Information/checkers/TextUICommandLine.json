@@ -1,0 +1,68 @@
+{
+  "name": "TextUICommandLine",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 859,
+  "branches": 144,
+  "apis": 228,
+  "test": [
+    {
+      "description": "handleOutputFileReturnsRemainingPart",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        18,
+        26
+      ],
+      "code": "@Test\n    void handleOutputFileReturnsRemainingPart() throws IOException {\n        Path file = Files.createTempFile(\"spotbugs\", \".xml\");\n        TextUICommandLine commandLine = new TextUICommandLine();\n        SortingBugReporter reporter = new SortingBugReporter();\n        String result = commandLine.handleOutputFilePath(reporter, \"withMessages=\" + file.toFile().getAbsolutePath());\n\n        assertThat(result, is(\"withMessages\"));\n    }"
+    },
+    {
+      "description": "handleOutputFilePathUsesGzip",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        28,
+        39
+      ],
+      "code": "@Test\n    void handleOutputFilePathUsesGzip() throws IOException {\n        Path file = Files.createTempFile(\"spotbugs\", \".xml.gz\");\n        TextUICommandLine commandLine = new TextUICommandLine();\n        SortingBugReporter reporter = new SortingBugReporter();\n        commandLine.handleOutputFilePath(reporter, \"withMessages=\" + file.toFile().getAbsolutePath());\n\n        reporter.finish();\n        byte[] written = Files.readAllBytes(file);\n        assertThat(\"GZip file should have 31 as its header\", written[0], is((byte) 31));\n        assertThat(\"GZip file should have -117 as its header\", written[1], is((byte) -117));\n    }"
+    },
+    {
+      "description": "handleOutputFileTruncatesExisting",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        41,
+        52
+      ],
+      "code": "@Test\n    void handleOutputFileTruncatesExisting() throws IOException {\n        Path file = Files.createTempFile(\"spotbugs\", \".html\");\n        Files.writeString(file, \"content\");\n        TextUICommandLine commandLine = new TextUICommandLine();\n        SortingBugReporter reporter = new SortingBugReporter();\n        commandLine.handleOutputFilePath(reporter, \"withMessages=\" + file.toFile().getAbsolutePath());\n\n        reporter.finish();\n        byte[] written = Files.readAllBytes(file);\n        assertThat(\"Output file should be truncated to 0 bytes\", written.length, is(0));\n    }"
+    },
+    {
+      "description": "htmlReportWithOption",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        54,
+        82
+      ],
+      "code": "@Test\n    void htmlReportWithOption() throws IOException {\n        Path xmlFile = Files.createTempFile(\"spotbugs\", \".xml\");\n        Path htmlFile = Files.createTempFile(\"spotbugs\", \".html\");\n        Path sarifFile = Files.createTempFile(\"spotbugs\", \".sarif\");\n        Path emacsFile = Files.createTempFile(\"spotbugs\", \".emacs\");\n        Path xdocsFile = Files.createTempFile(\"spotbugs\", \".xdocs\");\n        Path textFile = Files.createTempFile(\"spotbugs\", \".txt\");\n\n        TextUICommandLine commandLine = new TextUICommandLine();\n        try (FindBugs2 findbugs = new FindBugs2()) {\n            commandLine.handleOption(\"-xml\", \"=\" + xmlFile.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-html\", \"fancy-hist.xsl=\" + htmlFile.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-sarif\", \"=\" + sarifFile.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-emacs\", \"=\" + emacsFile.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-xdocs\", \"=\" + xdocsFile.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-sortByClass\", \"=\" + textFile.toFile().getAbsolutePath());\n            commandLine.configureEngine(findbugs);\n            findbugs.getBugReporter().finish();\n        }\n        String html = Files.readString(htmlFile, StandardCharsets.UTF_8);\n        assertThat(html, containsString(\"#historyTab\"));\n\n        assertTrue(xmlFile.toFile().isFile());\n        assertTrue(sarifFile.toFile().isFile());\n        assertTrue(emacsFile.toFile().isFile());\n        assertTrue(xdocsFile.toFile().isFile());\n        assertTrue(textFile.toFile().isFile());\n    }"
+    },
+    {
+      "description": "sharedOutputFilesAreNotDuplicated",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        84,
+        106
+      ],
+      "code": "@Test\n    void sharedOutputFilesAreNotDuplicated() throws Exception {\n        Path file = Files.createTempFile(\"spotbugs\", \".html\");\n        TextUICommandLine commandLine = new TextUICommandLine();\n        try (FindBugs2 findbugs = new FindBugs2()) {\n            commandLine.handleOption(\"-html\", \"fancy-hist.xsl=\" + file.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-xml\", \"withMessages=\" + file.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-xml\", \"=\" + file.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-sarif\", \"=\" + file.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-emacs\", \"=\" + file.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-xdocs\", \"=\" + file.toFile().getAbsolutePath());\n            commandLine.handleOption(\"-sortByClass\", \"=\" + file.toFile().getAbsolutePath());\n\n            commandLine.configureEngine(findbugs);\n            var configuredReporter = findbugs.getBugReporter();\n            // this is a horrible hack: This would be a BugReportDispatcher if there was more than one reporter\n            assertThat(configuredReporter, not(isA(BugReportDispatcher.class)));\n            configuredReporter.finish();\n        }\n        // we don't even *really* need to finish analysis, but it's better to explicitly check\n        String html = Files.readString(file, StandardCharsets.UTF_8);\n        assertThat(html, containsString(\"#historyTab\"));\n    }"
+    },
+    {
+      "description": "deduplicationUsesCanonicalPaths",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        108,
+        129
+      ],
+      "code": "@Test\n    void deduplicationUsesCanonicalPaths() throws Exception {\n        Path tmpdir = Files.createTempDirectory(\"spotbugs\");\n        Files.createDirectory(tmpdir.resolve(\"sibling1\"));\n        Files.createDirectory(tmpdir.resolve(\"sibling2\"));\n        Path file = Files.createTempFile(tmpdir.resolve(\"sibling1\"), \"tempFile\", \".xml\");\n        Path altFile = tmpdir.resolve(\"sibling2\").resolve(\"..\").resolve(file.getFileName());\n        TextUICommandLine commandLine = new TextUICommandLine();\n        try (FindBugs2 findbugs = new FindBugs2()) {\n            commandLine.handleOption(\"-xml\", \"=\" + file);\n            commandLine.handleOption(\"-xml\", \"=\" + altFile);\n\n            commandLine.configureEngine(findbugs);\n            var configuredReporter = findbugs.getBugReporter();\n            // this is a horrible hack: This would be a BugReportDispatcher if there was more than one reporter\n            assertThat(configuredReporter, not(isA(BugReportDispatcher.class)));\n            configuredReporter.finish();\n        }\n        // we don't even *really* need to finish analysis, but it's better to explicitly check\n        String xml = Files.readString(file, StandardCharsets.UTF_8);\n        assertThat(xml, containsString(\"BugCollection\"));\n    }"
+    }
+  ]
+}

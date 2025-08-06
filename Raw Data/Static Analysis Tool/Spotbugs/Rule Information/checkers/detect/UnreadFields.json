@@ -1,0 +1,32 @@
+{
+  "name": "UnreadFields",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 1327,
+  "branches": 242,
+  "apis": 479,
+  "test": [
+    {
+      "description": "bugInstanceShouldContainLineNumber",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        29,
+        37
+      ],
+      "code": "@Test\n    void bugInstanceShouldContainLineNumber(SpotBugsRunner spotbugs) {\n        BugCollection bugCollection = spotbugs.performAnalysis(Paths.get(\"../spotbugsTestCases/build/classes/java/main/ghIssues/Issue1368.class\"));\n        Optional<BugInstance> reportedBug = bugCollection.getCollection().stream()\n                .filter(bug -> \"UWF_NULL_FIELD\".equals(bug.getBugPattern().getType()))\n                .findAny();\n        assertTrue(reportedBug.isPresent());\n        assertThat(reportedBug.get().getPrimarySourceLineAnnotation().getStartLine(), is(not(-1)));\n    }"
+    },
+    {
+      "description": "unreadFieldInReflectiveClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        44,
+        59
+      ],
+      "code": "@Test\n    void unreadFieldInReflectiveClass(SpotBugsRunner spotbugs) {\n        BugCollection bugCollection = spotbugs.performAnalysis(Paths.get(\"../spotbugsTestCases/build/classes/java/main/ghIssues/Issue2325.class\"));\n\n        Optional<BugInstance> reportedBug = bugCollection.getCollection().stream()\n                .filter(bug -> \"UUF_UNUSED_FIELD\".equals(bug.getBugPattern().getType())).findAny();\n        assertTrue(reportedBug.isPresent(), \"Expected unused field bug, but got: \" + bugCollection.getCollection());\n        assertEquals(Priorities.LOW_PRIORITY, reportedBug.get().getPriority(),\n                \"Expected low priority unused field bug\");\n\n        reportedBug = bugCollection.getCollection().stream()\n                .filter(bug -> \"URF_UNREAD_FIELD\".equals(bug.getBugPattern().getType())).findAny();\n        assertTrue(reportedBug.isPresent(), \"Expected unread field bug, but got: \" + bugCollection.getCollection());\n        assertEquals(Priorities.LOW_PRIORITY, reportedBug.get().getPriority(),\n                \"Expected low priority unread field bug\");\n    }"
+    }
+  ]
+}

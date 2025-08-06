@@ -1,0 +1,23 @@
+{
+  "name": "Placeholder",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 39,
+  "branches": 2,
+  "apis": 6,
+  "test": [
+    {
+      "description": "testFormatWithKey",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        63,
+        89
+      ],
+      "code": "@Test\n    void testFormatWithKey() throws ClassNotFoundException {\n        BugPattern bugPattern = new BugPattern(\"BUG_TYPE\", \"abbrev\", \"category\", false, \"describing about this bug type...\",\n                \"describing about this bug type with value {0.givenClass} and {1.name}\", \"detailText\", null, 0);\n        DetectorFactoryCollection.instance().registerBugPattern(bugPattern);\n\n        JavaClass clazz = Repository.lookupClass(PlaceholderTest.class);\n        Method method = Arrays.stream(clazz.getMethods()).filter(m -> m.getName().equals(\"testFormatWithKey\")).findFirst().get();\n        reporter.reportBug(new BugInstance(bugPattern.getType(), bugPattern.getPriorityAdjustment()).addClassAndMethod(clazz, method));\n        reporter.finish();\n\n        String json = writer.toString();\n        JsonObject jsonObject = new Gson().fromJson(json, JsonObject.class);\n        JsonObject run = (JsonObject) jsonObject.getAsJsonArray(\"runs\").get(0);\n        JsonArray rules = run.getAsJsonObject(\"tool\").getAsJsonObject(\"driver\").getAsJsonArray(\"rules\");\n        String defaultText = ((JsonObject) rules.get(0)).getAsJsonObject(\"messageStrings\").getAsJsonObject(\"default\").get(\"text\").getAsString();\n        assertThat(\"key in placeholders are removed\",\n                defaultText, is(\"describing about this bug type with value {0} and {1}.\"));\n\n        JsonArray results = run.getAsJsonArray(\"results\");\n        JsonObject message = ((JsonObject) results.get(0)).getAsJsonObject(\"message\");\n        JsonArray arguments = message.getAsJsonArray(\"arguments\");\n        assertThat(\"BugAnnotation has been formatted by the key in placeholder\",\n                arguments.get(0).getAsString(), is(\"PlaceholderTest\"));\n        assertThat(\"BugAnnotation has been formatted by the key in placeholder\",\n                arguments.get(1).getAsString(), is(\"testFormatWithKey\"));\n    }"
+    }
+  ]
+}

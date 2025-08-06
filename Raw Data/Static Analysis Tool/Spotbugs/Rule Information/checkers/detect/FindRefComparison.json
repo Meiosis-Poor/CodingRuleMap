@@ -1,0 +1,50 @@
+{
+  "name": "FindRefComparison",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 1367,
+  "branches": 140,
+  "apis": 328,
+  "test": [
+    {
+      "description": "testComparisonsNotEnabled",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        25,
+        35
+      ],
+      "code": "@Test\n    void testComparisonsNotEnabled() {\n        // When there is no priority adjustment, and we enable ref comparison for\n        // all, we only get an integer ref comparison bug.\n        setPriorityAdjustment(0); // reset priority\n        SystemProperties.setProperty(\"findbugs.refcomp.reportAll\", \"true\"); // enable ref comparison\n\n        performAnalysisForRefComp();\n        assertBugTypeCount(\"RC_REF_COMPARISON\", 1);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"integerBadComparison\", 5, Confidence.HIGH);\n    }"
+    },
+    {
+      "description": "testComparisonsWhenPropertyUnset",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37,
+        48
+      ],
+      "code": "@Test\n    void testComparisonsWhenPropertyUnset() {\n        // When raising the priority, we get all ref comparison bugs.\n        setPriorityAdjustment(-1); // raise priority\n\n        SystemProperties.removeProperty(\"findbugs.refcomp.reportAll\");\n        performAnalysisForRefComp();\n        assertBugTypeCount(\"RC_REF_COMPARISON\", 3);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"integerBadComparison\", 5, Confidence.HIGH);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"myClass1BadComparison\", 13, Confidence.LOW);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"myClass2BadComparison\", 21, Confidence.LOW);\n    }"
+    },
+    {
+      "description": "testComparisonsWhenReportAllIsNotEnabled",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        50,
+        58
+      ],
+      "code": "@Test\n    void testComparisonsWhenReportAllIsNotEnabled() {\n        setPriorityAdjustment(-1); // raise priority\n        SystemProperties.setProperty(\"findbugs.refcomp.reportAll\", \"false\");\n\n        performAnalysis(\"RefComparisons.class\");\n        assertBugTypeCount(\"RC_REF_COMPARISON\", 1);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"integerBadComparison\", 5, Confidence.HIGH);\n    }"
+    },
+    {
+      "description": "testComparisonsWhenReportAllIsEnabled",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        60,
+        70
+      ],
+      "code": "@Test\n    void testComparisonsWhenReportAllIsEnabled() {\n        setPriorityAdjustment(-1); // raise priority\n        SystemProperties.setProperty(\"findbugs.refcomp.reportAll\", \"true\");\n\n        performAnalysisForRefComp();\n        assertBugTypeCount(\"RC_REF_COMPARISON\", 3);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"integerBadComparison\", 5, Confidence.HIGH);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"myClass1BadComparison\", 13, Confidence.LOW);\n        assertBugInMethodAtLineWithConfidence(\"RC_REF_COMPARISON\", \"RefComparisons\", \"myClass2BadComparison\", 21, Confidence.LOW);\n    }"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "name": "ProjectFilterSettings",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 545,
+  "branches": 54,
+  "apis": 85,
+  "test": [
+    {
+      "description": "testPlainPrio",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65,
+        68
+      ],
+      "code": "@Test\n    void testPlainPrio() {\n        Assertions.assertTrue(plain.getMinPriority().equals(ProjectFilterSettings.DEFAULT_PRIORITY));\n    }"
+    },
+    {
+      "description": "testPlainCategories",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70,
+        80
+      ],
+      "code": "@Test\n    void testPlainCategories() {\n        int count = 0;\n        for (String category : DetectorFactoryCollection.instance().getBugCategories()) {\n            if (!category.equals(\"NOISE\")) {\n                Assertions.assertTrue(plain.containsCategory(category));\n                ++count;\n            }\n        }\n        Assertions.assertEquals(count, plain.getActiveCategorySet().size());\n    }"
+    },
+    {
+      "description": "testAddCategory",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        82,
+        92
+      ],
+      "code": "@Test\n    void testAddCategory() {\n        Assertions.assertTrue(plain.containsCategory(\"FAKE_CATEGORY\")); // unknown\n        // categories\n        // should be\n        // unhidden\n        // by\n        // default\n        plain.addCategory(\"FAKE_CATEGORY\");\n        Assertions.assertTrue(plain.containsCategory(\"FAKE_CATEGORY\"));\n    }"
+    },
+    {
+      "description": "testRemoveCategory",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        94,
+        99
+      ],
+      "code": "@Test\n    void testRemoveCategory() {\n        Assertions.assertTrue(plain.containsCategory(\"MALICIOUS_CODE\"));\n        plain.removeCategory(\"MALICIOUS_CODE\");\n        Assertions.assertFalse(plain.containsCategory(\"MALICIOUS_CODE\"));\n    }"
+    },
+    {
+      "description": "testSetMinPriority",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101,
+        112
+      ],
+      "code": "@Test\n    void testSetMinPriority() {\n        plain.setMinPriority(\"High\");\n        Assertions.assertTrue(plain.getMinPriority().equals(\"High\"));\n        Assertions.assertTrue(plain.getMinPriorityAsInt() == Priorities.HIGH_PRIORITY);\n        plain.setMinPriority(\"Medium\");\n        Assertions.assertTrue(plain.getMinPriority().equals(\"Medium\"));\n        Assertions.assertTrue(plain.getMinPriorityAsInt() == Priorities.NORMAL_PRIORITY);\n        plain.setMinPriority(\"Low\");\n        Assertions.assertTrue(plain.getMinPriority().equals(\"Low\"));\n        Assertions.assertTrue(plain.getMinPriorityAsInt() == Priorities.LOW_PRIORITY);\n    }"
+    },
+    {
+      "description": "testEquals",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        114,
+        132
+      ],
+      "code": "@Test\n    void testEquals() {\n        Assertions.assertEquals(plain, otherPlain);\n\n        Assertions.assertFalse(plain.equals(changed));\n        Assertions.assertFalse(changed.equals(plain));\n\n        Assertions.assertFalse(plain.equals(changed2));\n        Assertions.assertFalse(changed2.equals(plain));\n\n        // The activeBugCategorySet doesn't matter for equals(), only\n        // the hiddenBugCategorySet does (along with minPriority and\n        // displayFalseWarnings) so 'plain' and 'changed3' should test equal.\n        Assertions.assertTrue(plain.equals(changed3));\n        Assertions.assertTrue(changed3.equals(plain));\n\n        Assertions.assertFalse(plain.equals(changed4));\n        Assertions.assertFalse(changed4.equals(plain));\n    }"
+    },
+    {
+      "description": "testEncodeDecode",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        134,
+        143
+      ],
+      "code": "@Test\n    void testEncodeDecode() {\n        ProjectFilterSettings copyOfPlain = ProjectFilterSettings.fromEncodedString(plain.toEncodedString());\n        ProjectFilterSettings.hiddenFromEncodedString(copyOfPlain, plain.hiddenToEncodedString());\n        Assertions.assertEquals(plain, copyOfPlain);\n\n        ProjectFilterSettings copyOfChanged4 = ProjectFilterSettings.fromEncodedString(changed4.toEncodedString());\n        ProjectFilterSettings.hiddenFromEncodedString(copyOfChanged4, changed4.hiddenToEncodedString());\n        Assertions.assertEquals(changed4, copyOfChanged4);\n    }"
+    },
+    {
+      "description": "testDisplayFalseWarnings",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        145,
+        159
+      ],
+      "code": "@Test\n    void testDisplayFalseWarnings() {\n        Assertions.assertEquals(plain, otherPlain);\n\n        Assertions.assertFalse(plain.displayFalseWarnings());\n        plain.setDisplayFalseWarnings(true);\n\n        Assertions.assertFalse(plain.equals(otherPlain));\n\n        ProjectFilterSettings copyOfPlain = ProjectFilterSettings.fromEncodedString(plain.toEncodedString());\n\n        Assertions.assertTrue(copyOfPlain.displayFalseWarnings());\n        Assertions.assertEquals(copyOfPlain, plain);\n        Assertions.assertEquals(plain, copyOfPlain);\n    }"
+    }
+  ]
+}

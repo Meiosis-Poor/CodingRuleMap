@@ -1,0 +1,77 @@
+{
+  "name": "AnnotationMatcher",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 72,
+  "branches": 7,
+  "apis": 11,
+  "test": [
+    {
+      "description": "writeXML",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        71,
+        81
+      ],
+      "code": "@Test\n    void writeXML() throws Exception {\n        AnnotationMatcher sm = new AnnotationMatcher(annotationName);\n\n        String xmlOutput = writeXMLAndGetStringOutput(sm, false);\n        assertEquals(\"<Annotation name=\\\"\" + annotationName + \"\\\"/>\", xmlOutput);\n\n        sm = new AnnotationMatcher(annotationName);\n        xmlOutput = writeXMLAndGetStringOutput(sm, true);\n        assertEquals(\"<Annotation name=\\\"\" + annotationName + \"\\\" disabled=\\\"true\\\"/>\", xmlOutput);\n    }"
+    },
+    {
+      "description": "testMatchMissingPrimaryAnnotationIsFalse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83,
+        89
+      ],
+      "code": "@Test\n    void testMatchMissingPrimaryAnnotationIsFalse() throws Exception {\n        Filter filter = readFilterFromXML();\n        // no primary annotation; should not match\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 0);\n        assertFalse(filter.match(bug));\n    }"
+    },
+    {
+      "description": "testMatchMissingJavaAnnotationIsFalse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        91,
+        99
+      ],
+      "code": "@Test\n    void testMatchMissingJavaAnnotationIsFalse() throws Exception {\n        Filter filter = readFilterFromXML();\n        // added primary class annotation; should not match b.c. missing java annotation\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 0);\n        ClassAnnotation buggyClass = new ClassAnnotation(\"BuggyClass\", \"BuggyClass.java\");\n        bug.add(buggyClass);\n        assertFalse(filter.match(bug));\n    }"
+    },
+    {
+      "description": "testMatchOtherJavaAnnotationIsFalse",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        101,
+        110
+      ],
+      "code": "@Test\n    void testMatchOtherJavaAnnotationIsFalse() throws Exception {\n        Filter filter = readFilterFromXML();\n        // added primary class annotation; should not match b.c. other java annotation\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 0);\n        ClassAnnotation buggyClass = new ClassAnnotation(\"BuggyClass\", \"BuggyClass.java\");\n        buggyClass.setJavaAnnotationNames(Arrays.asList(\"org.immutables.value.Other\"));\n        bug.add(buggyClass);\n        assertFalse(filter.match(bug));\n    }"
+    },
+    {
+      "description": "testMatchJavaAnnotationIsTrue",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        112,
+        121
+      ],
+      "code": "@Test\n    void testMatchJavaAnnotationIsTrue() throws Exception {\n        Filter filter = readFilterFromXML();\n        // added primary class annotation; should match b.c. has java annotation\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 0);\n        ClassAnnotation buggyClass = new ClassAnnotation(\"AnnotatedBuggyClass\", \"AnnotatedBuggyClass.java\");\n        buggyClass.setJavaAnnotationNames(Arrays.asList(annotationName));\n        bug.add(buggyClass);\n        assertTrue(filter.match(bug));\n    }"
+    },
+    {
+      "description": "testPerformAnalysis",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        138,
+        157
+      ],
+      "code": "@Test\n    void testPerformAnalysis(SpotBugsRunner spotbugs) {\n        BugCollection bugCollection = spotbugs.performAnalysis(\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/org/immutables/value/Generated.class\"),\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/org/immutables/value/Value.class\"),\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/org/immutables/value/Value$Immutable.class\"),\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/ghIssues/issue543/FoobarValue.class\"),\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/ghIssues/issue543/ImmutableFoobarValue.class\"),\n                Paths.get(\n                        \"../spotbugsTestCases/build/classes/java/main/ghIssues/issue543/ImmutableFoobarValue$1.class\"),\n                Paths.get(\n                        \"../spotbugsTestCases/build/classes/java/main/ghIssues/issue543/ImmutableFoobarValue$Builder.class\"));\n\n        AnnotationMatcher bugInstanceMatcher = new AnnotationMatcher(annotationName);\n        long numberOfMatchedBugs = bugCollection.getCollection().stream()\n                .filter(bugInstanceMatcher::match)\n                .count();\n\n        assertEquals(4, numberOfMatchedBugs);\n    }"
+    },
+    {
+      "description": "testFilteringWithAnnotationOnClassMembers",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        159,
+        197
+      ],
+      "code": "@Test\n    void testFilteringWithAnnotationOnClassMembers(SpotBugsRunner spotbugs) {\n        BugCollection bugCollection = spotbugs.performAnalysis(\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/org/example/GeneratedCode.class\"),\n                Paths.get(\"../spotbugsTestCases/build/classes/java/main/ghIssues/issue543/GeneratedOnClassMembers.class\"));\n\n        BugInstanceMatcher[] bugsWithGeneratedAnnotation = {\n            new BugInstanceMatcherBuilder()\n                    .bugType(\"URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD\")\n                    .atField(\"a\")\n                    .atLine(9)\n                    .build(),\n            new BugInstanceMatcherBuilder()\n                    .bugType(\"NP_TOSTRING_COULD_RETURN_NULL\")\n                    .inMethod(\"toString\")\n                    .atLine(15)\n                    .build(),\n            new BugInstanceMatcherBuilder()\n                    .bugType(\"ES_COMPARING_PARAMETER_STRING_WITH_EQ\")\n                    .inMethod(\"test\")\n                    .atLine(27)\n                    .build(),\n        };\n        BugInstanceMatcher bugWithoutGeneratedAnnotation = new BugInstanceMatcherBuilder()\n                .bugType(\"DMI_HARDCODED_ABSOLUTE_FILENAME\")\n                .inMethod(\"test\")\n                .atLine(20)\n                .build();\n\n        assertThat(bugCollection, hasItem(bugWithoutGeneratedAnnotation));\n        assertThat(bugCollection, hasItems(bugsWithGeneratedAnnotation));\n        AnnotationMatcher bugInstanceMatcher = new AnnotationMatcher(\"org.example.GeneratedCode\");\n        List<BugInstance> unmatchedBugs = bugCollection.getCollection().stream()\n                .filter(b -> !bugInstanceMatcher.match(b))\n                .collect(Collectors.toUnmodifiableList());\n\n        assertThat(unmatchedBugs, hasItem(bugWithoutGeneratedAnnotation));\n        assertThat(unmatchedBugs, not(hasItems(bugsWithGeneratedAnnotation)));\n    }"
+    }
+  ]
+}

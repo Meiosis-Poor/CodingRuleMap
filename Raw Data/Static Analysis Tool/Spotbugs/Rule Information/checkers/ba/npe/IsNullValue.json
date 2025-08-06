@@ -1,0 +1,77 @@
+{
+  "name": "IsNullValue",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 601,
+  "branches": 50,
+  "apis": 30,
+  "test": [
+    {
+      "description": "testMerge1",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        16,
+        23
+      ],
+      "code": "@Test\n    void testMerge1() {\n        IsNullValue nullValue = IsNullValue.nullValue();\n        IsNullValue nullExceptionValue = IsNullValue.nullValue().toExceptionValue();\n        IsNullValue result = IsNullValue.merge(nullValue, nullExceptionValue);\n        assertTrue(result.isDefinitelyNull());\n        assertFalse(result.isException());\n    }"
+    },
+    {
+      "description": "testMerge2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        25,
+        33
+      ],
+      "code": "@Test\n    void testMerge2() {\n        IsNullValue nullExceptionValue = IsNullValue.nullValue().toExceptionValue();\n        IsNullValue nonNullValue = IsNullValue.nonNullValue();\n        IsNullValue nsp_e = IsNullValue.merge(nonNullValue, nullExceptionValue);\n        assertTrue(nsp_e.isNullOnSomePath());\n        assertTrue(nsp_e.isException());\n        assertEquals(nsp_e, IsNullValue.nullOnSimplePathValue().toExceptionValue());\n    }"
+    },
+    {
+      "description": "testMerge3",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        35,
+        42
+      ],
+      "code": "@Test\n    void testMerge3() {\n        IsNullValue nullValue = IsNullValue.nullValue();\n        IsNullValue nsp_e = IsNullValue.nullOnSimplePathValue().toExceptionValue();\n        IsNullValue nsp = IsNullValue.merge(nullValue, nsp_e);\n        assertTrue(nsp.isNullOnSomePath());\n        assertFalse(nsp.isException());\n    }"
+    },
+    {
+      "description": "testMerge4",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        47,
+        54
+      ],
+      "code": "@Test\n    void testMerge4() {\n        IsNullValue noKaboom = IsNullValue.noKaboomNonNullValue(null);\n        IsNullValue nsp_e = IsNullValue.nullOnSimplePathValue().toExceptionValue();\n        IsNullValue nsp_e2 = IsNullValue.merge(noKaboom, nsp_e);\n        assertTrue(nsp_e2.isNullOnSomePath());\n        assertTrue(nsp_e2.isException());\n    }"
+    },
+    {
+      "description": "testMerge5",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        56,
+        63
+      ],
+      "code": "@Test\n    void testMerge5() {\n        IsNullValue checkedNonNull = IsNullValue.checkedNonNullValue();\n        IsNullValue nsp_e = IsNullValue.nullOnSimplePathValue().toExceptionValue();\n        IsNullValue nsp_e2 = IsNullValue.merge(checkedNonNull, nsp_e);\n        assertTrue(nsp_e2.isNullOnSomePath());\n        assertTrue(nsp_e2.isException());\n    }"
+    },
+    {
+      "description": "testMerge6",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        65,
+        72
+      ],
+      "code": "@Test\n    void testMerge6() {\n        IsNullValue checkedNull_e = IsNullValue.checkedNullValue().toExceptionValue();\n        IsNullValue unknown = IsNullValue.nonReportingNotNullValue();\n        IsNullValue nsp_e = IsNullValue.merge(checkedNull_e, unknown);\n        assertTrue(nsp_e.isNullOnSomePath());\n        assertTrue(nsp_e.isException());\n    }"
+    },
+    {
+      "description": "testMergeCheckForNull",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        74,
+        85
+      ],
+      "code": "@Test\n    void testMergeCheckForNull() {\n        XMethod method = Mockito.mock(XMethod.class);\n\n        IsNullValue checkedNull_e = IsNullValue.checkedNullValue().toExceptionValue();\n        IsNullValue checkForNull = IsNullValue.nullOnSimplePathValue().markInformationAsComingFromReturnValueOfMethod(method,\n                NullnessAnnotation.CHECK_FOR_NULL);\n        IsNullValue merged = IsNullValue.merge(checkedNull_e, checkForNull);\n\n        assertTrue(merged.isNullOnSomePath());\n        assertFalse(merged.isCheckForNull());\n    }"
+    }
+  ]
+}

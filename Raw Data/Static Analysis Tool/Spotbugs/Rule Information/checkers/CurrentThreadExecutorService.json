@@ -1,0 +1,41 @@
+{
+  "name": "CurrentThreadExecutorService",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 88,
+  "branches": 4,
+  "apis": 6,
+  "test": [
+    {
+      "description": "testCurrentThread",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        34,
+        51
+      ],
+      "code": "@Test\n    void testCurrentThread() throws InterruptedException {\n        Thread currentThread = Thread.currentThread();\n        ExecutorService executorService = new CurrentThreadExecutorService();\n        AtomicBoolean isCalled = new AtomicBoolean();\n        try {\n            executorService.execute(() -> {\n                assertEquals(currentThread, Thread.currentThread());\n                isCalled.set(true);\n            });\n            assertTrue(isCalled.get());\n        } finally {\n            executorService.shutdown();\n        }\n        assertTrue(executorService.awaitTermination(1, TimeUnit.SECONDS));\n        assertTrue(executorService.isShutdown());\n        assertTrue(executorService.isTerminated());\n    }"
+    },
+    {
+      "description": "testCloseTwice",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53,
+        62
+      ],
+      "code": "@Test\n    void testCloseTwice() {\n        ExecutorService executorService = new CurrentThreadExecutorService();\n        List<Runnable> remaining = executorService.shutdownNow();\n        assertTrue(remaining.isEmpty());\n\n        Assertions.assertThrows(IllegalStateException.class, () -> {\n            executorService.shutdown();\n        });\n    }"
+    },
+    {
+      "description": "awaitTerminationWithoutShutdown",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64,
+        70
+      ],
+      "code": "@Test\n    void awaitTerminationWithoutShutdown() {\n        ExecutorService executorService = new CurrentThreadExecutorService();\n        Assertions.assertThrows(IllegalStateException.class, () -> {\n            executorService.awaitTermination(1, TimeUnit.SECONDS);\n        });\n    }"
+    }
+  ]
+}

@@ -1,0 +1,275 @@
+{
+  "name": "MultipleInstantiationsOfSingletons",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 319,
+  "branches": 45,
+  "apis": 89,
+  "test": [
+    {
+      "description": "abstractClassTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        9,
+        14
+      ],
+      "code": "@Test\n    void abstractClassTest() {\n        performAnalysis(\"singletons/AbstractClass.class\",\n                \"singletons/AbstractClass$Nested.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "innerChildInstanceTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        16,
+        21
+      ],
+      "code": "@Test\n    void innerChildInstanceTest() {\n        performAnalysis(\"singletons/InnerChildInstance.class\",\n                \"singletons/InnerChildInstance$Unknown.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "innerChildAndMoreInstanceTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        23,
+        35
+      ],
+      "code": "@Test\n    void innerChildAndMoreInstanceTest() {\n        performAnalysis(\"singletons/InnerChildAndMoreInstance.class\",\n                \"singletons/InnerChildAndMoreInstance$Unknown.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"InnerChildAndMoreInstance\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "InnerChildAndMoreInstanceReorderedTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        37,
+        49
+      ],
+      "code": "@Test\n    void InnerChildAndMoreInstanceReorderedTest() {\n        performAnalysis(\"singletons/InnerChildAndMoreInstanceReordered.class\",\n                \"singletons/InnerChildAndMoreInstanceReordered$Unknown.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"InnerChildAndMoreInstanceReordered\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "InnerChildAndMoreInstanceNoGetterTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        51,
+        56
+      ],
+      "code": "@Test\n    void InnerChildAndMoreInstanceNoGetterTest() {\n        performAnalysis(\"singletons/InnerChildAndMoreInstanceNoGetter.class\",\n                \"singletons/InnerChildAndMoreInstanceNoGetter$Unknown.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "notSingletonWithFactoryMethodTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        58,
+        62
+      ],
+      "code": "@Test\n    void notSingletonWithFactoryMethodTest() {\n        performAnalysis(\"singletons/NotSingletonWithFactoryMethod.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "notLazyInitSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64,
+        68
+      ],
+      "code": "@Test\n    void notLazyInitSingletonTest() {\n        performAnalysis(\"singletons/NotLazyInitSingleton.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "cloneableSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        70,
+        81
+      ],
+      "code": "@Test\n    void cloneableSingletonTest() {\n        performAnalysis(\"singletons/CloneableSingleton.class\");\n        assertBugTypeCount(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\", 1);\n        assertBugInMethod(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\", \"CloneableSingleton\", \"clone\");\n\n        assertNoBugType(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "indirectlyCloneableSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        83,
+        94
+      ],
+      "code": "@Test\n    void indirectlyCloneableSingletonTest() {\n        performAnalysis(\"singletons/IndirectlyCloneableSingleton.class\", \"singletons/CloneableClass.class\");\n        assertBugTypeCount(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\", 1);\n        assertBugInClass(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\", \"IndirectlyCloneableSingleton\");\n\n        assertNoBugType(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "defaultConstructorTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        96,
+        107
+      ],
+      "code": "@Test\n    void defaultConstructorTest() {\n        performAnalysis(\"singletons/DefaultConstructor.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"DefaultConstructor\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "protectedConstructorTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        109,
+        120
+      ],
+      "code": "@Test\n    void protectedConstructorTest() {\n        performAnalysis(\"singletons/ProtectedConstructor.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"ProtectedConstructor\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "protectedConstructorStaticInitTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        122,
+        133
+      ],
+      "code": "@Test\n    void protectedConstructorStaticInitTest() {\n        performAnalysis(\"singletons/ProtectedConstructorStaticInit.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"ProtectedConstructorStaticInit\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "protectedConstructorStaticInitReorderedTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        135,
+        146
+      ],
+      "code": "@Test\n    void protectedConstructorStaticInitReorderedTest() {\n        performAnalysis(\"singletons/ProtectedConstructorStaticInitReordered.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"ProtectedConstructorStaticInitReordered\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "notCloneableButHasCloneMethodTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        148,
+        159
+      ],
+      "code": "@Test\n    void notCloneableButHasCloneMethodTest() {\n        performAnalysis(\"singletons/NotCloneableButHasCloneMethod.class\");\n        assertBugTypeCount(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\", 1);\n        assertBugInMethod(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\", \"NotCloneableButHasCloneMethod\", \"clone\");\n\n        assertNoBugType(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "serializableSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161,
+        172
+      ],
+      "code": "@Test\n    void serializableSingletonTest() {\n        performAnalysis(\"singletons/SerializableSingleton.class\");\n        assertBugTypeCount(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\", 1);\n        assertBugInClass(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\", \"SerializableSingleton\");\n\n        assertNoBugType(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "notSynchronizedSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        174,
+        185
+      ],
+      "code": "@Test\n    void notSynchronizedSingletonTest() {\n        performAnalysis(\"singletons/NotSynchronizedSingleton.class\");\n        assertBugTypeCount(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\", 1);\n        assertBugInMethod(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\", \"NotSynchronizedSingleton\", \"getInstance\");\n\n        assertNoBugType(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n    }"
+    },
+    {
+      "description": "inappropriateSynchronization",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        187,
+        200
+      ],
+      "code": "@Test\n    void inappropriateSynchronization() {\n        performAnalysis(\"singletons/InappropriateSynchronization.class\");\n        // now cannot detect synchronization bug\n        // because of the using of a monitor inside function\n        assertBugTypeCount(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\", 0);\n        //assertSINGBug(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\", \"InappropriateSynchronization\", \"getInstance\");\n\n        assertNoBugType(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n    }"
+    },
+    {
+      "description": "appropriateSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        202,
+        206
+      ],
+      "code": "@Test\n    void appropriateSingletonTest() {\n        performAnalysis(\"singletons/AppropriateSingleton.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "initializeOnDemandHolderIdiomTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        208,
+        213
+      ],
+      "code": "@Test\n    void initializeOnDemandHolderIdiomTest() {\n        performAnalysis(\"singletons/InitializeOnDemandHolderIdiom.class\",\n                \"singletons/InitializeOnDemandHolderIdiom$SingletonHolder.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "enumSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        215,
+        219
+      ],
+      "code": "@Test\n    void enumSingletonTest() {\n        performAnalysis(\"singletons/EnumSingleton.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "oneEnumSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        221,
+        225
+      ],
+      "code": "@Test\n    void oneEnumSingletonTest() {\n        performAnalysis(\"singletons/OneEnumSingleton.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "unconditionalThrowerCloneableTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        227,
+        231
+      ],
+      "code": "@Test\n    void unconditionalThrowerCloneableTest() {\n        performAnalysis(\"singletons/UnconditionalThrowerCloneable.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "doubleCheckedLockingTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        233,
+        237
+      ],
+      "code": "@Test\n    void doubleCheckedLockingTest() {\n        performAnalysis(\"singletons/DoubleCheckedLocking.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "doubleCheckedLockingIndirectTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        239,
+        243
+      ],
+      "code": "@Test\n    void doubleCheckedLockingIndirectTest() {\n        performAnalysis(\"singletons/DoubleCheckedLockingIndirect.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "doubleCheckedLockingIndirect2Test",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        245,
+        249
+      ],
+      "code": "@Test\n    void doubleCheckedLockingIndirect2Test() {\n        performAnalysis(\"singletons/DoubleCheckedLockingIndirect2.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "multiplePrivateConstructorsTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        251,
+        255
+      ],
+      "code": "@Test\n    void multiplePrivateConstructorsTest() {\n        performAnalysis(\"singletons/MultiplePrivateConstructors.class\");\n        assertNoBugs();\n    }"
+    },
+    {
+      "description": "multipleNonPrivateConstructorsTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        257,
+        268
+      ],
+      "code": "@Test\n    void multipleNonPrivateConstructorsTest() {\n        performAnalysis(\"singletons/MultipleNonPrivateConstructors.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"MultipleNonPrivateConstructors\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "multipleNonPrivateConstructorsTest2",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        270,
+        281
+      ],
+      "code": "@Test\n    void multipleNonPrivateConstructorsTest2() {\n        performAnalysis(\"singletons/MultipleNonPrivateConstructors2.class\");\n        assertBugTypeCount(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", 1);\n        assertBugInClass(\"SING_SINGLETON_HAS_NONPRIVATE_CONSTRUCTOR\", \"MultipleNonPrivateConstructors2\");\n\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_INDIRECTLY_IMPLEMENTS_CLONEABLE\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_CLONE_METHOD\");\n        assertNoBugType(\"SING_SINGLETON_IMPLEMENTS_SERIALIZABLE\");\n        assertNoBugType(\"SING_SINGLETON_GETTER_NOT_SYNCHRONIZED\");\n    }"
+    },
+    {
+      "description": "recordNotSingletonTest",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        283,
+        288
+      ],
+      "code": "@Test\n    @DisabledOnJre({ JRE.JAVA_8, JRE.JAVA_11 })\n    void recordNotSingletonTest() {\n        performAnalysis(\"../java17/Issue2981.class\");\n        assertNoBugs();\n    }"
+    }
+  ]
+}

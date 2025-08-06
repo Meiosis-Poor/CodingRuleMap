@@ -1,0 +1,41 @@
+{
+  "name": "ProfileSummary",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 134,
+  "branches": 7,
+  "apis": 40,
+  "test": [
+    {
+      "description": "testGetProfile",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        41,
+        53
+      ],
+      "code": "@Test\n    void testGetProfile() {\n        Profiler profiler = new Profiler();\n        profiler.start(String.class);\n        profiler.end(String.class);\n        Profiler another = new Profiler();\n        another.start(Object.class);\n        another.end(Object.class);\n        ProfileSummary summary = new ProfileSummary(profiler, another);\n\n        assertThat(summary.getProfile(String.class), is(profiler.getProfile(String.class)));\n        assertThat(summary.getProfile(Object.class), is(another.getProfile(Object.class)));\n    }"
+    },
+    {
+      "description": "testReport",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        55,
+        71
+      ],
+      "code": "@Test\n    void testReport() throws UnsupportedEncodingException {\n        Profiler profiler = new Profiler();\n        profiler.start(String.class);\n        profiler.end(String.class);\n        Profiler another = new Profiler();\n        another.start(Object.class);\n        another.end(Object.class);\n        ProfileSummary summary = new ProfileSummary(profiler, another);\n        ByteArrayOutputStream byteArray = new ByteArrayOutputStream();\n        PrintStream stream = new PrintStream(byteArray);\n\n        summary.report(new Profiler.ClassNameComparator(summary), (profile) -> true, stream);\n        String report = byteArray.toString(StandardCharsets.UTF_8.name());\n        assertThat(report, containsString(\"Object\"));\n        assertThat(report, containsString(\"String\"));\n    }"
+    },
+    {
+      "description": "testWriteXML",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        73,
+        98
+      ],
+      "code": "@Test\n    void testWriteXML() throws IOException {\n        Profiler profiler = new Profiler();\n        Profiler another = new Profiler();\n\n        // The XML report contains only profiles that consumes 10ms, so add Thread.sleep(int) in test\n        profiler.start(String.class);\n        another.start(Object.class);\n        try {\n            Thread.sleep(32); // two times of Windows' timestamp resolution\n        } catch (InterruptedException e) {\n            throw new RuntimeException(e);\n        }\n        profiler.end(String.class);\n        another.end(Object.class);\n\n        ProfileSummary summary = new ProfileSummary(profiler, another);\n        ByteArrayOutputStream byteArray = new ByteArrayOutputStream();\n        XMLOutput output = new OutputStreamXMLOutput(byteArray);\n\n        summary.writeXML(output);\n        output.finish();\n        String xml = byteArray.toString(StandardCharsets.UTF_8.name());\n        assertThat(xml, containsString(\"name=\\\"java.lang.Object\\\"\"));\n        assertThat(xml, containsString(\"name=\\\"java.lang.String\\\"\"));\n    }"
+    }
+  ]
+}

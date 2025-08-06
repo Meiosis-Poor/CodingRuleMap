@@ -1,0 +1,158 @@
+{
+  "name": "SuppressionMatcher",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 106,
+  "branches": 9,
+  "apis": 21,
+  "test": [
+    {
+      "description": "shouldMatchClassLevelSuppression",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        42,
+        51
+      ],
+      "code": "@Test\n    void shouldMatchClassLevelSuppression() {\n        // given\n        matcher.addSuppressor(new ClassWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, true));\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1).addClass(CLASS_NAME);\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should match the bug\", matched, is(true));\n    }"
+    },
+    {
+      "description": "shouldMatchPackageLevelSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        53,
+        62
+      ],
+      "code": "@Test\n    void shouldMatchPackageLevelSuppressor() {\n        // given\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1).addClass(CLASS_NAME);\n        matcher.addPackageSuppressor(new PackageWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, PACKAGE_NAME, true));\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should match the bug\", matched, is(true));\n    }"
+    },
+    {
+      "description": "shouldMatchMethodLevelSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        64,
+        74
+      ],
+      "code": "@Test\n    void shouldMatchMethodLevelSuppressor() {\n        // given\n        MethodAnnotation method = new MethodAnnotation(CLASS_NAME, \"test\", \"bool test()\", false);\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1).addClass(CLASS_NAME).addMethod(method);\n        matcher.addSuppressor(new MethodWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, method, true, true));\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should match the bug\", matched, is(true));\n    }"
+    },
+    {
+      "description": "shouldMatchParameterLevelSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        76,
+        88
+      ],
+      "code": "@Test\n    void shouldMatchParameterLevelSuppressor() {\n        // given\n        MethodAnnotation method = new MethodAnnotation(CLASS_NAME, \"test\", \"bool test()\", false);\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1)\n                .addClass(CLASS_NAME).addMethod(method)\n                .addAnnotations(Collections.singletonList(new LocalVariableAnnotation(\"?\", 2, 0, 0)));\n        matcher.addSuppressor(new ParameterWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, method, 2, true));\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should match the bug\", matched, is(true));\n    }"
+    },
+    {
+      "description": "shouldMatchFieldLevelSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        90,
+        100
+      ],
+      "code": "@Test\n    void shouldMatchFieldLevelSuppressor() {\n        // given\n        FieldAnnotation field = new FieldAnnotation(CLASS_NAME, \"test\", \"bool test\", false);\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1).addClass(CLASS_NAME).addField(field);\n        matcher.addSuppressor(new FieldWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, field, true, true));\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should match the bug\", matched, is(true));\n    }"
+    },
+    {
+      "description": "shouldNotMatchBugsWithDifferentType",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        102,
+        111
+      ],
+      "code": "@Test\n    void shouldNotMatchBugsWithDifferentType() {\n        // given\n        matcher.addSuppressor(new ClassWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, true));\n        BugInstance bug = new BugInstance(\"UWF_NULL_FIELD\", 1).addClass(CLASS_NAME);\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should not match the bug\", matched, is(false));\n    }"
+    },
+    {
+      "description": "shouldNotBreakOnMissingPrimaryClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        113,
+        122
+      ],
+      "code": "@Test\n    void shouldNotBreakOnMissingPrimaryClass() {\n        // given\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1);\n        matcher.addSuppressor(new ClassWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, true));\n        // when\n        boolean matched = matcher.match(bug);\n        // then\n        assertThat(\"Should not match the bug\", matched, is(false));\n    }"
+    },
+    {
+      "description": "shouldMatchFieldSuppressorBeforeClass",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        124,
+        137
+      ],
+      "code": "@Test\n    void shouldMatchFieldSuppressorBeforeClass() {\n        // given\n        FieldAnnotation field = new FieldAnnotation(CLASS_NAME, \"test\", \"bool test\", false);\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1).addClass(CLASS_NAME).addField(field);\n        matcher.addSuppressor(new FieldWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, field, true, true));\n        matcher.addSuppressor(new ClassWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, true));\n        // when\n        matcher.match(bug);\n        matcher.validateSuppressionUsage(bugReporter, new UselessSuppressionDetector());\n        // then\n        verify(bugReporter).reportBug(bugCaptor.capture());\n        assertThat(\"Bug type\", bugCaptor.getValue().getBugPattern().getType(), startsWith(\"US_USELESS_SUPPRESSION_ON_CLASS\"));\n    }"
+    },
+    {
+      "description": "shouldReportUselessSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        139,
+        151
+      ],
+      "code": "@Test\n    void shouldReportUselessSuppressor() {\n        // given\n        BugInstance bug = new BugInstance(\"UUF_UNUSED_FIELD\", 1).addClass(CLASS_NAME);\n        matcher.addSuppressor(new ClassWarningSuppressor(\"UUF_UNUSED_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, true));\n        matcher.addSuppressor(new ClassWarningSuppressor(\"UWF_NULL_FIELD\", SuppressMatchType.DEFAULT, CLASS_ANNOTATION, true));\n        // when\n        matcher.match(bug);\n        matcher.validateSuppressionUsage(bugReporter, new UselessSuppressionDetector());\n        // then\n        verify(bugReporter).reportBug(bugCaptor.capture());\n        assertThat(\"Bug type\", bugCaptor.getValue().getBugPattern().getType(), startsWith(\"US_USELESS_SUPPRESSION\"));\n    }"
+    },
+    {
+      "description": "uselessSuppressionOnClassMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        153,
+        159
+      ],
+      "code": "@Test\n    void uselessSuppressionOnClassMessage() {\n        ClassWarningSuppressor suppressor = new ClassWarningSuppressor(\"XYZ\", SuppressMatchType.DEFAULT, new ClassAnnotation(\"java.lang.String\"),\n                true);\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\"US: Suppressing annotation XYZ on the class java.lang.String is unnecessary\"));\n    }"
+    },
+    {
+      "description": "uselessSuppressionOnFieldMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        161,
+        171
+      ],
+      "code": "@Test\n    void uselessSuppressionOnFieldMessage() {\n        FieldWarningSuppressor suppressor = new FieldWarningSuppressor(\"XYZ\",\n                SuppressMatchType.DEFAULT, new ClassAnnotation(\"java.lang.String\"),\n                new FieldAnnotation(\"java.lang.String\", \"test\", \"test\", false),\n                true,\n                true);\n\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\"US: Suppressing annotation XYZ on the field java.lang.String.test is unnecessary\"));\n    }"
+    },
+    {
+      "description": "uselessSuppressionOnMethodMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        173,
+        183
+      ],
+      "code": "@Test\n    void uselessSuppressionOnMethodMessage() {\n        MethodWarningSuppressor suppressor = new MethodWarningSuppressor(\"XYZ\",\n                SuppressMatchType.DEFAULT, new ClassAnnotation(\"java.lang.String\"),\n                new MethodAnnotation(\"java.lang.String\", \"test\", \"()Ljava/lang/Object;)\", false),\n                true,\n                true);\n\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\"US: Suppressing annotation XYZ on the method String.test() is unnecessary\"));\n    }"
+    },
+    {
+      "description": "uselessSuppressionOnMethodParameterMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        185,
+        196
+      ],
+      "code": "@Test\n    void uselessSuppressionOnMethodParameterMessage() {\n        ParameterWarningSuppressor suppressor = new ParameterWarningSuppressor(\"XYZ\",\n                SuppressMatchType.DEFAULT, new ClassAnnotation(\"java.lang.String\"),\n                new MethodAnnotation(\"java.lang.String\", \"bar\", \"()Ljava/lang/Object;)\", false),\n                0,\n                true);\n\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\n                \"US: Suppressing annotation XYZ on the parameter 1 of the method String.bar() is unnecessary\"));\n    }"
+    },
+    {
+      "description": "uselessSuppressionOnPackageMessage",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        198,
+        203
+      ],
+      "code": "@Test\n    void uselessSuppressionOnPackageMessage() {\n        PackageWarningSuppressor suppressor = new PackageWarningSuppressor(\"XYZ\", SuppressMatchType.DEFAULT, \"java.lang\", true);\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\"US: Suppressing annotation XYZ on the package java.lang is unnecessary\"));\n    }"
+    },
+    {
+      "description": "nullBugPatternClassWarningSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        205,
+        211
+      ],
+      "code": "@Test\n    void nullBugPatternClassWarningSuppressor() {\n        ClassWarningSuppressor suppressor = new ClassWarningSuppressor(null, SuppressMatchType.DEFAULT, new ClassAnnotation(\"java.lang.String\"),\n                true);\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\"US: Suppressing annotation on the class java.lang.String is unnecessary\"));\n    }"
+    },
+    {
+      "description": "nullBugPatternPackageWarningSuppressor",
+      "expected-problems": null,
+      "expected-linenumbers": [
+        213,
+        218
+      ],
+      "code": "@Test\n    void nullBugPatternPackageWarningSuppressor() {\n        PackageWarningSuppressor suppressor = new PackageWarningSuppressor(null, SuppressMatchType.DEFAULT, \"java.lang\", true);\n        BugInstance bugInstance = suppressor.buildUselessSuppressionBugInstance(new UselessSuppressionDetector());\n        assertThat(\"Message\", bugInstance.getMessage(), is(\"US: Suppressing annotation on the package java.lang is unnecessary\"));\n    }"
+    }
+  ]
+}
