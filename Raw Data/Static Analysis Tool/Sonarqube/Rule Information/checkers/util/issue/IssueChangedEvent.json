@@ -1,0 +1,32 @@
+{
+  "name": "IssueChangedEvent",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 43,
+  "branches": 1,
+  "apis": 0,
+  "test": [
+    {
+      "description": "issueChangedEvent_instantiation_accepts_nulls",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void issueChangedEvent_instantiation_accepts_nulls() {\n\n    Issue issue = new Issue(ISSUE_KEY, BRANCH_NAME);\n\n    issue.addImpact(MAINTAINABILITY, Severity.HIGH);\n\n\n\n    IssueChangedEvent event = new IssueChangedEvent(PROJECT_KEY, new Issue[] {issue}, null, null, null);\n\n\n\n    assertThat(event.getEvent()).isEqualTo(\"IssueChanged\");\n\n    assertThat(event.getProjectKey()).isEqualTo(PROJECT_KEY);\n\n    assertThat(event.getResolved()).isNull();\n\n    assertThat(event.getUserSeverity()).isNull();\n\n    assertThat(event.getUserType()).isNull();\n\n    assertThat(event.getIssues()).hasSize(1);\n\n    assertThat(Arrays.stream(event.getIssues()).iterator().next().getImpacts())\n\n      .hasSize(1)\n\n      .containsExactlyInAnyOrder(new Issue.Impact(MAINTAINABILITY, Severity.HIGH));\n\n  }"
+    },
+    {
+      "description": "issueChangedEvent_instantiation_accepts_actual_values",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void issueChangedEvent_instantiation_accepts_actual_values() {\n\n    Issue[] issues = new Issue[] {new Issue(ISSUE_KEY, BRANCH_NAME)};\n\n    IssueChangedEvent event = new IssueChangedEvent(PROJECT_KEY, issues, true, \"BLOCKER\", \"BUG\");\n\n\n\n    assertThat(event.getEvent()).isEqualTo(\"IssueChanged\");\n\n    assertThat(event.getProjectKey()).isEqualTo(PROJECT_KEY);\n\n    assertThat(event.getResolved()).isTrue();\n\n    assertThat(event.getUserSeverity()).isEqualTo(\"BLOCKER\");\n\n    assertThat(event.getUserType()).isEqualTo(\"BUG\");\n\n    assertThat(event.getIssues()).hasSize(1);\n\n  }"
+    },
+    {
+      "description": "issueChangedEvent_instantiation_doesNotAccept_emptyIssues",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void issueChangedEvent_instantiation_doesNotAccept_emptyIssues() {\n\n    Issue[] issues = new Issue[0];\n\n\n\n    assertThatThrownBy(() -> new IssueChangedEvent(PROJECT_KEY, issues, true, \"BLOCKER\", \"BUG\"))\n\n      .isInstanceOf(IllegalArgumentException.class)\n\n      .withFailMessage(\"Can't create IssueChangedEvent without any issues that have changed\");\n\n  }"
+    }
+  ]
+}

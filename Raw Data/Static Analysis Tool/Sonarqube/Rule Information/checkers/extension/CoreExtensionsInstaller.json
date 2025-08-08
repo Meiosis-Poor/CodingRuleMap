@@ -1,0 +1,44 @@
+{
+  "name": "CoreExtensionsInstaller",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 101,
+  "branches": 4,
+  "apis": 21,
+  "test": [
+    {
+      "description": "install_has_no_effect_if_CoreExtensionRepository_has_no_loaded_CoreExtension",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void install_has_no_effect_if_CoreExtensionRepository_has_no_loaded_CoreExtension() {\n\n    ListContainer container = new ListContainer();\n\n    underTest.install(container, noExtensionFilter(), noAdditionalSideFilter());\n\n    assertAddedExtensions(container, 0);\n\n  }"
+    },
+    {
+      "description": "install_calls_load_method_on_all_loaded_CoreExtension",
+      "expected-problems": null,
+      "expected-linenumbers": 18,
+      "code": "  public void install_calls_load_method_on_all_loaded_CoreExtension() {\n\n    CoreExtension coreExtension1 = newCoreExtension();\n\n    CoreExtension coreExtension2 = newCoreExtension();\n\n    CoreExtension coreExtension3 = newCoreExtension();\n\n    CoreExtension coreExtension4 = newCoreExtension();\n\n    List<CoreExtension> coreExtensions = ImmutableList.of(coreExtension1, coreExtension2, coreExtension3, coreExtension4);\n\n    InOrder inOrder = Mockito.inOrder(coreExtension1, coreExtension2, coreExtension3, coreExtension4);\n\n    when(coreExtensionRepository.loadedCoreExtensions()).thenReturn(coreExtensions.stream());\n\n    ListContainer container = new ListContainer();\n\n\n\n    underTest.install(container, noExtensionFilter(), noAdditionalSideFilter());\n\n\n\n    inOrder.verify(coreExtension1).load(contextCaptor.capture());\n\n    inOrder.verify(coreExtension2).load(contextCaptor.capture());\n\n    inOrder.verify(coreExtension3).load(contextCaptor.capture());\n\n    inOrder.verify(coreExtension4).load(contextCaptor.capture());\n\n    // verify each core extension gets its own Context\n\n    assertThat(contextCaptor.getAllValues())\n\n      .hasSameElementsAs(ImmutableSet.copyOf(contextCaptor.getAllValues()));\n\n  }"
+    },
+    {
+      "description": "install_provides_runtime_from_constructor_in_context",
+      "expected-problems": null,
+      "expected-linenumbers": 12,
+      "code": "  public void install_provides_runtime_from_constructor_in_context() {\n\n    CoreExtension coreExtension1 = newCoreExtension();\n\n    CoreExtension coreExtension2 = newCoreExtension();\n\n    when(coreExtensionRepository.loadedCoreExtensions()).thenReturn(Stream.of(coreExtension1, coreExtension2));\n\n    ListContainer container = new ListContainer();\n\n\n\n    underTest.install(container, noExtensionFilter(), noAdditionalSideFilter());\n\n\n\n    verify(coreExtension1).load(contextCaptor.capture());\n\n    verify(coreExtension2).load(contextCaptor.capture());\n\n    assertThat(contextCaptor.getAllValues())\n\n      .extracting(CoreExtension.Context::getRuntime)\n\n      .containsOnly(sonarRuntime);\n\n  }"
+    },
+    {
+      "description": "install_provides_new_Configuration_when_getBootConfiguration_is_called_and_there_is_none_in_container",
+      "expected-problems": null,
+      "expected-linenumbers": 12,
+      "code": "  public void install_provides_new_Configuration_when_getBootConfiguration_is_called_and_there_is_none_in_container() {\n\n    CoreExtension coreExtension1 = newCoreExtension();\n\n    CoreExtension coreExtension2 = newCoreExtension();\n\n    when(coreExtensionRepository.loadedCoreExtensions()).thenReturn(Stream.of(coreExtension1, coreExtension2));\n\n    ListContainer container = new ListContainer();\n\n\n\n    underTest.install(container, noExtensionFilter(), noAdditionalSideFilter());\n\n\n\n    verify(coreExtension1).load(contextCaptor.capture());\n\n    verify(coreExtension2).load(contextCaptor.capture());\n\n    // verify each core extension gets its own configuration\n\n    assertThat(contextCaptor.getAllValues())\n\n      .hasSameElementsAs(ImmutableSet.copyOf(contextCaptor.getAllValues()));\n\n  }"
+    },
+    {
+      "description": "install_provides_Configuration_from_container_when_getBootConfiguration_is_called",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void install_provides_Configuration_from_container_when_getBootConfiguration_is_called() {\n\n    CoreExtension coreExtension1 = newCoreExtension();\n\n    CoreExtension coreExtension2 = newCoreExtension();\n\n    when(coreExtensionRepository.loadedCoreExtensions()).thenReturn(Stream.of(coreExtension1, coreExtension2));\n\n    Configuration configuration = new MapSettings().asConfig();\n\n    ExtensionContainer container = mock(ExtensionContainer.class);\n\n    when(container.getComponentByType(Configuration.class)).thenReturn(configuration);\n\n    underTest.install(container, noExtensionFilter(), noAdditionalSideFilter());\n\n\n\n    verify(coreExtension1).load(contextCaptor.capture());\n\n    verify(coreExtension2).load(contextCaptor.capture());\n\n    assertThat(contextCaptor.getAllValues())\n\n      .extracting(CoreExtension.Context::getBootConfiguration)\n\n      .containsOnly(configuration);\n\n  }"
+    }
+  ]
+}

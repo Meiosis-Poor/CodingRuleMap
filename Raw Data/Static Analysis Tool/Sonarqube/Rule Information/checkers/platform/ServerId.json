@@ -1,0 +1,50 @@
+{
+  "name": "ServerId",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 106,
+  "branches": 8,
+  "apis": 17,
+  "test": [
+    {
+      "description": "parse_throws_NPE_if_argument_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void parse_throws_NPE_if_argument_is_null() {\n\n    assertThatThrownBy(() -> ServerId.parse(null))\n\n      .isInstanceOf(NullPointerException.class);\n\n  }"
+    },
+    {
+      "description": "parse_parses_deprecated_format_serverId",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void parse_parses_deprecated_format_serverId() {\n\n    String deprecated = new SimpleDateFormat(\"yyyyMMddHHmmss\").format(new Date());\n\n\n\n    ServerId serverId = ServerId.parse(deprecated);\n\n\n\n    assertThat(serverId.getFormat()).isEqualTo(DEPRECATED);\n\n    assertThat(serverId.getDatasetId()).isEqualTo(deprecated);\n\n    assertThat(serverId.getDatabaseId()).isEmpty();\n\n    assertThat(serverId).hasToString(deprecated);\n\n  }"
+    },
+    {
+      "description": "parse_does_not_support_deprecated_server_id_with_database_id",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void parse_does_not_support_deprecated_server_id_with_database_id() {\n\n    assertThatThrownBy(() -> ServerId.parse(secure().nextAlphabetic(DATABASE_ID_LENGTH) + SPLIT_CHARACTER + secure().nextAlphabetic(DEPRECATED_SERVER_ID_LENGTH)))\n\n      .isInstanceOf(IllegalArgumentException.class)\n\n      .hasMessage(\"serverId does not have a supported length\");\n\n  }"
+    },
+    {
+      "description": "of_throws_NPE_if_datasetId_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void of_throws_NPE_if_datasetId_is_null() {\n\n    assertThatThrownBy(() -> ServerId.of(secure().nextAlphabetic(DATABASE_ID_LENGTH), null))\n\n      .isInstanceOf(NullPointerException.class);\n\n  }"
+    },
+    {
+      "description": "of_throws_IAE_if_datasetId_is_empty",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void of_throws_IAE_if_datasetId_is_empty() {\n\n    assertThatThrownBy(() -> ServerId.of(secure().nextAlphabetic(DATABASE_ID_LENGTH), \"\"))\n\n      .isInstanceOf(IllegalArgumentException.class)\n\n      .hasMessage(\"Illegal datasetId length (0)\");\n\n  }"
+    },
+    {
+      "description": "of_throws_IAE_if_databaseId_is_empty",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void of_throws_IAE_if_databaseId_is_empty() {\n\n    assertThatThrownBy(() -> ServerId.of(\"\", secure().nextAlphabetic(UUID_DATASET_ID_LENGTH)))\n\n      .isInstanceOf(IllegalArgumentException.class)\n\n      .hasMessage(\"Illegal databaseId length (0)\");\n\n  }"
+    }
+  ]
+}

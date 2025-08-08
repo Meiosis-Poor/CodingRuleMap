@@ -1,0 +1,110 @@
+{
+  "name": "ProtobufJsonFormat",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 125,
+  "branches": 16,
+  "apis": 64,
+  "test": [
+    {
+      "description": "test_primitive_types",
+      "expected-problems": null,
+      "expected-linenumbers": 12,
+      "code": "  public void test_primitive_types() {\n\n    PrimitiveTypeMsg protobuf = PrimitiveTypeMsg.newBuilder()\n\n      .setStringField(\"foo\")\n\n      .setIntField(10)\n\n      .setLongField(100L)\n\n      .setDoubleField(3.14)\n\n      .setBooleanField(true)\n\n      .setEnumField(org.sonar.core.test.Test.FakeEnum.GREEN)\n\n      .build();\n\n\n\n    assertThat(toJson(protobuf)).isEqualTo(\n\n      \"{\\\"stringField\\\":\\\"foo\\\",\\\"intField\\\":10,\\\"longField\\\":100,\\\"doubleField\\\":3.14,\\\"booleanField\\\":true,\\\"enumField\\\":\\\"GREEN\\\"}\");\n\n  }"
+    },
+    {
+      "description": "toJson_whenPrefixedEnum_shouldConvertToExpectedEnumValue",
+      "expected-problems": null,
+      "expected-linenumbers": 12,
+      "code": "  public void toJson_whenPrefixedEnum_shouldConvertToExpectedEnumValue() {\n\n    PrimitiveTypeMsg protobuf = PrimitiveTypeMsg.newBuilder()\n\n      .setStringField(\"foo\")\n\n      .setIntField(10)\n\n      .setLongField(100L)\n\n      .setDoubleField(3.14)\n\n      .setBooleanField(true)\n\n      .setEnumField(org.sonar.core.test.Test.FakeEnum.FakeEnum_YELLOW)\n\n      .build();\n\n\n\n    assertThat(toJson(protobuf)).isEqualTo(\n\n      \"{\\\"stringField\\\":\\\"foo\\\",\\\"intField\\\":10,\\\"longField\\\":100,\\\"doubleField\\\":3.14,\\\"booleanField\\\":true,\\\"enumField\\\":\\\"YELLOW\\\"}\");\n\n  }"
+    },
+    {
+      "description": "bytes_field_can_not_be_converted",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void bytes_field_can_not_be_converted() {\n\n    assertThatThrownBy(() -> {\n\n      PrimitiveTypeMsg protobuf = PrimitiveTypeMsg.newBuilder()\n\n        .setBytesField(ByteString.copyFrom(new byte[]{2, 4}))\n\n        .build();\n\n\n\n      ProtobufJsonFormat.write(protobuf, JsonWriter.of(new StringWriter()));\n\n    })\n\n      .isInstanceOf(RuntimeException.class)\n\n      .hasMessage(\"JSON format does not support type 'BYTE_STRING' of field 'bytesField'\");\n\n  }"
+    },
+    {
+      "description": "do_not_write_null_primitive_fields",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void do_not_write_null_primitive_fields() {\n\n    PrimitiveTypeMsg msg = PrimitiveTypeMsg.newBuilder().build();\n\n\n\n    // fields are absent\n\n    assertThat(msg.hasStringField()).isFalse();\n\n    assertThat(msg.hasIntField()).isFalse();\n\n  }"
+    },
+    {
+      "description": "write_empty_string",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void write_empty_string() {\n\n    PrimitiveTypeMsg msg = PrimitiveTypeMsg.newBuilder().setStringField(\"\").build();\n\n\n\n    // field is present\n\n    assertThat(msg.hasStringField()).isTrue();\n\n    assertThat(msg.getStringField()).isEmpty();\n\n\n\n    assertThat(toJson(msg)).isEqualTo(\"{\\\"stringField\\\":\\\"\\\"}\");\n\n  }"
+    },
+    {
+      "description": "write_array",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void write_array() {\n\n    TestArray msg = TestArray.newBuilder()\n\n      .addStrings(\"one\").addStrings(\"two\")\n\n      .addNesteds(NestedMsg.newBuilder().setLabel(\"nestedOne\")).addNesteds(NestedMsg.newBuilder().setLabel(\"nestedTwo\"))\n\n      .build();\n\n\n\n    assertThat(toJson(msg))\n\n      .isEqualTo(\"{\\\"strings\\\":[\\\"one\\\",\\\"two\\\"],\\\"nesteds\\\":[{\\\"label\\\":\\\"nestedOne\\\"},{\\\"label\\\":\\\"nestedTwo\\\"}]}\");\n\n  }"
+    },
+    {
+      "description": "write_empty_array",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void write_empty_array() {\n\n    TestArray msg = TestArray.newBuilder().build();\n\n\n\n    assertThat(toJson(msg)).isEqualTo(\"{\\\"strings\\\":[],\\\"nesteds\\\":[]}\");\n\n  }"
+    },
+    {
+      "description": "do_not_write_null_wrapper_of_array",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void do_not_write_null_wrapper_of_array() {\n\n    TestNullableArray msg = TestNullableArray.newBuilder()\n\n      .setLabel(\"world\")\n\n      .build();\n\n\n\n    assertThat(msg.hasCountries()).isFalse();\n\n\n\n    // array wrapper is null\n\n    assertThat(toJson(msg)).isEqualTo(\"{\\\"label\\\":\\\"world\\\"}\");\n\n  }"
+    },
+    {
+      "description": "inline_wrapper_of_array",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void inline_wrapper_of_array() {\n\n    TestNullableArray msg = TestNullableArray.newBuilder()\n\n      .setLabel(\"world\")\n\n      .setCountries(Countries.newBuilder())\n\n      .build();\n\n    assertThat(msg.hasCountries()).isTrue();\n\n    assertThat(toJson(msg)).contains(\"\\\"label\\\":\\\"world\\\",\\\"countries\\\":[]\");\n\n\n\n    msg = TestNullableArray.newBuilder()\n\n      .setLabel(\"world\")\n\n      .setCountries(Countries.newBuilder().addCountries(Country.newBuilder().setName(\"France\").setContinent(\"Europe\")))\n\n      .build();\n\n    assertThat(msg.hasCountries()).isTrue();\n\n    assertThat(toJson(msg)).contains(\"\\\"label\\\":\\\"world\\\",\\\"countries\\\":[{\\\"name\\\":\\\"France\\\",\\\"continent\\\":\\\"Europe\\\"}]\");\n\n  }"
+    },
+    {
+      "description": "write_map",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void write_map() {\n\n    TestMap.Builder builder = TestMap.newBuilder();\n\n    builder.getMutableStringMap().put(\"one\", \"un\");\n\n    builder.getMutableStringMap().put(\"two\", \"deux\");\n\n    builder.getMutableNestedMap().put(\"three\", NestedMsg.newBuilder().setLabel(\"trois\").build());\n\n    builder.getMutableNestedMap().put(\"four\", NestedMsg.newBuilder().setLabel(\"quatre\").build());\n\n    assertThat(toJson(builder.build())).isEqualTo(\n\n      \"{\\\"stringMap\\\":{\\\"one\\\":\\\"un\\\",\\\"two\\\":\\\"deux\\\"},\\\"nestedMap\\\":{\\\"three\\\":{\\\"label\\\":\\\"trois\\\"},\\\"four\\\":{\\\"label\\\":\\\"quatre\\\"}}}\");\n\n  }"
+    },
+    {
+      "description": "write_empty_map",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void write_empty_map() {\n\n    TestMap.Builder builder = TestMap.newBuilder();\n\n    assertThat(toJson(builder.build())).isEqualTo(\"{\\\"stringMap\\\":{},\\\"nestedMap\\\":{}}\");\n\n  }"
+    },
+    {
+      "description": "do_not_write_null_wrapper_of_map",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void do_not_write_null_wrapper_of_map() {\n\n    TestNullableMap msg = TestNullableMap.newBuilder()\n\n      .setLabel(\"world\")\n\n      .build();\n\n    assertThat(toJson(msg)).isEqualTo(\"{\\\"label\\\":\\\"world\\\"}\");\n\n  }"
+    },
+    {
+      "description": "inline_wrapper_of_map",
+      "expected-problems": null,
+      "expected-linenumbers": 15,
+      "code": "  public void inline_wrapper_of_map() {\n\n    TestNullableMap msg = TestNullableMap.newBuilder()\n\n      .setLabel(\"world\")\n\n      .setTranslations(Translations.newBuilder())\n\n      .build();\n\n    assertThat(toJson(msg)).isEqualTo(\"{\\\"label\\\":\\\"world\\\",\\\"translations\\\":{}}\");\n\n\n\n    Translations.Builder translationsBuilder = Translations.newBuilder();\n\n    translationsBuilder.getMutableTranslations().put(\"one\", \"un\");\n\n    translationsBuilder.getMutableTranslations().put(\"two\", \"deux\");\n\n    msg = TestNullableMap.newBuilder()\n\n      .setLabel(\"world\")\n\n      .setTranslations(translationsBuilder)\n\n      .build();\n\n    assertThat(toJson(msg)).isEqualTo(\"{\\\"label\\\":\\\"world\\\",\\\"translations\\\":{\\\"one\\\":\\\"un\\\",\\\"two\\\":\\\"deux\\\"}}\");\n\n  }"
+    },
+    {
+      "description": "write_map_of_arrays",
+      "expected-problems": null,
+      "expected-linenumbers": 11,
+      "code": "  public void write_map_of_arrays() {\n\n    // this is a trick to have arrays in map values\n\n    TestMapOfArray.Builder msg = TestMapOfArray.newBuilder();\n\n\n\n    // wrapper over array\n\n    Countries europe = Countries.newBuilder()\n\n      .addCountries(Country.newBuilder().setContinent(\"Europe\").setName(\"France\"))\n\n      .addCountries(Country.newBuilder().setContinent(\"Europe\").setName(\"Germany\"))\n\n      .build();\n\n    msg.getMutableMoneys().put(\"eur\", europe);\n\n    assertThat(toJson(msg.build())).isEqualTo(\"{\\\"moneys\\\":{\\\"eur\\\":[{\\\"name\\\":\\\"France\\\",\\\"continent\\\":\\\"Europe\\\"},{\\\"name\\\":\\\"Germany\\\",\\\"continent\\\":\\\"Europe\\\"}]}}\");\n\n  }"
+    },
+    {
+      "description": "write_map_of_map",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void write_map_of_map() {\n\n    // this is a trick to have maps in map values\n\n    TestMapOfMap.Builder msg = TestMapOfMap.newBuilder();\n\n\n\n    // wrapper over map\n\n    Translations.Builder translationsBuilder = Translations.newBuilder();\n\n    translationsBuilder.getMutableTranslations().put(\"one\", \"un\");\n\n    translationsBuilder.getMutableTranslations().put(\"two\", \"deux\");\n\n    msg.getMutableCatalogs().put(\"numbers\", translationsBuilder.build());\n\n    assertThat(toJson(msg.build())).isEqualTo(\"{\\\"catalogs\\\":{\\\"numbers\\\":{\\\"one\\\":\\\"un\\\",\\\"two\\\":\\\"deux\\\"}}}\");\n\n  }"
+    },
+    {
+      "description": "constructor_is_private",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void constructor_is_private() {\n\n    assertThat(TestUtils.hasOnlyPrivateConstructors(ProtobufJsonFormat.class)).isTrue();\n\n  }"
+    }
+  ]
+}

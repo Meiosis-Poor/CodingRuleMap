@@ -1,0 +1,38 @@
+{
+  "name": "PluginClassloaderFactory",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 93,
+  "branches": 10,
+  "apis": 39,
+  "test": [
+    {
+      "description": "create_isolated_classloader",
+      "expected-problems": null,
+      "expected-linenumbers": 13,
+      "code": "  public void create_isolated_classloader() {\n\n    PluginClassLoaderDef def = basePluginDef();\n\n    Map<PluginClassLoaderDef, ClassLoader> map = factory.create(emptyMap(), asList(def));\n\n\n\n    assertThat(map).containsOnlyKeys(def);\n\n    ClassLoader classLoader = map.get(def);\n\n\n\n    // plugin can access to API classes, and of course to its own classes !\n\n    assertThat(canLoadClass(classLoader, RulesDefinition.class.getCanonicalName())).isTrue();\n\n    assertThat(canLoadClass(classLoader, BASE_PLUGIN_CLASSNAME)).isTrue();\n\n\n\n    // plugin can not access to core classes\n\n    assertThat(canLoadClass(classLoader, PluginClassloaderFactory.class.getCanonicalName())).isFalse();\n\n    assertThat(canLoadClass(classLoader, Test.class.getCanonicalName())).isFalse();\n\n    assertThat(canLoadClass(classLoader, StringUtils.class.getCanonicalName())).isFalse();\n\n  }"
+    },
+    {
+      "description": "classloader_exports_resources_to_other_classloaders",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void classloader_exports_resources_to_other_classloaders() {\n\n    PluginClassLoaderDef baseDef = basePluginDef();\n\n    PluginClassLoaderDef dependentDef = dependentPluginDef();\n\n    Map<PluginClassLoaderDef, ClassLoader> map = factory.create(emptyMap(), asList(baseDef, dependentDef));\n\n    ClassLoader baseClassloader = map.get(baseDef);\n\n    ClassLoader dependentClassloader = map.get(dependentDef);\n\n\n\n    // base-plugin exports its API package to other plugins\n\n    assertThat(canLoadClass(dependentClassloader, \"org.sonar.plugins.base.api.BaseApi\")).isTrue();\n\n    assertThat(canLoadClass(dependentClassloader, BASE_PLUGIN_CLASSNAME)).isFalse();\n\n    assertThat(canLoadClass(dependentClassloader, DEPENDENT_PLUGIN_CLASSNAME)).isTrue();\n\n\n\n    // dependent-plugin does not export its classes\n\n    assertThat(canLoadClass(baseClassloader, DEPENDENT_PLUGIN_CLASSNAME)).isFalse();\n\n    assertThat(canLoadClass(baseClassloader, BASE_PLUGIN_CLASSNAME)).isTrue();\n\n  }"
+    },
+    {
+      "description": "classloader_exports_resources_to_other_classloaders_loaded_later",
+      "expected-problems": null,
+      "expected-linenumbers": 11,
+      "code": "  public void classloader_exports_resources_to_other_classloaders_loaded_later() {\n\n    PluginClassLoaderDef baseDef = basePluginDef();\n\n    Map<PluginClassLoaderDef, ClassLoader> map1 = factory.create(emptyMap(), List.of(baseDef));\n\n\n\n    PluginClassLoaderDef dependentDef = dependentPluginDef();\n\n    Map<PluginClassLoaderDef, ClassLoader> map2 = factory.create(map1, List.of(dependentDef));\n\n\n\n    ClassLoader dependentClassloader = map2.get(dependentDef);\n\n\n\n    // base-plugin exports its API package to other plugins\n\n    assertThat(canLoadClass(dependentClassloader, \"org.sonar.plugins.base.api.BaseApi\")).isTrue();\n\n    assertThat(canLoadClass(dependentClassloader, BASE_PLUGIN_CLASSNAME)).isFalse();\n\n    assertThat(canLoadClass(dependentClassloader, DEPENDENT_PLUGIN_CLASSNAME)).isTrue();\n\n  }"
+    },
+    {
+      "description": "classloader_exposes_license_api_from_main_classloader",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void classloader_exposes_license_api_from_main_classloader() {\n\n    PluginClassLoaderDef def = basePluginDef();\n\n    Map<PluginClassLoaderDef, ClassLoader> map = factory.create(emptyMap(), asList(def));\n\n\n\n    assertThat(map).containsOnlyKeys(def);\n\n    ClassLoader classLoader = map.get(def);\n\n\n\n    assertThat(canLoadClass(classLoader, FooBar.class.getCanonicalName())).isTrue();\n\n  }"
+    }
+  ]
+}

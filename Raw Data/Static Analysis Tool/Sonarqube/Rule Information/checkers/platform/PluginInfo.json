@@ -1,0 +1,68 @@
+{
+  "name": "PluginInfo",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 355,
+  "branches": 14,
+  "apis": 77,
+  "test": [
+    {
+      "description": "test_RequiredPlugin",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void test_RequiredPlugin() {\n\n    PluginInfo.RequiredPlugin plugin = PluginInfo.RequiredPlugin.parse(\"java:1.1\");\n\n    assertThat(plugin.getKey()).isEqualTo(\"java\");\n\n    assertThat(plugin.getMinimalVersion().getName()).isEqualTo(\"1.1\");\n\n    assertThat(plugin).hasToString(\"java:1.1\")\n\n      .isEqualTo(PluginInfo.RequiredPlugin.parse(\"java:1.2\"))\n\n      .isNotEqualTo(PluginInfo.RequiredPlugin.parse(\"php:1.2\"));\n\n\n\n    try {\n\n      PluginInfo.RequiredPlugin.parse(\"java\");\n\n      fail();\n\n    } catch (IllegalArgumentException expected) {\n\n      // ok\n\n    }\n\n  }"
+    },
+    {
+      "description": "test_comparison",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void test_comparison() {\n\n    PluginInfo java1 = new PluginInfo(\"java\").setVersion(Version.create(\"1.0\"));\n\n    PluginInfo java2 = new PluginInfo(\"java\").setVersion(Version.create(\"2.0\"));\n\n    PluginInfo javaNoVersion = new PluginInfo(\"java\");\n\n    PluginInfo cobol = new PluginInfo(\"cobol\").setVersion(Version.create(\"1.0\"));\n\n    PluginInfo noVersion = new PluginInfo(\"noVersion\");\n\n    List<PluginInfo> plugins = Arrays.asList(java1, cobol, javaNoVersion, noVersion, java2);\n\n\n\n    List<PluginInfo> ordered = natural().sortedCopy(plugins);\n\n    Assertions.assertThat(ordered.get(0)).isSameAs(cobol);\n\n    Assertions.assertThat(ordered.get(1)).isSameAs(javaNoVersion);\n\n    Assertions.assertThat(ordered.get(2)).isSameAs(java1);\n\n    Assertions.assertThat(ordered.get(3)).isSameAs(java2);\n\n    Assertions.assertThat(ordered.get(4)).isSameAs(noVersion);\n\n  }"
+    },
+    {
+      "description": "test_equals",
+      "expected-problems": null,
+      "expected-linenumbers": 15,
+      "code": "  public void test_equals() {\n\n    PluginInfo java1 = new PluginInfo(\"java\").setVersion(Version.create(\"1.0\"));\n\n    PluginInfo java2 = new PluginInfo(\"java\").setVersion(Version.create(\"2.0\"));\n\n    PluginInfo javaNoVersion = new PluginInfo(\"java\");\n\n    PluginInfo cobol = new PluginInfo(\"cobol\").setVersion(Version.create(\"1.0\"));\n\n\n\n    assertThat(java1.equals(java1)).isTrue();\n\n    assertThat(java1.equals(java2)).isFalse();\n\n    assertThat(java1.equals(javaNoVersion)).isFalse();\n\n    assertThat(java1.equals(cobol)).isFalse();\n\n    assertThat(java1.equals(\"java:1.0\")).isFalse();\n\n    assertThat(java1.equals(null)).isFalse();\n\n    assertThat(javaNoVersion.equals(javaNoVersion)).isTrue();\n\n\n\n    assertThat(java1).hasSameHashCodeAs(java1);\n\n    assertThat(javaNoVersion).hasSameHashCodeAs(javaNoVersion);\n\n  }"
+    },
+    {
+      "description": "test_compatibility_with_snapshot_version_of_sonarqube",
+      "expected-problems": null,
+      "expected-linenumbers": 20,
+      "code": "  public void test_compatibility_with_snapshot_version_of_sonarqube() {\n\n    // plugins compatible with 5.6 LTS\n\n    assertThat(withMinSqVersion(\"5.6\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"5.6.1\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n\n\n    // plugin build with old release candidates of SonarQube (RC technical versions have been removed\n\n    // in SonarQube 6.3)\n\n    assertThat(withMinSqVersion(\"5.6-RC1\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.2-RC1\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n\n\n    // plugin built with snapshot version of SonarQube\n\n    assertThat(withMinSqVersion(\"5.6-SNAPSHOT\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.3-SNAPSHOT\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.4-SNAPSHOT\").isCompatibleWith(\"6.3-SNAPSHOT\")).isFalse();\n\n\n\n    // plugin built with SonarQube releases\n\n    assertThat(withMinSqVersion(\"6.3.0.5000\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.3.1.5000\").isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.3.1.5000\").isCompatibleWith(\"6.4-SNAPSHOT\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.4.0.5000\").isCompatibleWith(\"6.3-SNAPSHOT\")).isFalse();\n\n\n\n    // no constraint\n\n    assertThat(withMinSqVersion(null).isCompatibleWith(\"6.3-SNAPSHOT\")).isTrue();\n\n  }"
+    },
+    {
+      "description": "test_compatibility_with_release_version_of_sonarqube",
+      "expected-problems": null,
+      "expected-linenumbers": 21,
+      "code": "  public void test_compatibility_with_release_version_of_sonarqube() {\n\n    // plugins compatible with 5.6 LTS\n\n    assertThat(withMinSqVersion(\"5.6\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"5.6.1\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n\n\n    // plugin build with old release candidates of SonarQube (RC technical versions have been removed\n\n    // in SonarQube 6.3)\n\n    assertThat(withMinSqVersion(\"5.6-RC1\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.2-RC1\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n\n\n    // plugin built with snapshot version of SonarQube\n\n    assertThat(withMinSqVersion(\"5.6-SNAPSHOT\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.3-SNAPSHOT\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.3-SNAPSHOT\").isCompatibleWith(\"6.3.1.6000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.4-SNAPSHOT\").isCompatibleWith(\"6.3.0.5000\")).isFalse();\n\n\n\n    // plugin built with SonarQube releases\n\n    assertThat(withMinSqVersion(\"6.3.0.5000\").isCompatibleWith(\"6.3.0.4000\")).isFalse();\n\n    assertThat(withMinSqVersion(\"6.3.0.5000\").isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.3.0.5000\").isCompatibleWith(\"6.3.1.6000\")).isTrue();\n\n    assertThat(withMinSqVersion(\"6.4.0.7000\").isCompatibleWith(\"6.3.0.5000\")).isFalse();\n\n\n\n    // no constraint\n\n    assertThat(withMinSqVersion(null).isCompatibleWith(\"6.3.0.5000\")).isTrue();\n\n  }"
+    },
+    {
+      "description": "create_from_file",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void create_from_file() {\n\n    File checkstyleJar = FileUtils.toFile(getClass().getResource(\"/org/sonar/core/platform/sonar-checkstyle-plugin-2.8.jar\"));\n\n    PluginInfo checkstyleInfo = PluginInfo.create(checkstyleJar);\n\n\n\n    assertThat(checkstyleInfo.getName()).isEqualTo(\"Checkstyle\");\n\n    assertThat(checkstyleInfo.getDocumentationPath()).isNull();\n\n    assertThat(checkstyleInfo.getMinimalSonarPluginApiVersion()).isEqualTo(Version.create(\"2.8\"));\n\n  }"
+    },
+    {
+      "description": "create_from_file_with_documentation",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void create_from_file_with_documentation() {\n\n    File jarWithDocs = FileUtils.toFile(getClass().getResource(\"/org/sonar/core/platform/jar_with_documentation.jar\"));\n\n    PluginInfo checkstyleInfo = PluginInfo.create(jarWithDocs);\n\n\n\n    assertThat(checkstyleInfo.getDocumentationPath()).isNotBlank();\n\n    assertThat(checkstyleInfo.getDocumentationPath()).isEqualTo(\"static/documentation.md\");\n\n  }"
+    },
+    {
+      "description": "test_toString",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void test_toString() {\n\n    PluginInfo pluginInfo = new PluginInfo(\"java\").setVersion(Version.create(\"1.1\"));\n\n    assertThat(pluginInfo).hasToString(\"[java / 1.1]\");\n\n\n\n    pluginInfo.setImplementationBuild(\"SHA1\");\n\n    assertThat(pluginInfo).hasToString(\"[java / 1.1 / SHA1]\");\n\n  }"
+    },
+    {
+      "description": "l10n_plugins_should_not_extend_english_plugin",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void l10n_plugins_should_not_extend_english_plugin() {\n\n    PluginInfo pluginInfo = new PluginInfo(\"l10nfr\").setBasePlugin(\"l10nen\");\n\n    assertThat(pluginInfo.getBasePlugin()).isNull();\n\n  }"
+    }
+  ]
+}

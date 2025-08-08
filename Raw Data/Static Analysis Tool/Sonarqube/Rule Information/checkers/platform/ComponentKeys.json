@@ -1,0 +1,44 @@
+{
+  "name": "ComponentKeys",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 30,
+  "branches": 3,
+  "apis": 14,
+  "test": [
+    {
+      "description": "generate_key_of_object",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void generate_key_of_object() {\n\n    assertThat(keys.of(FakeComponent.class)).isEqualTo(FakeComponent.class);\n\n  }"
+    },
+    {
+      "description": "generate_key_of_instance",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void generate_key_of_instance() {\n\n    assertThat((String) keys.of(new FakeComponent())).endsWith(\"-org.sonar.core.platform.ComponentKeysTest.FakeComponent-fake\");\n\n  }"
+    },
+    {
+      "description": "generate_key_of_class",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void generate_key_of_class() {\n\n    assertThat(keys.ofClass(FakeComponent.class)).endsWith(\"-org.sonar.core.platform.ComponentKeysTest.FakeComponent\");\n\n  }"
+    },
+    {
+      "description": "should_log_warning_if_toString_is_not_overridden",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void should_log_warning_if_toString_is_not_overridden() {\n\n    Logger log = mock(Logger.class);\n\n    when(log.isWarnEnabled()).thenReturn(true);\n\n    keys.of(new Object(), log);\n\n    verifyNoInteractions(log);\n\n\n\n    // only on non-first runs, to avoid false-positives on singletons\n\n    keys.of(new Object(), log);\n\n    verify(log).warn(startsWith(\"Bad component key\"), any(), any());\n\n  }"
+    },
+    {
+      "description": "should_generate_unique_key_when_toString_is_not_overridden",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void should_generate_unique_key_when_toString_is_not_overridden() {\n\n    Object key = keys.of(new WrongToStringImpl());\n\n    assertThat(key).isNotEqualTo(WrongToStringImpl.KEY);\n\n\n\n    Object key2 = keys.of(new WrongToStringImpl());\n\n    assertThat(key2).isNotEqualTo(key);\n\n  }"
+    }
+  ]
+}

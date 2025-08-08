@@ -1,0 +1,38 @@
+{
+  "name": "CoreExtensionsLoader",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 35,
+  "branches": 1,
+  "apis": 30,
+  "test": [
+    {
+      "description": "load_has_no_effect_if_there_is_no_ServiceLoader_for_CoreExtension_class",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void load_has_no_effect_if_there_is_no_ServiceLoader_for_CoreExtension_class() {\n\n    when(serviceLoaderWrapper.load(any())).thenReturn(Collections.emptySet());\n\n\n\n    underTest.load();\n\n\n\n    verify(serviceLoaderWrapper).load(CoreExtensionsLoader.class.getClassLoader());\n\n    verify(coreExtensionRepository).setLoadedCoreExtensions(Collections.emptySet());\n\n    verifyNoMoreInteractions(serviceLoaderWrapper, coreExtensionRepository);\n\n  }"
+    },
+    {
+      "description": "load_sets_loaded_core_extensions_into_repository",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void load_sets_loaded_core_extensions_into_repository() {\n\n    Set<CoreExtension> coreExtensions = IntStream.range(0, 1 + new Random().nextInt(5))\n\n      .mapToObj(i -> newCoreExtension(\"core_ext_\" + i))\n\n      .collect(Collectors.toSet());\n\n    when(serviceLoaderWrapper.load(any())).thenReturn(coreExtensions);\n\n\n\n    underTest.load();\n\n\n\n    verify(serviceLoaderWrapper).load(CoreExtensionsLoader.class.getClassLoader());\n\n    verify(coreExtensionRepository).setLoadedCoreExtensions(coreExtensions);\n\n    verifyNoMoreInteractions(serviceLoaderWrapper, coreExtensionRepository);\n\n  }"
+    },
+    {
+      "description": "load_fails_with_ISE_if_multiple_core_extensions_declare_same_name",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void load_fails_with_ISE_if_multiple_core_extensions_declare_same_name() {\n\n    Set<CoreExtension> coreExtensions = ImmutableSet.of(newCoreExtension(\"a\"), newCoreExtension(\"a\"));\n\n    when(serviceLoaderWrapper.load(any())).thenReturn(coreExtensions);\n\n\n\n    assertThatThrownBy(() -> underTest.load())\n\n      .isInstanceOf(IllegalStateException.class)\n\n      .hasMessage(\"Multiple core extensions declare the following names: a\");\n\n  }"
+    },
+    {
+      "description": "load_fails_with_ISE_if_multiple_core_extensions_declare_same_names",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void load_fails_with_ISE_if_multiple_core_extensions_declare_same_names() {\n\n    Set<CoreExtension> coreExtensions = ImmutableSet.of(newCoreExtension(\"a\"), newCoreExtension(\"a\"), newCoreExtension(\"b\"), newCoreExtension(\"b\"));\n\n    when(serviceLoaderWrapper.load(any())).thenReturn(coreExtensions);\n\n\n\n    assertThatThrownBy(() -> underTest.load())\n\n      .isInstanceOf(IllegalStateException.class)\n\n      .hasMessage(\"Multiple core extensions declare the following names: a, b\");\n\n  }"
+    }
+  ]
+}

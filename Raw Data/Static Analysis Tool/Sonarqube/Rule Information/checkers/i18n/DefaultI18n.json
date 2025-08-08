@@ -1,0 +1,134 @@
+{
+  "name": "DefaultI18n",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 164,
+  "branches": 11,
+  "apis": 50,
+  "test": [
+    {
+      "description": "load_core_bundle",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void load_core_bundle() {\n\n    assertThat(underTest.message(Locale.ENGLISH, \"any\", null)).isEqualTo(\"Any\");\n\n  }"
+    },
+    {
+      "description": "introspect_all_available_properties",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void introspect_all_available_properties() {\n\n    assertThat(underTest.getPropertyKeys().contains(\"any\")).isTrue();\n\n    // Only in english\n\n    assertThat(underTest.getPropertyKeys().contains(\"assignee\")).isTrue();\n\n    assertThat(underTest.getPropertyKeys().contains(\"sqale.page\")).isTrue();\n\n    assertThat(underTest.getPropertyKeys().contains(\"bla_bla_bla\")).isFalse();\n\n  }"
+    },
+    {
+      "description": "all_core_metrics_are_in_core_bundle",
+      "expected-problems": null,
+      "expected-linenumbers": 24,
+      "code": "  public void all_core_metrics_are_in_core_bundle() {\n\n    List<Metric> coreMetrics = CoreMetrics.getMetrics();\n\n    List<String> incorrectMetricDefinitions = new ArrayList<>();\n\n    for (Metric metric : coreMetrics) {\n\n      if (metric.isHidden()) {\n\n        continue;\n\n      }\n\n      String metricNamePropertyKey = \"metric.\" + metric.getKey() + \".name\";\n\n      String l10nMetricName = underTest.message(Locale.ENGLISH, metricNamePropertyKey, null);\n\n      if (l10nMetricName == null) {\n\n        incorrectMetricDefinitions.add(metricNamePropertyKey + \"=\" + metric.getName());\n\n      } else if (!l10nMetricName.equals(metric.getName())) {\n\n        incorrectMetricDefinitions.add(metricNamePropertyKey + \" is not consistent in core bundle and CoreMetrics\");\n\n      }\n\n\n\n      String metricDescriptionPropertyKey = \"metric.\" + metric.getKey() + \".description\";\n\n      String l10nMetricDescription = underTest.message(Locale.ENGLISH, metricDescriptionPropertyKey, null);\n\n      if (l10nMetricDescription == null) {\n\n        incorrectMetricDefinitions.add(metricDescriptionPropertyKey + \"=\" + metric.getDescription());\n\n      } else if (!l10nMetricDescription.equals(metric.getDescription())) {\n\n        incorrectMetricDefinitions.add(metricDescriptionPropertyKey + \" is not consistent in core bundle and CoreMetrics\");\n\n      }\n\n    }\n\n\n\n    assertThat(incorrectMetricDefinitions).as(\"Metric definitions to fix in core bundle\", incorrectMetricDefinitions.size()).isEmpty();\n\n  }"
+    },
+    {
+      "description": "get_english_labels",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void get_english_labels() {\n\n    assertThat(underTest.message(Locale.ENGLISH, \"any\", null)).isEqualTo(\"Any\");\n\n    assertThat(underTest.message(Locale.ENGLISH, \"sqale.page\", null)).isEqualTo(\"Sqale page title\");\n\n    assertThat(underTest.message(Locale.ENGLISH, \"checkstyle.rule1.name\", null)).isEqualTo(\"Rule one\");\n\n  }"
+    },
+    {
+      "description": "get_english_labels_when_default_locale_is_not_english",
+      "expected-problems": null,
+      "expected-linenumbers": 11,
+      "code": "  public void get_english_labels_when_default_locale_is_not_english() {\n\n    Locale defaultLocale = Locale.getDefault();\n\n    try {\n\n      Locale.setDefault(Locale.FRENCH);\n\n      assertThat(underTest.message(Locale.ENGLISH, \"any\", null)).isEqualTo(\"Any\");\n\n      assertThat(underTest.message(Locale.ENGLISH, \"sqale.page\", null)).isEqualTo(\"Sqale page title\");\n\n      assertThat(underTest.message(Locale.ENGLISH, \"checkstyle.rule1.name\", null)).isEqualTo(\"Rule one\");\n\n    } finally {\n\n      Locale.setDefault(defaultLocale);\n\n    }\n\n  }"
+    },
+    {
+      "description": "get_labels_from_french_pack",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void get_labels_from_french_pack() {\n\n    assertThat(underTest.message(Locale.FRENCH, \"checkstyle.rule1.name\", null)).isEqualTo(\"Rule un\");\n\n    assertThat(underTest.message(Locale.FRENCH, \"any\", null)).isEqualTo(\"Tous\");\n\n\n\n    // language pack\n\n    assertThat(underTest.message(Locale.FRENCH, \"sqale.page\", null)).isEqualTo(\"Titre de la page Sqale\");\n\n  }"
+    },
+    {
+      "description": "get_french_label_if_swiss_country",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void get_french_label_if_swiss_country() {\n\n    Locale swiss = new Locale(\"fr\", \"CH\");\n\n    assertThat(underTest.message(swiss, \"checkstyle.rule1.name\", null)).isEqualTo(\"Rule un\");\n\n    assertThat(underTest.message(swiss, \"any\", null)).isEqualTo(\"Tous\");\n\n\n\n    // language pack\n\n    assertThat(underTest.message(swiss, \"sqale.page\", null)).isEqualTo(\"Titre de la page Sqale\");\n\n  }"
+    },
+    {
+      "description": "fallback_to_default_locale",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void fallback_to_default_locale() {\n\n    assertThat(underTest.message(Locale.CHINA, \"checkstyle.rule1.name\", null)).isEqualTo(\"Rule one\");\n\n    assertThat(underTest.message(Locale.CHINA, \"any\", null)).isEqualTo(\"Any\");\n\n    assertThat(underTest.message(Locale.CHINA, \"sqale.page\", null)).isEqualTo(\"Sqale page title\");\n\n    assertThat(underTest.getEffectiveLocale(Locale.CHINA)).isEqualTo(Locale.ENGLISH);\n\n  }"
+    },
+    {
+      "description": "return_default_value_if_missing_key",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void return_default_value_if_missing_key() {\n\n    assertThat(underTest.message(Locale.ENGLISH, \"bla_bla_bla\", \"default\")).isEqualTo(\"default\");\n\n    assertThat(underTest.message(Locale.FRENCH, \"bla_bla_bla\", \"default\")).isEqualTo(\"default\");\n\n  }"
+    },
+    {
+      "description": "format_message_with_parameters",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void format_message_with_parameters() {\n\n    assertThat(underTest.message(Locale.ENGLISH, \"x_results\", null, \"10\")).isEqualTo(\"10 results\");\n\n  }"
+    },
+    {
+      "description": "use_default_locale_if_missing_value_in_localized_bundle",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void use_default_locale_if_missing_value_in_localized_bundle() {\n\n    assertThat(underTest.message(Locale.FRENCH, \"assignee\", null)).isEqualTo(\"Assignee\");\n\n    assertThat(underTest.message(Locale.CHINA, \"assignee\", null)).isEqualTo(\"Assignee\");\n\n  }"
+    },
+    {
+      "description": "return_null_if_file_not_found",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void return_null_if_file_not_found() {\n\n    String html = underTest.messageFromFile(Locale.ENGLISH, \"UnknownRule.html\", \"checkstyle.rule1.name\");\n\n    assertThat(html).isNull();\n\n  }"
+    },
+    {
+      "description": "return_null_if_rule_not_internationalized",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void return_null_if_rule_not_internationalized() {\n\n    String html = underTest.messageFromFile(Locale.ENGLISH, \"UnknownRule.html\", \"foo.rule1.name\");\n\n    assertThat(html).isNull();\n\n  }"
+    },
+    {
+      "description": "get_age_with_duration",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void get_age_with_duration() {\n\n    assertThat(underTest.age(Locale.ENGLISH, 10)).isEqualTo(\"less than a minute\");\n\n  }"
+    },
+    {
+      "description": "get_age_with_dates",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void get_age_with_dates() {\n\n    assertThat(underTest.age(Locale.ENGLISH, DateUtils.parseDate(\"2014-01-01\"), DateUtils.parseDate(\"2014-01-02\"))).isEqualTo(\"a day\");\n\n  }"
+    },
+    {
+      "description": "get_age_from_now",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void get_age_from_now() {\n\n    system2.setNow(DateUtils.parseDate(\"2014-01-02\").getTime());\n\n    assertThat(underTest.ageFromNow(Locale.ENGLISH, DateUtils.parseDate(\"2014-01-01\"))).isEqualTo(\"a day\");\n\n  }"
+    },
+    {
+      "description": "format_date_time",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void format_date_time() {\n\n    TimeZone initialTz = TimeZone.getDefault();\n\n    TimeZone.setDefault(TimeZone.getTimeZone(\"GMT+1\"));\n\n    assertThat(underTest.formatDateTime(Locale.ENGLISH, DateUtils.parseDateTime(\"2014-01-22T19:10:03+0100\"))).startsWith(\"Jan 22, 2014\");\n\n    TimeZone.setDefault(initialTz);\n\n  }"
+    },
+    {
+      "description": "format_date",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void format_date() {\n\n    TimeZone initialTz = TimeZone.getDefault();\n\n    TimeZone.setDefault(TimeZone.getTimeZone(\"GMT+1\"));\n\n    assertThat(underTest.formatDate(Locale.ENGLISH, DateUtils.parseDateTime(\"2014-01-22T19:10:03+0100\"))).isEqualTo(\"Jan 22, 2014\");\n\n    TimeZone.setDefault(initialTz);\n\n  }"
+    },
+    {
+      "description": "format_double",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void format_double() {\n\n    assertThat(underTest.formatDouble(Locale.FRENCH, 10.56)).isEqualTo(\"10,6\");\n\n    assertThat(underTest.formatDouble(Locale.FRENCH, 10d)).isEqualTo(\"10,0\");\n\n  }"
+    },
+    {
+      "description": "format_integer",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void format_integer() {\n\n    assertThat(underTest.formatInteger(Locale.ENGLISH, 10)).isEqualTo(\"10\");\n\n    assertThat(underTest.formatInteger(Locale.ENGLISH, 100000)).isEqualTo(\"100,000\");\n\n  }"
+    }
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "name": "MoreCollectors",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 135,
+  "branches": 11,
+  "apis": 30,
+  "test": [
+    {
+      "description": "index_empty_stream_returns_empty_map",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void index_empty_stream_returns_empty_map() {\n\n    assertThat(Stream.<MyObj>empty().collect(index(MyObj::getId)).size()).isZero();\n\n    assertThat(Stream.<MyObj>empty().collect(index(MyObj::getId, MyObj::getText)).size()).isZero();\n\n  }"
+    },
+    {
+      "description": "index_fails_if_key_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void index_fails_if_key_function_is_null() {\n\n    assertThatThrownBy(() -> index(null))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't be null\");\n\n  }"
+    },
+    {
+      "description": "index_with_valueFunction_fails_if_key_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void index_with_valueFunction_fails_if_key_function_is_null() {\n\n    assertThatThrownBy(() -> index(null, MyObj::getText))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't be null\");\n\n  }"
+    },
+    {
+      "description": "index_with_valueFunction_fails_if_value_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void index_with_valueFunction_fails_if_value_function_is_null() {\n\n    assertThatThrownBy(() ->  index(MyObj::getId, null))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Value function can't be null\");\n\n  }"
+    },
+    {
+      "description": "index_fails_if_key_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void index_fails_if_key_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT_LIST.stream().collect(index(s -> null)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't return null\");\n\n  }"
+    },
+    {
+      "description": "index_with_valueFunction_fails_if_key_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void index_with_valueFunction_fails_if_key_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT_LIST.stream().collect(index(s -> null, MyObj::getText)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't return null\");\n\n  }"
+    },
+    {
+      "description": "index_with_valueFunction_fails_if_value_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void index_with_valueFunction_fails_if_value_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT_LIST.stream().collect(index(MyObj::getId, s -> null)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Value function can't return null\");\n\n  }"
+    },
+    {
+      "description": "index_supports_duplicate_keys",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void index_supports_duplicate_keys() {\n\n    ListMultimap<Integer, MyObj> multimap = LIST_WITH_DUPLICATE_ID.stream().collect(index(MyObj::getId));\n\n\n\n    assertThat(multimap.keySet()).containsOnly(1, 2);\n\n    assertThat(multimap.get(1)).containsOnly(MY_OBJ_1_A, MY_OBJ_1_C);\n\n    assertThat(multimap.get(2)).containsOnly(MY_OBJ_2_B);\n\n  }"
+    },
+    {
+      "description": "index_returns_ListMultimap",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void index_returns_ListMultimap() {\n\n    ListMultimap<Integer, MyObj> multimap = LIST.stream().collect(index(MyObj::getId));\n\n\n\n    assertThat(multimap.size()).isEqualTo(3);\n\n    Map<Integer, Collection<MyObj>> map = multimap.asMap();\n\n    assertThat(map.get(1)).containsOnly(MY_OBJ_1_A);\n\n    assertThat(map.get(2)).containsOnly(MY_OBJ_2_B);\n\n    assertThat(map.get(3)).containsOnly(MY_OBJ_3_C);\n\n  }"
+    },
+    {
+      "description": "index_with_valueFunction_returns_ListMultimap",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void index_with_valueFunction_returns_ListMultimap() {\n\n    ListMultimap<Integer, String> multimap = LIST.stream().collect(index(MyObj::getId, MyObj::getText));\n\n\n\n    assertThat(multimap.size()).isEqualTo(3);\n\n    Map<Integer, Collection<String>> map = multimap.asMap();\n\n    assertThat(map.get(1)).containsOnly(\"A\");\n\n    assertThat(map.get(2)).containsOnly(\"B\");\n\n    assertThat(map.get(3)).containsOnly(\"C\");\n\n  }"
+    },
+    {
+      "description": "index_parallel_stream",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void index_parallel_stream() {\n\n    ListMultimap<String, String> multimap = HUGE_LIST.parallelStream().collect(index(identity()));\n\n\n\n    assertThat(multimap.keySet()).isEqualTo(HUGE_SET);\n\n  }"
+    },
+    {
+      "description": "index_with_valueFunction_parallel_stream",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void index_with_valueFunction_parallel_stream() {\n\n    ListMultimap<String, String> multimap = HUGE_LIST.parallelStream().collect(index(identity(), identity()));\n\n\n\n    assertThat(multimap.keySet()).isEqualTo(HUGE_SET);\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_empty_stream_returns_empty_map",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void unorderedIndex_empty_stream_returns_empty_map() {\n\n    assertThat(Stream.<MyObj>empty().collect(unorderedIndex(MyObj::getId)).size()).isZero();\n\n    assertThat(Stream.<MyObj>empty().collect(unorderedIndex(MyObj::getId, MyObj::getText)).size()).isZero();\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_fails_if_key_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedIndex_fails_if_key_function_is_null() {\n\n    assertThatThrownBy(() -> unorderedIndex(null))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't be null\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_with_valueFunction_fails_if_key_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedIndex_with_valueFunction_fails_if_key_function_is_null() {\n\n    assertThatThrownBy(() -> unorderedIndex(null, MyObj::getText))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't be null\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_with_valueFunction_fails_if_value_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedIndex_with_valueFunction_fails_if_value_function_is_null() {\n\n    assertThatThrownBy(() ->  unorderedIndex(MyObj::getId, null))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Value function can't be null\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_fails_if_key_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedIndex_fails_if_key_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT_LIST.stream().collect(unorderedIndex(s -> null)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't return null\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_with_valueFunction_fails_if_key_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedIndex_with_valueFunction_fails_if_key_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT_LIST.stream().collect(unorderedIndex(s -> null, MyObj::getText)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't return null\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_with_valueFunction_fails_if_value_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedIndex_with_valueFunction_fails_if_value_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT_LIST.stream().collect(unorderedIndex(MyObj::getId, s -> null)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Value function can't return null\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_supports_duplicate_keys",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void unorderedIndex_supports_duplicate_keys() {\n\n    SetMultimap<Integer, MyObj> multimap = LIST_WITH_DUPLICATE_ID.stream().collect(unorderedIndex(MyObj::getId));\n\n\n\n    assertThat(multimap.keySet()).containsOnly(1, 2);\n\n    assertThat(multimap.get(1)).containsOnly(MY_OBJ_1_A, MY_OBJ_1_C);\n\n    assertThat(multimap.get(2)).containsOnly(MY_OBJ_2_B);\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_returns_SetMultimap",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void unorderedIndex_returns_SetMultimap() {\n\n    SetMultimap<Integer, MyObj> multimap = LIST.stream().collect(unorderedIndex(MyObj::getId));\n\n\n\n    assertThat(multimap.size()).isEqualTo(3);\n\n    Map<Integer, Collection<MyObj>> map = multimap.asMap();\n\n    assertThat(map.get(1)).containsOnly(MY_OBJ_1_A);\n\n    assertThat(map.get(2)).containsOnly(MY_OBJ_2_B);\n\n    assertThat(map.get(3)).containsOnly(MY_OBJ_3_C);\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_with_valueFunction_returns_SetMultimap",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void unorderedIndex_with_valueFunction_returns_SetMultimap() {\n\n    SetMultimap<Integer, String> multimap = LIST.stream().collect(unorderedIndex(MyObj::getId, MyObj::getText));\n\n\n\n    assertThat(multimap.size()).isEqualTo(3);\n\n    Map<Integer, Collection<String>> map = multimap.asMap();\n\n    assertThat(map.get(1)).containsOnly(\"A\");\n\n    assertThat(map.get(2)).containsOnly(\"B\");\n\n    assertThat(map.get(3)).containsOnly(\"C\");\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_parallel_stream",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void unorderedIndex_parallel_stream() {\n\n    SetMultimap<String, String> multimap = HUGE_LIST.parallelStream().collect(unorderedIndex(identity()));\n\n\n\n    assertThat(multimap.keySet()).isEqualTo(HUGE_SET);\n\n  }"
+    },
+    {
+      "description": "unorderedIndex_with_valueFunction_parallel_stream",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void unorderedIndex_with_valueFunction_parallel_stream() {\n\n    SetMultimap<String, String> multimap = HUGE_LIST.parallelStream().collect(unorderedIndex(identity(), identity()));\n\n\n\n    assertThat(multimap.keySet()).isEqualTo(HUGE_SET);\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_empty_stream_returns_empty_map",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedFlattenIndex_empty_stream_returns_empty_map() {\n\n    assertThat(Stream.<MyObj2>empty()\n\n      .collect(unorderedFlattenIndex(MyObj2::getId, MyObj2::getTexts))\n\n      .size()).isZero();\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_with_valueFunction_fails_if_key_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedFlattenIndex_with_valueFunction_fails_if_key_function_is_null() {\n\n    assertThatThrownBy(() -> unorderedFlattenIndex(null, MyObj2::getTexts))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't be null\");\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_with_valueFunction_fails_if_value_function_is_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedFlattenIndex_with_valueFunction_fails_if_value_function_is_null() {\n\n    assertThatThrownBy(() -> unorderedFlattenIndex(MyObj2::getId, null))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Value function can't be null\");\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_with_valueFunction_fails_if_key_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedFlattenIndex_with_valueFunction_fails_if_key_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT2_LIST.stream().collect(unorderedFlattenIndex(s -> null, MyObj2::getTexts)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Key function can't return null\");\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_with_valueFunction_fails_if_value_function_returns_null",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void unorderedFlattenIndex_with_valueFunction_fails_if_value_function_returns_null() {\n\n    assertThatThrownBy(() -> SINGLE_ELEMENT2_LIST.stream().collect(unorderedFlattenIndex(MyObj2::getId, s -> null)))\n\n      .isInstanceOf(NullPointerException.class)\n\n      .hasMessage(\"Value function can't return null\");\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_supports_duplicate_keys",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void unorderedFlattenIndex_supports_duplicate_keys() {\n\n    SetMultimap<Integer, String> multimap = LIST2_WITH_DUPLICATE_ID.stream()\n\n      .collect(unorderedFlattenIndex(MyObj2::getId, MyObj2::getTexts));\n\n\n\n    assertThat(multimap.keySet()).containsOnly(1, 2);\n\n    assertThat(multimap.get(1)).containsOnly(\"A\", \"X\", \"C\");\n\n    assertThat(multimap.get(2)).containsOnly(\"B\");\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_with_valueFunction_returns_SetMultimap",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void unorderedFlattenIndex_with_valueFunction_returns_SetMultimap() {\n\n    SetMultimap<Integer, String> multimap = LIST2.stream()\n\n      .collect(unorderedFlattenIndex(MyObj2::getId, MyObj2::getTexts));\n\n\n\n    assertThat(multimap.size()).isEqualTo(4);\n\n    Map<Integer, Collection<String>> map = multimap.asMap();\n\n    assertThat(map.get(1)).containsOnly(\"A\", \"X\");\n\n    assertThat(map.get(2)).containsOnly(\"B\");\n\n    assertThat(map.get(3)).containsOnly(\"C\");\n\n  }"
+    },
+    {
+      "description": "unorderedFlattenIndex_with_valueFunction_parallel_stream",
+      "expected-problems": null,
+      "expected-linenumbers": 4,
+      "code": "  public void unorderedFlattenIndex_with_valueFunction_parallel_stream() {\n\n    SetMultimap<String, String> multimap = HUGE_LIST.parallelStream().collect(unorderedFlattenIndex(identity(), Stream::of));\n\n\n\n    assertThat(multimap.keySet()).isEqualTo(HUGE_SET);\n\n  }"
+    }
+  ]
+}

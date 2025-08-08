@@ -1,0 +1,128 @@
+{
+  "name": "SpringComponentContainer",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 228,
+  "branches": 25,
+  "apis": 37,
+  "test": [
+    {
+      "description": "should_stop_after_failing",
+      "expected-problems": null,
+      "expected-linenumbers": 17,
+      "code": "  public void should_stop_after_failing() {\n\n    ApiStartable startStop = new ApiStartable();\n\n    SpringComponentContainer container = new SpringComponentContainer() {\n\n      @Override\n\n      public void doBeforeStart() {\n\n        add(startStop);\n\n      }\n\n\n\n      @Override\n\n      public void doAfterStart() {\n\n        getComponentByType(ApiStartable.class);\n\n        throw new IllegalStateException(\"doBeforeStart\");\n\n      }\n\n    };\n\n\n\n    assertThrows(\"doBeforeStart\", IllegalStateException.class, container::execute);\n\n    assertThat(startStop.start).isOne();\n\n    assertThat(startStop.stop).isOne();\n\n  }"
+    },
+    {
+      "description": "add_registers_instance_with_toString",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void add_registers_instance_with_toString() {\n\n    SpringComponentContainer container = new SimpleContainer(new ToString(\"a\"), new ToString(\"b\"));\n\n    container.startComponents();\n\n    assertThat(container.context.getBeanDefinitionNames())\n\n      .contains(\n\n        this.getClass().getClassLoader() + \"-org.sonar.core.platform.SpringComponentContainerTest.ToString-a\",\n\n        this.getClass().getClassLoader() + \"-org.sonar.core.platform.SpringComponentContainerTest.ToString-b\");\n\n    assertThat(container.getComponentsByType(ToString.class)).hasSize(2);\n\n  }"
+    },
+    {
+      "description": "add_registers_class_with_classloader_and_fqcn",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void add_registers_class_with_classloader_and_fqcn() {\n\n    SpringComponentContainer container = new SimpleContainer(A.class, B.class);\n\n    container.startComponents();\n\n    assertThat(container.context.getBeanDefinitionNames())\n\n      .contains(\n\n        this.getClass().getClassLoader() + \"-org.sonar.core.platform.SpringComponentContainerTest.A\",\n\n        this.getClass().getClassLoader() + \"-org.sonar.core.platform.SpringComponentContainerTest.B\");\n\n    assertThat(container.getComponentByType(A.class)).isNotNull();\n\n    assertThat(container.getComponentByType(B.class)).isNotNull();\n\n  }"
+    },
+    {
+      "description": "addWebConfigurationClass_addsClass",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void addWebConfigurationClass_addsClass() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.addWebApiV2ConfigurationClass(org.sonar.core.test.Test.class);\n\n    assertThat(container.getWebApiV2ConfigurationClasses()).contains(org.sonar.core.test.Test.class);\n\n  }"
+    },
+    {
+      "description": "add_configures_module_instances",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void add_configures_module_instances() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.add(new TestModule());\n\n    container.startComponents();\n\n    assertThat(container.getComponentByType(A.class)).isNotNull();\n\n  }"
+    },
+    {
+      "description": "get_optional_component_by_type_should_return_correctly",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void get_optional_component_by_type_should_return_correctly() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.add(A.class);\n\n    container.startComponents();\n\n    assertThat(container.getOptionalComponentByType(A.class)).containsInstanceOf(A.class);\n\n    assertThat(container.getOptionalComponentByType(B.class)).isEmpty();\n\n  }"
+    },
+    {
+      "description": "createChild_method_should_spawn_a_child_container",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void createChild_method_should_spawn_a_child_container(){\n\n    SpringComponentContainer parent = new SpringComponentContainer();\n\n    SpringComponentContainer child = parent.createChild();\n\n    assertThat(child).isNotEqualTo(parent);\n\n    assertThat(child.parent).isEqualTo(parent);\n\n    assertThat(parent.children).contains(child);\n\n  }"
+    },
+    {
+      "description": "get_component_by_type_should_throw_exception_when_type_does_not_exist",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void get_component_by_type_should_throw_exception_when_type_does_not_exist() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.add(A.class);\n\n    container.startComponents();\n\n    assertThatThrownBy(() -> container.getComponentByType(B.class))\n\n      .isInstanceOf(IllegalStateException.class)\n\n      .hasMessage(\"Unable to load component class org.sonar.core.platform.SpringComponentContainerTest$B\");\n\n  }"
+    },
+    {
+      "description": "add_fails_if_adding_module_class",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void add_fails_if_adding_module_class() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.startComponents();\n\n    assertThatThrownBy(() -> container.add(TestModule.class))\n\n      .hasMessage(\"Modules should be added as instances\")\n\n      .isInstanceOf(IllegalStateException.class);\n\n  }"
+    },
+    {
+      "description": "should_throw_start_exception_if_stop_also_throws_exception",
+      "expected-problems": null,
+      "expected-linenumbers": 16,
+      "code": "  public void should_throw_start_exception_if_stop_also_throws_exception() {\n\n    ErrorStopClass errorStopClass = new ErrorStopClass();\n\n    SpringComponentContainer container = new SpringComponentContainer() {\n\n      @Override\n\n      public void doBeforeStart() {\n\n        add(errorStopClass);\n\n      }\n\n\n\n      @Override\n\n      public void doAfterStart() {\n\n        getComponentByType(ErrorStopClass.class);\n\n        throw new IllegalStateException(\"doBeforeStart\");\n\n      }\n\n    };\n\n    assertThrows(\"doBeforeStart\", IllegalStateException.class, container::execute);\n\n    assertThat(errorStopClass.stopped).isTrue();\n\n  }"
+    },
+    {
+      "description": "addExtension_supports_extensions_without_annotations",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void addExtension_supports_extensions_without_annotations() {\n\n    SpringComponentContainer container = new SimpleContainer(A.class, B.class);\n\n    container.addExtension(\"\", ExtensionWithMultipleConstructorsAndNoAnnotations.class);\n\n    container.startComponents();\n\n    assertThat(container.getComponentByType(ExtensionWithMultipleConstructorsAndNoAnnotations.class).gotBothArgs).isTrue();\n\n  }"
+    },
+    {
+      "description": "addExtension_supports_extension_instances_without_annotations",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void addExtension_supports_extension_instances_without_annotations() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.addExtension(\"\", new ExtensionWithMultipleConstructorsAndNoAnnotations(new A()));\n\n    container.startComponents();\n\n    assertThat(container.getComponentByType(ExtensionWithMultipleConstructorsAndNoAnnotations.class)).isNotNull();\n\n  }"
+    },
+    {
+      "description": "addExtension_resolves_iterables",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void addExtension_resolves_iterables() {\n\n    List<Class<?>> classes = Arrays.asList(A.class, B.class);\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.addExtension(\"\", classes);\n\n    container.startComponents();\n\n    assertThat(container.getComponentByType(A.class)).isNotNull();\n\n    assertThat(container.getComponentByType(B.class)).isNotNull();\n\n  }"
+    },
+    {
+      "description": "addExtension_adds_property_with_PluginInfo",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void addExtension_adds_property_with_PluginInfo() {\n\n    PluginInfo info = new PluginInfo(\"plugin1\").setName(\"plugin1\");\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.addExtension(info, A.class);\n\n\n\n    container.startComponents();\n\n    PropertyDefinitions propertyDefinitions = container.getComponentByType(PropertyDefinitions.class);\n\n    PropertyDefinition propertyDefinition = propertyDefinitions.get(\"k\");\n\n    assertThat(propertyDefinition.key()).isEqualTo(\"k\");\n\n    assertThat(propertyDefinitions.getCategory(\"k\")).isEqualTo(\"plugin1\");\n\n  }"
+    },
+    {
+      "description": "declareExtension_adds_property",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void declareExtension_adds_property() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.addExtension((PluginInfo) null, A.class);\n\n\n\n    container.startComponents();\n\n    PropertyDefinitions propertyDefinitions = container.getComponentByType(PropertyDefinitions.class);\n\n    PropertyDefinition propertyDefinition = propertyDefinitions.get(\"k\");\n\n    assertThat(propertyDefinition.key()).isEqualTo(\"k\");\n\n    assertThat(propertyDefinitions.getCategory(\"k\")).isEmpty();\n\n  }"
+    },
+    {
+      "description": "stop_should_stop_children",
+      "expected-problems": null,
+      "expected-linenumbers": 15,
+      "code": "  public void stop_should_stop_children() {\n\n    SpringComponentContainer parent = new SpringComponentContainer();\n\n    ApiStartable s1 = new ApiStartable();\n\n    parent.add(s1);\n\n    parent.startComponents();\n\n    SpringComponentContainer child = new SpringComponentContainer(parent);\n\n    assertThat(child.getParent()).isEqualTo(parent);\n\n    assertThat(parent.children).containsOnly(child);\n\n    ApiStartable s2 = new ApiStartable();\n\n    child.add(s2);\n\n    child.startComponents();\n\n\n\n    parent.stopComponents();\n\n    assertThat(s1.stop).isOne();\n\n    assertThat(s2.stop).isOne();\n\n  }"
+    },
+    {
+      "description": "stop_should_remove_container_from_parent",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void stop_should_remove_container_from_parent() {\n\n    SpringComponentContainer parent = new SpringComponentContainer();\n\n    SpringComponentContainer child = new SpringComponentContainer(parent);\n\n    assertThat(parent.children).containsOnly(child);\n\n    child.stopComponents();\n\n    assertThat(parent.children).isEmpty();\n\n  }"
+    },
+    {
+      "description": "bean_create_fails_if_class_has_default_constructor_and_other_constructors",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void bean_create_fails_if_class_has_default_constructor_and_other_constructors() {\n\n    SpringComponentContainer container = new SpringComponentContainer();\n\n    container.add(ClassWithMultipleConstructorsIncNoArg.class);\n\n    container.startComponents();\n\n    assertThatThrownBy(() -> container.getComponentByType(ClassWithMultipleConstructorsIncNoArg.class))\n\n      .hasRootCauseMessage(\"Constructor annotations missing in: class org.sonar.core.platform.SpringComponentContainerTest$ClassWithMultipleConstructorsIncNoArg\");\n\n  }"
+    },
+    {
+      "description": "support_start_stop_callbacks",
+      "expected-problems": null,
+      "expected-linenumbers": 20,
+      "code": "  public void support_start_stop_callbacks() {\n\n    JsrLifecycleCallbacks jsr = new JsrLifecycleCallbacks();\n\n    ApiStartable api = new ApiStartable();\n\n    AutoClose closeable = new AutoClose();\n\n\n\n    SpringComponentContainer container = new SimpleContainer(jsr, api, closeable) {\n\n      @Override\n\n      public void doAfterStart() {\n\n        // force lazy instantiation\n\n        getComponentByType(JsrLifecycleCallbacks.class);\n\n        getComponentByType(ApiStartable.class);\n\n        getComponentByType(AutoClose.class);\n\n      }\n\n    };\n\n    container.execute();\n\n\n\n    assertThat(closeable.closed).isOne();\n\n    assertThat(jsr.postConstruct).isOne();\n\n    assertThat(jsr.preDestroy).isOne();\n\n    assertThat(api.start).isOne();\n\n    assertThat(api.stop).isOne();\n\n  }"
+    }
+  ]
+}

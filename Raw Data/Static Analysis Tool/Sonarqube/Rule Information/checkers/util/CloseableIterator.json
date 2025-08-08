@@ -1,0 +1,62 @@
+{
+  "name": "CloseableIterator",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 154,
+  "branches": 10,
+  "apis": 9,
+  "test": [
+    {
+      "description": "iterate",
+      "expected-problems": null,
+      "expected-linenumbers": 19,
+      "code": "  public void iterate() {\n\n    SimpleCloseableIterator it = new SimpleCloseableIterator();\n\n    assertThat(it.isClosed).isFalse();\n\n\n\n    // multiple calls to hasNext() moves only once the cursor\n\n    assertThat(it.hasNext()).isTrue();\n\n    assertThat(it.hasNext()).isTrue();\n\n    assertThat(it.hasNext()).isTrue();\n\n    assertThat(it.next()).isEqualTo(1);\n\n    assertThat(it.isClosed).isFalse();\n\n\n\n    assertThat(it.hasNext()).isTrue();\n\n    assertThat(it.next()).isEqualTo(2);\n\n    assertThat(it.isClosed).isFalse();\n\n\n\n    assertThat(it.hasNext()).isFalse();\n\n    // automatic close\n\n    assertThat(it.isClosed).isTrue();\n\n\n\n    // explicit close does not fail\n\n    it.close();\n\n    assertThat(it.isClosed).isTrue();\n\n  }"
+    },
+    {
+      "description": "call_next_without_hasNext",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void call_next_without_hasNext() {\n\n    SimpleCloseableIterator it = new SimpleCloseableIterator();\n\n    assertThat(it.next()).isEqualTo(1);\n\n    assertThat(it.next()).isEqualTo(2);\n\n    try {\n\n      it.next();\n\n      fail();\n\n    } catch (NoSuchElementException expected) {\n\n\n\n    }\n\n  }"
+    },
+    {
+      "description": "automatic_close_if_traversal_error",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void automatic_close_if_traversal_error() {\n\n    FailureCloseableIterator it = new FailureCloseableIterator();\n\n    try {\n\n      it.next();\n\n      fail();\n\n    } catch (IllegalStateException expected) {\n\n      assertThat(expected).hasMessage(\"expected failure\");\n\n      assertThat(it.isClosed).isTrue();\n\n    }\n\n  }"
+    },
+    {
+      "description": "remove_is_not_supported_by_default",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void remove_is_not_supported_by_default() {\n\n    SimpleCloseableIterator it = new SimpleCloseableIterator();\n\n    try {\n\n      it.remove();\n\n      fail();\n\n    } catch (UnsupportedOperationException expected) {\n\n      assertThat(it.isClosed).isTrue();\n\n    }\n\n  }"
+    },
+    {
+      "description": "remove_can_be_overridden",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void remove_can_be_overridden() {\n\n    RemovableCloseableIterator it = new RemovableCloseableIterator();\n\n    it.remove();\n\n    assertThat(it.isRemoved).isTrue();\n\n  }"
+    },
+    {
+      "description": "has_next_should_not_call_do_next_when_already_closed",
+      "expected-problems": null,
+      "expected-linenumbers": 11,
+      "code": "  public void has_next_should_not_call_do_next_when_already_closed() {\n\n    DoNextShouldNotBeCalledWhenClosedIterator it = new DoNextShouldNotBeCalledWhenClosedIterator();\n\n\n\n    it.next();\n\n    it.next();\n\n    assertThat(it.hasNext()).isFalse();\n\n    // this call to hasNext close the stream\n\n    assertThat(it.hasNext()).isFalse();\n\n    assertThat(it.isClosed).isTrue();\n\n\n\n    // calling hasNext should not fail\n\n    it.hasNext();\n\n  }"
+    },
+    {
+      "description": "emptyIterator_has_next_is_false",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void emptyIterator_has_next_is_false() {\n\n    assertThat(CloseableIterator.emptyCloseableIterator().hasNext()).isFalse();\n\n  }"
+    },
+    {
+      "description": "verify_has_next_from_iterator_with_empty_iterator",
+      "expected-problems": null,
+      "expected-linenumbers": 3,
+      "code": "  public void verify_has_next_from_iterator_with_empty_iterator() {\n\n    assertThat(CloseableIterator.from(Collections.<String>emptyList().iterator()).hasNext()).isFalse();\n\n  }"
+    }
+  ]
+}

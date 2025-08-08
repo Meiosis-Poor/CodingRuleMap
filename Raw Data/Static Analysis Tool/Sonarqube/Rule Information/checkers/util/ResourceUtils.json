@@ -1,0 +1,32 @@
+{
+  "name": "ResourceUtils",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 27,
+  "branches": 2,
+  "apis": 4,
+  "test": [
+    {
+      "description": "whenReadValidClasspathResource_thenReadIt",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void whenReadValidClasspathResource_thenReadIt() {\n\n    String result = ResourceUtils.readClasspathResource(ResourceUtilsTest.class, \"classpath_resource.txt\");\n\n    assertThat(result)\n\n      .isEqualTo(\"OK\\n\");\n\n  }"
+    },
+    {
+      "description": "whenReadInexistantClasspathResource_thenThrow",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void whenReadInexistantClasspathResource_thenThrow() {\n\n    assertThatThrownBy(\n\n      () -> ResourceUtils.readClasspathResource(ResourceUtilsTest.class, \"inexistant_resource.txt\"))\n\n      .isInstanceOf(IllegalStateException.class)\n\n      .hasMessage(\"Fail to read classpath resource: inexistant_resource.txt of class: org.sonar.core.util\");\n\n  }"
+    },
+    {
+      "description": "whenReadClasspathResourceFails_thenThrow",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void whenReadClasspathResourceFails_thenThrow() {\n\n    try (MockedStatic<IOUtils> scopedMock = mockStatic(IOUtils.class)) {\n\n      scopedMock.when(() -> IOUtils.toString(any(InputStream.class), any(Charset.class))).thenThrow(new IOException(\"error\"));\n\n      assertThatThrownBy(() -> ResourceUtils.readClasspathResource(ResourceUtilsTest.class, \"classpath_resource.txt\"))\n\n        .isInstanceOf(IllegalStateException.class)\n\n        .hasMessage(\"Fail to read classpath resource: classpath_resource.txt of class: org.sonar.core.util\");\n\n    }\n\n  }"
+    }
+  ]
+}

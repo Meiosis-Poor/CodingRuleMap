@@ -1,0 +1,62 @@
+{
+  "name": "ContextException",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 88,
+  "branches": 11,
+  "apis": 33,
+  "test": [
+    {
+      "description": "only_label",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void only_label() {\n\n    ContextException e = ContextException.of(LABEL);\n\n    assertThat(e.getMessage()).isEqualTo(LABEL);\n\n    assertThat(e.getRawMessage()).isEqualTo(LABEL);\n\n    assertThat(e.getCause()).isNull();\n\n  }"
+    },
+    {
+      "description": "only_cause",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void only_cause() {\n\n    Exception cause = new Exception(\"cause\");\n\n    ContextException e = ContextException.of(cause);\n\n    assertThat(e.getMessage()).isEqualTo(\"java.lang.Exception: cause\");\n\n    assertThat(e.getRawMessage()).isEqualTo(\"java.lang.Exception: cause\");\n\n    assertThat(e.getCause()).isSameAs(cause);\n\n  }"
+    },
+    {
+      "description": "cause_and_message",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void cause_and_message() {\n\n    Exception cause = new Exception(\"cause\");\n\n    ContextException e = ContextException.of(LABEL, cause);\n\n    assertThat(e.getMessage()).isEqualTo(LABEL);\n\n    assertThat(e.getRawMessage()).isEqualTo(LABEL);\n\n    assertThat(e.getCause()).isSameAs(cause);\n\n  }"
+    },
+    {
+      "description": "addContext",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void addContext() {\n\n    ContextException e = ContextException.of(LABEL)\n\n      .addContext(\"K1\", \"V1\")\n\n      .addContext(\"K2\", \"V2\");\n\n    assertThat(e).hasMessage(LABEL + \" | K1=V1 | K2=V2\");\n\n  }"
+    },
+    {
+      "description": "setContext",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void setContext() {\n\n    ContextException e = ContextException.of(LABEL)\n\n      .addContext(\"K1\", \"V1\")\n\n      .setContext(\"K1\", \"V2\");\n\n    assertThat(e).hasMessage(LABEL + \" | K1=V2\");\n\n  }"
+    },
+    {
+      "description": "multiple_context_values",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void multiple_context_values() {\n\n    ContextException e = ContextException.of(LABEL)\n\n      .addContext(\"K1\", \"V1\")\n\n      .addContext(\"K1\", \"V2\");\n\n    assertThat(e).hasMessage(LABEL + \" | K1=[V1,V2]\");\n\n  }"
+    },
+    {
+      "description": "merge_ContextException",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void merge_ContextException() {\n\n    ContextException cause = ContextException.of(\"cause\").addContext(\"K1\", \"V1\");\n\n    ContextException e = ContextException.of(cause)\n\n      .addContext(\"K1\", \"V11\")\n\n      .addContext(\"K2\", \"V2\");\n\n    assertThat(e.getContext(\"K1\")).containsExactly(\"V1\", \"V11\");\n\n    assertThat(e.getContext(\"K2\")).containsOnly(\"V2\");\n\n    assertThat(e).hasMessage(\"K1=[V1,V11] | K2=V2\");\n\n  }"
+    },
+    {
+      "description": "merge_ContextException_with_new_message",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void merge_ContextException_with_new_message() {\n\n    ContextException cause = ContextException.of(\"cause\").addContext(\"K1\", \"V1\");\n\n    ContextException e = ContextException.of(LABEL, cause).addContext(\"K2\", \"V2\");\n\n    assertThat(e.getContext(\"K1\")).containsOnly(\"V1\");\n\n    assertThat(e.getContext(\"K2\")).containsOnly(\"V2\");\n\n    assertThat(e).hasMessage(LABEL + \" | K1=V1 | K2=V2\");\n\n  }"
+    }
+  ]
+}

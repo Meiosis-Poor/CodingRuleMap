@@ -1,0 +1,122 @@
+{
+  "name": "DefaultProfiler",
+  "language": "java",
+  "description": null,
+  "example": null,
+  "cwe": null,
+  "cwe-description": null,
+  "checker-language": "java",
+  "loc": 238,
+  "branches": 24,
+  "apis": 40,
+  "test": [
+    {
+      "description": "test_levels",
+      "expected-problems": null,
+      "expected-linenumbers": 11,
+      "code": "  public void test_levels() {\n\n    // info by default\n\n    assertThat(underTest.isDebugEnabled()).isFalse();\n\n    assertThat(underTest.isTraceEnabled()).isFalse();\n\n\n\n    tester.setLevel(Level.DEBUG);\n\n    assertThat(underTest.isDebugEnabled()).isTrue();\n\n    assertThat(underTest.isTraceEnabled()).isFalse();\n\n\n\n    tester.setLevel(Level.TRACE);\n\n    assertThat(underTest.isDebugEnabled()).isTrue();\n\n    assertThat(underTest.isTraceEnabled()).isTrue();\n\n  }"
+    },
+    {
+      "description": "start_writes_no_log_even_if_there_is_context",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void start_writes_no_log_even_if_there_is_context() {\n\n    underTest.addContext(\"a_string\", \"bar\");\n\n    underTest.addContext(\"null_value\", null);\n\n    underTest.addContext(\"an_int\", 42);\n\n    underTest.start();\n\n\n\n    // do not write context as there's no message\n\n    assertThat(tester.logs()).isEmpty();\n\n  }"
+    },
+    {
+      "description": "startInfo_writes_log_with_context_appended_when_there_is_a_message",
+      "expected-problems": null,
+      "expected-linenumbers": 5,
+      "code": "  public void startInfo_writes_log_with_context_appended_when_there_is_a_message() {\n\n    addSomeContext(underTest);\n\n    underTest.startInfo(\"Foo\");\n\n\n\n    assertThat(tester.logs(Level.INFO)).containsOnly(\"Foo | a_string=bar | an_int=42 | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "startDebug_writes_log_with_context_appended_when_there_is_a_message",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void startDebug_writes_log_with_context_appended_when_there_is_a_message() {\n\n    tester.setLevel(Level.DEBUG);\n\n    addSomeContext(underTest);\n\n    underTest.startDebug(\"Foo\");\n\n\n\n    assertThat(tester.logs(Level.DEBUG)).containsOnly(\"Foo | a_string=bar | an_int=42 | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "startTrace_writes_log_with_context_appended_when_there_is_a_message",
+      "expected-problems": null,
+      "expected-linenumbers": 6,
+      "code": "  public void startTrace_writes_log_with_context_appended_when_there_is_a_message() {\n\n    tester.setLevel(Level.TRACE);\n\n    addSomeContext(underTest);\n\n    underTest.startTrace(\"Foo\");\n\n\n\n    assertThat(tester.logs(Level.TRACE)).containsOnly(\"Foo | a_string=bar | an_int=42 | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "stopError_adds_context_after_time_by_default",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void stopError_adds_context_after_time_by_default() {\n\n    addSomeContext(underTest);\n\n    underTest.start().stopError(\"Rules registered\");\n\n\n\n    assertThat(tester.logs()).hasSize(1);\n\n    assertThat(tester.logs(Level.ERROR).get(0))\n\n      .startsWith(\"Rules registered | time=\")\n\n      .endsWith(\"ms | a_string=bar | an_int=42 | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "stopInfo_adds_context_after_time_by_default",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void stopInfo_adds_context_after_time_by_default() {\n\n    addSomeContext(underTest);\n\n    underTest.start().stopInfo(\"Rules registered\");\n\n\n\n    assertThat(tester.logs()).hasSize(1);\n\n    assertThat(tester.logs(Level.INFO).get(0))\n\n      .startsWith(\"Rules registered | time=\")\n\n      .endsWith(\"ms | a_string=bar | an_int=42 | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "stopTrace_adds_context_after_time_by_default",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void stopTrace_adds_context_after_time_by_default() {\n\n    tester.setLevel(Level.TRACE);\n\n    addSomeContext(underTest);\n\n    underTest.start().stopTrace(\"Rules registered\");\n\n\n\n    assertThat(tester.logs()).hasSize(1);\n\n    assertThat(tester.logs(Level.TRACE).get(0))\n\n      .startsWith(\"Rules registered | time=\")\n\n      .endsWith(\"ms | a_string=bar | an_int=42 | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "stopError_adds_context_before_time_if_logTimeLast_is_true",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void stopError_adds_context_before_time_if_logTimeLast_is_true() {\n\n    addSomeContext(underTest);\n\n    underTest.logTimeLast(true);\n\n    underTest.start().stopError(\"Rules registered\");\n\n\n\n    assertThat(tester.logs()).hasSize(1);\n\n    assertThat(tester.logs(Level.ERROR).get(0))\n\n      .startsWith(\"Rules registered | a_string=bar | an_int=42 | after_start=true | time=\")\n\n      .endsWith(\"ms\");\n\n  }"
+    },
+    {
+      "description": "stopInfo_adds_context_before_time_if_logTimeLast_is_true",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void stopInfo_adds_context_before_time_if_logTimeLast_is_true() {\n\n    addSomeContext(underTest);\n\n    underTest.logTimeLast(true);\n\n    underTest.start().stopInfo(\"Rules registered\");\n\n\n\n    assertThat(tester.logs()).hasSize(1);\n\n    assertThat(tester.logs(Level.INFO).get(0))\n\n      .startsWith(\"Rules registered | a_string=bar | an_int=42 | after_start=true | time=\")\n\n      .endsWith(\"ms\");\n\n  }"
+    },
+    {
+      "description": "stopTrace_adds_context_before_time_if_logTimeLast_is_true",
+      "expected-problems": null,
+      "expected-linenumbers": 10,
+      "code": "  public void stopTrace_adds_context_before_time_if_logTimeLast_is_true() {\n\n    tester.setLevel(Level.TRACE);\n\n    addSomeContext(underTest);\n\n    underTest.logTimeLast(true);\n\n    underTest.start().stopTrace(\"Rules registered\");\n\n\n\n    assertThat(tester.logs()).hasSize(1);\n\n    assertThat(tester.logs(Level.TRACE).get(0))\n\n      .startsWith(\"Rules registered | a_string=bar | an_int=42 | after_start=true | time=\")\n\n      .endsWith(\"ms\");\n\n  }"
+    },
+    {
+      "description": "stopInfo_clears_context",
+      "expected-problems": null,
+      "expected-linenumbers": 14,
+      "code": "  public void stopInfo_clears_context() {\n\n    addSomeContext(underTest);\n\n    underTest.logTimeLast(true);\n\n    underTest.start().stopInfo(\"Foo\");\n\n    underTest.start().stopInfo(\"Bar\");\n\n\n\n    assertThat(tester.logs()).hasSize(2);\n\n    List<String> logs = tester.logs(Level.INFO);\n\n    assertThat(logs.get(0))\n\n      .startsWith(\"Foo | a_string=bar | an_int=42 | after_start=true | time=\")\n\n      .endsWith(\"ms\");\n\n    assertThat(logs.get(1))\n\n      .startsWith(\"Bar | time=\")\n\n      .endsWith(\"ms\");\n\n  }"
+    },
+    {
+      "description": "stopDebug_clears_context",
+      "expected-problems": null,
+      "expected-linenumbers": 15,
+      "code": "  public void stopDebug_clears_context() {\n\n    tester.setLevel(Level.DEBUG);\n\n    addSomeContext(underTest);\n\n    underTest.logTimeLast(true);\n\n    underTest.start().stopDebug(\"Foo\");\n\n    underTest.start().stopDebug(\"Bar\");\n\n\n\n    assertThat(tester.logs()).hasSize(2);\n\n    List<String> logs = tester.logs(Level.DEBUG);\n\n    assertThat(logs.get(0))\n\n      .startsWith(\"Foo | a_string=bar | an_int=42 | after_start=true | time=\")\n\n      .endsWith(\"ms\");\n\n    assertThat(logs.get(1))\n\n      .startsWith(\"Bar | time=\")\n\n      .endsWith(\"ms\");\n\n  }"
+    },
+    {
+      "description": "stopTrace_clears_context",
+      "expected-problems": null,
+      "expected-linenumbers": 15,
+      "code": "  public void stopTrace_clears_context() {\n\n    tester.setLevel(Level.TRACE);\n\n    addSomeContext(underTest);\n\n    underTest.logTimeLast(true);\n\n    underTest.start().stopTrace(\"Foo\");\n\n    underTest.start().stopTrace(\"Bar\");\n\n\n\n    assertThat(tester.logs()).hasSize(2);\n\n    List<String> logs = tester.logs(Level.TRACE);\n\n    assertThat(logs.get(0))\n\n      .startsWith(\"Foo | a_string=bar | an_int=42 | after_start=true | time=\")\n\n      .endsWith(\"ms\");\n\n    assertThat(logs.get(1))\n\n      .startsWith(\"Bar | time=\")\n\n      .endsWith(\"ms\");\n\n  }"
+    },
+    {
+      "description": "empty_message",
+      "expected-problems": null,
+      "expected-linenumbers": 11,
+      "code": "  public void empty_message() {\n\n    underTest.addContext(\"foo\", \"bar\");\n\n    underTest.startInfo(\"\");\n\n\n\n    assertThat(tester.logs()).containsOnly(\"foo=bar\");\n\n\n\n    underTest.addContext(\"after_start\", true);\n\n    underTest.stopInfo(\"\");\n\n    assertThat(tester.logs()).hasSize(2);\n\n    assertThat(tester.logs().get(1))\n\n      .startsWith(\"time=\")\n\n      .endsWith(\"ms | foo=bar | after_start=true\");\n\n  }"
+    },
+    {
+      "description": "fail_if_stop_without_message",
+      "expected-problems": null,
+      "expected-linenumbers": 9,
+      "code": "  public void fail_if_stop_without_message() {\n\n    underTest.start();\n\n    try {\n\n      underTest.stopInfo();\n\n      fail();\n\n    } catch (IllegalStateException e) {\n\n      assertThat(e).hasMessage(\"Profiler#stopXXX() can't be called without any message defined in start methods\");\n\n    }\n\n  }"
+    },
+    {
+      "description": "fail_if_stop_without_start",
+      "expected-problems": null,
+      "expected-linenumbers": 8,
+      "code": "  public void fail_if_stop_without_start() {\n\n    try {\n\n      underTest.stopDebug(\"foo\");\n\n      fail();\n\n    } catch (IllegalStateException e) {\n\n      assertThat(e).hasMessage(\"Profiler must be started before being stopped\");\n\n    }\n\n  }"
+    },
+    {
+      "description": "hasContext",
+      "expected-problems": null,
+      "expected-linenumbers": 7,
+      "code": "  public void hasContext() {\n\n    assertThat(underTest.hasContext(\"foo\")).isFalse();\n\n\n\n    underTest.addContext(\"foo\", \"bar\");\n\n    assertThat(underTest.hasContext(\"foo\")).isTrue();\n\n\n\n    underTest.addContext(\"foo\", null);\n\n    assertThat(underTest.hasContext(\"foo\")).isFalse();\n\n  }"
+    }
+  ]
+}
